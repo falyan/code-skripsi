@@ -34,6 +34,6 @@ class CreateTableMasterData extends Migration
      */
     public function down()
     {
-        //
+        Schema::dropIfExists('master_data');
     }
 }
