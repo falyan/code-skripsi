@@ -22,7 +22,7 @@ class CreateProductStockTable extends Migration
             $table->json('description');
             $table->smallInteger('status');
             $table->string('created_by')->nullable();
-            $table->string('updated_by');
+            $table->string('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

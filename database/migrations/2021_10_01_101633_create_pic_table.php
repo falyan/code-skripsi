@@ -21,7 +21,7 @@ class CreatePicTable extends Migration
             $table->string('identity_number');
             $table->string('identity_url');
             $table->string('created_by')->nullable();
-            $table->string('updated_by');
+            $table->string('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

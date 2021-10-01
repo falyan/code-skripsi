@@ -19,7 +19,7 @@ class CreateTableRole extends Migration
             $table->string('display_name');
             $table->string('role_type');
             $table->string('created_by')->nullable();
-            $table->string('updated_by');
+            $table->string('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

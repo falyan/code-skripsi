@@ -33,7 +33,7 @@ class CreateMerchantTable extends Migration
             $table->smallInteger('status');
             $table->boolean('is_open');
             $table->string('created_by')->nullable();
-            $table->string('updated_by');
+            $table->string('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

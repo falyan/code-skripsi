@@ -18,7 +18,7 @@ class CreateMerchantPlanCoverageTable extends Migration
             $table->unsignedBigInteger('merchant_id');
             $table->unsignedBigInteger('city_id');
             $table->string('created_by')->nullable();
-            $table->string('updated_by');
+            $table->string('updated_by')->nullable();
             $table->timestamps();
 
             $table->foreign('merchant_id')->references('id')->on('merchant')->onDelete('cascade');

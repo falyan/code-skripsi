@@ -20,7 +20,7 @@ class CreateTableMasterData extends Migration
             $table->string('value_type');
             $table->string('value');
             $table->string('created_by')->nullable();
-            $table->string('updated_by');
+            $table->string('updated_by')->nullable();
             $table->bigInteger('parent_id');
             $table->timestamps();
             $table->softDeletes();

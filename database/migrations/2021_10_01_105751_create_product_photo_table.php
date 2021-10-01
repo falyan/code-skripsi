@@ -19,7 +19,7 @@ class CreateProductPhotoTable extends Migration
             $table->unsignedBigInteger('product_id');
             $table->string('url');
             $table->string('created_by')->nullable();
-            $table->string('updated_by');
+            $table->string('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
