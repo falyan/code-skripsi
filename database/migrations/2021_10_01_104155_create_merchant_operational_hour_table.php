@@ -17,9 +17,9 @@ class CreateMerchantOperationalHourTable extends Migration
             $table->bigIncrements('id');
             $table->unsignedBigInteger('merchant_id');
             $table->unsignedBigInteger('master_data_id');
-            $table->time('open_time');
-            $table->time('closed_time');
-            $table->string('timezone');
+            $table->time('open_time')->nullable();
+            $table->time('closed_time')->nullable();
+            $table->string('timezone')->nullable();
             $table->timestamps();
 
             $table->foreign('merchant_id')->references('id')->on('merchant')->onDelete('cascade');

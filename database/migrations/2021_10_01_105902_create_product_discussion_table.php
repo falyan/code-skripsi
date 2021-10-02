@@ -15,11 +15,11 @@ class CreateProductDiscussionTable extends Migration
     {
         Schema::create('product_discussion', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('product_id');
-            $table->unsignedBigInteger('buyer_id');
-            $table->unsignedBigInteger('seller_id');
-            $table->string('message');
-            $table->string('reply_message');
+            $table->unsignedBigInteger('product_id')->nullable();
+            $table->unsignedBigInteger('buyer_id')->nullable();
+            $table->unsignedBigInteger('seller_id')->nullable();
+            $table->string('message')->nullable();
+            $table->string('reply_message')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

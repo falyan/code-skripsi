@@ -16,8 +16,6 @@ class CreateCityTable extends Migration
         Schema::create('city', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name')->nullable();
-            $table->string('lat')->nullable();
-            $table->string('lng')->nullable();
             $table->unsignedBigInteger('province_id')->nullable();
             $table->foreign('province_id')->references('id')->on('province')->onDelete('cascade');
             $table->string('created_by')->nullable();

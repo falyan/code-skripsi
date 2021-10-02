@@ -18,14 +18,14 @@ class CreateProductsTable extends Migration
             $table->unsignedBigInteger('merchant_id');
             $table->string('name');
             $table->float('price');
-            $table->unsignedBigInteger('category_id');
-            $table->unsignedBigInteger('etalase_id');
-            $table->string('condition');
-            $table->string('weight');
-            $table->longText('description');
-            $table->boolean('is_shipping_insurance');
-            $table->string('shipping_service');
-
+            $table->integer('minimum_purchase')->default(1);
+            $table->unsignedBigInteger('category_id')->nullable();
+            $table->unsignedBigInteger('etalase_id')->nullable();
+            $table->string('condition')->nullable();
+            $table->string('weight')->nullable();
+            $table->longText('description')->nullable();
+            $table->boolean('is_shipping_insurance')->nullable();
+            $table->string('shipping_service')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

@@ -20,8 +20,8 @@ class CreateCustomerAddressTable extends Migration
             $table->unsignedBigInteger('city_id');
             $table->unsignedBigInteger('province_id');
             $table->string('postal_code');
-            $table->string('longitude');
-            $table->string('latitude');
+            $table->string('longitude')->nullable();
+            $table->string('latitude')->nullable();
             $table->string('receiver_name');
             $table->string('receiver_phone');
             $table->timestamps();

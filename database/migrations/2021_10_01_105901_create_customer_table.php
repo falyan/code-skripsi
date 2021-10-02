@@ -20,11 +20,11 @@ class CreateCustomerTable extends Migration
             $table->string('password');
             $table->string('email');
             $table->string('phone');
-            $table->string('type');
-            $table->unsignedBigInteger('role_id');
-            $table->unsignedBigInteger('merchant_id');
-            $table->smallInteger('status');
-            $table->string('related_pln_mobile_customer_id');
+            $table->string('type')->default('buyer');
+            $table->unsignedBigInteger('role_id')->nullable();
+            $table->unsignedBigInteger('merchant_id')->nullable();
+            $table->smallInteger('status')->default(1);
+            $table->string('related_pln_mobile_customer_id')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

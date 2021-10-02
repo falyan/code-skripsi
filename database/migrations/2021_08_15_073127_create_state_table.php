@@ -16,8 +16,6 @@ class CreateStateTable extends Migration
         Schema::create('state', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name')->nullable();
-            $table->string('lat')->nullable();
-            $table->string('lng')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

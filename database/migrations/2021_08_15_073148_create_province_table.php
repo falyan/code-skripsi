@@ -16,8 +16,6 @@ class CreateProvinceTable extends Migration
         Schema::create('province', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name')->nullable();
-            $table->string('lat')->nullable();
-            $table->string('lng')->nullable();
             $table->unsignedInteger('state_id')->nullable();
             $table->foreign('state_id')->references('id')->on('state')->onDelete('cascade');
             $table->string('created_by')->nullable();
