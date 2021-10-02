@@ -9,6 +9,7 @@ use App\Http\Services\Etalase\EtalaseQueries;
 use App\Http\Services\Example\ExampleCommands;
 use App\Models\Etalase;
 use Exception, Input;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class EtalaseController extends Controller
@@ -33,6 +34,10 @@ class EtalaseController extends Controller
         $validator = Validator::make(request()->all(), [
             'merchant_id' => 'required',
             'name' => 'required'
+        ]);
+        
+        request()->request->add([
+            'full_name' => Auth::user()->full_name
         ]);
         
         try {
