@@ -26,6 +26,7 @@ class Product extends Model
         'merchant_id',
         'name',
         'price',
+        'minimum_purchase',
         'category_id',
         'etalase_id',
         'condition',
@@ -83,4 +84,12 @@ class Product extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+
+   public function product_stock(){
+       return $this->hasMany(ProductStock::class);
+   }
+
+   public function product_photo(){
+       return $this->hasMany(ProductPhoto::class);
+   }
 }
