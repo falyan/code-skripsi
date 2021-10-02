@@ -23,7 +23,7 @@ class CreateCorporateTable extends Migration
             $table->unsignedBigInteger('city_id');
             $table->string('district');
             $table->string('email');
-            $table->string('fax_number');
+            $table->string('fax_number')->nullable();
             $table->string('npwp');
             $table->string('npwp_url');
             $table->unsignedBigInteger('pic_id');

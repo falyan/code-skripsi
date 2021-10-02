@@ -20,7 +20,7 @@ class CreateProductStockTable extends Migration
             $table->integer('amount');
             $table->string('uom');
             $table->json('description')->nullable();
-            $table->smallInteger('status')->default(1);
+            $table->smallInteger('status');
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

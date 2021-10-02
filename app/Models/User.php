@@ -18,9 +18,9 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
      *
      * @var array
      */
-    protected $fillable = [
-        'name', 'email',
-    ];
+    protected $table = 'customer';
+
+    protected $protected = ['*'];
 
     /**
      * The attributes excluded from the model's JSON form.
@@ -30,4 +30,19 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     protected $hidden = [
         'password',
     ];
+
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
+
+    public function merchant()
+    {
+        return $this->belongsTo(Merchant::class);
+    }   
 }

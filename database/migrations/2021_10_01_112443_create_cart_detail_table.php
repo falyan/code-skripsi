@@ -17,7 +17,7 @@ class CreateCartDetailTable extends Migration
             $table->bigIncrements('id');
             $table->unsignedBigInteger('cart_id');
             $table->unsignedBigInteger('product_id')->nullable();
-            $table->integer('quantity')->nullable()->default(1);
+            $table->integer('quantity')->nullable();
             $table->timestamps();
 
             $table->foreign('cart_id')->references('id')->on('cart')->onDelete('cascade');
