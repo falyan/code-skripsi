@@ -62,10 +62,10 @@ class ProductCommands{
                 'product_id' => $product->id,
                 'amount' => $data->amount,
                 'uom' => $data->uom,
-                'description' => '{"type": "Create initial amount"}',
+                'description' => '{"from": "Product", "type": "adding", "title": "Tambah stok produk baru", "amount": "' . $data->amount. '"}',
                 'status' => 1,
-                'created_by' => null,
-                'updated_by' => null,
+                'created_by' => $data->full_name,
+                'updated_by' => $data->full_name
             ]);
 
             if (!$product_stock){
@@ -75,23 +75,25 @@ class ProductCommands{
             }
 
             $product_photo = '';
+            $photo = [];
             foreach ($data->url as $url_photo){
                 $product_photo = ProductPhoto::create([
                     'merchant_id' => $data->merchant_id,
                     'product_id' => $product->id,
                     'url' => $url_photo,
-                    'created_by' => null,
-                    'updated_by' => null,
+                    'created_by' => $data->full_name,
+                    'updated_by' => $data->full_name
                 ]);
+                $photo[] = $url_photo;
             }
+            $product_photo->url = $photo;
 
             if (!$product_photo){
                 $response['success'] = false;
                 $response['message'] = 'Gagal menambahkan foto produk!';
                 return $response;
             }
-
-            $product_data = array_merge($product->toArray(), $product_stock->toArray(), $product_photo->toArray());
+            $product_data = [$product, $product_stock, $product_photo];
             $response['success'] = true;
             $response['message'] = 'Produk berhasil ditambahkan!';
             $response['data'] = $product_data;
@@ -118,7 +120,7 @@ class ProductCommands{
             $product->description = ($data->description == null) ? ($product->description):($data->description);
             $product->is_shipping_insurance = ($data->is_shipping_insurance == null) ? ($product->is_shipping_insurance):($data->is_shipping_insurance);
             $product->shipping_service = ($data->shipping_service == null) ? ($product->shipping_service):($data->shipping_service);
-            $product->updated_by = null;
+            $product->updated_by = $data->full_name;
 
             if (!$product->save()){
                 $response['success'] = false;
@@ -138,10 +140,10 @@ class ProductCommands{
                 'product_id' => $product_id,
                 'amount' => $data->amount,
                 'uom' => $data->uom,
-                'description' => '{"type": "Adjust existing amount"}',
+                'description' => '{"from": "Product", "type": "changing", "title": "Ubah stok produk", "amount": "' . $data->amount. '"}',
                 'status' => 1,
-                'created_by' => null,
-                'updated_by' => null,
+                'created_by' => $data->full_name,
+                'updated_by' => $data->full_name,
             ]);
 
             if (!$product_stock_new->save()){
@@ -157,15 +159,18 @@ class ProductCommands{
                 $photo->delete();
             }
 
+            $photo = [];
             foreach ($data->url as $url_photo){
                 $product_photo = ProductPhoto::create([
                     'merchant_id' => $merchant_id,
                     'product_id' => $product_id,
                     'url' => $url_photo,
-                    'created_by' => null,
-                    'updated_by' => null,
+                    'created_by' => $data->full_name,
+                    'updated_by' => $data->full_name,
                 ]);
+                $photo[] = $url_photo;
             }
+            $product_photo->url = $photo;
 
             if (!$product_photo){
                 $response['success'] = false;
@@ -173,7 +178,7 @@ class ProductCommands{
                 return $response;
             }
 
-            $product_data = array_merge($product->toArray(), $product_stock_new->toArray(), $product_photo->toArray());
+            $product_data = [$product, $product_stock_new, $product_photo];
             $response['success'] = true;
             $response['message'] = 'Produk berhasil diubah!';
             $response['data'] = $product_data;
@@ -235,10 +240,10 @@ class ProductCommands{
                 'product_id' => $product_id,
                 'amount' => $data->amount,
                 'uom' => $data->uom,
-                'description' => '{"type": "Adjust existing amount"}',
+                'description' => '{"from": "Product", "type": "changing", "title": "Ubah stok produk", "amount": "' . $data->amount. '"}',
                 'status' => 1,
-                'created_by' => null,
-                'updated_by' => null,
+                'created_by' => $data->full_name,
+                'updated_by' => $data->full_name,
             ]);
 
             if (!$stock_new){
