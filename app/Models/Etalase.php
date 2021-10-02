@@ -17,7 +17,7 @@ class Etalase extends Model
     /**
      * @var array Guarded fields
      */
-    protected $guarded = ['*'];
+    protected $guarded = ['id'];
 
     /**
      * @var array Fillable fields
@@ -75,4 +75,9 @@ class Etalase extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+
+    public function merchant()
+    {
+        return $this->belongsTo(Merchant::class);
+    }
 }

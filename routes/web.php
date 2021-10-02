@@ -16,3 +16,7 @@
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
+
+$router->group(['prefix' => 'command'], static function () use ($router) {
+    $router->post('etalase/store', 'EtalaseController@store');
+});
