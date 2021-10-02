@@ -5,9 +5,9 @@ FROM composer:2.1.8 as composer
 FROM php:7.3.30-fpm-alpine3.13
 
 RUN apk update \
-    && apk add --no-cache nginx supervisor ca-certificates zlib-dev libzip-dev oniguruma-dev \
-    && docker-php-ext-install mysqli pdo pdo_mysql zip bcmath mbstring \
-    && docker-php-ext-enable mysqli pdo pdo_mysql zip bcmath mbstring
+    && apk add --no-cache nginx supervisor ca-certificates zlib-dev libzip-dev oniguruma-dev postgresql-dev \
+    && docker-php-ext-install mysqli pgsql pdo pdo_mysql pdo_pgsql zip bcmath mbstring \
+    && docker-php-ext-enable mysqli pgsql pdo pdo_mysql pdo_pgsql zip bcmath mbstring
 
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 COPY ./docker/php.ini /usr/local/etc/php/php.ini
