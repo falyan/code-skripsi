@@ -21,8 +21,8 @@ $router->get('/', function () use ($router) {
 
 $router->group(['prefix' => 'command'], static function () use ($router) {
     $router->post('etalase/store', 'EtalaseController@store');
+    $router->delete('etalase/delete/{id}', 'EtalaseController@delete');
 });
-
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
     $router->group(['middleware' => 'auth'], function () use ($router) {
@@ -30,4 +30,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             return response()->json(Auth::user());
         });
     });
+});
+
+$router->group(['prefix' => 'query'], static function () use ($router) {
+    $router->get('etalase', 'EtalaseController@index');
+    $router->get('etalase/show/{id}', 'EtalaseController@show');
 });

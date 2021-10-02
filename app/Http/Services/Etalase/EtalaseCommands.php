@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Services\Example;
+namespace App\Http\Services\Etalase;
 
 use App\Models\Etalase;
 use Exception;
@@ -15,8 +15,8 @@ class EtalaseCommands{
             $record = Etalase::create([
                 'merchant_id' => data_get($request, 'merchant_id'),
                 'name' => data_get($request, 'name'),
-                'created_by' => null, //! ?? user dapet dari table customer, api create customer masih blum ada?
-                'updated_by' => null //! ??
+                'created_by' => "pudidi",
+                'updated_by' => "pudidi"
             ]);
             DB::commit();
 

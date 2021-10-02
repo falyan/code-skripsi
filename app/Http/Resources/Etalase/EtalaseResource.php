@@ -15,9 +15,10 @@ class EtalaseResource extends JsonResource
      */
     public function toArray($request)
     {
-        $merchant = Merchant::where('id', $this->merchant_id)->first(['name', 'status']);
+        $merchant = Merchant::where('id', $this->merchant_id)->first(['id', 'name', 'status']);
         
         return [
+            'id' => $this->id,
             'merchant_id' => $this->merchant_id,
             'name' => $this->name,
             'created_by' => $this->created_by,

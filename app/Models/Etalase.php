@@ -3,11 +3,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Etalase extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     /**
      * @var string The database table used by the model.
@@ -60,7 +59,6 @@ class Etalase extends Model
     protected $dates = [
         'created_at',
         'updated_at',
-        'deleted_at'
     ];
 
     /**
