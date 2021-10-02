@@ -18,7 +18,7 @@ class CreateMerchantTable extends Migration
             $table->string('name');
             $table->string('phone_office');
             $table->unsignedBigInteger('corporate_id');
-            $table->unsignedBigInteger('industry_type');
+            $table->unsignedBigInteger('industry_type_id')->nullable();
             $table->longText('address');
             $table->unsignedBigInteger('province_id');
             $table->unsignedBigInteger('city_id');
@@ -30,6 +30,7 @@ class CreateMerchantTable extends Migration
             $table->unsignedBigInteger('pic_id');
             $table->string('npwp');
             $table->string('npwp_url');
+            $table->string('nib_url')->nullable();
             $table->smallInteger('status');
             $table->boolean('is_open');
             $table->string('created_by')->nullable();
@@ -41,7 +42,7 @@ class CreateMerchantTable extends Migration
             $table->foreign('province_id')->references('id')->on('province')->onDelete('cascade');
             $table->foreign('city_id')->references('id')->on('city')->onDelete('cascade');
             $table->foreign('pic_id')->references('id')->on('pic')->onDelete('cascade');
-            $table->foreign('industry_type')->references('id')->on('master_data')->onDelete('cascade');
+            $table->foreign('industry_type_id')->references('id')->on('master_data')->onDelete('cascade');
         });
     }
 
