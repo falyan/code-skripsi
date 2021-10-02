@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -8,6 +9,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class ProductStock extends Model
 {
     use HasFactory, SoftDeletes;
+
+    public static function boot(){
+        parent::boot();
+
+        static::addGlobalScope('status', function (Builder $builder) {
+            $builder->where('status', '=', '1');
+        });
+    }
 
     /**
      * @var string The database table used by the model.
@@ -79,4 +88,8 @@ class ProductStock extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+
+    public function product(){
+        return $this->belongsTo(Product::class);
+    }
 }
