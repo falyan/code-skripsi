@@ -2,6 +2,8 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
+use Illuminate\Support\Facades\Auth;
+
 /*
 |--------------------------------------------------------------------------
 | Application Routes
@@ -19,4 +21,13 @@ $router->get('/', function () use ($router) {
 
 $router->group(['prefix' => 'command'], static function () use ($router) {
     $router->post('etalase/store', 'EtalaseController@store');
+});
+
+
+$router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
+    $router->group(['middleware' => 'auth'], function () use ($router) {
+        $router->get('user', function(){
+            return response()->json(Auth::user());
+        });
+    });
 });
