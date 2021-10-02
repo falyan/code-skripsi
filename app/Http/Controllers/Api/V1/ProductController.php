@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Controllers\Controller;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Product\ProductQueries;
 use Illuminate\Http\Request;
