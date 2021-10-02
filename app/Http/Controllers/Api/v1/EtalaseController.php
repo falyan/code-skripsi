@@ -57,7 +57,7 @@ class EtalaseController extends Controller
         }
     }
 
-    public function deleteItem($id)
+    public function delete($id)
     {
 
         try {
