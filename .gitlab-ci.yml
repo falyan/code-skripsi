@@ -14,7 +14,7 @@ variables:
 
   # IMAGE VARIABLES
   DOCKER_IMAGE_APP: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-  DOCKER_IMAGE_PHPFPM: $CI_REGISTRY_IMAGE:7.4.10-fpm-alpine3.11
+  DOCKER_IMAGE_PHPFPM: $CI_REGISTRY_IMAGE:7.3.30-fpm-alpine3.13
 
 Build Base:
   stage: build
@@ -24,7 +24,7 @@ Build Base:
   script:
     - docker build --no-cache -t $DOCKER_IMAGE_PHPFPM -f Dockerfile-Build .
     - docker push $DOCKER_IMAGE_PHPFPM
-  # when: manual
+  when: manual
   tags:
     - docker
 
@@ -39,6 +39,8 @@ Package Development:
     - docker push $DOCKER_IMAGE_APP
   tags:
     - docker
+  only:
+    - development
 
 Deploy Development:
   stage: deploy
@@ -50,6 +52,6 @@ Deploy Development:
   #   name: URL Development
   #   url: http://dev-sinjai.air.id
   only:
-    - branches
+    - development
   tags:
     - site-dd

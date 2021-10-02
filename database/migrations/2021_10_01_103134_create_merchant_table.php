@@ -31,8 +31,8 @@ class CreateMerchantTable extends Migration
             $table->string('npwp');
             $table->string('npwp_url');
             $table->string('nib_url')->nullable();
-            $table->smallInteger('status')->default(0);
-            $table->boolean('is_open')->default(0);
+            $table->smallInteger('status');
+            $table->boolean('is_open');
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();
