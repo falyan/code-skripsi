@@ -76,4 +76,9 @@ class ProductPhoto extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+
+    public function product(){
+        return $this->belongsTo(Product::class);
+    }
+
 }
