@@ -17,33 +17,7 @@ class Merchant extends Model
     /**
      * @var array Guarded fields
      */
-    protected $guarded = ['*'];
-
-    /**
-     * @var array Fillable fields
-     */
-    protected $fillable = [
-        'name',
-        'phone_office',
-        'corporate_id',
-        'industry_type_id',
-        'address',
-        'province_id',
-        'city_id',
-        'postal_code',
-        'longitude',
-        'latitude',
-        'email',
-        'photo_url',
-        'pic_id',
-        'npwp',
-        'npwp_url',
-        'status',
-        'is_open',
-        'nib_url',
-        'created_by',
-        'updated_by'
-    ];
+    protected $guarded = ['id'];
 
     /**
      * @var array Validation rules for attributes
@@ -91,4 +65,9 @@ class Merchant extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+
+    public function etalase()
+    {
+        return $this->hasMany(Etalase::class);
+    }
 }
