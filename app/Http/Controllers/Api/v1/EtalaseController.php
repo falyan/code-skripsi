@@ -59,7 +59,6 @@ class EtalaseController extends Controller
 
     public function delete($id)
     {
-
         try {
             EtalaseCommands::deleteItem($id);
 

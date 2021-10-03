@@ -7,7 +7,6 @@ require_once __DIR__.'/../vendor/autoload.php';
 ))->bootstrap();
 
 date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Jakarta'));
-
 /*
 |--------------------------------------------------------------------------
 | Create The Application
@@ -60,6 +59,7 @@ $app->singleton(
 */
 
 $app->configure('app');
+$app->configure('auth');
 
 /*
 |--------------------------------------------------------------------------

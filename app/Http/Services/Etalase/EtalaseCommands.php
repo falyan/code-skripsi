@@ -11,6 +11,16 @@ class EtalaseCommands{
     public static function storeItem($request){
         try {
 
+            $item_names = Etalase::where('merchant_id', data_get($request, 'merchant_id'))->get()->pluck('name');
+            $recorded = [];
+            foreach ($item_names as $origin) {
+                array_push($recorded, lcfirst($origin));
+            }
+            if (in_array(lcfirst(data_get($request, 'name')), $recorded)) {
+                throw new Exception('Nama etalase ini sudah anda gunakan', 400);
+            }
+            
+
             DB::beginTransaction();
             $record = Etalase::create([
                 'merchant_id' => data_get($request, 'merchant_id'),
@@ -21,7 +31,7 @@ class EtalaseCommands{
             DB::commit();
 
             return $record;
-        } catch (\Exception $th) {
+        } catch (Exception $th) {
             DB::rollBack();
             throw new Exception($th->getMessage(), $th->getCode());
         }
