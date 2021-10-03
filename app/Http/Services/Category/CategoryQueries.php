@@ -17,4 +17,17 @@ class CategoryQueries{
         $response['data'] = $category;
         return $response;
     }
+
+    public function getThreeRandomCategory(){
+        $category = MasterData::where('type', 'product_category')->inRandomOrder()->limit(3)->get();
+        if ($category->isEmpty()){
+            $response['success'] = false;
+            $response['message'] = 'Gagal mendapatkan data kategori!';
+            return $response;
+        }
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data kategori!';
+        $response['data'] = $category;
+        return $response;
+    }
 }
