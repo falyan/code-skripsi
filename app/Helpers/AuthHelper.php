@@ -22,25 +22,22 @@ class AuthHelper extends Controller{
     {
 
         try{
-
-            $res = $this->client->request('POST' ,$this->url . $uri_path, [
-                'headers' => [
-                ],
+            $res = $this->client->request('POST' ,$this->url . '/' .$uri_path, [
+                'headers' => $headers,
                 'form_params' => $data
             ]);
-
+            
             return $res->getBody();
         }catch (ClientException $e){
             return response()->json(json_decode($e->getResponse()->getBody(), true), $e->getResponse()->getStatusCode());
         }
         
     }
-
+    
     public function privateService($uri_path, $data = [], $headers = [])
     {
         try{
-
-            $res = $this->client->request('POST' ,$this->url . $uri_path, [
+            $res = $this->client->request('POST' ,$this->url . '/' . $uri_path, [
                 'headers' => $headers,
                 'form_params' => $data
             ]);
