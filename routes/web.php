@@ -55,13 +55,16 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'product'], static function () use ($router) {
                 $router->get('search/{keyword}', 'ProductController@SearchProductByName');
             });
+            $router->group(['prefix' => 'category'], static function () use ($router) {
+                $router->get('/random', 'CategoryController@getThreeRandomCategory');
+            });
         });
     });
-    
+
     $router->group(['prefix' => 'profile', 'middleware' => 'auth'], static function () use ($router) {
         $router->get('user', 'ProfileController@index');
         $router->post('logout', 'ProfileController@logout');
     });
-    
+
 
 });

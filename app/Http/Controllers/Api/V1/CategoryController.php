@@ -20,4 +20,8 @@ class CategoryController extends Controller
     public function getAllCategory(){
         return $this->categoryQueries->getAllCategory();
     }
+
+    public function getThreeRandomCategory(){
+        return $this->categoryQueries->getThreeRandomCategory();
+    }
 }
