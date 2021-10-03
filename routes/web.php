@@ -18,16 +18,6 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
-$router->group(['domain' => env('API_DOMAIN'),
-    'prefix' => env('API_PREFIX', 'api')], function () use ($router){
-        $router->post('product/create', 'ProductController@createProduct');
-        $router->post('product/edit/{product_id}/{merchant_id}', 'ProductController@updateProduct');
-        $router->delete('product/delete/{product_id}/{merchant_id}', 'ProductController@deleteProduct');
-        $router->get('product/all', 'ProductController@getAllProduct');
-        $router->get('product/merchant/{merchant_id}', 'ProductController@getProductByMerchant');
-        $router->get('product/etalase/{etalase_id}', 'ProductController@getProductByEtalase');
-        $router->post('product/stock/edit/{product_id}/{merchant_id}', 'ProductController@updateStockProduct');
-});
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
     $router->group(['prefix' => 'seller'], static function () use ($router) {
         $router->group(['middleware' => 'auth'], function () use ($router) {
