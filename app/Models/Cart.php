@@ -71,4 +71,14 @@ class Cart extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+
+    public function card_detail()
+    {
+        return $this->hasMany(CartDetail::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }
