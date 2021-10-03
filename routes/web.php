@@ -24,9 +24,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->get('user', function(){
                 return response()->json(Auth::user());
             });
-            $router->group(['prefix' => 'command'], static function () use ($router) {
-                $router->post('store', 'EtalaseController@store');
-                $router->group(['prefix' => 'etalase'], static function () use ($router) {
+            $router->group(['prefix' => 'command', 'middleware' => 'auth'], static function () use ($router) {
+                $router->group(['prefix' => 'etalase', 'middleware' => 'auth'], static function () use ($router) {
+                    $router->post('store', 'EtalaseController@store');
                     $router->delete('delete/{id}', 'EtalaseController@delete');
                 });
                 $router->group(['prefix' => 'product'], static function () use ($router) {
@@ -34,6 +34,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('edit/{product_id}/{merchant_id}', 'ProductController@updateProduct');
                     $router->delete('delete/{product_id}/{merchant_id}', 'ProductController@deleteProduct');
                     $router->post('stock/edit/{product_id}/{merchant_id}', 'ProductController@updateStockProduct');
+                });
+                $router->group(['prefix' => 'merchant'], static function () use ($router) {
+                    $router->post('atur-toko', 'MerchantController@aturToko');
                 });
             });
             $router->group(['prefix' => 'query'], static function () use ($router) {
