@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,16 +18,7 @@ class Etalase extends Model
      * @var array Guarded fields
      */
     protected $guarded = ['id'];
-
-    /**
-     * @var array Fillable fields
-     */
-    protected $fillable = [
-        'merchant_id',
-        'name',
-        'created_by',
-        'updated_by'
-    ];
+    public $timestamps = true;
 
     /**
      * @var array Validation rules for attributes
@@ -56,10 +48,10 @@ class Etalase extends Model
     /**
      * @var array Attributes to be cast to Argon (Carbon) instances
      */
-    protected $dates = [
-        'created_at',
-        'updated_at',
-    ];
+    // protected $dates = [
+    //     'created_at',
+    //     'updated_at',
+    // ];
 
     /**
      * @var array Relations

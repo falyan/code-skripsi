@@ -3,6 +3,7 @@
 namespace App\Http\Services\Etalase;
 
 use App\Models\Etalase;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -20,13 +21,16 @@ class EtalaseCommands{
                 throw new Exception('Nama etalase ini sudah anda gunakan', 400);
             }
             
-
+            $heu = Carbon::now('Asia/Jakarta')->timestamp;
+            
             DB::beginTransaction();
             $record = Etalase::create([
                 'merchant_id' => data_get($request, 'merchant_id'),
                 'name' => data_get($request, 'name'),
                 'created_by' => data_get($request, 'full_name'),
-                'updated_by' => data_get($request, 'full_name')
+                'updated_by' => data_get($request, 'full_name'),
+                'created_at' => $heu,
+                'updated_at' => $heu
             ]);
             DB::commit();
 
