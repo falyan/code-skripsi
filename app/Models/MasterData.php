@@ -78,4 +78,24 @@ class MasterData extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+
+    public function scopeSearch($query, $searchTerm)
+    {
+        return $query->where('name', 'ILIKE', "%{$searchTerm}%");
+    }
+
+    public function scopeSearchByKey($query, $key)
+    {
+        return $query->where('key', 'ILIKE', "%{$key}%");
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(MasterData::class, 'parent_id');
+    }
+
+    public function child()
+    {
+        return $this->hasMany(MasterData::class, 'parent_id');
+    }
 }

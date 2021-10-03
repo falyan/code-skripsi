@@ -6,7 +6,8 @@ use App\Models\MasterData;
 
 class CategoryQueries{
     public function getAllCategory(){
-        $category = MasterData::where('type', 'product_category')->get();
+        $category = MasterData::with(['child' => function($j)
+        {$j->with(['child']);}])->where('type', 'product_category')->where('parent_id', null)->get();
         if ($category->isEmpty()){
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data kategori!';
@@ -19,7 +20,7 @@ class CategoryQueries{
     }
 
     public function getThreeRandomCategory(){
-        $category = MasterData::where('type', 'product_category')->inRandomOrder()->limit(3)->get();
+        $category = MasterData::where('type', 'product_category')->where('parent_id', null)->inRandomOrder()->limit(3)->get();
         if ($category->isEmpty()){
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data kategori!';
