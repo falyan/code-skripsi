@@ -46,4 +46,18 @@ class ProductQueries{
         $response['data'] = $data;
         return $response;
     }
+
+    public function searchProductByName($keyword){
+        $product = Product::with(['product_stock', 'product_photo'])->where('name', 'ILIKE', '%'.$keyword.'%')->get();
+        if (empty($product)){
+            $response['success'] = false;
+            $response['message'] = 'Produk tidak tersedia.';
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Produk berhasil didapatkan.';
+        $response['data'] = $product;
+        return $response;
+    }
 }

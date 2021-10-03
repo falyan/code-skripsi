@@ -58,4 +58,9 @@ class ProductController extends Controller
         $request['full_name'] = Auth::user()->full_name;
         return $this->productCommands->updateStockProduct($product_id, $merchant_id, $request);
     }
+
+    //Search Produk
+    public function searchProductByName($keyword){
+        return $this->productQueries->searchProductByName($keyword);
+    }
 }
