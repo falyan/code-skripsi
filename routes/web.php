@@ -2,6 +2,7 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
+use App\Helpers\AuthHelper;
 use Illuminate\Support\Facades\Auth;
 
 /*
@@ -31,9 +32,6 @@ $router->group(['domain' => env('API_DOMAIN'),
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
     $router->group(['prefix' => 'seller'], static function () use ($router) {
         $router->group(['middleware' => 'auth'], function () use ($router) {
-            $router->get('user', function(){
-                return response()->json(Auth::user());
-            });
             $router->group(['prefix' => 'command'], static function () use ($router) {
                 $router->group(['prefix' => 'etalase'], static function () use ($router) {
                     $router->post('store', 'EtalaseController@store');
@@ -69,4 +67,18 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
         });
     });
+    
+    $router->group(['prefix' => 'profile', 'middleware' => 'auth'], static function () use ($router) {
+        $router->get('user', function(){
+            return response()->json(Auth::user());
+        });
+
+        $router->post('logout', function(\Illuminate\Support\Facades\Request $request){
+            Auth::logout();
+            $authReq = new AuthHelper();
+            return $authReq->privateService('logout', [], $request->header('Authorization'));
+        });
+    });
+    
+
 });
