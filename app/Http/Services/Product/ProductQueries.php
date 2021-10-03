@@ -8,7 +8,7 @@ class ProductQueries{
     public function getAllProduct(){
         $data = Product::with(['product_stock', 'product_photo'])->paginate(10);
 
-        if (empty($data)){
+        if ($data->isEmpty()){
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data produk!';
             return $response;
@@ -22,7 +22,7 @@ class ProductQueries{
     public function getProductByMerchantId($merchant_id){
         $data = Product::with(['product_stock', 'product_photo'])->where('merchant_id', $merchant_id)->paginate(10);
 
-        if (empty($data)){
+        if ($data->isEmpty()){
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data produk!';
             return $response;
@@ -36,7 +36,7 @@ class ProductQueries{
     public function getProductByEtalaseId($etalase_id){
         $data = Product::with(['product_stock', 'product_photo'])->where('etalase_id', $etalase_id)->paginate(10);
 
-        if (empty($data)){
+        if ($data->isEmpty()){
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data produk!';
             return $response;
@@ -49,7 +49,7 @@ class ProductQueries{
 
     public function searchProductByName($keyword){
         $product = Product::with(['product_stock', 'product_photo'])->where('name', 'ILIKE', '%'.$keyword.'%')->get();
-        if (empty($product)){
+        if ($product->isEmpty()){
             $response['success'] = false;
             $response['message'] = 'Produk tidak tersedia.';
             return $response;

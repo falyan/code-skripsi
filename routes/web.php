@@ -2,8 +2,6 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
-use Illuminate\Support\Facades\Auth;
-
 /*
 |--------------------------------------------------------------------------
 | Application Routes
@@ -49,6 +47,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchant');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
                 });
+                $router->group(['prefix' => 'category'], static function () use ($router) {
+                    $router->get('all', 'CategoryController@getAllCategory');
+                });
             });
         });
     });
@@ -60,6 +61,16 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'product'], static function () use ($router) {
                 $router->get('search/{keyword}', 'ProductController@SearchProductByName');
             });
+            $router->group(['prefix' => 'category'], static function () use ($router) {
+                $router->get('/random', 'CategoryController@getThreeRandomCategory');
+            });
         });
     });
+
+    $router->group(['prefix' => 'profile', 'middleware' => 'auth'], static function () use ($router) {
+        $router->get('user', 'ProfileController@index');
+        $router->post('logout', 'ProfileController@logout');
+    });
+
+
 });
