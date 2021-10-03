@@ -12,19 +12,18 @@
 | and give it the Closure to call when that URI is requested.
 |
 */
-
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
-    $router->post('store', 'EtalaseController@store');
     $router->group(['middleware' => 'auth'], function () use ($router) {
         $router->get('user', function(){
             return response()->json(Auth::user());
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
             $router->group(['prefix' => 'etalase'], static function () use ($router) {
+                $router->post('store', 'EtalaseController@store');
                 $router->delete('delete/{id}', 'EtalaseController@delete');
             });
             $router->group(['prefix' => 'product'], static function () use ($router) {
