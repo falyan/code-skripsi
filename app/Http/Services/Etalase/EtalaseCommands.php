@@ -24,7 +24,7 @@ class EtalaseCommands{
             DB::beginTransaction();
             $record = Etalase::create([
                 'merchant_id' => data_get($request, 'merchant_id'),
-                'name' => data_get($request, 'name'),
+                'name' => ucfirst(data_get($request, 'name')),
                 'created_by' => data_get($request, 'full_name'),
                 'updated_by' => data_get($request, 'full_name')
             ]);
