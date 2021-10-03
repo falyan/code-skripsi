@@ -43,9 +43,9 @@ class ProductController extends Controller
         return $this->productQueries->getAllProduct();
     }
 
-    //Get Produk Berdasarkan Merchant
-    public function getProductByMerchant($merchant_id){
-        return $this->productQueries->getProductByMerchantId($merchant_id);
+    //Get Produk Berdasarkan Merchant Seller
+    public function getProductByMerchantSeller($merchant_id){
+        return $this->productQueries->getProductByMerchantIdSeller($merchant_id);
     }
 
     //Get Produk Berdasarkan Etalase
@@ -62,5 +62,20 @@ class ProductController extends Controller
     //Search Produk
     public function searchProductByName($keyword){
         return $this->productQueries->searchProductByName($keyword);
+    }
+
+    //Get Produk Berdasarkan Merchant Buyer
+    public function getProductByMerchantBuyer($merchant_id){
+        return $this->productQueries->getProductByMerchantIdBuyer($merchant_id);
+    }
+
+    //Get Produk Berdasarkan Kategori
+    public function getProductByCategory($category_id){
+        return $this->productQueries->getProductByCategory($category_id);
+    }
+
+    //Get Produk Berdasarkan ID
+    public function getProductById($id){
+        return $this->productQueries->getProductById($id);
     }
 }
