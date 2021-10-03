@@ -19,7 +19,7 @@ class CreateEtalaseTable extends Migration
             $table->string('name');
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
-            $table->timestamps();
+            $table->timestampsTz();
 
             $table->foreign('merchant_id')->references('id')->on('merchant')->onDelete('cascade');
         });
