@@ -46,6 +46,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchant');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
                 });
+                $router->group(['prefix' => 'category'], static function () use ($router) {
+                    $router->get('all', 'CategoryController@getAllCategory');
+                });
             });
         });
     });
