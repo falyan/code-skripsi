@@ -38,7 +38,7 @@ class EtalaseController extends Controller
         ]);
         
         request()->request->add([
-            'full_name' => Auth::user()->full_name
+            'full_name' => 'himbabwe'//Auth::user()->full_name
         ]);
         
         try {

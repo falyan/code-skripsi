@@ -14,17 +14,17 @@ class EtalaseCommands{
             $item_names = Etalase::where('merchant_id', data_get($request, 'merchant_id'))->get()->pluck('name');
             $recorded = [];
             foreach ($item_names as $origin) {
-                array_push($recorded, $origin);
+                array_push($recorded, lcfirst($origin));
             }
-            
-            if (in_array(data_get($request, 'name'), $recorded)) {
+            if (in_array(lcfirst(data_get($request, 'name')), $recorded)) {
                 throw new Exception('Nama etalase ini sudah anda gunakan', 400);
             }
+            
 
             DB::beginTransaction();
             $record = Etalase::create([
                 'merchant_id' => data_get($request, 'merchant_id'),
-                'name' => ucfirst(data_get($request, 'name')),
+                'name' => data_get($request, 'name'),
                 'created_by' => data_get($request, 'full_name'),
                 'updated_by' => data_get($request, 'full_name')
             ]);
