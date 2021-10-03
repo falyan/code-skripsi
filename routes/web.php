@@ -35,12 +35,27 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             return response()->json(Auth::user());
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
-            $router->post('etalase/store', 'EtalaseController@store');
-            $router->delete('etalase/delete/{id}', 'EtalaseController@delete');
+            $router->group(['prefix' => 'etalase'], static function () use ($router) {
+                $router->post('store', 'EtalaseController@store');
+                $router->delete('delete/{id}', 'EtalaseController@delete');
+            });
+            $router->group(['prefix' => 'product'], static function () use ($router) {
+                $router->post('create', 'ProductController@createProduct');
+                $router->post('edit/{product_id}/{merchant_id}', 'ProductController@updateProduct');
+                $router->delete('delete/{product_id}/{merchant_id}', 'ProductController@deleteProduct');
+                $router->post('stock/edit/{product_id}/{merchant_id}', 'ProductController@updateStockProduct');
+            });
         });
         $router->group(['prefix' => 'query'], static function () use ($router) {
-            $router->get('etalase', 'EtalaseController@index');
-            $router->get('etalase/show/{id}', 'EtalaseController@show');
+            $router->group(['prefix' => 'etalase'], static function () use ($router) {
+                $router->get('/', 'EtalaseController@index');
+                $router->get('show/{id}', 'EtalaseController@show');
+            });
+            $router->group(['prefix' => 'product'], static function () use ($router) {
+                $router->get('all', 'ProductController@getAllProduct');
+                $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchant');
+                $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
+            });
         });
     });
 });
