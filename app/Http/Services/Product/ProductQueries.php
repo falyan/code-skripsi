@@ -102,4 +102,32 @@ class ProductQueries{
         $response['data'] = $data;
         return $response;
     }
+
+    public function getRecommendProduct(){
+        $product = Product::with(['product_stock', 'product_photo'])->latest()->limit(10)->get();
+
+        if ($product->isEmpty()){
+            $response['success'] = false;
+            $response['message'] = 'Gagal mendapatkan data produk!';
+            return $response;
+        }
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $product;
+        return $response;
+    }
+
+    public function getSpecialProduct(){
+        $product = Product::with(['product_stock', 'product_photo'])->latest()->limit(10)->get();
+
+        if ($product->isEmpty()){
+            $response['success'] = false;
+            $response['message'] = 'Gagal mendapatkan data produk!';
+            return $response;
+        }
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $product;
+        return $response;
+    }
 }

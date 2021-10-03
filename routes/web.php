@@ -63,6 +63,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchantBuyer');
                 $router->get('category/{category_id}', 'ProductController@getProductByCategory');
                 $router->get('{id}', 'ProductController@getProductById');
+                $router->get('recommend', 'ProductController@getRecommendProduct');
+                $router->get('special', 'ProductController@getSpecialProduct');
             });
             $router->group(['prefix' => 'category'], static function () use ($router) {
                 $router->get('/random', 'CategoryController@getThreeRandomCategory');

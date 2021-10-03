@@ -78,4 +78,13 @@ class ProductController extends Controller
     public function getProductById($id){
         return $this->productQueries->getProductById($id);
     }
+
+    //Get Produk Rekomendasi
+    public function getRecommendProduct(){
+        return $this->productQueries->getRecommendProduct();
+    }
+
+    public function getSpecialProduct(){
+        return $this->productQueries->getSpecialProduct();
+    }
 }
