@@ -72,9 +72,9 @@ class Cart extends Model
     public $attachOne = [];
     public $attachMany = [];
 
-    public function card_detail()
+    public function cart_detail()
     {
-        return $this->hasMany(CartDetail::class);
+        return $this->hasMany(CartDetail::class, 'cart_id');
     }
 
     public function customer()
