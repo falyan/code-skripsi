@@ -37,6 +37,8 @@ class ProfileController extends Controller
     {
         Auth::logout();
         $authReq = new AuthHelper();
-        return $authReq->privateService('logout', [], $request->header());
+        $body = $authReq->privateService('logout', [], $request->header());
+
+        return $this->respondWithResult(true, 'Berhasil Logout');
     }
 }

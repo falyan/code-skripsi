@@ -21,19 +21,13 @@ class MerchantCommands{
                 'description' => data_get($request, 'description')
             ]);
             
+            $merchant->operationals()->delete();
             
             foreach (data_get($request, 'operational') as $key) {
-                if (in_array($key['day_id'], $merchant->operationals()->get()->pluck('master_data_id')->toArray())) {
-                    throw new Exception('Anda sudah mengatur jam oprational hari ini sebelumnya');
-                }
-            }
-            
-            foreach (data_get($request, 'operational') as $key) {
-                if (in_array($key['day_id'], $merchant->operationals()->get()->pluck('master_data_id')->toArray())) {
-                    
-                }
                 if (array_key_exists('day_id', $key)) {
                     $key['master_data_id'] = $key['day_id'];
+                    $key['open_time'] = data_get($request, 'open_time');
+                    $key['closed_time'] = data_get($request, 'closed_time');
                     unset($key['day_id']);
                 }
                 $merchant->operationals()->create($key);

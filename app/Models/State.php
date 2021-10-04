@@ -23,8 +23,6 @@ class State extends Model
      */
     protected $fillable = [
         'name',
-        'lat',
-        'lng',
         'created_by',
         'updated_by'
     ];

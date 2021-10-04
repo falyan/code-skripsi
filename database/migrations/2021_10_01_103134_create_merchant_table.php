@@ -24,6 +24,7 @@ class CreateMerchantTable extends Migration
             $table->string('slogan');
             $table->unsignedBigInteger('province_id');
             $table->unsignedBigInteger('city_id');
+            $table->unsignedBigInteger('district_id');
             $table->string('postal_code');
             $table->string('longitude')->nullable();
             $table->string('latitude')->nullable();
@@ -44,6 +45,7 @@ class CreateMerchantTable extends Migration
             $table->foreign('corporate_id')->references('id')->on('corporate')->onDelete('cascade');
             $table->foreign('province_id')->references('id')->on('province')->onDelete('cascade');
             $table->foreign('city_id')->references('id')->on('city')->onDelete('cascade');
+            $table->foreign('district_id')->references('id')->on('district')->onDelete('cascade');
             $table->foreign('pic_id')->references('id')->on('pic')->onDelete('cascade');
             $table->foreign('industry_type_id')->references('id')->on('master_data')->onDelete('cascade');
         });
