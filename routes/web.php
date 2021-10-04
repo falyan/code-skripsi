@@ -67,8 +67,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'setting', 'middleware' => 'auth'], static function () use ($router) {
-                $router->get('profile', 'SettingProfileController@myProfile');
-                $router->get('merchant', 'SettingProfileController@myMerchant');
+                $router->get('profile', 'SettingProfileController@index');
             });
 
             $router->group(['middleware' => 'auth'], static function () use ($router) {
