@@ -15,7 +15,7 @@ class CreateOrderTable extends Migration
     {
         Schema::create('order', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('seller_id')->nullable();
+            $table->unsignedBigInteger('merchant_id')->nullable();
             $table->unsignedBigInteger('buyer_id')->nullable();
             $table->string('trx_no')->nullable();
             $table->dateTime('order_date')->nullable();
@@ -30,7 +30,7 @@ class CreateOrderTable extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('seller_id')->references('id')->on('customer')->onDelete('cascade');
+            $table->foreign('merchant_id')->references('id')->on('merchant')->onDelete('cascade');
             $table->foreign('buyer_id')->references('id')->on('customer')->onDelete('cascade');
         });
     }

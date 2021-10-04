@@ -13,7 +13,8 @@
 |
 */
 $router->get('/', function () use ($router) {
-    return $router->app->version();
+    // return $router->app->version();
+    return \Carbon\Carbon::now('Asia/Jakarta')->timestamp;
 });
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {

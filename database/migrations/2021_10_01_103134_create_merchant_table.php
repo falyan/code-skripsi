@@ -31,8 +31,8 @@ class CreateMerchantTable extends Migration
             $table->string('email');
             $table->string('photo_url')->nullable();
             $table->unsignedBigInteger('pic_id');
-            $table->string('npwp');
-            $table->string('npwp_url');
+            $table->string('npwp')->nullable();
+            $table->string('npwp_url')->nullable();
             $table->string('nib_url')->nullable();
             $table->smallInteger('status');
             $table->boolean('is_open');
