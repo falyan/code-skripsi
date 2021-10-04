@@ -3,32 +3,24 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Services\Profile\ProfileCommands;
+use App\Http\Services\Profile\ProfileQueries;
 
 class SettingProfileController extends Controller
 {
     public function __construct()
     {
-        $this->getUser = Customer::find(Auth::user()->id);
+        $this->profileCommands = new ProfileCommands();
+        $this->profileQueries = new ProfileQueries();
     }
 
-    public function myProfile()
+    public function index()
     {
         try {
             return $this->respondWithData([
-                'profile' => $this->getUser,
-                'merchant_link' => "http://103.94.6.62/api/pln-marketplace-saruman-development/v1/buyer/query/setting/merchant"
+                'user' => $this->profileQueries->getUser(),
+                'toko' => $this->profileQueries->getMerchant()
             ], 'Success get your profile information', 200);
-        } catch (Exception $e) {
-            return $this->respondWithResult(false, $e->getMessage(), 500);
-        }
-    }
-
-    public function myMerchant()
-    {
-        try {
-            return $this->respondWithData($this->getUser->merchant, 'Success get your merchant information', 200);
         } catch (Exception $e) {
             return $this->respondWithResult(false, $e->getMessage(), 500);
         }
