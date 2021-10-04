@@ -16,7 +16,7 @@ class CreateTableMasterData extends Migration
         Schema::create('master_data', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('type');
-            $table->string('key');
+            $table->string('key')->nullable();
             $table->string('value_type');
             $table->string('value');
             $table->string('created_by')->nullable();
