@@ -117,4 +117,15 @@ class CartController extends Controller
             return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], 404);
         }
     }
+
+    public function showDetail($buyer_id){
+        try {
+            return $this->respondWithData(CartQueries::getDetailCart($buyer_id), 'Sukses ambil data keranjang');
+        } catch (\Throwable $th) {
+            if (in_array($th->getCode(), $this->error_codes)) {
+                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
+            }
+            return $this->respondWithResult(false, $th->getMessage(), 500);
+        }
+    }
 }
