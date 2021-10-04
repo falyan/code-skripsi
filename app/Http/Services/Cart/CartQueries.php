@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Auth;
 
 class CartQueries{
     public static function getTotalCart(){
-        $sum = [];
         $customer = Customer::find(Auth::user()->id);
 
         return [

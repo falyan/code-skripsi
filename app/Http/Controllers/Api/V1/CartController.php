@@ -8,6 +8,24 @@ use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/v1/buyer/query/cart",
+     *     summary="Get Total Amount Cart",
+     *     operationId="get_total_cart",
+     *     tags={"Cart"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response="200",
+     *         description="Returns total amount of customer cart",
+     *         @OA\JsonContent()
+     *     ),
+     *     @OA\Response(
+     *         response="401",
+     *         description="Error: Unauthorized. When Bearer token is invalid or null.",
+     *     ),
+     * )
+     */
     public function index()
     {
         try {
