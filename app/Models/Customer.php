@@ -17,7 +17,7 @@ class Customer extends Model
     /**
      * @var array Guarded fields
      */
-    protected $guarded = ['*'];
+    protected $guarded = ['id'];
 
     /**
      * @var array Fillable fields
@@ -77,5 +77,10 @@ class Customer extends Model
     public function merchant()
     {
         return $this->belongsTo(Merchant::class);
-    }  
+    }
+
+    public function cart()
+    {
+        return $this->hasOne(Cart::class, 'buyer_id');
+    }
 }

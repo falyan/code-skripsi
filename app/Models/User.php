@@ -20,7 +20,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
      */
     protected $table = 'customer';
 
-    protected $protected = ['*'];
+    protected $guarded = ['id'];
 
     /**
      * The attributes excluded from the model's JSON form.
@@ -44,5 +44,5 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     public function merchant()
     {
         return $this->belongsTo(Merchant::class);
-    }   
+    }
 }

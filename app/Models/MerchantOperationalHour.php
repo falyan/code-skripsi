@@ -16,18 +16,18 @@ class MerchantOperationalHour extends Model
     /**
      * @var array Guarded fields
      */
-    protected $guarded = ['*'];
+    protected $guarded = ['id'];
 
     /**
      * @var array Fillable fields
      */
-    protected $fillable = [
-        'merchant_id',
-        'master_data_id',
-        'open_time',
-        'closed_time',
-        'timezone'
-    ];
+    // protected $fillable = [
+    //     'merchant_id',
+    //     'master_data_id',
+    //     'open_time',
+    //     'closed_time',
+    //     'timezone'
+    // ];
 
     /**
      * @var array Validation rules for attributes
@@ -74,4 +74,9 @@ class MerchantOperationalHour extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+
+    public function merchant()
+    {
+        return $this->belongsTo(Merchant::class);
+    }
 }

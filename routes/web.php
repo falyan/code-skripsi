@@ -19,8 +19,8 @@ $router->get('/', function () use ($router) {
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
     $router->group(['prefix' => 'seller'], static function () use ($router) {
         $router->group(['middleware' => 'auth'], function () use ($router) {
-            $router->group(['prefix' => 'command'], static function () use ($router) {
-                $router->group(['prefix' => 'etalase'], static function () use ($router) {
+            $router->group(['prefix' => 'command', 'middleware' => 'auth'], static function () use ($router) {
+                $router->group(['prefix' => 'etalase', 'middleware' => 'auth'], static function () use ($router) {
                     $router->post('store', 'EtalaseController@store');
                     $router->delete('delete/{id}', 'EtalaseController@delete');
                 });
@@ -30,6 +30,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->delete('delete/{product_id}/{merchant_id}', 'ProductController@deleteProduct');
                     $router->post('stock/edit/{product_id}/{merchant_id}', 'ProductController@updateStockProduct');
                 });
+                $router->group(['prefix' => 'merchant'], static function () use ($router) {
+                    $router->post('atur-toko', 'MerchantController@aturToko');
+                });
             });
             $router->group(['prefix' => 'query'], static function () use ($router) {
                 $router->group(['prefix' => 'etalase'], static function () use ($router) {
@@ -38,7 +41,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 });
                 $router->group(['prefix' => 'product'], static function () use ($router) {
                     $router->get('all', 'ProductController@getAllProduct');
-                    $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchant');
+                    $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchantSeller');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
                 });
                 $router->group(['prefix' => 'category'], static function () use ($router) {
@@ -53,15 +56,29 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             });
             $router->group(['prefix' => 'product'], static function () use ($router) {
+                $router->get('recommend', 'ProductController@getRecommendProduct');
+                $router->get('special', 'ProductController@getSpecialProduct');
                 $router->get('search/{keyword}', 'ProductController@SearchProductByName');
+                $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchantBuyer');
+                $router->get('category/{category_id}', 'ProductController@getProductByCategory');
+                $router->get('{id}', 'ProductController@getProductById');
+            });
+            $router->group(['prefix' => 'category'], static function () use ($router) {
+                $router->get('/random', 'CategoryController@getThreeRandomCategory');
+            });
+            
+            $router->group(['middleware' => 'auth'], static function () use ($router) {
+                $router->group(['prefix' => 'cart'], static function () use ($router) {
+                    $router->get('/', 'CartController@index');
+                });
             });
         });
     });
-    
+
     $router->group(['prefix' => 'profile', 'middleware' => 'auth'], static function () use ($router) {
         $router->get('user', 'ProfileController@index');
         $router->post('logout', 'ProfileController@logout');
     });
-    
+
 
 });

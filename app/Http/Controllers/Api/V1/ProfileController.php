@@ -28,7 +28,7 @@ class ProfileController extends Controller
             $user = Auth::user();
             $data = Customer::with(['merchant'])->find($user->id);
 
-            return $this->respondWithData($data, 'Success get user info', 200);;
+            return $this->respondWithData($data, 'Success get user info', 200);
         } catch (Exception $ex) {
             return $this->respondWithResult(false, $ex->getMessage(), 500);
         }

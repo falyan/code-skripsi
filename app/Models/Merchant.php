@@ -12,7 +12,7 @@ class Merchant extends Model
     /**
      * @var string The database table used by the model.
      */
-    public $table = 'merchant';
+    protected $table = 'merchant';
 
     /**
      * @var array Guarded fields
@@ -69,5 +69,15 @@ class Merchant extends Model
     public function etalase()
     {
         return $this->hasMany(Etalase::class);
+    }
+
+    public function operationals()
+    {
+        return $this->hasMany(MerchantOperationalHour::class);
+    }
+
+    public function user()
+    {
+        return $this->hasOne(User::class);
     }
 }
