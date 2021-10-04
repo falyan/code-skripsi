@@ -1,17 +1,15 @@
 <?php
+
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class State extends Model
+class District extends Model
 {
-    use HasFactory;
-
-    /**
+     /**
      * @var string The database table used by the model.
      */
-    public $table = 'state';
+    public $table = 'district';
 
     /**
      * @var array Guarded fields
@@ -23,6 +21,7 @@ class State extends Model
      */
     protected $fillable = [
         'name',
+        'city_id',
         'created_by',
         'updated_by'
     ];

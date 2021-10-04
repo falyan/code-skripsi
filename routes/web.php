@@ -79,6 +79,4 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->get('user', 'ProfileController@index');
         $router->post('logout', 'ProfileController@logout');
     });
-
-
 });

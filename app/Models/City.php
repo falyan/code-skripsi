@@ -23,8 +23,6 @@ class City extends Model
      */
     protected $fillable = [
         'name',
-        'lat',
-        'lng',
         'province_id',
         'created_by',
         'updated_by'
