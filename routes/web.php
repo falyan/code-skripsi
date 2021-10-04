@@ -74,6 +74,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->group(['prefix' => 'cart'], static function () use ($router) {
                     $router->get('/', 'CartController@index');
                     $router->post('/add', 'CartController@add');
+                    $router->delete('/delete/{id}', 'CartController@destroy');
+                    $router->patch('/qty/update/{id}', 'CartController@qtyUpdate');
                 });
             });
         });
