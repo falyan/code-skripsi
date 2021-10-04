@@ -24,7 +24,7 @@ class CreateOrderTable extends Migration
             $table->float('total_weight')->nullable();
             $table->string('payment_method')->nullable();
             $table->string('delivery_method')->nullable();
-            $table->string('related_buyer_id')->nullable();
+            $table->string('related_pln_mobile_customer_id')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

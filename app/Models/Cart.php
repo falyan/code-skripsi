@@ -23,7 +23,7 @@ class Cart extends Model
      */
     protected $fillable = [
         'buyer_id',
-        'related_buyer_id',
+        'related_pln_mobile_customer_id',
     ];
 
     /**
