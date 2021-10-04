@@ -17,11 +17,11 @@ class CreateCorporateTable extends Migration
             $table->bigIncrements('id');
             $table->string('name');
             $table->string('area_name');
-            $table->string('phone_office');
+            $table->string('phone_office')->nullable();
             $table->longText('address');
             $table->unsignedBigInteger('province_id');
             $table->unsignedBigInteger('city_id');
-            $table->string('district');
+            $table->unsignedBigInteger('district_id');
             $table->string('email');
             $table->string('fax_number')->nullable();
             $table->string('npwp');
@@ -35,6 +35,7 @@ class CreateCorporateTable extends Migration
 
             $table->foreign('province_id')->references('id')->on('province')->onDelete('cascade');
             $table->foreign('city_id')->references('id')->on('city')->onDelete('cascade');
+            $table->foreign('district_id')->references('id')->on('district')->onDelete('cascade');
             $table->foreign('pic_id')->references('id')->on('pic')->onDelete('cascade');
         });
     }
