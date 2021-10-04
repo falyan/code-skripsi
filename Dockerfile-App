@@ -6,6 +6,7 @@ COPY ./docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY --chown=www-data . /var/www/html/
 RUN composer update
 RUN php artisan swagger-lume:generate
+RUN php -S http://103.94.6.62/api/pln-marketplace-saruman-development public/index.php
 RUN rm -Rf docker/
 WORKDIR /var/www/html
 EXPOSE 80
