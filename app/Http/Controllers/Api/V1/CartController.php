@@ -37,4 +37,9 @@ class CartController extends Controller
             return $this->respondWithResult(false, $th->getMessage(), 500);
         }
     }
+
+    public function add()
+    {
+        return 'seep!';
+    }
 }
