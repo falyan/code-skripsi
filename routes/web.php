@@ -53,7 +53,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     $router->group(['prefix' => 'buyer'], static function () use ($router) {
         $router->group(['prefix' => 'query'], static function () use ($router) {
             $router->group(['prefix' => 'etalase'], static function () use ($router) {
-
             });
             $router->group(['prefix' => 'product'], static function () use ($router) {
                 $router->get('recommend', 'ProductController@getRecommendProduct');
@@ -66,7 +65,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'category'], static function () use ($router) {
                 $router->get('/random', 'CategoryController@getThreeRandomCategory');
             });
-            
+
+            $router->group(['prefix' => 'setting', 'middleware' => 'auth'], static function () use ($router) {
+                $router->get('profile', 'SettingProfileController@myProfile');
+                $router->get('merchant', 'SettingProfileController@myMerchant');
+            });
+
             $router->group(['middleware' => 'auth'], static function () use ($router) {
                 $router->group(['prefix' => 'cart'], static function () use ($router) {
                     $router->get('/', 'CartController@index');
@@ -79,6 +83,4 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->get('user', 'ProfileController@index');
         $router->post('logout', 'ProfileController@logout');
     });
-
-
 });
