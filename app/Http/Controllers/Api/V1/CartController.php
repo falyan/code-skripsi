@@ -32,12 +32,11 @@ class CartController extends Controller
      */
     public function index()
     {
-        
-        try {
-            if (!$rlc_id = request()->header('related_customer_id')) {
-                throw new Exception('Kolom related_customer_id kosong', 400);
-            }
+        if (!$rlc_id = request()->header('related_customer_id')) {
+            return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
+        }
 
+        try {
             return $this->respondWithData(CartQueries::getTotalCart($rlc_id), 'Sukses ambil data keranjang');
         } catch (Exception $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
