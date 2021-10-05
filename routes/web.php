@@ -85,7 +85,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'cart'], static function () use ($router) {
                 $router->get('/', 'CartController@index');
-                $router->get('detail/{buyer_id}', 'CartController@showDetail');
+                $router->get('detail', 'CartController@showDetail');
             });
 
             $router->group(['prefix' => 'region'], static function () use ($router) {
@@ -94,9 +94,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
             $router->group(['prefix' => 'cart'], static function () use ($router) {
-                $router->post('add/', 'CartController@add');
-                $router->delete('delete/', 'CartController@destroy');
-                $router->patch('qty/update/', 'CartController@qtyUpdate');
+                $router->post('add', 'CartController@add');
+                $router->delete('delete', 'CartController@destroy');
+                $router->patch('qty/update', 'CartController@qtyUpdate');
             });
         });
     });

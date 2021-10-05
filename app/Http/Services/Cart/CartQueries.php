@@ -19,8 +19,39 @@ class CartQueries{
         ];
     }
 
-    public static function getDetailCart($buyer_id){
-        $cart = Cart::with(['cart_detail'])->where('buyer_id', $buyer_id)->get();
-        return $cart;
+    public static function getDetailCart($buyer_id = null, $related_id){
+        if ($buyer_id != null){
+            $cart = Cart::with(['cart_detail' => function($product)
+            {$product->with(['product' => function($product_detail)
+            {$product_detail->with(['product_stock', 'product_photo']);}]);}])
+                ->where('buyer_id', $buyer_id)->get();
+
+            if ($cart->isEmpty()){
+                $response['success'] = false;
+                $response['message'] = 'Gagal mendapatkan data keranjang.';
+                return $response;
+            }
+
+            $response['success'] = true;
+            $response['message'] = 'Berhasil mendapatkan data keranjang.';
+            $response['data'] = $cart;
+            return $response;
+        }else{
+            $cart = Cart::with(['cart_detail' => function($product)
+            {$product->with(['product' => function($product_detail)
+            {$product_detail->with(['product_stock', 'product_photo']);}]);}])
+                ->where('related_pln_mobile_customer_id', $related_id)->get();
+
+            if ($cart->isEmpty()){
+                $response['success'] = false;
+                $response['message'] = 'Gagal mendapatkan data keranjang.';
+                return $response;
+            }
+
+            $response['success'] = true;
+            $response['message'] = 'Berhasil mendapatkan data keranjang.';
+            $response['data'] = $cart;
+            return $response;
+        }
     }
 }

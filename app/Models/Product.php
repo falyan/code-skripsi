@@ -84,7 +84,7 @@ class Product extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
-    
+
     protected function serializeDate($date){
         return $date->format('Y-m-d H:i:s');
     }
@@ -95,5 +95,9 @@ class Product extends Model
 
    public function product_photo(){
        return $this->hasMany(ProductPhoto::class);
+   }
+
+   public function cart_detail(){
+        return $this->hasMany(CartDetail::class);
    }
 }
