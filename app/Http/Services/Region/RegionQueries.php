@@ -6,6 +6,10 @@ use App\Models\District;
 
 class RegionQueries{
     public function searchDistrict($keyword){
+        if (strlen($keyword) < 3){
+            return false;
+        }
+
         $district = District::with(['city' => function($city)
         {$city->with(['province']);}])->where('name', 'ILIKE', '%'.$keyword.'%')->get();
 
