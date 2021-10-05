@@ -79,7 +79,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/random', 'CategoryController@getThreeRandomCategory');
             });
 
-            $router->group(['prefix' => 'setting', 'middleware' => 'auth'], static function () use ($router) {
+            $router->group(['prefix' => 'setting'], static function () use ($router) {
                 $router->get('profile', 'SettingProfileController@index');
             });
 
