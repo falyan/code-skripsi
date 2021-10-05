@@ -73,4 +73,8 @@ class Province extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+
+    public function city(){
+        return $this->hasMany(City::class);
+    }
 }
