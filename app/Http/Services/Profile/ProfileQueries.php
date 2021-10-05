@@ -8,11 +8,22 @@ class ProfileQueries
 {
     public function getUser()
     {
-        return Customer::find(Auth::user()->id);
+        if(request('related_pln_mobile_customer_id'))
+        {
+            $data = Customer::where('related_pln_mobile_customer_id', request('related_pln_mobile_customer_id'))->first();
+        } else {
+            $data = null;
+        }
+        return $data;
     }
 
     public function getMerchant()
     {
-        return $this->getUser()->merchant ? $this->getUser()->merchant : null;
+        if (request('related_pln_mobile_customer_id')) {
+            $data = $this->getUser()->merchant ? $this->getUser()->merchant : null;
+        } else {
+            $data = null;
+        }
+        return $data;
     }
 }

@@ -48,6 +48,10 @@ class ProductQueries{
     }
 
     public function searchProductByName($keyword){
+        if (strlen($keyword) < 3){
+            return false;
+        }
+
         $product = Product::with(['product_stock', 'product_photo'])->where('name', 'ILIKE', '%'.$keyword.'%')->get();
         if ($product->isEmpty()){
             $response['success'] = false;
