@@ -102,9 +102,18 @@ class CartCommands
                 $existsData->update([
                     'quantity' => request('quantity')
                 ]);
+
+                if ($existsData->quantity < 1){
+                    $existsData->delete();
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Produk berhasil dihapus',
+                    ], 404);
+                }
                 return response()->json([
                     'success' => true,
-                    'message' => 'produk berhasil dihapus',
+                    'message' => 'Produk berhasil diubah',
                 ], 404);
             } else {
                 return response()->json([
