@@ -10,8 +10,8 @@ use App\Models\Etalase;
 use Illuminate\Support\Facades\Auth;
 
 class CartQueries{
-    public static function getTotalCart(){
-        $customer = Customer::find(Auth::user()->id);
+    public static function getTotalCart($related_customer_id){
+        $customer = Customer::findByrelatedCustomerId($related_customer_id);
 
         return [
             'product' => count($customer->cart->cart_detail->toArray()),

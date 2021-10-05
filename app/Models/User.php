@@ -45,4 +45,9 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     {
         return $this->belongsTo(Merchant::class);
     }
+    
+    protected function serializeDate($date){
+        return $date->format('Y-m-d H:i:s');
+    }
+    
 }

@@ -26,10 +26,10 @@ class MerchantCommands{
             foreach (data_get($request, 'operational') as $key) {
                 if (array_key_exists('day_id', $key)) {
                     $key['master_data_id'] = $key['day_id'];
-                    $key['open_time'] = data_get($request, 'open_time');
-                    $key['closed_time'] = data_get($request, 'closed_time');
                     unset($key['day_id']);
                 }
+                $key['open_time'] = data_get($request, 'open_time');
+                $key['closed_time'] = data_get($request, 'closed_time');
                 $merchant->operationals()->create($key);
             }
             DB::commit();
@@ -47,4 +47,3 @@ class MerchantCommands{
         }
     }
 }
-;

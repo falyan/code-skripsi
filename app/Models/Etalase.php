@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Carbon\Carbon;
@@ -48,10 +49,10 @@ class Etalase extends Model
     /**
      * @var array Attributes to be cast to Argon (Carbon) instances
      */
-    // protected $dates = [
-    //     'created_at',
-    //     'updated_at',
-    // ];
+    protected $dates = [
+        'created_at',
+        'updated_at',
+    ];
 
     /**
      * @var array Relations
@@ -65,6 +66,11 @@ class Etalase extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+
+    protected function serializeDate($date)
+    {
+        return $date->format('Y-m-d H:i:s');
+    }
 
     public function merchant()
     {

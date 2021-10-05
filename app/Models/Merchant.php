@@ -65,6 +65,10 @@ class Merchant extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+    protected function serializeDate($date){
+        return $date->format('Y-m-d H:i:s');
+    }
+    
 
     public function etalase()
     {
@@ -79,5 +83,10 @@ class Merchant extends Model
     public function user()
     {
         return $this->hasOne(User::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
     }
 }

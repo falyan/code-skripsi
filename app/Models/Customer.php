@@ -70,6 +70,10 @@ class Customer extends Model
         'updated_at',
         'deleted_at'
     ];
+    protected function serializeDate($date){
+        return $date->format('Y-m-d H:i:s');
+    }
+    
 
     /**
      * @var array Relations
@@ -82,5 +86,20 @@ class Customer extends Model
     public function cart()
     {
         return $this->hasOne(Cart::class, 'buyer_id');
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Customer::class, 'buyer_id');
+    }
+
+    /**
+     * @var array Custom Static Functions
+     */
+
+    public static function findByrelatedCustomerId($related_customer_id)
+    {
+        $user = static::where('related_pln_mobile_customer_id', $related_customer_id)->first();
+        return $user;
     }
 }
