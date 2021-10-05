@@ -43,9 +43,11 @@ class MerchantQueries{
                         'name' => $merchant->name,
                         'image_url' => $merchant->photo_url,
                     ],
-                    'total_transaction' => count(array_merge($orders['success'], $orders['canceled'])),
-                    'total_success' => count($orders['success']),
-                    'total_canceled' => count($orders['canceled'])
+                    'transactions' => [
+                        'total_transaction' => count(array_merge($orders['success'], $orders['canceled'])),
+                        'total_success' => count($orders['success']),
+                        'total_canceled' => count($orders['canceled'])
+                    ]
                 ]
             ];
             // dd(Order::where('id', 2)->first()->progress->toArray());
