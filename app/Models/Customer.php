@@ -88,4 +88,14 @@ class Customer extends Model
     {
         return $this->hasMany(Customer::class, 'buyer_id');
     }
+
+    /**
+     * @var array Custom Static Functions
+     */
+
+    public static function findByrelatedCustomerId($related_customer_id)
+    {
+        $user = static::where('related_pln_mobile_customer_id', $related_customer_id)->first();
+        return $user;
+    }
 }

@@ -32,9 +32,14 @@ class CartController extends Controller
      */
     public function index()
     {
+        
         try {
-            return $this->respondWithData(CartQueries::getTotalCart(), 'Sukses ambil data keranjang');
-        } catch (\Throwable $th) {
+            if (!$rlc_id = request()->header('related_customer_id')) {
+                throw new Exception('Kolom related_customer_id kosong', 400);
+            }
+
+            return $this->respondWithData(CartQueries::getTotalCart($rlc_id), 'Sukses ambil data keranjang');
+        } catch (Exception $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
             }
@@ -49,11 +54,15 @@ class CartController extends Controller
         ]);
 
         try {
+            if (!$rlc_id = request()->header('related_customer_id')) {
+                throw new Exception('Kolom related_customer_id kosong', 400);
+            }
+
             if ($validator->fails()) {
                 throw new Exception($validator->errors(), 400);
             }
 
-            $data = CartCommands::addCart();
+            $data = CartCommands::addCart($rlc_id);
 
             return $this->respondWithData($data, 'Keranjang berhasil disimpan');
         } catch (\Throwable $th) {

@@ -32,10 +32,18 @@ class MerchantQueries{
                 }
             }
 
+            // $iconcash
+
             // dd($orders);
 
             return [
                 'data' => [
+                    'merchant' => [
+                        'id' => $merchant->id,
+                        'name' => $merchant->name,
+                        'image_url' => $merchant->photo_url,
+                    ],
+                    'total_transaction' => count(array_merge($orders['success'], $orders['canceled'])),
                     'total_success' => count($orders['success']),
                     'total_canceled' => count($orders['canceled'])
                 ]

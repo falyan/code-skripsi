@@ -82,12 +82,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'setting', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('profile', 'SettingProfileController@index');
             });
-
-            $router->group(['middleware' => 'auth'], static function () use ($router) {
-                $router->group(['prefix' => 'cart'], static function () use ($router) {
-                    $router->get('/', 'CartController@index');
-                    $router->get('detail/{buyer_id}', 'CartController@showDetail');
-                });
+            
+            $router->group(['prefix' => 'cart'], static function () use ($router) {
+                $router->get('/', 'CartController@index');
+                $router->get('detail/{buyer_id}', 'CartController@showDetail');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
