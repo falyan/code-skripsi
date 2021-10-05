@@ -25,7 +25,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('store', 'EtalaseController@store');
                     $router->delete('delete/{id}', 'EtalaseController@delete');
                 });
-                
+
                 $router->group(['prefix' => 'product'], static function () use ($router) {
                     $router->post('create', 'ProductController@createProduct');
                     $router->post('edit/{product_id}/{merchant_id}', 'ProductController@updateProduct');
@@ -82,10 +82,14 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'setting', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('profile', 'SettingProfileController@index');
             });
-            
+
             $router->group(['prefix' => 'cart'], static function () use ($router) {
                 $router->get('/', 'CartController@index');
                 $router->get('detail/{buyer_id}', 'CartController@showDetail');
+            });
+
+            $router->group(['prefix' => 'region'], static function () use ($router) {
+                $router->get('search/{keyword}', 'RegionController@searchDistrict');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
