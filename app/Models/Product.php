@@ -84,6 +84,10 @@ class Product extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+    
+    protected function serializeDate($date){
+        return $date->format('Y-m-d H:i:s');
+    }
 
    public function product_stock(){
        return $this->hasMany(ProductStock::class);

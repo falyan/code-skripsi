@@ -70,6 +70,10 @@ class Customer extends Model
         'updated_at',
         'deleted_at'
     ];
+    protected function serializeDate($date){
+        return $date->format('Y-m-d H:i:s');
+    }
+    
 
     /**
      * @var array Relations
