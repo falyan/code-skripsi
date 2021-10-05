@@ -55,17 +55,15 @@ class CartController extends Controller
         ]);
 
         try {
-            if (!$rlc_id = request()->header('related_customer_id')) {
-                throw new Exception('Kolom related_customer_id kosong', 400);
-            }
+            // if (!$rlc_id = request()->header('related_customer_id')) {
+            //     throw new Exception('Kolom related_customer_id kosong', 400);
+            // }
 
             if ($validator->fails()) {
                 throw new Exception($validator->errors(), 400);
             }
 
-            $data = CartCommands::addCart($rlc_id);
-
-            // return $this->respondWithData($data, 'Keranjang berhasil disimpan');
+            $data = CartCommands::addCart();
 
             return response()->json([
                 'status' => 'success',
