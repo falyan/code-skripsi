@@ -76,5 +76,8 @@ class Province extends Model
     protected function serializeDate($date){
         return $date->format('Y-m-d H:i:s');
     }
-    
+
+    public function city(){
+        return $this->hasMany(City::class);
+    }
 }

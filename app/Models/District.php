@@ -74,5 +74,8 @@ class District extends Model
     protected function serializeDate($date){
         return $date->format('Y-m-d H:i:s');
     }
-    
+
+    public function city(){
+        return $this->belongsTo(City::class);
+    }
 }
