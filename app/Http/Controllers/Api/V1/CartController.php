@@ -32,7 +32,7 @@ class CartController extends Controller
      */
     public function index()
     {
-        if (!$rlc_id = request()->header('related_customer_id')) {
+        if (!$rlc_id = request()->header('Related-Customer-Id')) {
             return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
         }
 
