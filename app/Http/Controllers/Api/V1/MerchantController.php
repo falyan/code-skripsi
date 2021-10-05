@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Services\Merchant\MerchantCommands;
+use App\Http\Services\Merchant\MerchantQueries;
+use App\Models\Customer;
 // use App\Models\Customer;
 use App\Models\Merchant;
 use App\Models\User;
@@ -32,6 +34,18 @@ class MerchantController extends Controller
                 return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], $th->getCode());
             }
             return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], 404);
+        }
+    }
+
+    public function homepageProfile()
+    {
+        try {
+            return MerchantQueries::homepageProfile(Auth::user()->merchant_id);
+        } catch (Exception $th) {
+            if (in_array($th->getCode(), $this->error_codes)) {
+                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
+            }
+            return $this->respondWithResult(false, $th->getMessage(), 500);
         }
     }
 }
