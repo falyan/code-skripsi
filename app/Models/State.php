@@ -72,4 +72,8 @@ class State extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+    protected function serializeDate($date){
+        return $date->format('Y-m-d H:i:s');
+    }
+    
 }

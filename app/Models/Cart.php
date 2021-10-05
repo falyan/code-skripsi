@@ -72,6 +72,10 @@ class Cart extends Model
     public $attachOne = [];
     public $attachMany = [];
 
+    protected function serializeDate($date){
+        return $date->format('Y-m-d H:i:s');
+    }
+    
     public function cart_detail()
     {
         return $this->hasMany(CartDetail::class, 'cart_id');
