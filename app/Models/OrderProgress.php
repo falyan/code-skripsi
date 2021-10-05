@@ -10,6 +10,11 @@ class OrderProgress extends Model
 
     protected $guarded = ['id'];
 
+    protected function serializeDate($date)
+    {
+        return $date->format('Y-m-d H:i:s');
+    }
+
     public function order()
     {
         return $this->belongsTo(Order::class);
