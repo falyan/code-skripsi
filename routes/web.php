@@ -105,6 +105,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         });
     });
 
+    $router->group(['prefix' => 'setting'], static function () use ($router) {
+        $router->get('faq', 'FaqController@index');
+        $router->get('pages', 'PagesController@index');
+    });
+
     $router->group(['prefix' => 'profile', 'middleware' => 'auth'], static function () use ($router) {
         $router->get('user', 'ProfileController@index');
         $router->post('logout', 'ProfileController@logout');
