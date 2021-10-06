@@ -19,7 +19,7 @@ class AccountSeeder extends Seeder
         User::create([
             'full_name' => 'alexander buyer',
             'username' => 'buyertest',
-            'password' => Hash::make('123456'),
+            'password' => Hash::make('password12345'),
             'email' => 'buyertest@email.com',
             'phone' => '08123123723',
             'type' => 'buyer',
