@@ -15,13 +15,28 @@ class Order extends Model
         return $date->format('Y-m-d H:i:s');
     }
 
+    public function detail()
+    {
+        return $this->hasMany(OrderDetail::class);
+    }
+
     public function progress()
     {
-        return $this->hasOne(OrderProgress::class);
+        return $this->hasMany(OrderProgress::class);
+    }
+
+    public function progress_active()
+    {
+        return $this->hasOne(OrderProgress::class)->where('status',1);
     }
 
     public function merchant()
     {
         return $this->belongsTo(Merchant::class);
+    }
+
+    public function delivery()
+    {
+        return $this->hasOne(OrderDelivery::class);
     }
 }

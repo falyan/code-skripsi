@@ -13,8 +13,7 @@
 |
 */
 $router->get('/', function () use ($router) {
-    // return $router->app->version();
-    return \Carbon\Carbon::now('Asia/Jakarta')->timestamp;
+    return $router->app->version();
 });
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
@@ -90,6 +89,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'region'], static function () use ($router) {
                 $router->get('search/{keyword}', 'RegionController@searchDistrict');
+            });
+
+            $router->group(['prefix' => 'transaction'], static function () use ($router) {
+                $router->get('/', 'TransactionController@index');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
