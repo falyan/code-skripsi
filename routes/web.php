@@ -13,8 +13,7 @@
 |
 */
 $router->get('/', function () use ($router) {
-    // return $router->app->version();
-    return \Carbon\Carbon::now('Asia/Jakarta')->timestamp;
+    return $router->app->version();
 });
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
@@ -57,9 +56,21 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->group(['prefix' => 'category'], static function () use ($router) {
                     $router->get('all', 'CategoryController@getAllCategory');
                 });
+
+                $router->group(['prefix' => 'transaction'], static function () use ($router) {
+                    $router->get('/', 'TransactionController@sellerIndex');
+                    $router->get('/detail/{id}', 'TransactionController@detailTransaction');
+                    $router->get('/new-order', 'TransactionController@newOrder');
+                    $router->get('/to-deliver', 'TransactionController@orderToDeliver');
+                    $router->get('/on-delivery', 'TransactionController@orderInDelivery');
+                    $router->get('/done', 'TransactionController@orderDone');
+                    $router->get('/calceled', 'TransactionController@sellerTransactionCanceled');
+                    $router->get('/search/{keyword}', 'TransactionController@sellerSearchTransaction');
+                });
             });
         });
     });
+
     $router->group(['prefix' => 'buyer'], static function () use ($router) {
         $router->group(['prefix' => 'query'], static function () use ($router) {
 
@@ -68,6 +79,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'etalase'], static function () use ($router) {
+                $router->get('rajaongkir', 'EtalaseController@rajaongkir');
             });
 
             $router->group(['prefix' => 'product'], static function () use ($router) {
@@ -95,6 +107,17 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'region'], static function () use ($router) {
                 $router->get('search/{keyword}[/{limit}]', 'RegionController@searchDistrict');
             });
+
+            $router->group(['prefix' => 'transaction'], static function () use ($router) {
+                $router->get('/', 'TransactionController@buyerIndex');
+                $router->get('/detail/{id}', 'TransactionController@detailTransaction');
+                $router->get('/on-payment', 'TransactionController@transactionToPay');
+                $router->get('/on-approve', 'TransactionController@transactionOnApprove');
+                $router->get('/on-delivery', 'TransactionController@transactionOnDelivery');
+                $router->get('/done', 'TransactionController@buyerTransactionDone');
+                $router->get('/calceled', 'TransactionController@buyerTransactionCanceled');
+                $router->get('/search/{keyword}', 'TransactionController@buyerSearchTransaction');
+            });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
             $router->group(['prefix' => 'cart'], static function () use ($router) {
@@ -114,4 +137,14 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->get('user', 'ProfileController@index');
         $router->post('logout', 'ProfileController@logout');
     });
+
+    $router->group(['prefix' => 'rajaongkir'], static function () use ($router) {
+        $router->get('province', 'RajaOngkirController@getProvince');
+    });
+
+    $router->group(['prefix' => 'inject'], static function () use ($router) {
+        $router->get('inject-province', 'RajaOngkirController@injectProvince');
+        $router->get('inject-city', 'RajaOngkirController@injectCity');
+    });
+    
 });

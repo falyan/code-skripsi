@@ -37,6 +37,7 @@ $app->alias('mailer', Illuminate\Contracts\Mail\Mailer::class);
 $app->alias('mailer', Illuminate\Contracts\Mail\MailQueue::class);
 
 $app->configure('swagger-lume');
+$app->configure('credentials');
 /*
 |--------------------------------------------------------------------------
 | Register Container Bindings
