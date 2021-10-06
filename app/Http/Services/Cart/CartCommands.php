@@ -80,7 +80,7 @@ class CartCommands
                 return response()->json([
                     'success' => true,
                     'message' => 'produk berhasil dihapus',
-                ], 404);
+                ], 200);
             } else {
                 return response()->json([
                     'success' => false,
@@ -109,12 +109,12 @@ class CartCommands
                     return response()->json([
                         'success' => true,
                         'message' => 'Produk berhasil dihapus',
-                    ], 404);
+                    ], 200);
                 }
                 return response()->json([
                     'success' => true,
                     'message' => 'Produk berhasil diubah',
-                ], 404);
+                ], 200);
             } else {
                 return response()->json([
                     'success' => false,
