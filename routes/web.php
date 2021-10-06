@@ -79,6 +79,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'etalase'], static function () use ($router) {
+                $router->get('rajaongkir', 'EtalaseController@rajaongkir');
             });
 
             $router->group(['prefix' => 'product'], static function () use ($router) {
@@ -136,4 +137,14 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->get('user', 'ProfileController@index');
         $router->post('logout', 'ProfileController@logout');
     });
+
+    $router->group(['prefix' => 'rajaongkir'], static function () use ($router) {
+        $router->get('province', 'RajaOngkirController@getProvince');
+    });
+
+    $router->group(['prefix' => 'inject'], static function () use ($router) {
+        $router->get('inject-province', 'RajaOngkirController@injectProvince');
+        $router->get('inject-city', 'RajaOngkirController@injectCity');
+    });
+    
 });

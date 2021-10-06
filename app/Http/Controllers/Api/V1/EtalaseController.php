@@ -8,6 +8,7 @@ use App\Http\Resources\Etalase\EtalaseResource;
 use App\Http\Services\Etalase\EtalaseCommands;
 use App\Http\Services\Etalase\EtalaseQueries;
 use App\Http\Services\Example\ExampleCommands;
+use App\Http\Services\Manager\RajaOngkirManager;
 use App\Models\Etalase;
 use Exception, Input;
 use Illuminate\Support\Facades\Auth;
@@ -79,5 +80,10 @@ class EtalaseController extends Controller
             }
             return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], 404);
         }
+    }
+
+    public function rajaongkir()
+    {
+        RajaOngkirManager::getProvinces();
     }
 }

@@ -16,17 +16,7 @@ class Province extends Model
     /**
      * @var array Guarded fields
      */
-    protected $guarded = ['*'];
-
-    /**
-     * @var array Fillable fields
-     */
-    protected $fillable = [
-        'name',
-        'state_id',
-        'created_by',
-        'updated_by'
-    ];
+    protected $guarded = ['id'];
 
     /**
      * @var array Validation rules for attributes
