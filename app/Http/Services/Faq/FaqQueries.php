@@ -2,10 +2,12 @@
 
 namespace App\Http\Services\Faq;
 
+use App\Models\Faq;
+
 class FaqQueries
 {
-    public static function getDataExample()
+    public function getData()
     {
-        //Queries here
+        return Faq::get();
     }
 }
