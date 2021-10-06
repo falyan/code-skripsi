@@ -26,11 +26,11 @@ class CartQueries{
             {$product_detail->with(['product_stock', 'product_photo']);}]);}])
                 ->where('buyer_id', $buyer_id)->get();
 
-            if ($cart->isEmpty()){
-                $response['success'] = false;
-                $response['message'] = 'Gagal mendapatkan data keranjang.';
-                return $response;
-            }
+//            if ($cart->isEmpty()){
+//                $response['success'] = false;
+//                $response['message'] = 'Gagal mendapatkan data keranjang.';
+//                return $response;
+//            }
 
             $response['success'] = true;
             $response['message'] = 'Berhasil mendapatkan data keranjang.';
@@ -42,11 +42,11 @@ class CartQueries{
             {$product_detail->with(['product_stock', 'product_photo']);}]);}])
                 ->where('related_pln_mobile_customer_id', $related_id)->get();
 
-            if ($cart->isEmpty()){
-                $response['success'] = false;
-                $response['message'] = 'Gagal mendapatkan data keranjang.';
-                return $response;
-            }
+//            if ($cart->isEmpty()){
+//                $response['success'] = false;
+//                $response['message'] = 'Gagal mendapatkan data keranjang.';
+//                return $response;
+//            }
 
             $response['success'] = true;
             $response['message'] = 'Berhasil mendapatkan data keranjang.';
