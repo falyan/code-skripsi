@@ -9,7 +9,7 @@ class TransactionQueries
     public function getTransaction($column_name, $column_value)
     {
         $data = Order::with([
-            'detail', 'progress_active', 'merchant', 'delivery'
+            'detail', 'progress_active', 'merchant', 'delivery', 'buyer'
         ])->where($column_name, $column_value)->paginate(10);
         return $data;
     }
@@ -17,11 +17,11 @@ class TransactionQueries
     public function getTransactionWithStatusCode($column_name, $column_value, $status_code)
     {
         $data = Order::with([
-            'detail', 'progress_active', 'merchant', 'delivery'
+            'detail', 'progress_active', 'merchant', 'delivery', 'buyer'
         ])->where([
             [$column_name, $column_value],
-        ])->whereHas('progress_active', function ($j) use($status_code){
-            $j->whereIn('status_code', [$status_code]);
+        ])->whereHas('progress_active', function ($j) use ($status_code) {
+            $j->whereIn('status_code', $status_code);
         })->paginate(10);
         return $data;
     }
@@ -29,27 +29,26 @@ class TransactionQueries
     public function getDetailTransaction($order_id)
     {
         $data = Order::with([
-            'detail', 'progress_active', 'merchant', 'delivery'
+            'detail', 'progress_active', 'merchant', 'delivery', 'buyer'
         ])->find($order_id);
         return $data;
     }
 
-    public function searchTransaction($buyer_id, $keyword)
-    {
+    public function searchTransaction($column_name, $column_value, $keyword)
+    {      
         $data = Order::with([
-            'detail', 'progress_active', 'merchant', 'delivery'
-        ])->where(
-            function ($q) use ($buyer_id) {
-                $q->where('buyer_id', $buyer_id)->orWhere('related_pln_mobile_customer_id', $buyer_id);
-            }
-        )->orWhereHas('merchant', function ($j) use ($keyword) {
-            $j->where('merchant.name', 'ILIKE', '%' . $keyword . '%');
-        })->orWhereHas('detail', function ($j) use ($keyword) {
-            $j->whereHas('product', function ($j) use ($keyword) {
-                $j->where('product.name', 'ILIKE', '%' . $keyword . '%');
-            });
-        })->paginate(10);
-
-        return $data;
+                'detail', 'progress_active', 'merchant', 'delivery', 'buyer'
+            ])
+            ->leftjoin('order_detail', 'order_detail.order_id', '=', 'order.id')
+            ->leftjoin('product', 'order_detail.product_id', '=', 'product.id')
+            ->leftjoin('merchant', 'merchant.id', '=', 'order.merchant_id')
+            ->where('order'.$column_name, $column_value)
+            ->orWhere(function($q)use($keyword){
+                $q->where('merchant.name', 'ILIKE', '%' . $keyword . '%')
+                ->orWhere('product.name', 'ILIKE', '%' . $keyword . '%')
+                ->orWhere('order.trx_no', 'ILIKE', '%' . $keyword . '%');
+            })
+            ->paginate(10);
+        return ($data);
     }
 }

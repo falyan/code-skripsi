@@ -56,9 +56,21 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->group(['prefix' => 'category'], static function () use ($router) {
                     $router->get('all', 'CategoryController@getAllCategory');
                 });
+
+                $router->group(['prefix' => 'transaction'], static function () use ($router) {
+                    $router->get('/', 'TransactionController@sellerIndex');
+                    $router->get('/detail/{id}', 'TransactionController@detailTransaction');
+                    $router->get('/new-order', 'TransactionController@newOrder');
+                    $router->get('/to-deliver', 'TransactionController@orderToDeliver');
+                    $router->get('/on-delivery', 'TransactionController@orderInDelivery');
+                    $router->get('/done', 'TransactionController@orderDone');
+                    $router->get('/calceled', 'TransactionController@sellerTransactionCanceled');
+                    $router->get('/search/{keyword}', 'TransactionController@sellerSearchTransaction');
+                });
             });
         });
     });
+
     $router->group(['prefix' => 'buyer'], static function () use ($router) {
         $router->group(['prefix' => 'query'], static function () use ($router) {
 
@@ -92,7 +104,14 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'transaction'], static function () use ($router) {
-                $router->get('/', 'TransactionController@index');
+                $router->get('/', 'TransactionController@buyerIndex');
+                $router->get('/detail/{id}', 'TransactionController@detailTransaction');
+                $router->get('/on-payment', 'TransactionController@transactionToPay');
+                $router->get('/on-approve', 'TransactionController@transactionOnApprove');
+                $router->get('/on-delivery', 'TransactionController@transactionOnDelivery');
+                $router->get('/done', 'TransactionController@buyerTransactionDone');
+                $router->get('/calceled', 'TransactionController@buyerTransactionCanceled');
+                $router->get('/search/{keyword}', 'TransactionController@buyerSearchTransaction');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {

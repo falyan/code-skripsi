@@ -39,4 +39,9 @@ class Order extends Model
     {
         return $this->hasOne(OrderDelivery::class);
     }
+
+    public function buyer()
+    {
+        return $this->belongsTo(Customer::class, 'buyer_id');
+    }
 }
