@@ -60,4 +60,26 @@ class MerchantQueries{
             throw new Exception($th->getMessage(), 500);
         }
     }
+
+    public static function publicProfile($merchant_id)
+    {
+        try {
+            $merchant = Merchant::find($merchant_id);
+            $base_data = $merchant->first(['id', 'name', 'photo_url', 'slogan', 'description', 'city_id']);
+            dd($base_data);
+            return [
+                'merchant' => null,
+                'meta_data' => [
+                    'total_product' => null,
+                    'total_transactions' => null,
+                    'operational_hour' => null
+                ]
+            ];
+        } catch (Exception $th) {
+            if (in_array($th->getCode(), self::$error_codes)) {
+                throw new Exception($th->getMessage(), $th->getCode());
+            }
+            throw new Exception($th->getMessage(), 500);
+        }
+    }
 }

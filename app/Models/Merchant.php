@@ -89,4 +89,9 @@ class Merchant extends Model
     {
         return $this->hasMany(Order::class);
     }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }
 }
