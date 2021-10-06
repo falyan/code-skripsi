@@ -47,12 +47,12 @@ class ProductQueries{
         return $response;
     }
 
-    public function searchProductByName($keyword){
+    public function searchProductByName($keyword, $limit = 10){
         if (strlen($keyword) < 3){
             return false;
         }
 
-        $product = Product::with(['product_stock', 'product_photo'])->where('name', 'ILIKE', '%'.$keyword.'%')->get();
+        $product = Product::with(['product_stock', 'product_photo'])->where('name', 'ILIKE', '%'.$keyword.'%')->paginate($limit);
         if ($product->isEmpty()){
             $response['success'] = false;
             $response['message'] = 'Produk tidak tersedia.';

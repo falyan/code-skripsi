@@ -62,7 +62,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     });
     $router->group(['prefix' => 'buyer'], static function () use ($router) {
         $router->group(['prefix' => 'query'], static function () use ($router) {
-            
+
             $router->group(['prefix' => 'merchant'], static function () use ($router) {
                 $router->get('{merchant_id}', 'MerchantController@publicProfile');
             });
@@ -73,7 +73,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'product'], static function () use ($router) {
                 $router->get('recommend', 'ProductController@getRecommendProduct');
                 $router->get('special', 'ProductController@getSpecialProduct');
-                $router->get('search/{keyword}', 'ProductController@SearchProductByName');
+                $router->get('search/{keyword}[/{limit}]', 'ProductController@SearchProductByName');
                 $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchantBuyer');
                 $router->get('category/{category_id}', 'ProductController@getProductByCategory');
                 $router->get('{id}', 'ProductController@getProductById');
@@ -93,7 +93,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'region'], static function () use ($router) {
-                $router->get('search/{keyword}', 'RegionController@searchDistrict');
+                $router->get('search/{keyword}[/{limit}]', 'RegionController@searchDistrict');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
