@@ -75,9 +75,13 @@ class CartDetail extends Model
     protected function serializeDate($date){
         return $date->format('Y-m-d H:i:s');
     }
-    
+
     public function cart()
     {
         return $this->belongsTo(Cart::class);
+    }
+
+    public function product(){
+        return $this->belongsTo(Product::class);
     }
 }

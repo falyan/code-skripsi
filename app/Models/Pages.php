@@ -1,42 +1,31 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Product extends Model
+class Pages extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     /**
      * @var string The database table used by the model.
      */
-    public $table = 'product';
+    public $table = 'pages';
 
     /**
      * @var array Guarded fields
      */
-    protected $guarded = ['id'];
+    protected $guarded = ['*'];
 
     /**
      * @var array Fillable fields
      */
-    protected $fillable = [
-        'merchant_id',
-        'name',
-        'price',
-        'minimum_purchase',
-        'category_id',
-        'etalase_id',
-        'condition',
-        'weight',
-        'description',
-        'is_shipping_insurance',
-        'shipping_service',
-        'created_by',
-        'updated_by'
-    ];
+    // protected $fillable = [
+    //     'buyer_id',
+    //     'related_pln_mobile_customer_id',
+    // ];
 
     /**
      * @var array Validation rules for attributes
@@ -69,7 +58,6 @@ class Product extends Model
     protected $dates = [
         'created_at',
         'updated_at',
-        'deleted_at'
     ];
 
     /**
@@ -85,24 +73,8 @@ class Product extends Model
     public $attachOne = [];
     public $attachMany = [];
 
-    protected function serializeDate($date){
+    protected function serializeDate($date)
+    {
         return $date->format('Y-m-d H:i:s');
     }
-
-    public function merchant()
-    {
-        return $this->belongsTo(Merchant::class);
-    }
-
-    public function product_stock(){
-        return $this->hasMany(ProductStock::class);
-    }
-
-    public function product_photo(){
-        return $this->hasMany(ProductPhoto::class);
-    }
-
-    public function cart_detail(){
-            return $this->hasMany(CartDetail::class);
-   }
 }

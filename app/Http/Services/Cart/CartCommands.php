@@ -80,7 +80,7 @@ class CartCommands
                 return response()->json([
                     'success' => true,
                     'message' => 'produk berhasil dihapus',
-                ], 404);
+                ], 200);
             } else {
                 return response()->json([
                     'success' => false,
@@ -102,10 +102,19 @@ class CartCommands
                 $existsData->update([
                     'quantity' => request('quantity')
                 ]);
+
+                if ($existsData->quantity < 1){
+                    $existsData->delete();
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Produk berhasil dihapus',
+                    ], 200);
+                }
                 return response()->json([
                     'success' => true,
-                    'message' => 'produk berhasil dihapus',
-                ], 404);
+                    'message' => 'Produk berhasil diubah',
+                ], 200);
             } else {
                 return response()->json([
                     'success' => false,

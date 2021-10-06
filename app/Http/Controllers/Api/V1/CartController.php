@@ -136,9 +136,9 @@ class CartController extends Controller
         }
     }
 
-    public function showDetail($buyer_id){
+    public function showDetail($buyer_id = null, $related_id){
         try {
-            return $this->respondWithData(CartQueries::getDetailCart($buyer_id), 'Sukses ambil data keranjang');
+            return CartQueries::getDetailCart($buyer_id, $related_id);
         } catch (\Throwable $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
