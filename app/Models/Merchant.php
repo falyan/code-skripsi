@@ -14,6 +14,8 @@ class Merchant extends Model
      */
     protected $table = 'merchant';
 
+    protected $with = [];
+
     /**
      * @var array Guarded fields
      */
@@ -65,6 +67,10 @@ class Merchant extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+
+    /**
+     * @var void Relations
+     */
     protected function serializeDate($date){
         return $date->format('Y-m-d H:i:s');
     }
@@ -94,4 +100,18 @@ class Merchant extends Model
     {
         return $this->belongsTo(City::class);
     }
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    /**
+     * @var void Custom Static Function
+     */
+    // public static function publicProfile($id)
+    // {
+    //     $merchant = static::where('id', $id);
+    //     return $merchant;
+    // }
 }
