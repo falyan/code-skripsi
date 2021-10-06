@@ -136,10 +136,8 @@ class CartController extends Controller
         }
     }
 
-    public function showDetail(Request $request){
+    public function showDetail($buyer_id = null, $related_id){
         try {
-            $buyer_id = $request->buyer_id;
-            $related_id = $request->related_id;
             return CartQueries::getDetailCart($buyer_id, $related_id);
         } catch (\Throwable $th) {
             if (in_array($th->getCode(), $this->error_codes)) {

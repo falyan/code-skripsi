@@ -89,7 +89,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'cart'], static function () use ($router) {
                 $router->get('/', 'CartController@index');
-                $router->get('detail', 'CartController@showDetail');
+                $router->get('detail/{related_id}[/{buyer_id}]', 'CartController@showDetail');
             });
 
             $router->group(['prefix' => 'region'], static function () use ($router) {
