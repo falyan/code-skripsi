@@ -18,14 +18,14 @@ class SettingProfileController extends Controller
 
     public function index()
     {
-        $validator = Validator::make(request()->all(), [
-            'related_pln_mobile_customer_id' => 'nullable|exists:cart,related_pln_mobile_customer_id'
-        ]);
+        // $validator = Validator::make(request()->all(), [
+        //     'related_pln_mobile_customer_id' => 'nullable|exists:cart,related_pln_mobile_customer_id'
+        // ]);
 
         try {
-            if ($validator->fails()) {
-                throw new Exception($validator->errors(), 400);
-            }
+            // if ($validator->fails()) {
+            //     throw new Exception($validator->errors(), 400);
+            // }
 
             return $this->respondWithData([
                 'user' => $this->profileQueries->getUser(),
