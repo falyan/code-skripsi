@@ -60,8 +60,8 @@ class ProductController extends Controller
     }
 
     //Search Produk
-    public function searchProductByName($keyword){
-        return $this->productQueries->searchProductByName($keyword);
+    public function searchProductByName($keyword, $limit = 10){
+        return $this->productQueries->searchProductByName($keyword, $limit);
     }
 
     //Get Produk Berdasarkan Merchant Buyer

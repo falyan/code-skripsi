@@ -8,11 +8,11 @@ class ProductQueries{
     public function getAllProduct(){
         $data = Product::with(['product_stock', 'product_photo'])->paginate(10);
 
-        if ($data->isEmpty()){
-            $response['success'] = false;
-            $response['message'] = 'Gagal mendapatkan data produk!';
-            return $response;
-        }
+//        if ($data->isEmpty()){
+//            $response['success'] = false;
+//            $response['message'] = 'Gagal mendapatkan data produk!';
+//            return $response;
+//        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -22,11 +22,11 @@ class ProductQueries{
     public function getProductByMerchantIdSeller($merchant_id){
         $data = Product::with(['product_stock', 'product_photo'])->where('merchant_id', $merchant_id)->paginate(10);
 
-        if ($data->isEmpty()){
-            $response['success'] = false;
-            $response['message'] = 'Gagal mendapatkan data produk!';
-            return $response;
-        }
+//        if ($data->isEmpty()){
+//            $response['success'] = false;
+//            $response['message'] = 'Gagal mendapatkan data produk!';
+//            return $response;
+//        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -36,28 +36,28 @@ class ProductQueries{
     public function getProductByEtalaseId($etalase_id){
         $data = Product::with(['product_stock', 'product_photo'])->where('etalase_id', $etalase_id)->paginate(10);
 
-        if ($data->isEmpty()){
-            $response['success'] = false;
-            $response['message'] = 'Gagal mendapatkan data produk!';
-            return $response;
-        }
+//        if ($data->isEmpty()){
+//            $response['success'] = false;
+//            $response['message'] = 'Gagal mendapatkan data produk!';
+//            return $response;
+//        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
         return $response;
     }
 
-    public function searchProductByName($keyword){
+    public function searchProductByName($keyword, $limit = 10){
         if (strlen($keyword) < 3){
             return false;
         }
 
-        $product = Product::with(['product_stock', 'product_photo'])->where('name', 'ILIKE', '%'.$keyword.'%')->get();
-        if ($product->isEmpty()){
-            $response['success'] = false;
-            $response['message'] = 'Produk tidak tersedia.';
-            return $response;
-        }
+        $product = Product::with(['product_stock', 'product_photo'])->where('name', 'ILIKE', '%'.$keyword.'%')->paginate($limit);
+//        if ($product->isEmpty()){
+//            $response['success'] = false;
+//            $response['message'] = 'Produk tidak tersedia.';
+//            return $response;
+//        }
 
         $response['success'] = true;
         $response['message'] = 'Produk berhasil didapatkan.';
@@ -68,11 +68,11 @@ class ProductQueries{
     public function getProductByMerchantIdBuyer($merchant_id){
         $data = Product::with(['product_stock', 'product_photo'])->where('merchant_id', $merchant_id)->paginate(10);
 
-        if ($data->isEmpty()){
-            $response['success'] = false;
-            $response['message'] = 'Gagal mendapatkan data produk!';
-            return $response;
-        }
+//        if ($data->isEmpty()){
+//            $response['success'] = false;
+//            $response['message'] = 'Gagal mendapatkan data produk!';
+//            return $response;
+//        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -82,11 +82,11 @@ class ProductQueries{
     public function getProductByCategory($category_id){
         $data = Product::with(['product_stock', 'product_photo'])->where('category_id', $category_id)->paginate(10);
 
-        if ($data->isEmpty()){
-            $response['success'] = false;
-            $response['message'] = 'Gagal mendapatkan data produk!';
-            return $response;
-        }
+//        if ($data->isEmpty()){
+//            $response['success'] = false;
+//            $response['message'] = 'Gagal mendapatkan data produk!';
+//            return $response;
+//        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -99,6 +99,7 @@ class ProductQueries{
         if (!$data){
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data produk!';
+            $response['data'] = $data;
             return $response;
         }
         $response['success'] = true;
@@ -110,11 +111,11 @@ class ProductQueries{
     public function getRecommendProduct(){
         $product = Product::with(['product_stock', 'product_photo'])->latest()->limit(10)->get();
 
-        if ($product->isEmpty()){
-            $response['success'] = false;
-            $response['message'] = 'Gagal mendapatkan data produk!';
-            return $response;
-        }
+//        if ($product->isEmpty()){
+//            $response['success'] = false;
+//            $response['message'] = 'Gagal mendapatkan data produk!';
+//            return $response;
+//        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $product;
@@ -124,11 +125,11 @@ class ProductQueries{
     public function getSpecialProduct(){
         $product = Product::with(['product_stock', 'product_photo'])->latest()->limit(10)->get();
 
-        if ($product->isEmpty()){
-            $response['success'] = false;
-            $response['message'] = 'Gagal mendapatkan data produk!';
-            return $response;
-        }
+//        if ($product->isEmpty()){
+//            $response['success'] = false;
+//            $response['message'] = 'Gagal mendapatkan data produk!';
+//            return $response;
+//        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $product;

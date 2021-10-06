@@ -5,13 +5,13 @@ namespace App\Http\Services\Region;
 use App\Models\District;
 
 class RegionQueries{
-    public function searchDistrict($keyword){
+    public function searchDistrict($keyword, $limit = 10){
         if (strlen($keyword) < 3){
             return false;
         }
 
         $district = District::with(['city' => function($city)
-        {$city->with(['province']);}])->where('name', 'ILIKE', '%'.$keyword.'%')->get();
+        {$city->with(['province']);}])->where('name', 'ILIKE', '%'.$keyword.'%')->paginate($limit);
 
         if ($district->isEmpty()){
             $response['success'] = false;
