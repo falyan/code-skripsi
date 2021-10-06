@@ -48,4 +48,16 @@ class MerchantController extends Controller
             return $this->respondWithResult(false, $th->getMessage(), 500);
         }
     }
+
+    public function publicProfile($merchant_id)
+    {
+        try {
+            return MerchantQueries::publicProfile($merchant_id);
+        } catch (Exception $th) {
+            if (in_array($th->getCode(), $this->error_codes)) {
+                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
+            }
+            return $this->respondWithResult(false, $th->getMessage(), 500);
+        }
+    }
 }

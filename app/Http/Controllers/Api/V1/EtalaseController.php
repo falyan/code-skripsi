@@ -46,8 +46,7 @@ class EtalaseController extends Controller
 
             $record = EtalaseCommands::storeItem(request()->all());
             
-            return new EtalaseResource($record);
-            // return $this->respondWithData($record, 'Sukses Tambah Etalase');;
+            return $this->respondWithData(new EtalaseResource($record), 'Success saved data');
         } catch (\Throwable $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], $th->getCode());

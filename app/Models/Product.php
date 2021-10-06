@@ -17,7 +17,7 @@ class Product extends Model
     /**
      * @var array Guarded fields
      */
-    protected $guarded = ['*'];
+    protected $guarded = ['id'];
 
     /**
      * @var array Fillable fields
@@ -89,15 +89,20 @@ class Product extends Model
         return $date->format('Y-m-d H:i:s');
     }
 
-   public function product_stock(){
-       return $this->hasMany(ProductStock::class);
-   }
+    public function merchant()
+    {
+        return $this->belongsTo(Merchant::class);
+    }
 
-   public function product_photo(){
-       return $this->hasMany(ProductPhoto::class);
-   }
+    public function product_stock(){
+        return $this->hasMany(ProductStock::class);
+    }
 
-   public function cart_detail(){
-        return $this->hasMany(CartDetail::class);
+    public function product_photo(){
+        return $this->hasMany(ProductPhoto::class);
+    }
+
+    public function cart_detail(){
+            return $this->hasMany(CartDetail::class);
    }
 }

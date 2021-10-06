@@ -16,17 +16,7 @@ class City extends Model
     /**
      * @var array Guarded fields
      */
-    protected $guarded = ['*'];
-
-    /**
-     * @var array Fillable fields
-     */
-    protected $fillable = [
-        'name',
-        'province_id',
-        'created_by',
-        'updated_by'
-    ];
+    protected $guarded = ['id'];
 
     /**
      * @var array Validation rules for attributes
@@ -73,6 +63,7 @@ class City extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+
     protected function serializeDate($date){
         return $date->format('Y-m-d H:i:s');
     }
@@ -83,5 +74,10 @@ class City extends Model
 
     public function district(){
         return $this->hasMany(District::class);
+    }
+
+    public function merchants()
+    {
+        return $this->hasMany(Merchant::class);
     }
 }
