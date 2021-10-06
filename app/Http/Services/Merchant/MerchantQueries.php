@@ -20,18 +20,10 @@ class MerchantQueries{
         try {
             $merchant = Merchant::find($merchant_id);
             $orders = [];
-            $orders['success'] = [];
-            $orders['canceled'] = [];
-            // dd($merchant->orders->progress);
-            foreach ($merchant->orders as $order) {
-                if ($order->progress->status == 1 && $order->progress->status_code == 88) {
-                    array_push($orders['success'], $order);
-                }
-                if ($order->progress->status == 1 && $order->progress->status_code == 99) {
-                    array_push($orders['canceled'], $order);
-                }
-            }
-
+            
+            $orders['success'] = static::getTotalTrx($merchant_id, 88)->toArray();
+            $orders['canceled'] = static::getTotalTrx($merchant_id, 99)->toArray();
+            
             return [
                 'data' => [
                     'merchant' => [
@@ -65,9 +57,7 @@ class MerchantQueries{
             $merged_data = array_merge($mc, ['city_name' => $cityname['name']]);
             $total_product = $merchant->products()->count();
 
-            $total_trx = OrderProgress::with(['order' => function($orders_query) use ($merchant_id){
-                $orders_query->where('merchant_id', $merchant_id);
-            }])->where('status_code', 88)->get();
+            $total_trx = static::getTotalTrx($merchant_id, 88);
 
             return [
                 'merchantz' => $merged_data,
@@ -91,5 +81,12 @@ class MerchantQueries{
             unset($array[$key]);
         }
         return $array;
+    }
+
+    public static function getTotalTrx($merchant_id, $status_code)
+    {
+        return OrderProgress::with(['order' => function($orders_query) use ($merchant_id){
+            $orders_query->where('merchant_id', $merchant_id);
+        }])->where('status_code', $status_code)->get();
     }
 }
