@@ -57,6 +57,27 @@ class RajaOngkirManager {
     return data_get($response, 'rajaongkir.results');
   }
 
+  public static function getSubdistrict($id = null, $city_id = null)
+  {
+    $param = static::setParamAPI([
+      'id' => $id,
+      'city' => $city_id
+    ]);
+    
+    $url = sprintf('%s/%s', static::$apiendpoint, 'api/subdistrict' . $param);
+    
+    $response = static::$curl->request('GET', $url, [
+      'headers' => [
+        'key' => static::$appkey
+      ],
+      'http_errrors' => false,
+      'json_decode' => true
+    ]);
+
+    $response  = json_decode($response->getBody());
+    return data_get($response, 'rajaongkir.results');
+  }
+
   static function setParamAPI($data = [])
   {
     $param = [];
