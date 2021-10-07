@@ -19,9 +19,11 @@ class CreateTableMasterData extends Migration
             $table->string('key')->nullable();
             $table->string('value_type');
             $table->string('value');
+            $table->bigInteger('parent_id')->nullable();
+            $table->string('reference_third_party_id')->nullable();
+            $table->string('reference_third_party_token')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
-            $table->bigInteger('parent_id')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

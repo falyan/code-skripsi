@@ -16,18 +16,46 @@ class PagesController extends Controller
         $this->pagesCommands = new PagesCommands();
     }
 
-    public function index()
+    public function termCondition()
     {
-        $validator = Validator::make(request()->all(), [
-            'page_type' => 'required'
-        ]);
-
         try {
-            if ($validator->fails()) {
-                throw new Exception($validator->errors(), 400);
+            return $this->pagesQueries->termConditionPage();
+        } catch (Exception $th) {
+            if (in_array($th->getCode(), $this->error_codes)) {
+                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
             }
+            return $this->respondWithResult(false, $th->getMessage(), 500);
+        }
+    }
 
-            return $this->pagesQueries->getPageType(request('page_type'));
+    public function contactUs()
+    {
+        try {
+            return $this->pagesQueries->contactUsPage();
+        } catch (Exception $th) {
+            if (in_array($th->getCode(), $this->error_codes)) {
+                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
+            }
+            return $this->respondWithResult(false, $th->getMessage(), 500);
+        }
+    }
+
+    public function aboutUs()
+    {
+        try {
+            return $this->pagesQueries->aboutUsPage();
+        } catch (Exception $th) {
+            if (in_array($th->getCode(), $this->error_codes)) {
+                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
+            }
+            return $this->respondWithResult(false, $th->getMessage(), 500);
+        }
+    }
+
+    public function privacyPolicy()
+    {
+        try {
+            return $this->pagesQueries->privacyPolicyPage();
         } catch (Exception $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
