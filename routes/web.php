@@ -149,12 +149,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     $router->group(['prefix' => 'rajaongkir'], static function () use ($router) {
         $router->get('province', 'RajaOngkirController@getProvince');
         $router->get('district', 'RajaOngkirController@getDistrict');
-    });
-
-    $router->group(['prefix' => 'inject'], static function () use ($router) {
-        $router->get('inject-province', 'RajaOngkirController@injectProvince');
-        $router->get('inject-city', 'RajaOngkirController@injectCity');
-        $router->get('inject-district', 'RajaOngkirController@injectDistrict');
-        $router->get('update-city', 'RajaOngkirController@updateCity');
+        $router->post('ongkir', 'RajaOngkirController@ongkir');
     });
 });

@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Rajaongkir\RajaongkirResources;
 use App\Http\Services\Manager\RajaOngkirManager;
 use App\Models\City;
 use App\Models\District;
 use App\Models\Province;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class RajaOngkirController extends Controller
 {
@@ -125,6 +128,33 @@ class RajaOngkirController extends Controller
             return $this->respondWithResult(true, 'Success update data');
         } catch (Exception $th) {
             DB::rollBack();
+            if (in_array($th->getCode(), $this->error_codes)) {
+                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
+            }
+            return $this->respondWithResult(false, $th->getMessage(), 500);
+        }
+    }
+
+    public function ongkir()
+    {
+        $validator = Validator::make(request()->all(), [
+            'origin_district_id' => 'required',
+            'destination_district_id' => 'required',
+            'weight' => 'required',
+            'courier' => 'required',
+            'length' => 'sometimes',
+            'width' => 'sometimes',
+            'height' => 'sometimes',
+            'diameter' => 'sometimes',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->respondValidationError($validator->errors(), 'Validation Error!');
+        }
+
+        try {
+            return RajaOngkirManager::getOngkir(request()->only(['origin_district_id','destination_district_id','weight','courier']));
+        } catch (Exception $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
             }
