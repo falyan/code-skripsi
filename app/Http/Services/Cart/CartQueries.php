@@ -23,7 +23,7 @@ class CartQueries{
         if ($buyer_id != null){
             $cart = Cart::with(['cart_detail' => function($product)
             {$product->with(['product' => function($product_detail)
-            {$product_detail->with(['product_stock', 'product_photo']);}]);}])
+            {$product_detail->with(['product_stock', 'product_photo', 'merchant']);}]);}])
                 ->where('buyer_id', $buyer_id)->get();
 
 //            if ($cart->isEmpty()){
@@ -39,7 +39,7 @@ class CartQueries{
         }else{
             $cart = Cart::with(['cart_detail' => function($product)
             {$product->with(['product' => function($product_detail)
-            {$product_detail->with(['product_stock', 'product_photo']);}]);}])
+            {$product_detail->with(['product_stock', 'product_photo', 'merchant']);}]);}])
                 ->where('related_pln_mobile_customer_id', $related_id)->get();
 
 //            if ($cart->isEmpty()){
