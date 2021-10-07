@@ -6,11 +6,11 @@ use App\Models\Pages;
 
 class PagesQueries
 {
-    public static function getPageType($type)
+    public static function termConditionPage()
     {
-        $page = Pages::where('page_type', $type)->first();
+        $data = Pages::where('page_type', 'term_condition')->first();
 
-        if (!$page) {
+        if (!$data) {
             return response()->json([
                 'success' => false,
                 'message' => 'Page type Not Found!',
@@ -20,7 +20,64 @@ class PagesQueries
             return response()->json([
                 'success' => true,
                 'message' => 'Data page berhasil ditampilkan',
-                'data' => $page
+                'data' => $data
+            ], 200);
+        }
+    }
+
+    public static function contactUsPage()
+    {
+        $data = Pages::where('page_type', 'contact_us')->first();
+
+        if (!$data) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Page type Not Found!',
+                'data' => []
+            ], 400);
+        } else {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data page berhasil ditampilkan',
+                'data' => $data
+            ], 200);
+        }
+    }
+
+    public static function aboutUsPage()
+    {
+        $data = Pages::where('page_type', 'about_us')->first();
+
+        if (!$data) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Page type Not Found!',
+                'data' => []
+            ], 400);
+        } else {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data page berhasil ditampilkan',
+                'data' => $data
+            ], 200);
+        }
+    }
+
+    public static function privacyPolicyPage()
+    {
+        $data = Pages::where('page_type', 'privacy_policy')->first();
+
+        if (!$data) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Page type Not Found!',
+                'data' => []
+            ], 400);
+        } else {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data page berhasil ditampilkan',
+                'data' => $data
             ], 200);
         }
     }

@@ -130,7 +130,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
     $router->group(['prefix' => 'setting'], static function () use ($router) {
         $router->get('faq', 'FaqController@index');
-        $router->get('pages', 'PagesController@index');
+        $router->group(['prefix' => 'pages'], static function () use ($router) {
+            $router->get('term-condition', 'PagesController@termCondition');
+            $router->get('contact-us', 'PagesController@contactUs');
+            $router->get('about-us', 'PagesController@aboutUs');
+            $router->get('privacy-policy', 'PagesController@privacyPolicy');
+        });
     });
 
     $router->group(['prefix' => 'profile', 'middleware' => 'auth'], static function () use ($router) {
@@ -146,5 +151,4 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->get('inject-province', 'RajaOngkirController@injectProvince');
         $router->get('inject-city', 'RajaOngkirController@injectCity');
     });
-    
 });
