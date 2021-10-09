@@ -18,7 +18,7 @@ class MerchantQueries{
     public static function homepageProfile($merchant_id)
     {
         try {
-            $merchant = Merchant::find($merchant_id);
+            $merchant = Merchant::with(['operationals'])->find($merchant_id);
             $orders = [];
             
             $orders['success'] = static::getTotalTrx($merchant_id, 88)->toArray();
@@ -26,11 +26,7 @@ class MerchantQueries{
             
             return [
                 'data' => [
-                    'merchant' => [
-                        'id' => $merchant->id,
-                        'name' => $merchant->name,
-                        'image_url' => $merchant->photo_url,
-                    ],
+                    'merchant' => $merchant,
                     'transactions' => [
                         'total_transaction' => count(array_merge($orders['success'], $orders['canceled'])),
                         'total_success' => count($orders['success']),

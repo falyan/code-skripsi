@@ -25,7 +25,6 @@ class Customer extends Model
     protected $fillable = [
         'full_name',
         'username',
-        'password',
         'email',
         'phone',
         'type',
@@ -60,7 +59,10 @@ class Customer extends Model
     /**
      * @var array Attributes to be removed from the API representation of the model (ex. toArray())
      */
-    protected $hidden = [];
+    protected $hidden = [
+        'username',
+        'password'
+    ];
 
     /**
      * @var array Attributes to be cast to Argon (Carbon) instances

@@ -26,7 +26,7 @@ class ProfileController extends Controller
     {
         try {
             $user = Auth::user();
-            $data = Customer::with(['merchant'])->find($user->id);
+            $data = Customer::with(['merchant' => function($j){$j->with(['operationals']);}])->find($user->id);
 
             return $this->respondWithData($data, 'Success get user info', 200);
         } catch (Exception $ex) {

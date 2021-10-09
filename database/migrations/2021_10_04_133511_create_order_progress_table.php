@@ -18,7 +18,7 @@ class CreateOrderProgressTable extends Migration
             $table->unsignedBigInteger('order_id');
             $table->integer('status_code');
             $table->string('status_name');
-            $table->string('note');
+            $table->string('note')->nullable();
             $table->smallInteger('status');
             $table->timestamps();
             $table->softDeletes();
