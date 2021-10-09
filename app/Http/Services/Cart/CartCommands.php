@@ -44,7 +44,8 @@ class CartCommands
                     $cartDetail = CartDetail::create([
                         'cart_id' => $cart->id,
                         'product_id' => request('product_id'),
-                        'quantity' => 1
+                        'quantity' => 1,
+                        'related_merchant_id' => request('related_merchant_id')
                     ]);
                 }
             } else {
@@ -56,7 +57,8 @@ class CartCommands
                 $cartDetail = CartDetail::create([
                     'cart_id' => $cartCreate->id,
                     'product_id' => request('product_id'),
-                    'quantity' => 1
+                    'quantity' => 1,
+                    'related_merchant_id' => request('related_merchant_id')
                 ]);
             }
 
