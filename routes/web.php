@@ -150,5 +150,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->get('province', 'RajaOngkirController@getProvince');
         $router->get('district', 'RajaOngkirController@getDistrict');
         $router->post('ongkir', 'RajaOngkirController@ongkir');
+        $router->get('couriers', 'RajaOngkirController@couriers');
     });
 });
