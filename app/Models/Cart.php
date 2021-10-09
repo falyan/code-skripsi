@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -84,5 +85,16 @@ class Cart extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /**
+     * @var array Custom Static Functions
+     */
+
+    public static function findByRelatedId($buyer_id, $related_customer_id)
+    {
+        $cart = static::whereNotNull('buyer_id')->where('buyer_id', $buyer_id)->orWhere('related_pln_mobile_customer_id', $related_customer_id)->first();
+        throw_if(!$cart, new Exception('List cart tidak ditemukan'));
+        return $cart;
     }
 }

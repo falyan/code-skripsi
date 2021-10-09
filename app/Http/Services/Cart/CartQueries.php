@@ -7,15 +7,16 @@ use App\Http\Resources\Etalase\EtalaseResource;
 use App\Models\Cart;
 use App\Models\Customer;
 use App\Models\Etalase;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 
 class CartQueries{
-    public static function getTotalCart($related_customer_id){
-        $customer = Customer::findByrelatedCustomerId($related_customer_id);
+    public static function getTotalCart($related_customer_id, $buyer_id = null){
+        $cart = Cart::findByRelatedId($buyer_id, $related_customer_id);
 
         return [
-            'product' => count($customer->cart->cart_detail->toArray()),
-            'total_item' => array_sum($customer->cart->cart_detail->pluck('quantity')->toArray())
+            'product' => count($cart->cart_detail->toArray()),
+            'total_item' => array_sum($cart->cart_detail->pluck('quantity')->toArray())
         ];
     }
 
