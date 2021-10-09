@@ -31,14 +31,10 @@ class CartController extends Controller
      *     ),
      * )
      */
-    public function index()
+    public function index($rlc_id, $buyer_id = null)
     {
-        if (!$rlc_id = request()->header('Related-Customer-Id')) {
-            return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
-        }
-
         try {
-            return $this->respondWithData(CartQueries::getTotalCart($rlc_id), 'Sukses ambil data keranjang');
+            return $this->respondWithData(CartQueries::getTotalCart($rlc_id, $buyer_id), 'Sukses ambil data keranjang');
         } catch (Exception $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
@@ -51,7 +47,8 @@ class CartController extends Controller
     {
         $validator = Validator::make(request()->all(), [
             'product_id' => 'required|exists:product,id',
-            'buyer_id' => 'nullable|exists:customer,id'
+            'buyer_id' => 'nullable|exists:customer,id',
+            'related_merchant_id' => 'required|exist:merchant,id'
         ]);
 
         try {

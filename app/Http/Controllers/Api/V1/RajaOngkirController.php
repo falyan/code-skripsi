@@ -7,6 +7,7 @@ use App\Http\Resources\Rajaongkir\RajaongkirResources;
 use App\Http\Services\Manager\RajaOngkirManager;
 use App\Models\City;
 use App\Models\District;
+use App\Models\MasterData;
 use App\Models\Province;
 use Exception;
 use Illuminate\Http\Request;
@@ -154,6 +155,26 @@ class RajaOngkirController extends Controller
 
         try {
             return RajaOngkirManager::getOngkir(request()->only(['origin_district_id','destination_district_id','weight','courier']));
+        } catch (Exception $th) {
+            if (in_array($th->getCode(), $this->error_codes)) {
+                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
+            }
+            return $this->respondWithResult(false, $th->getMessage(), 500);
+        }
+    }
+
+    public function couriers()
+    {
+        try {
+            return [
+                'data' => array_map(function($item) {
+                    return [
+                        'name' => data_get($item, 'value'),
+                        'value' => data_get($item, 'reference_third_party_id'),
+                        'logo' => data_get($item, 'photo_url')
+                    ];
+                }, MasterData::where('type', 'rajaongkir_courier')->orderBy('value', 'ASC')->get()->toArray())
+            ];
         } catch (Exception $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
