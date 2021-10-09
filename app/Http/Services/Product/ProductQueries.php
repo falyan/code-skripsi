@@ -94,7 +94,7 @@ class ProductQueries{
     }
 
     public function getProductById($id){
-        $data = Product::with(['product_stock', 'product_photo'])->where('id', $id)->first();
+        $data = Product::with(['product_stock', 'product_photo', 'merchant'])->where('id', $id)->first();
 
         if (!$data){
             $response['success'] = false;
