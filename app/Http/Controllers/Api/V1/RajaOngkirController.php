@@ -166,13 +166,15 @@ class RajaOngkirController extends Controller
     public function couriers()
     {
         try {
-            return array_map(function($item) {
-                return [
-                    'name' => data_get($item, 'value'),
-                    'value' => data_get($item, 'reference_third_party_id'),
-                    'logo' => data_get($item, 'photo_url')
-                ];
-            }, MasterData::where('type', 'rajaongkir_courier')->orderBy('value', 'ASC')->get()->toArray());
+            return [
+                'data' => array_map(function($item) {
+                    return [
+                        'name' => data_get($item, 'value'),
+                        'value' => data_get($item, 'reference_third_party_id'),
+                        'logo' => data_get($item, 'photo_url')
+                    ];
+                }, MasterData::where('type', 'rajaongkir_courier')->orderBy('value', 'ASC')->get()->toArray())
+            ];
         } catch (Exception $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
