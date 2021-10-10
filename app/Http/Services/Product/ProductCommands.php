@@ -110,6 +110,12 @@ class ProductCommands{
         try {
             DB::beginTransaction();
             $product = Product::find($product_id);
+
+            if ($product == null){
+                $response['success'] = false;
+                $response['message'] = 'Produk tidak ditemukan!';
+                return $response;
+            }
             $product->name = ($data->name == null) ? ($product->name):($data->name);
             $product->price = ($data->price == null) ? ($product->price):($data->price);
             $product->minimum_purchase = ($data->minimum_purchase == null) ? ($product->minimum_purchase):($data->minimum_purchase) ;
@@ -132,8 +138,10 @@ class ProductCommands{
                 ->where('product_id', $product_id)
                 ->where('status', 1)->latest()->first();
 
-            $product_stock_old->status = 0;
-            $product_stock_old->save();
+            if ($product_stock_old != null){
+                $product_stock_old->status = 0;
+                $product_stock_old->save();
+            }
 
             $product_stock_new = ProductStock::create([
                 'merchant_id' => $merchant_id,
@@ -155,8 +163,10 @@ class ProductCommands{
             $product_photo = ProductPhoto::where('merchant_id', $merchant_id)
                 ->where('product_id', $product_id)->get();
 
-            foreach ($product_photo as $photo){
-                $photo->delete();
+            if (!empty($product_photo)){
+                foreach ($product_photo as $photo){
+                    $photo->delete();
+                }
             }
 
             $photo = [];
@@ -197,15 +207,19 @@ class ProductCommands{
             $product_photo = ProductPhoto::where('merchant_id', $merchant_id)
                 ->where('product_id', $product_id)->get();
 
-            foreach ($product_photo as $photo){
-                $photo->delete();
+            if (!empty($product_photo)){
+                foreach ($product_photo as $photo){
+                    $photo->delete();
+                }
             }
 
             $product_stock = $product_stock = ProductStock::where('merchant_id', $merchant_id)
                 ->where('product_id', $product_id)->get();
 
-            foreach ($product_stock as $stock){
-                $stock->delete();
+            if (!empty($product_stock)){
+                foreach ($product_stock as $stock){
+                    $stock->delete();
+                }
             }
 
             $product = Product::find($product_id);
