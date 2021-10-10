@@ -65,8 +65,8 @@ class ProductQueries{
         return $response;
     }
 
-    public function getProductByMerchantIdBuyer($merchant_id){
-        $data = Product::with(['product_stock', 'product_photo'])->where('merchant_id', $merchant_id)->paginate(10);
+    public function getProductByMerchantIdBuyer($merchant_id, $size){
+        $data = Product::with(['product_stock', 'product_photo'])->where('merchant_id', $merchant_id)->paginate($size);
 
 //        if ($data->isEmpty()){
 //            $response['success'] = false;
