@@ -41,9 +41,12 @@ class CartQueries{
             $response['data'] = $cart;
             return $response;
         }else{
+            
             $cart = Cart::with(['cart_detail' => function($cart_detail) {
                 $cart_detail->with(['product' => function($product) {
-                    $product->with(['merchant', 'product_photo', 'product_stock']);
+                    $product->with(['merchant' => function($merchant) {
+                        $merchant->with('expedition');
+                    }, 'product_photo', 'product_stock']);
                 }]);
             }])->where('related_pln_mobile_customer_id', $related_id)->first();
 //            if ($cart->isEmpty()){

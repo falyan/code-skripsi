@@ -40,7 +40,7 @@ class DetailCartResource extends JsonResource
             'cart_detail' => array_map(function($products) {
                     return [
                         'merchant' => $products[0]['merchant'],
-                        'products' => $products
+                        'products' => $products,
                     ];
                 }, $new_array)
         ];
