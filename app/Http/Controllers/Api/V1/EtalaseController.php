@@ -19,7 +19,7 @@ class EtalaseController extends Controller
     public function index()
     {
         try {
-            return EtalaseQueries::getAll();
+            return EtalaseQueries::getAll(Auth::user()->merchant->id);
         } catch (\Throwable $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], $th->getCode());
@@ -80,10 +80,5 @@ class EtalaseController extends Controller
             }
             return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], 404);
         }
-    }
-
-    public function rajaongkir()
-    {
-        RajaOngkirManager::getProvinces();
     }
 }

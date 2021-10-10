@@ -52,7 +52,28 @@ class MerchantController extends Controller
     public function publicProfile($merchant_id)
     {
         try {
-            return MerchantQueries::publicProfile($merchant_id);
+            return $this->respondWithData(MerchantQueries::publicProfile($merchant_id), 'Berhasil mendapatkan data toko');
+        } catch (Exception $th) {
+            if (in_array($th->getCode(), $this->error_codes)) {
+                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
+            }
+            return $this->respondWithResult(false, $th->getMessage(), 500);
+        }
+    }
+
+    public function setExpedition()
+    {
+        $validator = Validator::make(request()->all(), [
+            'list_expeditions' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->respondValidationError($validator->errors(), 'Validation Error!');
+        }
+
+        try {
+            MerchantCommands::createOrUpdateExpedition(request()->get('list_expeditions'));
+            return $this->respondWithData(Merchant::with('expedition')->where('id', Auth::user()->merchant->id)->firstOrFail(), 'Layanan ekspedisi berhasil disimpan');
         } catch (Exception $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return $this->respondWithResult(false, $th->getMessage(), $th->getCode());

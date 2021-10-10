@@ -37,6 +37,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {
                     $router->post('atur-toko', 'MerchantController@aturToko');
+                    $router->post('set-expedition', 'MerchantController@setExpedition');
                 });
             });
 

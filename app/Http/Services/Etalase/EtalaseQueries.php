@@ -7,8 +7,8 @@ use App\Http\Resources\Etalase\EtalaseResource;
 use App\Models\Etalase;
 
 class EtalaseQueries{
-    public static function getAll(){
-        $paginate = Etalase::paginate();
+    public static function getAll($id){
+        $paginate = Etalase::where('merchant_id', $id)->paginate();
         return new EtalaseCollection($paginate);
     }
 
