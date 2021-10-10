@@ -57,9 +57,9 @@ class MerchantCommands{
                 throw new Exception('User tidak memiliki merchant.');
             }
             
-            MerchantExpedition::firstOrCreate(
+            MerchantExpedition::updateOrCreate(
                 ['merchant_id' => $merchant->id],
-                ['list_expeditions' => $list_expeditions]
+                ['merchant_id' => $merchant->id, 'list_expeditions' => $list_expeditions]
             );
             DB::commit();
         } catch (\Exception $th) {
