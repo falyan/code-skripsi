@@ -15,19 +15,23 @@ class CreateOrderDeliveryTable extends Migration
     {
         Schema::create('order_delivery', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('order_id')->nullable();
+            $table->unsignedBigInteger('order_id');
             $table->text('address')->nullable();
             $table->unsignedBigInteger('city_id')->nullable();
             $table->unsignedBigInteger('province_id')->nullable();
             $table->string('postal_code')->nullable();
             $table->string('latitude')->nullable();
             $table->string('longitude')->nullable();
-            $table->string('shipping_type')->nullable();
             $table->string('receiver_name')->nullable();
             $table->string('receiver_phone')->nullable();
+            $table->string('awb_number')->nullable();
+            $table->string('shipping_type')->nullable();
+            $table->string('date_of_shipment')->nullable();
             $table->timestamps();
 
             $table->foreign('order_id')->references('id')->on('order')->onDelete('cascade');
+            $table->foreign('city_id')->references('id')->on('city')->onDelete('cascade');
+            $table->foreign('province_id')->references('id')->on('province_id')->onDelete('cascade');
         });
     }
 

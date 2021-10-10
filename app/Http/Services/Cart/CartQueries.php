@@ -41,16 +41,12 @@ class CartQueries{
             $response['data'] = $cart;
             return $response;
         }else{
-            $carr = array_map(function($cart) {
-                $product = Product::where('id', $cart['product_id'])->first();
-                return (object) [
-                    'merchant' => Merchant::where('id', $product->merchant_id)->first(),
-                ];
-            }, Cart::where('related_pln_mobile_customer_id', $related_id)->first()->cart_detail->toArray());
             
             $cart = Cart::with(['cart_detail' => function($cart_detail) {
                 $cart_detail->with(['product' => function($product) {
-                    $product->with(['merchant', 'product_photo', 'product_stock']);
+                    $product->with(['merchant' => function($merchant) {
+                        $merchant->with('expedition');
+                    }, 'product_photo', 'product_stock']);
                 }]);
             }])->where('related_pln_mobile_customer_id', $related_id)->first();
 //            if ($cart->isEmpty()){
