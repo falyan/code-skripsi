@@ -48,7 +48,8 @@ class CartController extends Controller
         $validator = Validator::make(request()->all(), [
             'product_id' => 'required|exists:product,id',
             'buyer_id' => 'nullable|exists:customer,id',
-            'related_merchant_id' => 'required|exist:merchant,id'
+            'related_merchant_id' => 'required|exists:merchant,id',
+            'related_pln_mobile_customer_id' => 'required'
         ]);
 
         try {
