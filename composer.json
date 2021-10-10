@@ -10,6 +10,7 @@
         "firebase/php-jwt": "^5.4",
         "guzzlehttp/guzzle": "^7.3",
         "illuminate/mail": "^8.61",
+        "kreait/firebase-php": "^4.40",
         "laravel/lumen-framework": "^8.0",
         "laravelista/lumen-vendor-publish": "^8.0",
         "phpseclib/phpseclib": "^3.0",
