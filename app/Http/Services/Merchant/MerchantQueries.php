@@ -56,7 +56,7 @@ class MerchantQueries{
             $total_trx = static::getTotalTrx($merchant_id, 88);
 
             return [
-                'merchantz' => $merged_data,
+                'merchant' => $merged_data,
                 'meta_data' => [
                     'total_product' => $total_product,
                     'total_transactions' => $total_trx->count(),
