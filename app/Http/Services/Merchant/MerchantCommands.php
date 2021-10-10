@@ -4,6 +4,7 @@ namespace App\Http\Services\Merchant;
 
 use App\Models\Etalase;
 use App\Models\Merchant;
+use App\Models\MerchantExpedition;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -39,6 +40,29 @@ class MerchantCommands{
                 'operationals' => $merchant->operationals()->get()
             ];
         } catch (\Throwable $th) {
+            DB::rollBack();
+            if (in_array($th->getCode(), self::$error_codes)) {
+                throw new Exception($th->getMessage(), $th->getCode());
+            }
+            throw new Exception($th->getMessage(), 500);
+        }
+    }
+
+    public static function createOrUpdateExpedition($list_expeditions)
+    {
+        try {
+            DB::beginTransaction();
+            
+            if (!$merchant = Auth::user()->merchant) {
+                throw new Exception('User tidak memiliki merchant.');
+            }
+            
+            MerchantExpedition::firstOrCreate(
+                ['merchant_id' => $merchant->id],
+                ['list_expeditions' => $list_expeditions]
+            );
+            DB::commit();
+        } catch (\Exception $th) {
             DB::rollBack();
             if (in_array($th->getCode(), self::$error_codes)) {
                 throw new Exception($th->getMessage(), $th->getCode());

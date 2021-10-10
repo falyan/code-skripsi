@@ -106,12 +106,8 @@ class Merchant extends Model
         return $this->hasMany(Product::class);
     }
 
-    /**
-     * @var void Custom Static Function
-     */
-    // public static function publicProfile($id)
-    // {
-    //     $merchant = static::where('id', $id);
-    //     return $merchant;
-    // }
+    public function expedition()
+    {
+        return $this->hasOne(MerchantExpedition::class);
+    }
 }
