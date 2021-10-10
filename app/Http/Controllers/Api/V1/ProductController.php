@@ -66,7 +66,8 @@ class ProductController extends Controller
 
     //Get Produk Berdasarkan Merchant Buyer
     public function getProductByMerchantBuyer($merchant_id){
-        return $this->productQueries->getProductByMerchantIdBuyer($merchant_id);
+        $size = request()->query('size', 10);
+        return $this->productQueries->getProductByMerchantIdBuyer($merchant_id, $size);
     }
 
     //Get Produk Berdasarkan Kategori
