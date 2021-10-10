@@ -52,7 +52,7 @@ class MerchantController extends Controller
     public function publicProfile($merchant_id)
     {
         try {
-            return MerchantQueries::publicProfile($merchant_id);
+            return $this->respondWithData(MerchantQueries::publicProfile($merchant_id), 'Berhasil mendapatkan data toko');
         } catch (Exception $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
