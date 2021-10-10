@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 | and give it the Closure to call when that URI is requested.
 |
 */
+
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
@@ -38,6 +39,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {
                     $router->post('atur-toko', 'MerchantController@aturToko');
                     $router->post('set-expedition', 'MerchantController@setExpedition');
+                });
+
+                $router->group(['prefix' => 'order'], static function () use ($router) {
+                    $router->post('/{id}/approve', 'TransactionController@approveOrder');
+                    $router->post('/{id}/reject', 'TransactionController@rejectOrder');
+                    $router->post('/{id}/deliver', 'TransactionController@deliverOrder');
                 });
             });
 
@@ -63,13 +70,13 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
                 $router->group(['prefix' => 'transaction'], static function () use ($router) {
                     $router->get('/', 'TransactionController@sellerIndex');
-                    $router->get('/detail/{id}', 'TransactionController@detailTransaction');
                     $router->get('/new-order', 'TransactionController@newOrder');
                     $router->get('/to-deliver', 'TransactionController@orderToDeliver');
                     $router->get('/on-delivery', 'TransactionController@orderInDelivery');
                     $router->get('/done', 'TransactionController@orderDone');
                     $router->get('/calceled', 'TransactionController@sellerTransactionCanceled');
                     $router->get('/search/{keyword}', 'TransactionController@sellerSearchTransaction');
+                    $router->get('/detail/{id}', 'TransactionController@detailTransaction');
                 });
             });
         });
@@ -152,5 +159,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->get('district', 'RajaOngkirController@getDistrict');
         $router->post('ongkir', 'RajaOngkirController@ongkir');
         $router->get('couriers', 'RajaOngkirController@couriers');
+    });
+
+    $router->group(['prefix' => 'order'], static function () use ($router) {
+        $router->post('/create', 'TransactionController@createOrder');
+        $router->post('/{id}/request-cancel', 'TransactionController@requestCancelOrder');
+        $router->post('/{id}/confirm', 'TransactionController@confirmOrder');
     });
 });
