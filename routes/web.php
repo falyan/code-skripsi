@@ -126,7 +126,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/on-approve', 'TransactionController@transactionOnApprove');
                 $router->get('/on-delivery', 'TransactionController@transactionOnDelivery');
                 $router->get('/done', 'TransactionController@buyerTransactionDone');
-                $router->get('/calceled', 'TransactionController@buyerTransactionCanceled');
+                $router->get('/canceled', 'TransactionController@buyerTransactionCanceled');
                 $router->get('/search/{keyword}', 'TransactionController@buyerSearchTransaction');
             });
         });
