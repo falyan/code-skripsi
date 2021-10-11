@@ -71,14 +71,13 @@ class CartCommands
         return 'data saved';
     }
 
-    public static function deleteProduct($key)
+    public static function deleteProduct($cart_detail_id, $cart_id)
     {
         try {
-            $cart = Cart::where('related_pln_mobile_customer_id', $key)->first();
-            $existsData = $cart->cart_detail->where('product_id', request('product_id'))->first();
+            $data = CartDetail::where([['id', $cart_detail_id], ['cart_id', $cart_id]])->firstOrFail();
 
-            if ($existsData) {
-                $existsData->delete();
+            if ($data) {
+                $data->delete();
                 return response()->json([
                     'success' => true,
                     'message' => 'produk berhasil dihapus',
@@ -94,25 +93,25 @@ class CartCommands
         }
     }
 
-    public static function QuantityUpdate($key)
+    public static function QuantityUpdate($cart_detail_id, $cart_id)
     {
         try {
-            $cart = Cart::where('related_pln_mobile_customer_id', $key)->first();
-            $existsData = $cart->cart_detail->where('product_id', request('product_id'))->first();
+            $data = CartDetail::where([['id', $cart_detail_id], ['cart_id', $cart_id]])->firstOrFail();
 
-            if ($existsData) {
-                $existsData->update([
+            if ($data) {
+                $data->update([
                     'quantity' => request('quantity')
                 ]);
 
-                if ($existsData->quantity < 1){
-                    $existsData->delete();
+                if ($data->quantity < 1){
+                    $data->delete();
 
                     return response()->json([
                         'success' => true,
                         'message' => 'Produk berhasil dihapus',
                     ], 200);
                 }
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Produk berhasil diubah',
