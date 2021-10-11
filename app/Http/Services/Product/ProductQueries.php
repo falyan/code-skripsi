@@ -65,7 +65,9 @@ class ProductQueries{
         return $response;
     }
     public function getProductByMerchantIdBuyer($merchant_id, $size){
-        $data = Product::withCount('reviews')->with(['reviews', 'product_stock', 'product_photo'])->where('merchant_id', $merchant_id)->paginate($size);
+        $data = Product::withCount(['order_details'])->with(['reviews', 'merchant' => function($merchant) {
+            $merchant->with('city:id,name');
+        },'product_stock', 'product_photo'])->where('merchant_id', $merchant_id)->paginate($size);
 
 //        if ($data->isEmpty()){
 //            $response['success'] = false;
