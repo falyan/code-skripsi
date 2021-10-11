@@ -32,9 +32,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
                 $router->group(['prefix' => 'product'], static function () use ($router) {
                     $router->post('create', 'ProductController@createProduct');
-                    $router->post('edit/{product_id}/{merchant_id}', 'ProductController@updateProduct');
-                    $router->delete('delete/{product_id}/{merchant_id}', 'ProductController@deleteProduct');
-                    $router->post('stock/edit/{product_id}/{merchant_id}', 'ProductController@updateStockProduct');
+                    $router->post('edit/{product_id}', 'ProductController@updateProduct');
+                    $router->delete('delete/{product_id}', 'ProductController@deleteProduct');
+                    $router->post('stock/edit/{product_id}', 'ProductController@updateStockProduct');
                 });
 
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {
@@ -61,7 +61,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
                 $router->group(['prefix' => 'product'], static function () use ($router) {
                     $router->get('all', 'ProductController@getAllProduct');
-                    $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchantSeller');
+                    $router->get('merchant', 'ProductController@getProductByMerchantSeller');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
                 });
 

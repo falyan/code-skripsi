@@ -207,25 +207,8 @@ class ProductCommands{
     public function deleteProduct($product_id, $merchant_id){
         try {
             DB::beginTransaction();
-//            $product_photo = ProductPhoto::where('merchant_id', $merchant_id)
-//                ->where('product_id', $product_id)->get();
-//
-//            if (!empty($product_photo)){
-//                foreach ($product_photo as $photo){
-//                    $photo->delete();
-//                }
-//            }
-//
-//            $product_stock = $product_stock = ProductStock::where('merchant_id', $merchant_id)
-//                ->where('product_id', $product_id)->get();
-//
-//            if (!empty($product_stock)){
-//                foreach ($product_stock as $stock){
-//                    $stock->delete();
-//                }
-//            }
 
-            $product = Product::find($product_id);
+            $product = Product::where('id', $product_id)->where('merchant_id', $merchant_id)->first();
             if ($product == null){
                 $response['success'] = false;
                 $response['message'] = 'Produk tidak ditemukan!';
