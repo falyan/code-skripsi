@@ -30,6 +30,11 @@ class Order extends Model
         return $this->hasOne(OrderProgress::class)->where('status',1);
     }
 
+    public function progress_done()
+    {
+        return $this->progress_active()->where('status_code', 88);
+    }
+
     public function merchant()
     {
         return $this->belongsTo(Merchant::class);

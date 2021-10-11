@@ -153,9 +153,9 @@ class TransactionController extends Controller
 
             if (Auth::check()) {
                 $user = Customer::find(Auth::id());
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, 99);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, [99]);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $rlc_id, 99);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $rlc_id, [99]);
             }
 
             if ($data->total() > 0) {
@@ -277,7 +277,7 @@ class TransactionController extends Controller
     public function sellerTransactionCanceled()
     {
         try {
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, 99);
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, [99]);
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
