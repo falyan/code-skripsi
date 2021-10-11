@@ -186,7 +186,6 @@ class TransactionController extends Controller
                 $data = $this->transactionQueries->searchTransaction('related_pln_mobile_customer_id', $rlc_id, $keyword);
             }
 
-            return($data->count());
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
             }else {
