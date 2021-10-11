@@ -26,6 +26,7 @@ class Product extends Model
         'merchant_id',
         'name',
         'price',
+        'strike_price',
         'minimum_purchase',
         'category_id',
         'etalase_id',

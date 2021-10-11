@@ -16,12 +16,13 @@ class ProductCommands{
             $rules = [
                 'merchant_id' => 'required',
                 'name' => 'required',
-                'price' => 'required',
+                'price' => 'required|numeric',
+                'strike_price' => 'nullable|numeric|gt:price',
                 'minimum_purchase' => 'required',
                 'condition' => 'required',
                 'weight' => 'required',
                 'is_shipping_insurance' => 'required',
-                'shipping_service' => 'required',
+                'shipping_service' => 'nullable',
                 'url.*' => 'required',
                 'amount' => 'required',
                 'uom' => 'required'
@@ -31,14 +32,15 @@ class ProductCommands{
             if ($validator->fails()){
                 $response['success'] = false;
                 $response['message'] = $validator->errors();
-                $response['data'] = $data;
+                $response['data'] = $data->all();
                 return $response;
-            }
+        }
             DB::beginTransaction();
             $product = Product::create([
                 'merchant_id' => $data->merchant_id,
                 'name' => $data->name,
                 'price' => $data->price,
+                'strike_price' => $data->strike_price,
                 'minimum_purchase' => $data->minimum_purchase,
                 'category_id' => $data->category_id,
                 'etalase_id' => $data->etalase_id,
