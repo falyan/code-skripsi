@@ -161,9 +161,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('ongkir', 'RajaOngkirController@ongkir');
         $router->get('couriers', 'RajaOngkirController@couriers');
     });
-<<<<<<< HEAD
-});
-=======
 
     $router->group(['prefix' => 'order'], static function () use ($router) {
         $router->post('/create', 'TransactionController@createOrder');
@@ -171,4 +168,3 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('/{id}/confirm', 'TransactionController@confirmOrder');
     });
 });
->>>>>>> 29d256d18d017e38259c837884867d3ba49c388a
