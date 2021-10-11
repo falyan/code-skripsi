@@ -112,10 +112,10 @@ class CartController extends Controller
         }
     }
 
-    public function destroy($cart_id, $product_id, $related_merchant_id = null)
+    public function destroy($cart_detail_id, $cart_id)
     {
         try {
-            return CartCommands::deleteProduct($cart_id, $product_id, $related_merchant_id);
+            return CartCommands::deleteProduct($cart_detail_id, $cart_id);
         } catch (\Throwable $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], $th->getCode());
