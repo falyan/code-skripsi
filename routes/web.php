@@ -75,7 +75,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('/to-deliver', 'TransactionController@orderToDeliver');
                     $router->get('/on-delivery', 'TransactionController@orderInDelivery');
                     $router->get('/done', 'TransactionController@orderDone');
-                    $router->get('/calceled', 'TransactionController@sellerTransactionCanceled');
+                    $router->get('/canceled', 'TransactionController@sellerTransactionCanceled');
                     $router->get('/search/{keyword}', 'TransactionController@sellerSearchTransaction');
                     $router->get('/detail/{id}', 'TransactionController@detailTransaction');
                 });
