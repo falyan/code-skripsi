@@ -17,15 +17,7 @@ use Illuminate\Support\Facades\Hash;
 */
 
 $router->get('/', function () use ($router) {
-    // return $router->app->version();
-
-    $list_product_id = \App\Models\Product::with(['order_details' => function ($trx) {
-        $trx->whereHas('order', function ($j) {
-            $j->whereHas('progress_done');
-        });
-    }])->get();
-
-    return $list_product_id;
+    return $router->app->version();
 });
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {

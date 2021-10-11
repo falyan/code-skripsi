@@ -65,9 +65,13 @@ class ProductQueries{
         return $response;
     }
     public function getProductByMerchantIdBuyer($merchant_id, $size){
-        $data = Product::withCount(['order_details'])->with(['reviews', 'merchant' => function($merchant) {
+        $products = \App\Models\Product::with(['reviews', 'merchant' => function($merchant) {
             $merchant->with('city:id,name');
-        },'product_stock', 'product_photo'])->where('merchant_id', $merchant_id)->paginate($size);
+        },'order_details' => function ($trx) {
+            $trx->whereHas('order', function ($j) {
+                $j->whereHas('progress_done');
+            });
+        }, 'product_photo', 'product_stock'])->where('merchant_id', $merchant_id)->paginate($size);
 
 //        if ($data->isEmpty()){
 //            $response['success'] = false;
@@ -76,7 +80,7 @@ class ProductQueries{
 //        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $data;
+        $response['data'] = $products;
         return $response;
     }
 
