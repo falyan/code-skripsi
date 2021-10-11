@@ -16,10 +16,12 @@ class CreateCartTable extends Migration
         Schema::create('cart', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('buyer_id')->nullable();
+            $table->unsignedBigInteger('merchant_id')->nullable();
             $table->string('related_pln_mobile_customer_id')->nullable();
             $table->timestamps();
 
             $table->foreign('buyer_id')->references('id')->on('customer')->onDelete('cascade');
+            $table->foreign('merchant_id')->references('id')->on('merchant')->onDelete('cascade');
         });
     }
 

@@ -104,5 +104,10 @@ class Product extends Model
 
     public function cart_detail(){
             return $this->hasMany(CartDetail::class);
-   }
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
 }

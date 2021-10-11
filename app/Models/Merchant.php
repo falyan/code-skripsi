@@ -110,4 +110,9 @@ class Merchant extends Model
     {
         return $this->hasOne(MerchantExpedition::class);
     }
+
+    public function carts()
+    {
+        return $this->hasMany(Cart::class);
+    }
 }

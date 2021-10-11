@@ -64,9 +64,8 @@ class ProductQueries{
         $response['data'] = $product;
         return $response;
     }
-
     public function getProductByMerchantIdBuyer($merchant_id, $size){
-        $data = Product::with(['product_stock', 'product_photo'])->where('merchant_id', $merchant_id)->paginate($size);
+        $data = Product::withCount('reviews')->with(['product_stock', 'product_photo'])->where('merchant_id', $merchant_id)->paginate($size);
 
 //        if ($data->isEmpty()){
 //            $response['success'] = false;
@@ -94,7 +93,9 @@ class ProductQueries{
     }
 
     public function getProductById($id){
-        $data = Product::with(['product_stock', 'product_photo', 'merchant'])->where('id', $id)->first();
+        $data = Product::withCount('reviews')->with(['reviews' => function($reviews) {
+            $reviews->with('customer:id,full_name,image_url');
+        }, 'product_stock', 'product_photo', 'merchant'])->where('id', $id)->first();
 
         if (!$data){
             $response['success'] = false;

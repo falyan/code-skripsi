@@ -41,24 +41,20 @@ class CartQueries{
             $response['data'] = $cart;
             return $response;
         }else{
-            
-            $cart = Cart::with(['cart_detail' => function($cart_detail) {
+            // dd(Cart::with('merchants')->where('related_pln_mobile_customer_id', $related_id)->get());
+            $cart = Cart::with(['merchants' => function ($merchant) {
+                $merchant->with('expedition');
+            }, 'cart_detail' => function($cart_detail) {
                 $cart_detail->with(['product' => function($product) {
-                    $product->with(['merchant' => function($merchant) {
-                        $merchant->with('expedition');
-                    }, 'product_photo', 'product_stock']);
+                    $product->with(['product_stock', 'product_photo']);
                 }]);
-            }])->where('related_pln_mobile_customer_id', $related_id)->first();
-//            if ($cart->isEmpty()){
-//                $response['success'] = false;
-//                $response['message'] = 'Gagal mendapatkan data keranjang.';
-//                return $response;
-//            }
+            }])->where('related_pln_mobile_customer_id', $related_id)->get();
 
             $response['success'] = true;
             $response['message'] = 'Berhasil mendapatkan data keranjang.';
             $response['data'] = $cart;
-            return new DetailCartResource($cart);
+
+            return $response;
         }
     }
 }

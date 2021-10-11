@@ -20,6 +20,7 @@ $router->get('/', function () use ($router) {
 });
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
+    
     $router->group(['prefix' => 'seller'], static function () use ($router) {
         $router->group(['middleware' => 'auth'], function () use ($router) {
             $router->group(['prefix' => 'command', 'middleware' => 'auth'], static function () use ($router) {
@@ -50,17 +51,17 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('/', 'EtalaseController@index');
                     $router->get('show/{id}', 'EtalaseController@show');
                 });
-
+                
                 $router->group(['prefix' => 'product'], static function () use ($router) {
                     $router->get('all', 'ProductController@getAllProduct');
                     $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchantSeller');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
                 });
-
+                
                 $router->group(['prefix' => 'category'], static function () use ($router) {
                     $router->get('all', 'CategoryController@getAllCategory');
                 });
-
+                
                 $router->group(['prefix' => 'transaction'], static function () use ($router) {
                     $router->get('/', 'TransactionController@sellerIndex');
                     $router->get('/detail/{id}', 'TransactionController@detailTransaction');
@@ -74,10 +75,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
         });
     });
-
+    
     $router->group(['prefix' => 'buyer'], static function () use ($router) {
         $router->group(['prefix' => 'query'], static function () use ($router) {
-
+            
             $router->group(['prefix' => 'merchant'], static function () use ($router) {
                 $router->get('{merchant_id}', 'MerchantController@publicProfile');
             });
@@ -85,7 +86,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'etalase'], static function () use ($router) {
                 $router->get('rajaongkir', 'EtalaseController@rajaongkir');
             });
-
+            
             $router->group(['prefix' => 'product'], static function () use ($router) {
                 $router->get('recommend', 'ProductController@getRecommendProduct');
                 $router->get('special', 'ProductController@getSpecialProduct');
@@ -94,11 +95,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('category/{category_id}', 'ProductController@getProductByCategory');
                 $router->get('{id}', 'ProductController@getProductById');
             });
-
+            
             $router->group(['prefix' => 'category'], static function () use ($router) {
                 $router->get('/random', 'CategoryController@getThreeRandomCategory');
             });
-
+            
             $router->group(['prefix' => 'setting'], static function () use ($router) {
                 $router->get('profile', 'SettingProfileController@index');
             });
@@ -107,7 +108,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('detail/{related_id}[/{buyer_id}]', 'CartController@showDetail');
                 $router->get('{rlc_id}[/{buyer_id}]', 'CartController@index');
             });
-
+            
             $router->group(['prefix' => 'region'], static function () use ($router) {
                 $router->get('search/{keyword}[/{limit}]', 'RegionController@searchDistrict');
             });
@@ -131,7 +132,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
         });
     });
-
+    
     $router->group(['prefix' => 'setting'], static function () use ($router) {
         $router->get('faq', 'FaqController@index');
         $router->group(['prefix' => 'pages'], static function () use ($router) {
@@ -146,7 +147,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->get('user', 'ProfileController@index');
         $router->post('logout', 'ProfileController@logout');
     });
-
+    
     $router->group(['prefix' => 'rajaongkir'], static function () use ($router) {
         $router->get('province', 'RajaOngkirController@getProvince');
         $router->get('district', 'RajaOngkirController@getDistrict');

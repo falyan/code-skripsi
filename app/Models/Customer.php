@@ -85,9 +85,9 @@ class Customer extends Model
         return $this->belongsTo(Merchant::class);
     }
 
-    public function cart()
+    public function carts()
     {
-        return $this->hasOne(Cart::class, 'buyer_id');
+        return $this->hasMany(Cart::class, 'buyer_id');
     }
 
     public function orders()
@@ -95,8 +95,13 @@ class Customer extends Model
         return $this->hasMany(Order::class, 'buyer_id');
     }
 
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
     /**
-     * @var array Custom Static Functions
+     * @var void Custom Static Functions
      */
 
     public static function findByrelatedCustomerId($related_customer_id)
