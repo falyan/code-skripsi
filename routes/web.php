@@ -17,7 +17,15 @@ use Illuminate\Support\Facades\Hash;
 */
 
 $router->get('/', function () use ($router) {
-    return $router->app->version();
+    // return $router->app->version();
+
+    $list_product_id = \App\Models\Product::with(['order_details' => function ($trx) {
+        $trx->whereHas('order', function ($j) {
+            $j->whereHas('progress_done');
+        });
+    }])->get();
+
+    return $list_product_id;
 });
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
@@ -91,7 +99,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'etalase'], static function () use ($router) {
-                $router->get('rajaongkir', 'EtalaseController@rajaongkir');
+                $router->get('merchant/{merchant_id}', 'EtalaseController@publicEtalase');
             });
 
             $router->group(['prefix' => 'product'], static function () use ($router) {

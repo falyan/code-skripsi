@@ -10,6 +10,7 @@ use App\Http\Services\Etalase\EtalaseQueries;
 use App\Http\Services\Example\ExampleCommands;
 use App\Http\Services\Manager\RajaOngkirManager;
 use App\Models\Etalase;
+use App\Models\Merchant;
 use Exception, Input;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -20,6 +21,18 @@ class EtalaseController extends Controller
     {
         try {
             return EtalaseQueries::getAll(Auth::user()->merchant->id);
+        } catch (\Throwable $th) {
+            if (in_array($th->getCode(), $this->error_codes)) {
+                return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], $th->getCode());
+            }
+            return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], 404);
+        }
+    }
+
+    public function publicEtalase($merchant_id)
+    {
+        try {
+            return EtalaseQueries::getAll($merchant_id);
         } catch (\Throwable $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], $th->getCode());
