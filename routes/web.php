@@ -91,7 +91,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'etalase'], static function () use ($router) {
-                $router->get('rajaongkir', 'EtalaseController@rajaongkir');
+                $router->get('merchant/{merchant_id}', 'EtalaseController@publicEtalase');
             });
             
             $router->group(['prefix' => 'product'], static function () use ($router) {
