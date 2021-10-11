@@ -28,13 +28,15 @@ class ProductController extends Controller
     }
 
     //Update Produk
-    public function updateProduct($product_id, $merchant_id, Request $request){
+    public function updateProduct($product_id, Request $request){
         $request['full_name'] = Auth::user()->full_name;
+        $merchant_id = Auth::user()->merchant_id;
         return $this->productCommands->updateProduct($product_id, $merchant_id, $request);
     }
 
     //Delete Produk
-    public function deleteProduct($product_id, $merchant_id){
+    public function deleteProduct($product_id){
+        $merchant_id = Auth::user()->merchant_id;
         return $this->productCommands->deleteProduct($product_id, $merchant_id);
     }
 
@@ -44,7 +46,8 @@ class ProductController extends Controller
     }
 
     //Get Produk Berdasarkan Merchant Seller
-    public function getProductByMerchantSeller($merchant_id){
+    public function getProductByMerchantSeller(){
+        $merchant_id = Auth::user()->merchant_id;
         return $this->productQueries->getProductByMerchantIdSeller($merchant_id);
     }
 
@@ -54,8 +57,9 @@ class ProductController extends Controller
     }
 
     //Adjust Stok Produk
-    public function updateStockProduct($product_id, $merchant_id, Request $request){
+    public function updateStockProduct($product_id, Request $request){
         $request['full_name'] = Auth::user()->full_name;
+        $merchant_id = Auth::user()->merchant_id;
         return $this->productCommands->updateStockProduct($product_id, $merchant_id, $request);
     }
 
