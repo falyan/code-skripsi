@@ -2,7 +2,10 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
+use App\Models\Coba;
 use App\Models\Customer;
+use App\Models\Order;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 
 /*
@@ -21,7 +24,6 @@ $router->get('/', function () use ($router) {
 });
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
-
     $router->group(['prefix' => 'seller'], static function () use ($router) {
         $router->group(['middleware' => 'auth'], function () use ($router) {
             $router->group(['prefix' => 'command', 'middleware' => 'auth'], static function () use ($router) {
@@ -132,11 +134,17 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
+            $router->group(['middleware' => 'auth'], static function () use ($router) {
+                $router->group(['prefix' => 'order'], static function () use ($router) {
+                    $router->post('checkout', 'TransactionController@checkout');
+                });    
+            });
+
             $router->group(['prefix' => 'cart'], static function () use ($router) {
                 $router->post('add', 'CartController@add');
                 $router->delete('delete', 'CartController@destroy');
                 $router->patch('qty/update', 'CartController@qtyUpdate');
-            });
+            });    
         });
     });
 
@@ -163,7 +171,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     });
 
     $router->group(['prefix' => 'order'], static function () use ($router) {
-        $router->post('/create', 'TransactionController@createOrder');
         $router->post('/{id}/request-cancel', 'TransactionController@requestCancelOrder');
         $router->post('/{id}/confirm', 'TransactionController@confirmOrder');
     });

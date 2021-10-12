@@ -7,8 +7,10 @@ use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
 use App\Models\Customer;
 use App\Models\Merchant;
+use App\Models\Product;
 use Exception, Input;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class TransactionController extends Controller
 {
@@ -21,6 +23,70 @@ class TransactionController extends Controller
     {
         $this->transactionQueries = new TransactionQueries();
         $this->transactionCommand = new TransactionCommands();
+    }
+
+    // Checkout
+    public function checkout()
+    {
+        $validator = Validator::make(request()->all(), [
+            'merchants' => 'required|array',
+            'merchants.*.merchant_id' => 'required',
+            'merchants.*.total_weight' => 'required',
+            'merchants.*.delivery_method' => 'required',
+            'merchants.*.total_amount' => 'required',
+            'merchants.*.total_payment' => 'required',
+            'merchants.*.related_pln_mobile_customer_id' => 'required',
+            'merchants.*.products' => 'required',
+            'merchants.*.products.*.product_id' => 'required',
+            'merchants.*.products.*.quantity' => 'required',
+            'merchants.*.products.*.price' => 'required',
+            'merchants.*.products.*.weight' => 'required',
+            'merchants.*.products.*.insurance_cost' => 'required',
+            'merchants.*.products.*.discount' => 'required',
+            'merchants.*.products.*.total_price' => 'required',
+            'merchants.*.products.*.total_weight' => 'required',
+            'merchants.*.products.*.total_discount' => 'required',
+            'merchants.*.products.*.total_insurance_cost' => 'required',
+            'merchants.*.products.*.total_amount' => 'required',
+            'merchants.*.products.*.payment_amount' => 'required',
+            'merchants.*.products.*.payment_note' => 'sometimes',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->respondValidationError($validator->errors(), 'Validation Error!');
+        }
+
+        try {
+            $this->validateProduct(request()->get('merchants'));
+
+            $this->transactionCommand->createOrder(request()->get('merchants'));
+        } catch (Exception $th) {
+            if (in_array($th->getCode(), $this->error_codes)) {
+                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
+            }
+            return $this->respondWithResult(false, $th->getMessage(), 500);
+        }
+    }
+
+    private function validateProduct($merchants)
+    {
+        try {
+            array_map(function($merchant) {
+                array_map(function($item) {
+                    if (!$product = Product::find(data_get($item, 'product_id'))) {
+                        throw new Exception('Produk tidak ditemukan', 404);
+                    }
+                    if ($product->product_stock->pluck('amount')->first() < data_get($item, 'quantity')) {
+                        throw new Exception('Stok produk tidak mencukupi', 400);
+                    }
+                }, data_get($merchant, 'products'));
+            }, $merchants);
+        } catch (Exception $th) {
+            if (in_array($th->getCode(), $this->error_codes)) {
+                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
+            }
+            return $this->respondWithResult(false, $th->getMessage(), 500);
+        }
     }
 
     #region Buyer

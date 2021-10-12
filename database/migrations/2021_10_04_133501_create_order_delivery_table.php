@@ -31,7 +31,7 @@ class CreateOrderDeliveryTable extends Migration
 
             $table->foreign('order_id')->references('id')->on('order')->onDelete('cascade');
             $table->foreign('city_id')->references('id')->on('city')->onDelete('cascade');
-            $table->foreign('province_id')->references('id')->on('province_id')->onDelete('cascade');
+            $table->foreign('province_id')->references('id')->on('province')->onDelete('cascade');
         });
     }
 
