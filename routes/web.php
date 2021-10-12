@@ -134,10 +134,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
-            $router->group(['middleware' => 'auth'], static function () use ($router) {
-                $router->group(['prefix' => 'order'], static function () use ($router) {
-                    $router->post('checkout', 'TransactionController@checkout');
-                });    
+            $router->group(['prefix' => 'order'], static function () use ($router) {
+                $router->post('checkout/{related_pln_mobile_customer_id}', 'TransactionController@checkout');
             });
 
             $router->group(['prefix' => 'cart'], static function () use ($router) {
