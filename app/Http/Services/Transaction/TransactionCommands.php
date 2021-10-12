@@ -74,10 +74,12 @@ class TransactionCommands extends Service
                 $order_payment->booking_code = null;
                 $order_payment->payment_note = data_get($data, 'payment_note') ?? null;
             }, $datas);
+            DB::commit();
             
-            // return [
-            //     ''
-            // ]
+            return [
+                'success' => true,
+                'message' => 'Berhasil create order',
+            ];
         } catch (Exception $th) {
             DB::rollBack();
             if (in_array($th->getCode(), self::$error_codes)) {

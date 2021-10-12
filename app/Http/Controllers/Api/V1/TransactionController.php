@@ -11,6 +11,7 @@ use App\Models\Product;
 use Exception, Input;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use stdClass;
 
 class TransactionController extends Controller
 {
@@ -48,7 +49,6 @@ class TransactionController extends Controller
             'merchants.*.products.*.total_discount' => 'required',
             'merchants.*.products.*.total_insurance_cost' => 'required',
             'merchants.*.products.*.total_amount' => 'required',
-            'merchants.*.products.*.payment_amount' => 'required',
             'merchants.*.products.*.payment_note' => 'sometimes',
         ]);
 
@@ -57,30 +57,18 @@ class TransactionController extends Controller
         }
 
         try {
-            $this->validateProduct(request()->get('merchants'));
-
-            $this->transactionCommand->createOrder(request()->get('merchants'));
-        } catch (Exception $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
-        }
-    }
-
-    private function validateProduct($merchants)
-    {
-        try {
             array_map(function($merchant) {
                 array_map(function($item) {
                     if (!$product = Product::find(data_get($item, 'product_id'))) {
-                        throw new Exception('Produk tidak ditemukan', 404);
+                        throw new Exception('Produk dengan id ' . data_get($item, 'product_id') . ' tidak ditemukan', 404);
                     }
                     if ($product->product_stock->pluck('amount')->first() < data_get($item, 'quantity')) {
-                        throw new Exception('Stok produk tidak mencukupi', 400);
+                        throw new Exception('Stok produk dengan id ' . $product->id . ' tidak mencukupi', 400);
                     }
                 }, data_get($merchant, 'products'));
-            }, $merchants);
+            }, request()->get('merchants'));
+            $checkout = $this->transactionCommand->createOrder(request()->get('merchants'));
+            return response()->json($checkout);
         } catch (Exception $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
@@ -389,5 +377,31 @@ class TransactionController extends Controller
         } catch (Exception $ex) {
             return $this->respondWithResult(false, $ex->getMessage(), 500);
         }
+    }
+
+    private function validateProduct($merchants)
+    {
+        $error = new stdClass();
+        array_map(function($merchant) use ($error) {
+            array_map(function($item) use ($error) {
+                if (!$product = Product::find(data_get($item, 'product_id'))) {
+                    if (isset($error->message) && isset($error->code)) {
+                        return [
+                            $error->message => 'Produk tidak ditemukan',
+                            $error->code => 404
+                        ];
+                    }
+                }
+                if ($product->product_stock->pluck('amount')->first() < data_get($item, 'quantity')) {
+                    if (isset($error->message) && isset($error->code)) {
+                        return [
+                            $error->message => 'Stok produk tidak mencukupi',
+                            $error->code => 400
+                        ];
+                    }
+                }
+            }, data_get($merchant, 'products'));
+        }, $merchants);
+        $error;
     }
 }
