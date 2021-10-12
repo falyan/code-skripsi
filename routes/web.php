@@ -166,6 +166,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->get('district', 'RajaOngkirController@getDistrict');
         $router->post('ongkir', 'RajaOngkirController@ongkir');
         $router->get('couriers', 'RajaOngkirController@couriers');
+        $router->post('track', 'RajaOngkirController@trackOrder');
     });
 
     $router->group(['prefix' => 'order'], static function () use ($router) {

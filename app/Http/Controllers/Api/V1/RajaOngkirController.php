@@ -16,6 +16,16 @@ use Illuminate\Support\Facades\Validator;
 
 class RajaOngkirController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->rajaongkirManager = new RajaOngkirManager();
+    }
+
     public function getProvince($province_id = null)
     {
         try {
@@ -39,7 +49,7 @@ class RajaOngkirController extends Controller
             return $this->respondWithResult(false, $th->getMessage(), 500);
         }
     }
-    
+
     public function injectProvince()
     {
         try {
@@ -176,6 +186,17 @@ class RajaOngkirController extends Controller
                 }, MasterData::where('type', 'rajaongkir_courier')->orderBy('value', 'ASC')->get()->toArray())
             ];
         } catch (Exception $th) {
+            if (in_array($th->getCode(), $this->error_codes)) {
+                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
+            }
+            return $this->respondWithResult(false, $th->getMessage(), 500);
+        }
+    }
+
+    public function trackOrder($trx_no){
+        try {
+            return $this->rajaongkirManager->trackOrder($trx_no);
+        }catch (Exception $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
             }
