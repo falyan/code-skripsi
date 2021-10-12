@@ -121,14 +121,14 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'transaction'], static function () use ($router) {
-                $router->get('/', 'TransactionController@buyerIndex');
-                $router->get('/detail/{id}', 'TransactionController@detailTransaction');
-                $router->get('/on-payment', 'TransactionController@transactionToPay');
-                $router->get('/on-approve', 'TransactionController@transactionOnApprove');
-                $router->get('/on-delivery', 'TransactionController@transactionOnDelivery');
-                $router->get('/done', 'TransactionController@buyerTransactionDone');
-                $router->get('/canceled', 'TransactionController@buyerTransactionCanceled');
-                $router->get('/search/{keyword}', 'TransactionController@buyerSearchTransaction');
+                $router->get('{rlc_id}', 'TransactionController@buyerIndex');
+                $router->get('detail/{id}', 'TransactionController@detailTransaction');
+                $router->get('on-payment/{rlc_id}', 'TransactionController@transactionToPay');
+                $router->get('on-approve/{rlc_id}', 'TransactionController@transactionOnApprove');
+                $router->get('on-delivery/{rlc_id}', 'TransactionController@transactionOnDelivery');
+                $router->get('done/{rlc_id}', 'TransactionController@buyerTransactionDone');
+                $router->get('canceled/{rlc_id}', 'TransactionController@buyerTransactionCanceled');
+                $router->get('search/{rlc_id}/{keyword}', 'TransactionController@buyerSearchTransaction');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {

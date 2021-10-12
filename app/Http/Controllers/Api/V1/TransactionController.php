@@ -24,13 +24,9 @@ class TransactionController extends Controller
     }
 
     #region Buyer
-    public function buyerIndex()
+    public function buyerIndex($rlc_id)
     {
         try {
-            if (!$rlc_id = request()->header('Related-Customer-Id')) {
-                return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
-            }
-
             if (Auth::check()) {
                 $user = Customer::find(Auth::id());
                 $data = $this->transactionQueries->getTransaction('buyer_id', $user->id);
@@ -48,13 +44,9 @@ class TransactionController extends Controller
         }
     }
 
-    public function transactionToPay()
+    public function transactionToPay($rlc_id)
     {
         try {
-            if (!$rlc_id = request()->header('Related-Customer-Id')) {
-                return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
-            }
-
             if (Auth::check()) {
                 $user = Customer::find(Auth::id());
                 $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, [0]);
@@ -72,13 +64,9 @@ class TransactionController extends Controller
         }
     }
 
-    public function transactionOnApprove()
+    public function transactionOnApprove($rlc_id)
     {
         try {
-            if (!$rlc_id = request()->header('Related-Customer-Id')) {
-                return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
-            }
-
             if (Auth::check()) {
                 $user = Customer::find(Auth::id());
                 $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, [1]);
@@ -96,13 +84,9 @@ class TransactionController extends Controller
         }
     }
 
-    public function transactionOnDelivery()
+    public function transactionOnDelivery($rlc_id)
     {
         try {
-            if (!$rlc_id = request()->header('Related-Customer-Id')) {
-                return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
-            }
-
             if (Auth::check()) {
                 $user = Customer::find(Auth::id());
                 $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, [3, 8]);
@@ -120,13 +104,9 @@ class TransactionController extends Controller
         }
     }
 
-    public function buyerTransactionDone()
+    public function buyerTransactionDone($rlc_id)
     {
         try {
-            if (!$rlc_id = request()->header('Related-Customer-Id')) {
-                return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
-            }
-
             if (Auth::check()) {
                 $user = Customer::find(Auth::id());
                 $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, [88]);
@@ -144,13 +124,9 @@ class TransactionController extends Controller
         }
     }
 
-    public function buyerTransactionCanceled()
+    public function buyerTransactionCanceled($rlc_id)
     {
         try {
-            if (!$rlc_id = request()->header('Related-Customer-Id')) {
-                return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
-            }
-
             if (Auth::check()) {
                 $user = Customer::find(Auth::id());
                 $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, [99]);
@@ -168,13 +144,9 @@ class TransactionController extends Controller
         }
     }
 
-    public function buyerSearchTransaction($keyword)
+    public function buyerSearchTransaction($rlc_id, $keyword)
     {
         try {
-            if (!$rlc_id = request()->header('Related-Customer-Id')) {
-                return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
-            }
-
             if (strlen(trim($keyword)) < 3) {
                 return $this->respondWithResult(false, 'Kata kunci minimal 3 karakter', 400);
             }
@@ -196,7 +168,7 @@ class TransactionController extends Controller
         }
     }
     #End Region Buyer
-    
+
     #Region Seller
     public function sellerIndex()
     {
@@ -213,7 +185,7 @@ class TransactionController extends Controller
         }
     }
 
-    
+
     public function newOrder()
     {
         try {
@@ -292,7 +264,7 @@ class TransactionController extends Controller
     public function sellerSearchTransaction($keyword)
     {
         try {
-            
+
             if (strlen(trim($keyword)) < 3) {
                 return $this->respondWithResult(false, 'Kata kunci minimal 3 karakter', 400);
             }
