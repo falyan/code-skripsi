@@ -196,7 +196,7 @@ class TransactionController extends Controller
         }
     }
     #End Region Buyer
-    
+
     #Region Seller
     public function sellerIndex()
     {
@@ -213,7 +213,7 @@ class TransactionController extends Controller
         }
     }
 
-    
+
     public function newOrder()
     {
         try {
@@ -292,7 +292,7 @@ class TransactionController extends Controller
     public function sellerSearchTransaction($keyword)
     {
         try {
-            
+
             if (strlen(trim($keyword)) < 3) {
                 return $this->respondWithResult(false, 'Kata kunci minimal 3 karakter', 400);
             }
