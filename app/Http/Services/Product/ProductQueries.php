@@ -2,9 +2,11 @@
 
 namespace App\Http\Services\Product;
 
+use App\Http\Services\Service;
 use App\Models\Product;
 
-class ProductQueries{
+class ProductQueries extends Service
+{
     public function getAllProduct(){
         $data = Product::with(['product_stock', 'product_photo'])->paginate(10);
 

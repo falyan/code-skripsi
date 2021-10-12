@@ -2,11 +2,12 @@
 
 namespace App\Http\Services\Profile;
 
+use App\Http\Services\Service;
 use App\Models\Customer;
 use App\Models\Merchant;
 use Illuminate\Support\Facades\Auth;
 
-class ProfileQueries
+class ProfileQueries extends Service
 {
     public function getUser()
     {

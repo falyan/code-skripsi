@@ -2,9 +2,11 @@
 
 namespace App\Http\Services\Region;
 
+use App\Http\Services\Service;
 use App\Models\District;
 
-class RegionQueries{
+class RegionQueries extends Service
+{
     public function searchDistrict($keyword, $limit = 10){
         if (strlen($keyword) < 3){
             return false;

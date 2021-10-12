@@ -5,6 +5,7 @@ namespace App\Http\Services\Cart;
 use App\Http\Resources\Cart\DetailCartResource;
 use App\Http\Resources\Etalase\EtalaseCollection;
 use App\Http\Resources\Etalase\EtalaseResource;
+use App\Http\Services\Service;
 use App\Models\Cart;
 use App\Models\Customer;
 use App\Models\Etalase;
@@ -13,7 +14,8 @@ use App\Models\Product;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 
-class CartQueries{
+class CartQueries extends Service
+{
     public static function getTotalCart($related_customer_id, $buyer_id = null){
         $cart = Cart::findByRelatedId($buyer_id, $related_customer_id);
 

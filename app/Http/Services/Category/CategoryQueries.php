@@ -2,9 +2,11 @@
 
 namespace App\Http\Services\Category;
 
+use App\Http\Services\Service;
 use App\Models\MasterData;
 
-class CategoryQueries{
+class CategoryQueries extends Service
+{
     public function getAllCategory(){
         $category = MasterData::with(['child' => function($j)
         {$j->with(['child']);}])->where('type', 'product_category')->where('parent_id', null)->get();

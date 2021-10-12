@@ -2,7 +2,9 @@
 
 namespace App\Http\Services\Profile;
 
-class ProfileCommands
+use App\Http\Services\Service;
+
+class ProfileCommands extends Service
 {
     public function yourMethod()
     {

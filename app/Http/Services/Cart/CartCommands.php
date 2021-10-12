@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\Cart;
 
+use App\Http\Services\Service;
 use App\Models\Cart;
 use App\Models\CartDetail;
 use App\Models\Customer;
@@ -12,7 +13,7 @@ use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class CartCommands
+class CartCommands extends Service
 {
     public static function addCart()
     {

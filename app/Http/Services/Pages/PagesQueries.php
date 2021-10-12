@@ -2,9 +2,10 @@
 
 namespace App\Http\Services\Pages;
 
+use App\Http\Services\Service;
 use App\Models\Pages;
 
-class PagesQueries
+class PagesQueries extends Service
 {
     public static function termConditionPage()
     {

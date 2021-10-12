@@ -2,13 +2,15 @@
 
 namespace App\Http\Services\Etalase;
 
+use App\Http\Services\Service;
 use App\Models\Etalase;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class EtalaseCommands{
+class EtalaseCommands extends Service
+{
     public static function storeItem($request){
         try {
 

@@ -2,9 +2,10 @@
 
 namespace App\Http\Services\Transaction;
 
+use App\Http\Services\Service;
 use App\Models\Order;
 
-class TransactionQueries
+class TransactionQueries extends Service
 {
     public function getTransaction($column_name, $column_value)
     {

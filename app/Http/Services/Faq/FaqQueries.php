@@ -2,9 +2,10 @@
 
 namespace App\Http\Services\Faq;
 
+use App\Http\Services\Service;
 use App\Models\Faq;
 
-class FaqQueries
+class FaqQueries extends Service
 {
     public function getData()
     {

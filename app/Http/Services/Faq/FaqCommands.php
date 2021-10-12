@@ -2,7 +2,9 @@
 
 namespace App\Http\Services\Faq;
 
-class FaqCommands
+use App\Http\Services\Service;
+
+class FaqCommands extends Service
 {
     public static function deleteExample()
     {

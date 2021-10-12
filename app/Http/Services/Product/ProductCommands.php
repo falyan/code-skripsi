@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\Product;
 
+use App\Http\Services\Service;
 use App\Models\Product;
 use App\Models\ProductPhoto;
 use App\Models\ProductStock;
@@ -10,7 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class ProductCommands{
+class ProductCommands extends Service
+{
     public function createProduct($data){
         try {
             $rules = [

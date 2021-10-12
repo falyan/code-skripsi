@@ -2,7 +2,10 @@
 
 namespace App\Http\Services\Region;
 
-class RegionCommands{
+use App\Http\Services\Service;
+
+class RegionCommands extends Service
+{
     public function deleteExample(){
         //Commands here
     }

@@ -2,7 +2,10 @@
 
 namespace App\Http\Services\Example;
 
-class CategoryCommands{
+use App\Http\Services\Service;
+
+class CategoryCommands extends Service
+{
     public function deleteExample(){
         //Commands here
     }
