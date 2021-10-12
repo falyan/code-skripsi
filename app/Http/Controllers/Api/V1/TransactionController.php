@@ -90,10 +90,10 @@ class TransactionController extends Controller
     }
 
     #region Buyer
-    public function buyerIndex()
+    public function buyerIndex($related_id)
     {
         try {
-            if (!$rlc_id = request()->header('Related-Customer-Id')) {
+            if (empty($related_id)) {
                 return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
             }
 
@@ -101,7 +101,7 @@ class TransactionController extends Controller
                 $user = Customer::find(Auth::id());
                 $data = $this->transactionQueries->getTransaction('buyer_id', $user->id);
             } else {
-                $data = $this->transactionQueries->getTransaction('related_pln_mobile_customer_id', $rlc_id);
+                $data = $this->transactionQueries->getTransaction('related_pln_mobile_customer_id', $related_id);
             }
 
             if ($data->total() > 0) {
@@ -114,18 +114,18 @@ class TransactionController extends Controller
         }
     }
 
-    public function transactionToPay()
+    public function transactionToPay($related_id)
     {
         try {
-            if (!$rlc_id = request()->header('Related-Customer-Id')) {
+            if (empty($related_id)) {
                 return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
             }
 
             if (Auth::check()) {
                 $user = Customer::find(Auth::id());
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, [0]);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, ['00']);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $rlc_id, [0]);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['00']);
             }
 
             if ($data->total() > 0) {
@@ -138,10 +138,10 @@ class TransactionController extends Controller
         }
     }
 
-    public function transactionOnApprove()
+    public function transactionOnApprove($related_id)
     {
         try {
-            if (!$rlc_id = request()->header('Related-Customer-Id')) {
+            if (empty($related_id)) {
                 return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
             }
 
@@ -149,7 +149,7 @@ class TransactionController extends Controller
                 $user = Customer::find(Auth::id());
                 $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, [1]);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $rlc_id, [1]);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['01']);
             }
 
             if ($data->total() > 0) {
@@ -162,18 +162,18 @@ class TransactionController extends Controller
         }
     }
 
-    public function transactionOnDelivery()
+    public function transactionOnDelivery($related_id)
     {
         try {
-            if (!$rlc_id = request()->header('Related-Customer-Id')) {
+            if (empty($related_id)) {
                 return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
             }
 
             if (Auth::check()) {
                 $user = Customer::find(Auth::id());
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, [3, 8]);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, ['03', '08']);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $rlc_id, [3]);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['03', '08']);
             }
 
             if ($data->total() > 0) {
@@ -186,18 +186,18 @@ class TransactionController extends Controller
         }
     }
 
-    public function buyerTransactionDone()
+    public function buyerTransactionDone($related_id)
     {
         try {
-            if (!$rlc_id = request()->header('Related-Customer-Id')) {
+            if (empty($related_id)) {
                 return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
             }
 
             if (Auth::check()) {
                 $user = Customer::find(Auth::id());
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, [88]);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, ['88']);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $rlc_id, [88]);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['88']);
             }
 
             if ($data->total() > 0) {
@@ -210,18 +210,18 @@ class TransactionController extends Controller
         }
     }
 
-    public function buyerTransactionCanceled()
+    public function buyerTransactionCanceled($related_id)
     {
         try {
-            if (!$rlc_id = request()->header('Related-Customer-Id')) {
+            if (empty($related_id)) {
                 return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
             }
 
             if (Auth::check()) {
                 $user = Customer::find(Auth::id());
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, [99]);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, ['99']);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $rlc_id, [99]);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['99']);
             }
 
             if ($data->total() > 0) {
@@ -234,10 +234,10 @@ class TransactionController extends Controller
         }
     }
 
-    public function buyerSearchTransaction($keyword)
+    public function buyerSearchTransaction($related_id, $keyword)
     {
         try {
-            if (!$rlc_id = request()->header('Related-Customer-Id')) {
+            if (empty($related_id)) {
                 return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
             }
 
@@ -249,7 +249,7 @@ class TransactionController extends Controller
                 $user = Customer::find(Auth::id());
                 $data = $this->transactionQueries->searchTransaction('buyer_id', $user->id, $keyword);
             } else {
-                $data = $this->transactionQueries->searchTransaction('related_pln_mobile_customer_id', $rlc_id, $keyword);
+                $data = $this->transactionQueries->searchTransaction('related_pln_mobile_customer_id', $related_id, $keyword);
             }
 
             if ($data->total() > 0) {
@@ -262,7 +262,7 @@ class TransactionController extends Controller
         }
     }
     #End Region Buyer
-    
+
     #Region Seller
     public function sellerIndex()
     {
@@ -279,11 +279,11 @@ class TransactionController extends Controller
         }
     }
 
-    
+
     public function newOrder()
     {
         try {
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, [1]);
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['01']);
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
@@ -298,7 +298,7 @@ class TransactionController extends Controller
     public function orderToDeliver()
     {
         try {
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, [2]);
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['02']);
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
@@ -313,7 +313,7 @@ class TransactionController extends Controller
     public function orderInDelivery()
     {
         try {
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, [3,8]);
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['03', '08']);
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
@@ -328,7 +328,7 @@ class TransactionController extends Controller
     public function orderDone()
     {
         try {
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, [88]);
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['88']);
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
@@ -343,7 +343,7 @@ class TransactionController extends Controller
     public function sellerTransactionCanceled()
     {
         try {
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, [99]);
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['99']);
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
@@ -358,7 +358,7 @@ class TransactionController extends Controller
     public function sellerSearchTransaction($keyword)
     {
         try {
-            
+
             if (strlen(trim($keyword)) < 3) {
                 return $this->respondWithResult(false, 'Kata kunci minimal 3 karakter', 400);
             }

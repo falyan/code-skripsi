@@ -9,7 +9,9 @@ class TransactionQueries
     public function getTransaction($column_name, $column_value)
     {
         $data = Order::with([
-            'detail', 'progress_active', 'merchant', 'delivery', 'buyer'
+            'detail' => function ($product){
+                $product->with(['product']);
+            }, 'progress_active', 'merchant', 'delivery', 'buyer'
         ])->where($column_name, $column_value)->paginate(10);
         return $data;
     }
@@ -17,7 +19,9 @@ class TransactionQueries
     public function getTransactionWithStatusCode($column_name, $column_value, $status_code)
     {
         $data = Order::with([
-            'detail', 'progress_active', 'merchant', 'delivery', 'buyer'
+            'detail' => function ($product){
+                $product->with(['product']);
+            }, 'progress_active', 'merchant', 'delivery', 'buyer'
         ])->where([
             [$column_name, $column_value],
         ])->whereHas('progress_active', function ($j) use ($status_code) {
@@ -29,15 +33,19 @@ class TransactionQueries
     public function getDetailTransaction($order_id)
     {
         $data = Order::with([
-            'detail', 'progress_active', 'merchant', 'delivery', 'buyer'
+            'detail' => function ($product){
+                $product->with(['product']);
+            }, 'progress_active', 'merchant', 'delivery', 'buyer'
         ])->find($order_id);
         return $data;
     }
 
     public function searchTransaction($column_name, $column_value, $keyword)
-    {      
+    {
         $data = Order::with([
-                'detail', 'progress_active', 'merchant', 'delivery', 'buyer'
+                'detail' => function ($product){
+                    $product->with(['product']);
+                }, 'progress_active', 'merchant', 'delivery', 'buyer'
             ])
             ->leftjoin('order_detail', 'order_detail.order_id', '=', 'order.id')
             ->leftjoin('product', 'order_detail.product_id', '=', 'product.id')

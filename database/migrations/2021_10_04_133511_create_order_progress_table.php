@@ -16,12 +16,14 @@ class CreateOrderProgressTable extends Migration
         Schema::create('order_progress', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('order_id');
-            $table->integer('status_code');
+            $table->string('status_code');
             $table->string('status_name');
             $table->string('note')->nullable();
             $table->smallInteger('status');
             $table->timestamps();
             $table->softDeletes();
+            $table->string('created_by');
+            $table->string('updated_by');
         });
     }
 

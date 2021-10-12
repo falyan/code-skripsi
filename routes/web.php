@@ -123,14 +123,14 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'transaction'], static function () use ($router) {
-                $router->get('/', 'TransactionController@buyerIndex');
-                $router->get('/detail/{id}', 'TransactionController@detailTransaction');
-                $router->get('/on-payment', 'TransactionController@transactionToPay');
-                $router->get('/on-approve', 'TransactionController@transactionOnApprove');
-                $router->get('/on-delivery', 'TransactionController@transactionOnDelivery');
-                $router->get('/done', 'TransactionController@buyerTransactionDone');
-                $router->get('/canceled', 'TransactionController@buyerTransactionCanceled');
-                $router->get('/search/{keyword}', 'TransactionController@buyerSearchTransaction');
+                $router->get('/{related_id}', 'TransactionController@buyerIndex');
+                $router->get('/{related_id}/detail/{id}', 'TransactionController@detailTransaction');
+                $router->get('/{related_id}/on-payment', 'TransactionController@transactionToPay');
+                $router->get('/{related_id}/on-approve', 'TransactionController@transactionOnApprove');
+                $router->get('/{related_id}/on-delivery', 'TransactionController@transactionOnDelivery');
+                $router->get('/{related_id}/done', 'TransactionController@buyerTransactionDone');
+                $router->get('/{related_id}/canceled', 'TransactionController@buyerTransactionCanceled');
+                $router->get('/{related_id}/search/{keyword}', 'TransactionController@buyerSearchTransaction');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
@@ -142,9 +142,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'cart'], static function () use ($router) {
                 $router->post('add', 'CartController@add');
-                $router->delete('delete', 'CartController@destroy');
-                $router->patch('qty/update', 'CartController@qtyUpdate');
-            });    
+                $router->delete('delete/{cart_detail_id}/{cart_id}', 'CartController@destroy');
+                $router->post('qty/update/{cart_detail_id}/{cart_id}', 'CartController@qtyUpdate');
+            });
         });
     });
 
