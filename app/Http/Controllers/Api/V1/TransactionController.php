@@ -27,7 +27,7 @@ class TransactionController extends Controller
     }
 
     // Checkout
-    public function checkout()
+    public function checkout($related_pln_mobile_customer_id)
     {
         $validator = Validator::make(request()->all(), [
             'merchants' => 'required|array',
@@ -36,7 +36,6 @@ class TransactionController extends Controller
             'merchants.*.delivery_method' => 'required',
             'merchants.*.total_amount' => 'required',
             'merchants.*.total_payment' => 'required',
-            'merchants.*.related_pln_mobile_customer_id' => 'required',
             'merchants.*.products' => 'required',
             'merchants.*.products.*.product_id' => 'required',
             'merchants.*.products.*.quantity' => 'required',
@@ -56,7 +55,12 @@ class TransactionController extends Controller
             return $this->respondValidationError($validator->errors(), 'Validation Error!');
         }
 
+        
         try {
+            if (!Customer::where('related_pln_mobile_customer_id', $related_pln_mobile_customer_id)->exists()) {
+                throw new Exception('Customer tidak ditemukan', 404);
+            }
+
             array_map(function($merchant) {
                 array_map(function($item) {
                     if (!$product = Product::find(data_get($item, 'product_id'))) {
@@ -67,8 +71,7 @@ class TransactionController extends Controller
                     }
                 }, data_get($merchant, 'products'));
             }, request()->get('merchants'));
-            $checkout = $this->transactionCommand->createOrder(request()->get('merchants'));
-            return response()->json($checkout);
+            return $this->transactionCommand->createOrder(request()->all(), $related_pln_mobile_customer_id);
         } catch (Exception $th) {
             if (in_array($th->getCode(), $this->error_codes)) {
                 return $this->respondWithResult(false, $th->getMessage(), $th->getCode());

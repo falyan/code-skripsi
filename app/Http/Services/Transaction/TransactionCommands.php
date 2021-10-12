@@ -10,23 +10,25 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Http\Services\Service;
+use App\Models\Customer;
+use App\Models\OrderDelivery;
 use App\Models\OrderPayment;
 use Ramsey\Uuid\Uuid;
 
 class TransactionCommands extends Service
 {
-    public function createOrder($datas)
+    public function createOrder($datas, $related_pln_mobile_customer_id)
     {
         DB::beginTransaction();
         try {
             $no_reference = Uuid::uuid4();
             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now())->setTimezone('Asia/Jakarta')->timestamp);
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now()->addDay())->setTimezone('Asia/Jakarta')->timestamp);
-
-            array_map(function ($data) use ($no_reference, $trx_date, $exp_date) {
+            
+            array_map(function ($data) use ($datas, $related_pln_mobile_customer_id, $no_reference, $trx_date, $exp_date) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
-                $order->buyer_id = Auth::user()->id;
+                $order->buyer_id = Customer::where('related_pln_mobile_customer_id', $related_pln_mobile_customer_id)->first()->id;
                 $order->trx_no = static::invoice_num(static::nextOrderId(), 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
                 $order->order_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now())->setTimezone('Asia/Jakarta')->timestamp);
                 $order->total_amount = data_get($data, 'total_amount');
@@ -34,7 +36,7 @@ class TransactionCommands extends Service
                 $order->total_weight = data_get($data, 'total_weight');
                 $order->payment_method = null;
                 $order->delivery_method = data_get($data, 'delivery_method');
-                $order->related_pln_mobile_customer_id = data_get($data, 'related_pln_mobile_customer_id');
+                $order->related_pln_mobile_customer_id = $related_pln_mobile_customer_id;
                 $order->no_reference = $no_reference;
                 $order->save();
 
@@ -64,16 +66,30 @@ class TransactionCommands extends Service
                 $order_progress->status = 1;
                 $order_progress->save();
 
+                $order_delivery = new OrderDelivery();
+                $order_delivery->order_id = $order->id;
+                $order_delivery->receiver_name = data_get($datas, 'destination_info.receiver_name');
+                $order_delivery->receiver_phone = data_get($datas, 'destination_info.receiver_phone');
+                $order_delivery->address = data_get($datas, 'destination_info.address');
+                $order_delivery->city_id = data_get($datas, 'destination_info.city_id');
+                $order_delivery->district_id = data_get($datas, 'destination_info.district_id');
+                $order_delivery->postal_code = data_get($datas, 'destination_info.postal_code');
+                $order_delivery->latitude = data_get($datas, 'destination_info.latitude');
+                $order_delivery->longitude = data_get($datas, 'destination_info.longitude');
+                $order_delivery->shipping_type = data_get($data, 'delivery_service');
+                $order_delivery->awb_number = null;
+                $order_delivery->save();
+
                 $order_payment = new OrderPayment();
                 $order_payment->order_id = $order->id;
-                $order_payment->customer_id = data_get($data, 'related_pln_mobile_customer_id');
+                $order_payment->customer_id = $related_pln_mobile_customer_id;
                 $order_payment->payment_amount = data_get($data, 'payment_amount');
                 $order_payment->date_created = $trx_date;
                 $order_payment->date_expired = $exp_date;
                 $order_payment->payment_method = null;
                 $order_payment->booking_code = null;
                 $order_payment->payment_note = data_get($data, 'payment_note') ?? null;
-            }, $datas);
+            }, data_get($datas, 'merchants'));
             DB::commit();
             
             return [
