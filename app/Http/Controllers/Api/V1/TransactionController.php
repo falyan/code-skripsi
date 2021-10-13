@@ -30,6 +30,7 @@ class TransactionController extends Controller
     public function checkout($related_pln_mobile_customer_id)
     {
         $validator = Validator::make(request()->all(), [
+            'destination_info.receiver_name' => 'required',
             'merchants' => 'required|array',
             'merchants.*.merchant_id' => 'required',
             'merchants.*.total_weight' => 'required',

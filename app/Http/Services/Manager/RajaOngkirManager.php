@@ -111,7 +111,7 @@ class RajaOngkirManager {
       throw new Exception($response->rajaongkir->status->description, $response->rajaongkir->status->code);
     }
     
-    return new RajaongkirResources(data_get($response, 'rajaongkir'));
+    return new RajaongkirResources($response);
   }
 
   static function setParamAPI($data = [])

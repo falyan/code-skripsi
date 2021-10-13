@@ -14,22 +14,23 @@ class RajaongkirResources extends JsonResource
      */
     public function toArray($request)
     {
+
         return [
             'asal_pengiriman' => [
-                'district_id' => $this->origin_details->subdistrict_id,
-                'district_name' => $this->origin_details->subdistrict_name,
-                'city_id' => $this->origin_details->city_id,
-                'city_name' => $this->origin_details->city,
-                'province_id' => $this->origin_details->province_id,
-                'province_name' => $this->origin_details->province,
+                'district_id' => $this->rajaongkir->origin_details->subdistrict_id,
+                'district_name' => $this->rajaongkir->origin_details->subdistrict_name,
+                'city_id' => $this->rajaongkir->origin_details->city_id,
+                'city_name' => $this->rajaongkir->origin_details->city,
+                'province_id' => $this->rajaongkir->origin_details->province_id,
+                'province_name' => $this->rajaongkir->origin_details->province,
             ],
             'tujuan_pengiriman' => [
-                'district_id' => $this->destination_details->subdistrict_id,
-                'district_name' => $this->destination_details->subdistrict_name,
-                'city_id' => $this->destination_details->city_id,
-                'city_name' => $this->destination_details->city,
-                'province_id' => $this->destination_details->province_id,
-                'province_name' => $this->destination_details->province,
+                'district_id' => $this->rajaongkir->destination_details->subdistrict_id,
+                'district_name' => $this->rajaongkir->destination_details->subdistrict_name,
+                'city_id' => $this->rajaongkir->destination_details->city_id,
+                'city_name' => $this->rajaongkir->destination_details->city,
+                'province_id' => $this->rajaongkir->destination_details->province_id,
+                'province_name' => $this->rajaongkir->destination_details->province,
             ],
             'couriers' => array_map(function ($courier) {
                 return [
@@ -49,7 +50,7 @@ class RajaongkirResources extends JsonResource
                         ];
                     }, $courier->costs)
                 ];
-            }, $this->results),
+            }, $this->rajaongkir->results),
         ];
     }
 }
