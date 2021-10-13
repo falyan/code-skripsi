@@ -23,6 +23,7 @@ class CreateNotificationTable extends Migration
             $table->string('message')->nullable();
             $table->string('url_path')->nullable();
             $table->smallInteger('status')->nullable();
+            $table->string('related_pln_mobile_customer_id')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();
