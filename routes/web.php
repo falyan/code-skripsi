@@ -48,6 +48,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('/{id}/approve', 'TransactionController@approveOrder');
                     $router->post('/{id}/reject', 'TransactionController@rejectOrder');
                     $router->post('/{id}/deliver', 'TransactionController@deliverOrder');
+                    $router->post('accept/{order_id}', 'TransactionController@acceptOrder');
+                    $router->post('reject/{order_id}', 'TransactionController@rejectOrder');
+                    $router->post('awb-number/{order_id}/{awb}', 'TransactionController@addAwbNumberOrder');
                 });
             });
 
