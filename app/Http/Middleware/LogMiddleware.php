@@ -19,8 +19,8 @@ class LogMiddleware
         $response = $next($request);
 
         $log_response = $response->original;
-        if (!empty($log_response['token'])) {
-            $log_response['token'] = "hiddentoken";
+        if (!empty(data_get($log_response, 'token'))) {
+            $log_response->token = "hiddentoken";
         }
 
         Log::info($uid, [
