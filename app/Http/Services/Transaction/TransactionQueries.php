@@ -11,7 +11,9 @@ class TransactionQueries extends Service
     {
         $data = Order::with([
             'detail' => function ($product){
-                $product->with(['product']);
+                $product->with(['product' => function($j){
+                    $j->with(['product_photo']);
+                }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer'
         ])->where($column_name, $column_value)->paginate(10);
         return $data;
@@ -21,7 +23,9 @@ class TransactionQueries extends Service
     {
         $data = Order::with([
             'detail' => function ($product){
-                $product->with(['product']);
+                $product->with(['product' => function($j){
+                    $j->with(['product_photo']);
+                }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer'
         ])->where([
             [$column_name, $column_value],
@@ -35,7 +39,9 @@ class TransactionQueries extends Service
     {
         $data = Order::with([
             'detail' => function ($product){
-                $product->with(['product']);
+                $product->with(['product' => function($j){
+                    $j->with(['product_photo']);
+                }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer'
         ])->find($order_id);
         return $data;
@@ -45,7 +51,9 @@ class TransactionQueries extends Service
     {
         $data = Order::with([
                 'detail' => function ($product){
-                    $product->with(['product']);
+                    $product->with(['product' => function($j){
+                        $j->with(['product_photo']);
+                    }]);
                 }, 'progress_active', 'merchant', 'delivery', 'buyer'
             ])
             ->leftjoin('order_detail', 'order_detail.order_id', '=', 'order.id')
