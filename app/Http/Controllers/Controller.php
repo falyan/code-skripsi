@@ -118,7 +118,7 @@ class Controller extends BaseController
         return response()->json($result, 400, $headers);
     }
 
-    public function respondErrorException(Exception $e, Request $request)
+    public function respondErrorException($e, Request $request)
     {
         $message = $e->getMessage();
         $error = ("{$message}\r\nFile {$e->getFile()}:{$e->getLine()} with message {$e->getMessage()}\r\n{$e->getTraceAsString()}");
