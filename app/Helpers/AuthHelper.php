@@ -13,7 +13,7 @@ class AuthHelper extends Controller{
 
     public function __construct()
     {
-        $this->url = env('AUTH_URL', 'http://gandalf.test');
+        $this->url = env('AUTH_URL', 'http://pln-marketplace-gandalf-development:8080');
 
         $this->client = new Client();
     }
@@ -22,7 +22,7 @@ class AuthHelper extends Controller{
     {
 
         try{
-            $res = $this->client->request('POST' ,$this->url . '/' .$uri_path, [
+            $res = $this->client->request('POST' ,$this->url . '/auth/' .$uri_path, [
                 'headers' => $headers,
                 'form_params' => $data
             ]);
