@@ -29,16 +29,20 @@ class ProfileController extends Controller
             $data = Customer::with(['merchant' => function($j){$j->with(['operationals']);}])->find($user->id);
 
             return $this->respondWithData($data, 'Success get user info', 200);
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, $request);
         }
     }
     public function logout(Request $request)
     {
-        Auth::logout();
-        $authReq = new AuthHelper();
-        $body = $authReq->privateService('logout', [], $request->header());
-
-        return $this->respondWithResult(true, 'Berhasil Logout');
+        try {
+            Auth::logout();
+            $authReq = new AuthHelper();
+            $body = $authReq->privateService('logout', [], $request->header());
+    
+            return $this->respondWithResult(true, 'Berhasil Logout');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, $request);
+        }
     }
 }

@@ -29,11 +29,8 @@ class MerchantController extends Controller
             };
             
             return MerchantCommands::aturToko(request()->all(), Auth::user()->merchant_id);
-        } catch (\Throwable $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], $th->getCode());
-            }
-            return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], 404);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -41,11 +38,8 @@ class MerchantController extends Controller
     {
         try {
             return MerchantQueries::homepageProfile(Auth::user()->merchant_id);
-        } catch (Exception $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -53,11 +47,8 @@ class MerchantController extends Controller
     {
         try {
             return $this->respondWithData(MerchantQueries::publicProfile($merchant_id), 'Berhasil mendapatkan data toko');
-        } catch (Exception $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -74,11 +65,8 @@ class MerchantController extends Controller
         try {
             MerchantCommands::createOrUpdateExpedition(request()->get('list_expeditions'));
             return $this->respondWithData(Merchant::with('expedition')->where('id', Auth::user()->merchant->id)->firstOrFail(), 'Layanan ekspedisi berhasil disimpan');
-        } catch (Exception $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 }

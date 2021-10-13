@@ -19,6 +19,10 @@ class RegionController extends Controller
 
     //Search Region
     public function searchDistrict($keyword, $limit = 10){
-        return $this->regionQueries->searchDistrict($keyword, $limit);
+        try {
+            return $this->regionQueries->searchDistrict($keyword, $limit);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
     }
 }

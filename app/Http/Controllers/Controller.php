@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Laravel\Lumen\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class Controller extends BaseController
 {
@@ -112,6 +116,32 @@ class Controller extends BaseController
         ];
 
         return response()->json($result, 400, $headers);
+    }
+
+    public function respondErrorException($e, Request $request)
+    {
+        $message = $e->getMessage();
+        $error = ("{$message}\r\nFile {$e->getFile()}:{$e->getLine()} with message {$e->getMessage()}\r\n{$e->getTraceAsString()}");
+
+        $uid = Str::random(12);
+        Log::error($uid, [
+            'path_url' => $request->path(),
+            'query' =>  $request->query(),
+            'body' => $request->except(['password', 'c_password', 'bearer', 'bearer_token', 'related_id', 'related_customer_id']),
+            'error' => $error
+        ]);
+
+        $data = [
+            'success' => false, 
+            'status_code' => $e->getCode(), 
+            'message' => $message
+        ];
+
+        if (in_array($e->getCode(), $this->error_codes)) {
+            return response()->json($data, $e->getCode(), $request->header);
+        }
+
+        return response()->json($data, 404);
     }
     
 }

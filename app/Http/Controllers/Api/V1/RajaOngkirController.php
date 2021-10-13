@@ -16,15 +16,22 @@ use Illuminate\Support\Facades\Validator;
 
 class RajaOngkirController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->rajaongkirManager = new RajaOngkirManager();
+    }
+
     public function getProvince($province_id = null)
     {
         try {
             return RajaOngkirManager::getProvinces($province_id);
-        } catch (Exception $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -32,14 +39,11 @@ class RajaOngkirController extends Controller
     {
         try {
             return RajaOngkirManager::getSubdistrict($district, $city_id);
-        } catch (Exception $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
-    
+
     public function injectProvince()
     {
         try {
@@ -54,12 +58,9 @@ class RajaOngkirController extends Controller
 
             DB::commit();
             return $this->respondWithResult(true, 'Success inject data');
-        } catch (Exception $th) {
+        } catch (Exception $e) {
             DB::rollBack();
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+            return $this->respondErrorException($e, request());
         }
     }
     public function injectCity()
@@ -78,12 +79,9 @@ class RajaOngkirController extends Controller
 
             DB::commit();
             return $this->respondWithResult(true, 'Success inject data');
-        } catch (Exception $th) {
+        } catch (Exception $e) {
             DB::rollBack();
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -104,12 +102,9 @@ class RajaOngkirController extends Controller
             }
             DB::commit();
             return $this->respondWithResult(true, 'Success inject data');
-        } catch (Exception $th) {
+        } catch (Exception $e) {
             DB::rollBack();
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -127,12 +122,9 @@ class RajaOngkirController extends Controller
             DB::commit();
 
             return $this->respondWithResult(true, 'Success update data');
-        } catch (Exception $th) {
+        } catch (Exception $e) {
             DB::rollBack();
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -150,16 +142,13 @@ class RajaOngkirController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->respondValidationError($validator->errors(), 'Validation Error!');
+            return $this->respondValidationError($validator->messages()->get('*'), 'Validation Error!');
         }
 
         try {
             return RajaOngkirManager::getOngkir(request()->only(['origin_district_id','destination_district_id','weight','courier']));
-        } catch (Exception $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -175,11 +164,19 @@ class RajaOngkirController extends Controller
                     ];
                 }, MasterData::where('type', 'rajaongkir_courier')->orderBy('value', 'ASC')->get()->toArray())
             ];
-        } catch (Exception $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function trackOrder()
+    {
+        try {
+            $trx_no = request()->input('trx_no');
+//            dd($this->rajaongkirManager->trackOrder($trx_no));
+            return response()->json(['data' => $this->rajaongkirManager->trackOrder($trx_no)]);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 }

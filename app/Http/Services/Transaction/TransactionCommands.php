@@ -13,6 +13,7 @@ use App\Http\Services\Service;
 use App\Models\Customer;
 use App\Models\OrderDelivery;
 use App\Models\OrderPayment;
+use Monolog\Handler\IFTTTHandler;
 use Ramsey\Uuid\Uuid;
 
 class TransactionCommands extends Service
@@ -24,7 +25,7 @@ class TransactionCommands extends Service
             $no_reference = Uuid::uuid4();
             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now())->setTimezone('Asia/Jakarta')->timestamp);
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now()->addDay())->setTimezone('Asia/Jakarta')->timestamp);
-            
+
             array_map(function ($data) use ($datas, $related_pln_mobile_customer_id, $no_reference, $trx_date, $exp_date) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
@@ -57,7 +58,7 @@ class TransactionCommands extends Service
                     $order_detail->total_amount = data_get($product, 'total_amount');
                     $order_detail->save();
                 }, data_get($data, 'products'));
-                    
+
                 $order_progress = new OrderProgress();
                 $order_progress->order_id = $order->id;
                 $order_progress->status_code = 0;
@@ -91,7 +92,7 @@ class TransactionCommands extends Service
                 $order_payment->payment_note = data_get($data, 'payment_note') ?? null;
             }, data_get($datas, 'merchants'));
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Berhasil create order',
@@ -120,7 +121,7 @@ class TransactionCommands extends Service
         $old_order_progress = OrderProgress::where('order_id', $order_id)->get();
         $total = count($old_order_progress) ?? 0;
         if ($total >= 0) {
-            for ($i=0; $i < $total; $i++) { 
+            for ($i=0; $i < $total; $i++) {
                 $old_order_progress[$i]->status = 0;
                 $old_order_progress[$i]->save();
             }
@@ -129,19 +130,43 @@ class TransactionCommands extends Service
         $new_order_progress = new OrderProgress();
         $new_order_progress->order_id = $order_id;
         $new_order_progress->status_code = $status_code;
-        $new_order_progress->status_name = $this->status_order[$status_code];
+        $new_order_progress->status_name = parent::$status_order[$status_code];
         $new_order_progress->note = $note;
         $new_order_progress->status = 1;
-        $new_order_progress->save();
+
+        if (!$new_order_progress->save()){
+            $response['success'] = false;
+            $response['message'] = 'Gagal merubah status pesanan';
+            return $response;
+        }
+        $response['success'] = true;
+        $response['message'] = 'Berhasil merubah status pesanan';
+        $response['status_code'] = $status_code;
+        return $response;
+    }
+
+    public function addAwbNumber($order_id, $awb){
+        $delivery = OrderDelivery::where('order_id', $order_id)->first();
+        $delivery->awb_number = $awb;
+
+        if (!$delivery->save()){
+            $response['success'] = false;
+            $response['message'] = 'Gagal menambahkan nomor resi';
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil menambahkan nomor resi';
+        return $response;
     }
 
     static function invoice_num ($input, $pad_len = 3, $prefix = null) {
         if ($pad_len <= strlen($input))
         $pad_len++;
-        
+
         if (is_string($prefix))
         return sprintf("%s%s", $prefix, str_pad($input, $pad_len, "0", STR_PAD_LEFT));
-        
+
         return str_pad($input, $pad_len, "0", STR_PAD_LEFT);
-    }    
+    }
 };

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Services\Category\CategoryQueries;
+use Exception;
 
 class CategoryController extends Controller
 {
@@ -18,10 +19,18 @@ class CategoryController extends Controller
     }
 
     public function getAllCategory(){
-        return $this->categoryQueries->getAllCategory();
+        try {
+            return $this->categoryQueries->getAllCategory();
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
     }
 
     public function getThreeRandomCategory(){
-        return $this->categoryQueries->getThreeRandomCategory();
+        try {
+            return $this->categoryQueries->getThreeRandomCategory();   
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
     }
 }

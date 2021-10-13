@@ -53,10 +53,10 @@ class TransactionController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->respondValidationError($validator->errors(), 'Validation Error!');
+            return $this->respondValidationError($validator->messages()->get('*'), 'Validation Error!');
         }
 
-        
+
         try {
             if (!Customer::where('related_pln_mobile_customer_id', $related_pln_mobile_customer_id)->exists()) {
                 throw new Exception('Customer tidak ditemukan', 404);
@@ -73,11 +73,8 @@ class TransactionController extends Controller
                 }, data_get($merchant, 'products'));
             }, request()->get('merchants'));
             return $this->transactionCommand->createOrder(request()->all(), $related_pln_mobile_customer_id);
-        } catch (Exception $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -101,8 +98,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(true, 'belum ada transaksi');
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -125,8 +122,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(true, 'tidak ada transaksi yang belum dibayar');
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -149,8 +146,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(true, 'tidak ada transaksi yang menunggu persetujuan');
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -173,8 +170,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(true, 'tidak ada transaksi yang sedang dikirim');
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -197,8 +194,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(true, 'belum ada transaksi yang selesai');
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -221,8 +218,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(true, 'tidak ada transaksi yang dibatalkan');
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -249,8 +246,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan');
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
     #End Region Buyer
@@ -266,8 +263,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(true, 'belum ada transaksi');
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -282,8 +279,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(true, 'belum ada pesanan baru');
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -297,8 +294,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(true, 'belum ada pesanan yang siap dikirim');
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -312,8 +309,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(true, 'tidak ada pesanan yang sedang dikirim');
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -327,8 +324,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(true, 'belum ada pesanan yang berhasil');
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -342,8 +339,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(true, 'belum ada pesanan yang dibatalkan');
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -362,8 +359,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan');
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
     #End Region
@@ -378,8 +375,8 @@ class TransactionController extends Controller
             }else {
                 return $this->respondWithResult(false, 'ID transaksi salah', 400);
             }
-        } catch (Exception $ex) {
-            return $this->respondWithResult(false, $ex->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -407,5 +404,39 @@ class TransactionController extends Controller
             }, data_get($merchant, 'products'));
         }, $merchants);
         $error;
+    }
+
+    public function acceptOrder($order_id){
+        try {
+            return $this->transactionCommand->updateOrderStatus($order_id, '02');
+        }catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function rejectOrder($order_id){
+        try {
+            $notes = request()->input('notes');
+            return $this->transactionCommand->updateOrderStatus($order_id, '99', $notes);
+        }catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function addAwbNumberOrder($order_id, $awb){
+        try {
+            $response = $this->transactionCommand->addAwbNumber($order_id, $awb);
+            if ($response['success'] == false){
+                return $response;
+            }
+            $status = $this->transactionCommand->updateOrderStatus($order_id, '03');
+            if ($status['success'] == false){
+                return $status;
+            }
+
+            return $response;
+        }catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
     }
 }

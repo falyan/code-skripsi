@@ -24,7 +24,7 @@ class SettingProfileController extends Controller
                 'toko' => $this->profileQueries->getMerchant()
             ], 'Success get your profile information', 200);
         } catch (Exception $e) {
-            return $this->respondWithResult(false, $e->getMessage(), 500);
+            return $this->respondErrorException($e, request());
         }
     }
 }

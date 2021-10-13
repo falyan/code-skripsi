@@ -1,8 +1,9 @@
-<?php 
+<?php
 
 namespace App\Http\Services\Manager;
 
 use App\Http\Resources\Rajaongkir\RajaongkirResources;
+use App\Models\Order;
 use Exception;
 use GuzzleHttp\Client;
 
@@ -27,9 +28,9 @@ class RajaOngkirManager {
     $param = static::setParamAPI([
       'id' => $province_id
     ]);
-    
+
     $url = sprintf('%s/%s', static::$apiendpoint, 'api/province' . $param);
-    
+
     $response = static::$curl->request('GET', $url, [
       'headers' => [
         'key' => static::$appkey
@@ -48,9 +49,9 @@ class RajaOngkirManager {
       'province' => $province_id,
       'id' => $city_id
     ]);
-    
+
     $url = sprintf('%s/%s', static::$apiendpoint, 'api/city' . $param);
-    
+
     $response = static::$curl->request('GET', $url, [
       'headers' => [
         'key' => static::$appkey
@@ -69,9 +70,9 @@ class RajaOngkirManager {
       'id' => $id,
       'city' => $city_id
     ]);
-    
+
     $url = sprintf('%s/%s', static::$apiendpoint, 'api/subdistrict' . $param);
-    
+
     $response = static::$curl->request('GET', $url, [
       'headers' => [
         'key' => static::$appkey
@@ -104,7 +105,7 @@ class RajaOngkirManager {
     ]);
 
     $response = json_decode($response->getBody());
-    
+
     throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
     if ($response->rajaongkir->status->code != 200) {
@@ -112,6 +113,33 @@ class RajaOngkirManager {
     }
     
     return new RajaongkirResources($response);
+  }
+
+  public static function trackOrder($trx_no)
+  {
+      $param = static::setParamAPI([]);
+
+      $url = sprintf('%s/%s', static::$apiendpoint, 'api/waybill');
+
+      $order = Order::where('trx_no', $trx_no)->first();
+      $response = static::$curl->request('POST', $url, [
+          'headers' => static::$header,
+          'http_errors' => false,
+          'json' => [
+              'waybill' => $order->delivery->awb_number,
+              'courier' => $order->delivery_method,
+          ]
+      ]);
+
+      $response = json_decode($response->getBody());
+
+      throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+
+      if ($response->rajaongkir->status->code != 200) {
+          throw new Exception($response->rajaongkir->status->description, $response->rajaongkir->status->code);
+      }
+
+      return $response;
   }
 
   static function setParamAPI($data = [])

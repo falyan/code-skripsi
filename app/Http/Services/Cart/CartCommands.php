@@ -20,12 +20,13 @@ class CartCommands extends Service
         $getRelationMobile = request('related_pln_mobile_customer_id');
         $getProductId = request('product_id');
         $buyerID = request('buyer_id') ? request('buyer_id') : null;
+        $related_merchant_id = request('related_merchant_id') ? request('related_merchant_id') : null;
         // $getUser = Customer::findByrelatedCustomerId($related_customer_id);
 
         DB::beginTransaction();
 
         try {
-            $cart = Cart::where('related_pln_mobile_customer_id', $getRelationMobile)->first();
+            $cart = Cart::where([['related_pln_mobile_customer_id', $getRelationMobile], ['merchant_id', $related_merchant_id]])->first();
 
             if ($cart) {
                 $productExists = $cart->cart_detail->where('product_id', $getProductId)
@@ -40,20 +41,21 @@ class CartCommands extends Service
                         'cart_id' => $cart->id,
                         'product_id' => request('product_id'),
                         'quantity' => 1,
-                        'related_merchant_id' => request('related_merchant_id')
+                        'related_merchant_id' => $related_merchant_id
                     ]);
                 }
             } else {
                 $cartCreate = Cart::create([
                     'related_pln_mobile_customer_id' => request('related_pln_mobile_customer_id'),
-                    'buyer_id' => $buyerID
+                    'buyer_id' => $buyerID,
+                    'merchant_id' => $related_merchant_id
                 ]);
 
                 $cartDetail = CartDetail::create([
                     'cart_id' => $cartCreate->id,
                     'product_id' => request('product_id'),
                     'quantity' => 1,
-                    'related_merchant_id' => request('related_merchant_id')
+                    'related_merchant_id' => $related_merchant_id
                 ]);
             }
 
