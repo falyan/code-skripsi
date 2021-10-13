@@ -115,7 +115,8 @@ class RajaOngkirManager {
     return new RajaongkirResources(data_get($response, 'rajaongkir'));
   }
 
-  public static function trackOrder($trx_no){
+  public static function trackOrder($trx_no)
+  {
       $param = static::setParamAPI([]);
 
       $url = sprintf('%s/%s', static::$apiendpoint, 'api/waybill');
@@ -138,7 +139,7 @@ class RajaOngkirManager {
           throw new Exception($response->rajaongkir->status->description, $response->rajaongkir->status->code);
       }
 
-      return new RajaongkirResources(data_get($response, 'rajaongkir'));
+      return $response;
   }
 
   static function setParamAPI($data = [])

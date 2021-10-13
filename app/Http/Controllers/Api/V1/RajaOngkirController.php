@@ -169,10 +169,14 @@ class RajaOngkirController extends Controller
         }
     }
 
-    public function trackOrder($trx_no){
+    public function trackOrder()
+    {
         try {
-            return $this->rajaongkirManager->trackOrder($trx_no);
-        }catch (Exception $e) {
+            $trx_no = request()->input('trx_no');
+//            dd($this->rajaongkirManager->trackOrder($trx_no));
+            return response()->json(['data' => $this->rajaongkirManager->trackOrder($trx_no)]);
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
+    }
 }

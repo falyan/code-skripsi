@@ -22,7 +22,7 @@ class LogMiddleware
         if (!empty($log_response['token'])) {
             $log_response['token'] = "hiddentoken";
         }
-        
+
         Log::info($uid, [
             'path_url' => $request->path(),
             'query' =>  $request->query(),
