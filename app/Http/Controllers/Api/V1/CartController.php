@@ -35,11 +35,8 @@ class CartController extends Controller
     {
         try {
             return $this->respondWithData(CartQueries::getTotalCart($rlc_id, $buyer_id), 'Sukses ambil data keranjang');
-        } catch (Exception $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -67,11 +64,8 @@ class CartController extends Controller
                 'status' => 'success',
                 'message' => $data
             ], 200);
-        } catch (\Throwable $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], $th->getCode());
-            }
-            return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], 404);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -87,11 +81,8 @@ class CartController extends Controller
             }
 
             return CartCommands::QuantityUpdate($cart_detail_id, $cart_id);
-        } catch (\Throwable $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], $th->getCode());
-            }
-            return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], 404);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, $request);
         }
     }
 
@@ -99,22 +90,16 @@ class CartController extends Controller
     {
         try {
             return CartCommands::deleteProduct($cart_detail_id, $cart_id);
-        } catch (\Throwable $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], $th->getCode());
-            }
-            return response()->json(['error' => ['code' => 'ERROR', 'http_code' => $th->getCode(), 'message' => $th->getMessage()]], 404);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
     public function showDetail($buyer_id = null, $related_id){
         try {
             return CartQueries::getDetailCart($buyer_id, $related_id);
-        } catch (\Throwable $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 }

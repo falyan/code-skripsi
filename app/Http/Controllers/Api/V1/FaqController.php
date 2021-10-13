@@ -19,11 +19,8 @@ class FaqController extends Controller
     {
         try {
             return $this->respondWithData($this->faqQueries->getData(), 'Sukses ambil data faq');
-        } catch (Exception $th) {
-            if (in_array($th->getCode(), $this->error_codes)) {
-                return $this->respondWithResult(false, $th->getMessage(), $th->getCode());
-            }
-            return $this->respondWithResult(false, $th->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 }
