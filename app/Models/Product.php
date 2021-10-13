@@ -116,4 +116,12 @@ class Product extends Model
     {
         return $this->hasMany(OrderDetail::class);
     }
+
+    public function etalase(){
+        return $this->belongsTo(Etalase::class);
+    }
+
+    public function category(){
+        return $this->belongsTo(MasterData::class);
+    }
 }

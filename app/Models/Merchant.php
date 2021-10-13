@@ -74,7 +74,7 @@ class Merchant extends Model
     protected function serializeDate($date){
         return $date->format('Y-m-d H:i:s');
     }
-    
+
 
     public function etalase()
     {
@@ -114,5 +114,13 @@ class Merchant extends Model
     public function carts()
     {
         return $this->hasMany(Cart::class);
+    }
+
+    public function province(){
+        return $this->belongsTo(Province::class);
+    }
+
+    public function district(){
+        return $this->belongsTo(District::class);
     }
 }

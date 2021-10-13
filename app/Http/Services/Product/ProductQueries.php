@@ -103,7 +103,9 @@ class ProductQueries extends Service
     public function getProductById($id){
         $data = Product::withCount('reviews')->with(['reviews' => function($reviews) {
             $reviews->with('customer:id,full_name,image_url');
-        }, 'product_stock', 'product_photo', 'merchant'])->where('id', $id)->first();
+        }, 'product_stock', 'product_photo', 'merchant' => function($region){
+            $region->with(['province', 'city', 'district']);
+        }, 'etalase', 'category'])->where('id', $id)->first();
 
         if (!$data){
             $response['success'] = false;
