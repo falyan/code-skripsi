@@ -25,6 +25,7 @@ class CartDetail extends Model
         'cart_id',
         'product_id',
         'quantity',
+        'related_merchant_id'
     ];
 
     /**

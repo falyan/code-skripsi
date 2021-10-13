@@ -42,20 +42,16 @@ class CartController extends Controller
 
     public function add()
     {
-        $validator = Validator::make(request()->all(), [
-            'product_id' => 'required|exists:product,id',
-            'buyer_id' => 'nullable|exists:customer,id',
-            'related_merchant_id' => 'required|exists:merchant,id',
-            'related_pln_mobile_customer_id' => 'required'
-        ]);
-
         try {
-            // if (!$rlc_id = request()->header('related_customer_id')) {
-            //     throw new Exception('Kolom related_customer_id kosong', 400);
-            // }
-
+            $validator = Validator::make(request()->all(), [
+                'product_id' => 'required|exists:product,id',
+                'buyer_id' => 'nullable|exists:customer,id',
+                'related_merchant_id' => 'required|exists:merchant,id',
+                'related_pln_mobile_customer_id' => 'required'
+            ]);
+     
             if ($validator->fails()) {
-                throw new Exception($validator->errors(), 400);
+                return $this->respondValidationError($validator->messages()->get('*'), 'Validation Error!');
             }
 
             $data = CartCommands::addCart();
