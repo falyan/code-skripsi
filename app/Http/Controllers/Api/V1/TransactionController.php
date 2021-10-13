@@ -439,4 +439,13 @@ class TransactionController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function getDetailTransaction(){
+        try {
+            $trx_no = request()->input('trx_no');
+            return $this->transactionQueries->getDetailTransacation($trx_no);
+        }catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
 }

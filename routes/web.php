@@ -134,6 +134,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/{related_id}/done', 'TransactionController@buyerTransactionDone');
                 $router->get('/{related_id}/canceled', 'TransactionController@buyerTransactionCanceled');
                 $router->get('/{related_id}/search/{keyword}', 'TransactionController@buyerSearchTransaction');
+                $router->get('detail', 'TransactionController@getDetailTransaction');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
