@@ -80,4 +80,8 @@ class City extends Model
     {
         return $this->hasMany(Merchant::class);
     }
+
+    public function delivery(){
+        return $this->hasMany(OrderDelivery::class);
+    }
 }

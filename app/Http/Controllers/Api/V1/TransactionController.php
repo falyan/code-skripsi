@@ -30,6 +30,7 @@ class TransactionController extends Controller
     public function checkout($related_pln_mobile_customer_id)
     {
         $validator = Validator::make(request()->all(), [
+            'destination_info.receiver_name' => 'required',
             'merchants' => 'required|array',
             'merchants.*.merchant_id' => 'required',
             'merchants.*.total_weight' => 'required',
@@ -55,7 +56,7 @@ class TransactionController extends Controller
             return $this->respondValidationError($validator->messages()->get('*'), 'Validation Error!');
         }
 
-        
+
         try {
             if (!Customer::where('related_pln_mobile_customer_id', $related_pln_mobile_customer_id)->exists()) {
                 throw new Exception('Customer tidak ditemukan', 404);
@@ -403,5 +404,48 @@ class TransactionController extends Controller
             }, data_get($merchant, 'products'));
         }, $merchants);
         $error;
+    }
+
+    public function acceptOrder($order_id){
+        try {
+            return $this->transactionCommand->updateOrderStatus($order_id, '02');
+        }catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function rejectOrder($order_id){
+        try {
+            $notes = request()->input('notes');
+            return $this->transactionCommand->updateOrderStatus($order_id, '99', $notes);
+        }catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function addAwbNumberOrder($order_id, $awb){
+        try {
+            $response = $this->transactionCommand->addAwbNumber($order_id, $awb);
+            if ($response['success'] == false){
+                return $response;
+            }
+            $status = $this->transactionCommand->updateOrderStatus($order_id, '03');
+            if ($status['success'] == false){
+                return $status;
+            }
+
+            return $response;
+        }catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getDetailTransaction(){
+        try {
+            $trx_no = request()->input('trx_no');
+            return $this->transactionQueries->getDetailTransacation($trx_no);
+        }catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
     }
 }

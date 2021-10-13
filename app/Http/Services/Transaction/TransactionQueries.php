@@ -68,4 +68,15 @@ class TransactionQueries extends Service
             ->paginate(10);
         return ($data);
     }
+
+    public function getDetailTransacation($trx_no){
+        $data = Order::with(['progress', 'delivery' => function($region){
+            $region->with(['city', 'district']);
+        }, 'buyer', 'merchant', 'product'])->where('trx_no', $trx_no)->first();
+
+        $response['success'] = true;
+        $response['message'] = 'Detail transaksi berhasil didapatkan';
+        $response['data'] = $data;
+        return $response;
+    }
 }

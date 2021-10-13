@@ -48,6 +48,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('/{id}/approve', 'TransactionController@approveOrder');
                     $router->post('/{id}/reject', 'TransactionController@rejectOrder');
                     $router->post('/{id}/deliver', 'TransactionController@deliverOrder');
+                    $router->post('accept/{order_id}', 'TransactionController@acceptOrder');
+                    $router->post('reject/{order_id}', 'TransactionController@rejectOrder');
+                    $router->post('awb-number/{order_id}/{awb}', 'TransactionController@addAwbNumberOrder');
                 });
             });
 
@@ -131,6 +134,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/{related_id}/done', 'TransactionController@buyerTransactionDone');
                 $router->get('/{related_id}/canceled', 'TransactionController@buyerTransactionCanceled');
                 $router->get('/{related_id}/search/{keyword}', 'TransactionController@buyerSearchTransaction');
+                $router->get('detail', 'TransactionController@getDetailTransaction');
             });
 
             $router->group(['prefix' => 'notification'], static function () use ($router) {

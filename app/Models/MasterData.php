@@ -81,7 +81,7 @@ class MasterData extends Model
     protected function serializeDate($date){
         return $date->format('Y-m-d H:i:s');
     }
-    
+
 
     public function scopeSearch($query, $searchTerm)
     {
@@ -101,5 +101,9 @@ class MasterData extends Model
     public function child()
     {
         return $this->hasMany(MasterData::class, 'parent_id');
+    }
+
+    public function product(){
+        return $this->hasMany(Product::class);
     }
 }

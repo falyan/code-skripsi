@@ -111,8 +111,8 @@ class RajaOngkirManager {
     if ($response->rajaongkir->status->code != 200) {
       throw new Exception($response->rajaongkir->status->description, $response->rajaongkir->status->code);
     }
-
-    return new RajaongkirResources(data_get($response, 'rajaongkir'));
+    
+    return new RajaongkirResources($response);
   }
 
   public static function trackOrder($trx_no)
