@@ -26,7 +26,7 @@ class CartCommands extends Service
         DB::beginTransaction();
 
         try {
-            $cart = Cart::where('related_pln_mobile_customer_id', $getRelationMobile)->first();
+            $cart = Cart::where([['related_pln_mobile_customer_id', $getRelationMobile], ['merchant_id', $related_merchant_id]])->first();
 
             if ($cart) {
                 $productExists = $cart->cart_detail->where('product_id', $getProductId)
