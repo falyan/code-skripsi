@@ -122,9 +122,8 @@ class TransactionCommands extends Service
             DB::commit();
 
             $customer = Customer::where('related_pln_mobile_customer_id', $related_pln_mobile_customer_id)->first();
-            $param = static::setParamAPI([]);
 
-            $url = sprintf('%s/%s', static::$apiendpoint, 'booking' . $param);
+            $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
 
             $response = static::$curl->request('POST', $url, [
                 'headers' => static::$header,
