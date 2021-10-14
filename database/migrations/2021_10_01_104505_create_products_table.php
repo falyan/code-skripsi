@@ -18,6 +18,7 @@ class CreateProductsTable extends Migration
             $table->unsignedBigInteger('merchant_id');
             $table->string('name');
             $table->float('price');
+            $table->float('strike_price');
             $table->integer('minimum_purchase');
             $table->unsignedBigInteger('category_id')->nullable();
             $table->unsignedBigInteger('etalase_id')->nullable();
@@ -26,6 +27,7 @@ class CreateProductsTable extends Migration
             $table->longText('description')->nullable();
             $table->boolean('is_shipping_insurance')->nullable();
             $table->string('shipping_service')->nullable();
+            $table->boolean('is_featured_product')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

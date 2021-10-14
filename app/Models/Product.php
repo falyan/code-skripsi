@@ -35,6 +35,7 @@ class Product extends Model
         'description',
         'is_shipping_insurance',
         'shipping_service',
+        'is_featured_product',
         'created_by',
         'updated_by'
     ];

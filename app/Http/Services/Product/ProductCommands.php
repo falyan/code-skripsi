@@ -26,6 +26,7 @@ class ProductCommands extends Service
                 'is_shipping_insurance' => 'required',
                 'shipping_service' => 'nullable',
                 'url.*' => 'required',
+                'is_featured_product' => 'nullable',
                 'amount' => 'required',
                 'uom' => 'required'
             ];
@@ -51,6 +52,7 @@ class ProductCommands extends Service
                 'description' => $data->description,
                 'is_shipping_insurance' => $data->is_shipping_insurance,
                 'shipping_service' => $data->shipping_service,
+                'is_featured_product' => $data->is_featured_product,
                 'created_by' => $data->full_name,
                 'updated_by' => $data->full_name
             ]);
@@ -130,6 +132,7 @@ class ProductCommands extends Service
             $product->weight = ($data->weight == null) ? ($product->weight):($data->weight);
             $product->description = ($data->description == null) ? ($product->description):($data->description);
             $product->is_shipping_insurance = ($data->is_shipping_insurance == null) ? ($product->is_shipping_insurance):($data->is_shipping_insurance);
+            $product->is_featured_product = ($data->is_featured_product == null) ? ($product->is_featured_product):($data->is_featured_product);
             $product->shipping_service = ($data->shipping_service == null) ? ($product->shipping_service):($data->shipping_service);
             $product->updated_by = $data->full_name;
 
