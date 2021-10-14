@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderProgress;
 use Exception;
+use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,30 @@ use Ramsey\Uuid\Uuid;
 
 class TransactionCommands extends Service
 {
+    static $apiendpoint;
+    static $appkey;
+    static $curl;
+    static $clientid;
+    static $productid;
+    static $appsource;
+    static $header;
+
+    static function init()
+    {
+        self::$curl = new Client();
+        self::$apiendpoint = config('credentials.iconpay.endpoint');
+        self::$appkey = config('credentials.iconpay.app_key');
+        self::$clientid = config('credentials.iconpay.client_id');
+        self::$productid = config('credentials.iconpay.product_id');
+        self::$appsource = config('credentials.iconpay.app_source');
+        self::$header = [
+            'client-id' => static::$clientid,
+            'timestamp' => date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now())->setTimezone('Asia/Jakarta')->timestamp),
+            'appsource' => static::$appsource,
+            'signature' => static::$appkey
+        ];
+    }
+
     public function createOrder($datas, $related_pln_mobile_customer_id)
     {
         DB::beginTransaction();
@@ -25,8 +50,9 @@ class TransactionCommands extends Service
             $no_reference = Uuid::uuid4();
             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now())->setTimezone('Asia/Jakarta')->timestamp);
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now()->addDay())->setTimezone('Asia/Jakarta')->timestamp);
+            $total_price = 0;
 
-            array_map(function ($data) use ($datas, $related_pln_mobile_customer_id, $no_reference, $trx_date, $exp_date) {
+            array_map(function ($data) use ($datas, $related_pln_mobile_customer_id, $no_reference, $trx_date, $exp_date, $total_price) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
                 $order->buyer_id = Customer::where('related_pln_mobile_customer_id', $related_pln_mobile_customer_id)->first()->id;
@@ -40,6 +66,8 @@ class TransactionCommands extends Service
                 $order->related_pln_mobile_customer_id = $related_pln_mobile_customer_id;
                 $order->no_reference = $no_reference;
                 $order->save();
+
+                $total_price += $order->payment_amount;
 
                 array_map(function ($product) use ($order) {
                     $order_detail = new OrderDetail();
@@ -93,9 +121,41 @@ class TransactionCommands extends Service
             }, data_get($datas, 'merchants'));
             DB::commit();
 
+            $customer = Customer::where('related_pln_mobile_customer_id', $related_pln_mobile_customer_id)->first();
+            $param = static::setParamAPI([]);
+
+            $url = sprintf('%s/%s', static::$apiendpoint, 'booking' . $param);
+
+            $response = static::$curl->request('POST', $url, [
+                'headers' => static::$header,
+                'http_errors' => false,
+                'json' => [
+                    'no_reference' => $no_reference,
+                    'transaction_date' => $trx_date,
+                    'transaction_code' => '00',
+                    'partner_reference' => $no_reference,
+                    'product_id' => static::$productid,
+                    'amount' => $total_price,
+                    'customer_id' => $related_pln_mobile_customer_id,
+                    'customer_name' => $customer['fullname'],
+                    'email' => $customer['email'],
+                    'phone_number' => $customer['phone'],
+                    'expired_invoice' => $exp_date,
+                ]
+            ]);
+
+            $response = json_decode($response->getBody());
+
+            throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+
+            if ($response->response_status->success != 1) {
+                throw new Exception($response->response_status);
+            }
+
             return [
                 'success' => true,
                 'message' => 'Berhasil create order',
+                'data' => $response
             ];
         } catch (Exception $th) {
             DB::rollBack();
