@@ -120,6 +120,7 @@ class Controller extends BaseController
 
     public function respondErrorException($e, $request)
     {
+        $data = [];
         $message = $e->getMessage();
         $error = ("{$message}\r\nFile {$e->getFile()}:{$e->getLine()} with message {$e->getMessage()}");
 
@@ -137,11 +138,13 @@ class Controller extends BaseController
             'message' => $message
         ];
 
+        
         if (in_array($e->getCode(), $this->error_codes)) {
-            return response()->json($data, $e->getCode(), $request->header);
+            return response($data, $e->getCode(), $request->header??[]);
+        }else {
+            return response($data, 404);
         }
 
-        return response()->json($data, 404);
     }
     
 }
