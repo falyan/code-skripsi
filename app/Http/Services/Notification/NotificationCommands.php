@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Services\Profile;
+namespace App\Http\Services\Notification;
 
 use App\Http\Services\Service;
 use App\Models\Notification;
@@ -47,6 +47,5 @@ class NotificationCommands extends Service
         }else {
             return false;
         }
-
     }
 }

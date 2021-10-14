@@ -67,6 +67,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->group(['prefix' => 'product'], static function () use ($router) {
                     $router->get('all', 'ProductController@getAllProduct');
                     $router->get('merchant', 'ProductController@getProductByMerchantSeller');
+                    $router->get('detail/{id}', 'ProductController@getProductById');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
                 });
 
@@ -105,7 +106,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('search/{keyword}[/{limit}]', 'ProductController@SearchProductByName');
                 $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchantBuyer');
                 $router->get('category/{category_id}', 'ProductController@getProductByCategory');
-                $router->get('{id}', 'ProductController@getProductById');
+                $router->get('detail/{id}', 'ProductController@getProductById');
             });
 
             $router->group(['prefix' => 'category'], static function () use ($router) {
@@ -134,13 +135,13 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/{related_id}/done', 'TransactionController@buyerTransactionDone');
                 $router->get('/{related_id}/canceled', 'TransactionController@buyerTransactionCanceled');
                 $router->get('/{related_id}/search/{keyword}', 'TransactionController@buyerSearchTransaction');
-                $router->get('detail', 'TransactionController@getDetailTransaction');
+                $router->get('/{related_id}/detail/{id}/invoice', 'TransactionController@getDetailInvoice');
             });
 
             $router->group(['prefix' => 'notification'], static function () use ($router) {
                 $router->get('/{rlc_id}', 'NotificationController@buyerIndex');
                 $router->get('/list/{rlc_id}', 'NotificationController@buyerNotificationList');
-                $router->get('/list/{rlc_id}/{type}', 'NotificationController@buyerNotificationByType');
+                $router->get('/list/{type}/{rlc_id}', 'NotificationController@buyerNotificationByType');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
@@ -155,8 +156,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'notification'], static function () use ($router) {
-                $router->post('/{rlc_id}/on-approve', 'NotificationController@buyerReadNotification');
-                $router->delete('/{rlc_id}/on-delivery', 'NotificationController@buyerDeleteNotification');
+                $router->post('/read/{id}/{rlc_id}', 'NotificationController@buyerReadNotification');
+                $router->delete('/delete/{id}/{rlc_id}', 'NotificationController@buyerDeleteNotification');
             });
         });
     });

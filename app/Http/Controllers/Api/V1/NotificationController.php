@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Services\Profile\NotificationCommands;
-use App\Http\Services\Profile\NotificationQueries;
+use App\Http\Services\Notification\NotificationCommands;
+use App\Http\Services\Notification\NotificationQueries;
 use Illuminate\Http\Request;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -12,6 +12,12 @@ use Illuminate\Support\Facades\Validator;
 
 class NotificationController extends Controller
 {
+    public $notification_type = [
+        '1' => 'Informasi',
+        '2' => 'Transaksi',
+        '3' => 'Promo',
+    ];
+
     protected $notificationQueries, $notificationCommand;
     public function __construct()
     {
@@ -23,7 +29,7 @@ class NotificationController extends Controller
     {
         try {
             $data = null;
-            if (!Auth::check()) {
+            if (Auth::check()) {
                 $data = $this->notificationQueries->getTotalNotification('buyer_id', Auth::user()->id);
             } else {
                 $data = $this->notificationQueries->getTotalNotification('related_pln_mobile_customer_id', $rlc_id);
@@ -39,7 +45,7 @@ class NotificationController extends Controller
     {
         try {
             $data = null;
-            if (!Auth::check()) {
+            if (Auth::check()) {
                 $data = $this->notificationQueries->getAllNotification('buyer_id', Auth::user()->id);
             } else {
                 $data = $this->notificationQueries->getAllNotification('related_pln_mobile_customer_id', $rlc_id);
@@ -58,24 +64,28 @@ class NotificationController extends Controller
     public function buyerNotificationByType($type, $rlc_id)
     {
         try {
+            if (!in_array($type, [1, 2, 3])) {
+                return $this->respondValidationError(['notification_type' => $type, 'error_message' => 'type yang diinput salah.']);
+            }
+
             $data = null;
-            if (!Auth::check()) {
+            if (Auth::check()) {
                 $data = $this->notificationQueries->getAllNotificationByType('buyer_id', Auth::user()->id, $type);
             } else {
                 $data = $this->notificationQueries->getAllNotificationByType('related_pln_mobile_customer_id', $rlc_id, $type);
             }
 
             if ($data->total() > 0) {
-                return $this->respondWithData($data, 'sukses get data notifikasi');
+                return $this->respondWithData($data, 'sukses get data notifikasi ' . $this->notification_type[$type]);
             } else {
-                return $this->respondWithResult(true, 'belum ada notifikasi');
+                return $this->respondWithResult(true, 'belum ada notifikasi . ' . $this->notification_type[$type]);
             }
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function buyerReadNotification($id)
+    public function buyerReadNotification($id, $rlc_id)
     {
         try {
             $data = $this->notificationCommand->updateRead($id);
@@ -90,7 +100,7 @@ class NotificationController extends Controller
         }
     }
 
-    public function buyerDeleteNotification($id)
+    public function buyerDeleteNotification($id, $rlc_id)
     {
         try {
             $data = $this->notificationCommand->destroy($id);

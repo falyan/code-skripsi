@@ -11,7 +11,21 @@ class Service
       '02' => 'Pesanan Siap Dikirim',
       '03' => 'Pesanan Sedang Dikirim',
       '08' => 'Pesanan Telah Sampai',
+      '09' => 'Pesanan Ditolak',
       '88' => 'Pesanan Selesai',
       '99' => 'Pesanan Dibatalkan',
+  ];
+
+  static $notification_type = [
+    '1' => 'Informasi',
+    '2' => 'Transaksi',
+    '3' => 'Promo',
+  ];
+
+  static $order_detail_type = [
+    '1' => 'Detail',
+    '2' => 'Fee',
+    '3' => 'Discount',
+    '3' => 'Partner Fee',
   ];
 }
