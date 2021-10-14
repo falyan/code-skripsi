@@ -19,4 +19,9 @@ class Review extends Model
     {
         return $this->belongsTo(Customer::class);
     }
+
+    protected function serializeDate($date)
+    {
+        return $date->format('Y-m-d H:i:s');
+    }
 }

@@ -371,7 +371,7 @@ class TransactionController extends Controller
             $data = $this->transactionQueries->getDetailTransaction($id);
 
             if (!empty($data)) {
-                return $this->respondWithData($data, 'sukses get data transaksi');;
+                return $this->respondWithData($data, 'sukses get detail transaksi');;
             }else {
                 return $this->respondWithResult(false, 'ID transaksi salah', 400);
             }
@@ -440,10 +440,14 @@ class TransactionController extends Controller
         }
     }
 
-    public function getDetailTransaction(){
+    public function getInvoice($id){
         try {
-            $trx_no = request()->input('trx_no');
-            return $this->transactionQueries->getDetailTransacation($trx_no);
+            $data = $this->transactionQueries->getDetailTransaction($id);
+            if (!empty($data)) {
+                return $this->respondWithData($data, 'sukses get detail Invoice');;
+            }else {
+                return $this->respondWithResult(false, 'ID transaksi salah', 400);
+            }
         }catch (Exception $e){
             return $this->respondErrorException($e, request());
         }

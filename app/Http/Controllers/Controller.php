@@ -118,16 +118,16 @@ class Controller extends BaseController
         return response()->json($result, 400, $headers);
     }
 
-    public function respondErrorException($e, Request $request)
+    public function respondErrorException($e, $request)
     {
         $message = $e->getMessage();
-        $error = ("{$message}\r\nFile {$e->getFile()}:{$e->getLine()} with message {$e->getMessage()}\r\n{$e->getTraceAsString()}");
+        $error = ("{$message}\r\nFile {$e->getFile()}:{$e->getLine()} with message {$e->getMessage()}");
 
         $uid = Str::random(12);
         Log::error($uid, [
             'path_url' => $request->path(),
             'query' =>  $request->query(),
-            'body' => $request->except(['password', 'c_password', 'bearer', 'bearer_token', 'related_id', 'related_customer_id']),
+            'body' => $request->except(['password', 'c_password', 'bearer', 'bearer_token', 'related_id', 'related_customer_id', 'rlc_id']),
             'error' => $error
         ]);
 

@@ -42,7 +42,9 @@ class TransactionQueries extends Service
                 $product->with(['product' => function($j){
                     $j->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer'
+            }, 'progress', 'merchant', 'delivery' => function($region){
+                $region->with(['city', 'district']);
+            }, 'buyer'
         ])->find($order_id);
         return $data;
     }
@@ -67,16 +69,5 @@ class TransactionQueries extends Service
             })
             ->paginate(10);
         return ($data);
-    }
-
-    public function getDetailTransacation($trx_no){
-        $data = Order::with(['progress', 'delivery' => function($region){
-            $region->with(['city', 'district']);
-        }, 'buyer', 'merchant', 'product'])->where('trx_no', $trx_no)->first();
-
-        $response['success'] = true;
-        $response['message'] = 'Detail transaksi berhasil didapatkan';
-        $response['data'] = $data;
-        return $response;
     }
 }

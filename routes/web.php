@@ -67,6 +67,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->group(['prefix' => 'product'], static function () use ($router) {
                     $router->get('all', 'ProductController@getAllProduct');
                     $router->get('merchant', 'ProductController@getProductByMerchantSeller');
+                    $router->get('detail/{id}', 'ProductController@getProductById');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
                 });
 
@@ -134,6 +135,13 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/{related_id}/done', 'TransactionController@buyerTransactionDone');
                 $router->get('/{related_id}/canceled', 'TransactionController@buyerTransactionCanceled');
                 $router->get('/{related_id}/search/{keyword}', 'TransactionController@buyerSearchTransaction');
+                $router->get('/{related_id}/detail/{id}/invoice', 'TransactionController@getDetailInvoice');
+            });
+
+            $router->group(['prefix' => 'notification'], static function () use ($router) {
+                $router->get('/{rlc_id}', 'NotificationController@buyerIndex');
+                $router->get('/list/{rlc_id}', 'NotificationController@buyerNotificationList');
+                $router->get('/list/{type}/{rlc_id}', 'NotificationController@buyerNotificationByType');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
@@ -146,6 +154,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->delete('delete/{cart_detail_id}/{cart_id}', 'CartController@destroy');
                 $router->post('qty/update/{cart_detail_id}/{cart_id}', 'CartController@qtyUpdate');
                 $router->delete('all/delete/{related_id}[/{buyer_id}]', 'CartController@deleteAllCart');
+            });
+
+            $router->group(['prefix' => 'notification'], static function () use ($router) {
+                $router->post('/read/{id}/{rlc_id}', 'NotificationController@buyerReadNotification');
+                $router->delete('/delete/{id}/{rlc_id}', 'NotificationController@buyerDeleteNotification');
             });
         });
     });
