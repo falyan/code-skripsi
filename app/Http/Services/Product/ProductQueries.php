@@ -104,7 +104,7 @@ class ProductQueries extends Service
         $data = Product::withCount('reviews')->with(['reviews' => function($reviews) {
             $reviews->with('customer:id,full_name,image_url')->paginate(10);
         }, 'product_stock', 'product_photo', 'merchant' => function($region){
-            $region->with(['province', 'city', 'district']);
+            $region->with(['province', 'city', 'district', 'expedition']);
         }, 'etalase', 'category'])->where('id', $id)->first();
 
         if (!$data){
