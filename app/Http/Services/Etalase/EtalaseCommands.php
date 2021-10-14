@@ -13,7 +13,6 @@ class EtalaseCommands extends Service
 {
     public static function storeItem($request){
         try {
-
             $item_names = Etalase::where('merchant_id', data_get($request, 'merchant_id'))->get()->pluck('name');
             $recorded = [];
             foreach ($item_names as $origin) {
@@ -39,12 +38,66 @@ class EtalaseCommands extends Service
         }
     }
 
+    public static function updateItem($id, $request)
+    {
+        try {
+            $item_names = Etalase::where('merchant_id', data_get($request, 'merchant_id'))->get()->pluck('name');
+            $recorded = [];
+            foreach ($item_names as $origin) {
+                array_push($recorded, lcfirst($origin));
+            }
+            if (in_array(lcfirst(data_get($request, 'name')), $recorded)) {
+                throw new Exception('Nama etalase ini sudah anda gunakan', 400);
+            }
+
+            $item = Etalase::find($id);
+
+            if (strtolower($item->name) == 'semua produk') {
+                throw new Exception('Etalase ' . $item->name . ' tidak dapat diubah', 400);
+            }
+
+            DB::beginTransaction();
+            $item->name = data_get($request, 'name') == null ? $item->name : data_get($request, 'name');
+            $item->updated_by = Auth::user()->full_name;
+            $item->save();
+            DB::commit();
+        } catch (\Exception $th) {
+            DB::rollBack();
+            throw new Exception($th->getMessage(), $th->getCode());
+        }
+    }
+
     public static function deleteItem($id)
     {
         try {
-            $item = Etalase::find($id);
+            $item = Etalase::with('product')->find($id);
+            if (strtolower($item->name) == 'semua produk') {
+                throw new Exception('Etalase ' . $item->name . ' tidak dapat dihapus', 400);
+            }
+            DB::beginTransaction();
+            self::moveProductToDefaultEtalase($item->product);
             $item->delete();
+            DB::commit();
         } catch (\Exception $th) {
+            DB::rollBack();
+            throw new Exception($th->getMessage(), $th->getCode());
+        }
+    }
+
+    public static function moveProductToDefaultEtalase($products)
+    {
+        try {
+            //find default etalase
+            $default = Etalase::where('merchant_id', Auth::user()->merchant_id)->whereIn('name', ['semua produk', 'Semua produk', 'Semua Produk', 'SEMUA PRODUK'])->firstOrFail();
+            
+            //update etalase to default
+            $total = count($products) ?? 0;
+            for ($i=0; $i < $total; $i++) { 
+                $products[$i]->etalase_id = $default->id;
+                $products[$i]->updated_by = Auth::user()->full_name;
+                $products[$i]->save();
+            }
+        } catch (\Throwable $th) {
             throw new Exception($th->getMessage(), $th->getCode());
         }
     }

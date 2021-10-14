@@ -29,6 +29,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'command', 'middleware' => 'auth'], static function () use ($router) {
                 $router->group(['prefix' => 'etalase', 'middleware' => 'auth'], static function () use ($router) {
                     $router->post('store', 'EtalaseController@store');
+                    $router->post('update/{id}', 'EtalaseController@update');
                     $router->delete('delete/{id}', 'EtalaseController@delete');
                 });
 

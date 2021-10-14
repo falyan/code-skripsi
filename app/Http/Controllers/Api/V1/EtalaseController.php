@@ -60,6 +60,25 @@ class EtalaseController extends Controller
         }
     }
 
+    public function update($id)
+    {
+        try {
+            $validator = Validator::make(request()->all(), [
+                'name' => 'required'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->respondValidationError($validator->messages()->get('*'));
+            }
+
+            EtalaseCommands::updateItem($id, request()->all());
+
+            return response()->json(['success' => true, 'message' => 'Item Etalase Berhasil Diperbaharui']);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function delete($id)
     {
         try {
