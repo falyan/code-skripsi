@@ -49,7 +49,7 @@ class CartController extends Controller
                 'related_merchant_id' => 'required|exists:merchant,id',
                 'related_pln_mobile_customer_id' => 'required'
             ]);
-     
+
             if ($validator->fails()) {
                 return $this->respondValidationError($validator->messages()->get('*'), 'Validation Error!');
             }
@@ -96,6 +96,15 @@ class CartController extends Controller
             return CartQueries::getDetailCart($buyer_id, $related_id);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function deleteAllCart($related_id, $buyer_id = null){
+        try {
+            $cartCommands = new CartCommands();
+            return $cartCommands->deleteAllCart($related_id, $buyer_id);
+        } catch (Exception $e) {
+//            return $this->respondErrorException($e, request());
         }
     }
 }

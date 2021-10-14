@@ -125,4 +125,31 @@ class CartCommands extends Service
 
         return null;
     }
-};
+
+    public function deleteAllCart($related_id, $buyer_id = null){
+        if ($buyer_id != null){
+            $carts = Cart::where('buyer_id', $buyer_id)->get();
+            foreach ($carts as $cart){
+                if ($cart->delete() < 1){
+                    $response['success'] = false;
+                    $response['message'] = 'Gagal menghapus keranjang';
+                    return $response;
+                }
+            }
+            $response['success'] = true;
+            $response['message'] = 'Berhasil menghapus keranjang';
+            return $response;
+        }
+        $carts = Cart::where('related_pln_mobile_customer_id', $related_id)->get();
+        foreach ($carts as $cart){
+            if ($cart->delete() < 1){
+                $response['success'] = false;
+                $response['message'] = 'Gagal menghapus keranjang';
+                return $response;
+            }
+        }
+        $response['success'] = true;
+        $response['message'] = 'Berhasil menghapus keranjang';
+        return $response;
+    }
+}
