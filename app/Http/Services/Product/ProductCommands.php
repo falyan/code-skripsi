@@ -43,7 +43,7 @@ class ProductCommands extends Service
             if ($data->is_featured_product == true){
                 $count_featured_product = Product::where('merchant_id', $data->merchant_id)->where('is_featured_product', true)->count();
                 if ($count_featured_product >= 5){
-                    $data->is_featured_product = false;
+                    throw new Exception("Produk Unggulan telah mencapai batas maksimal 5 Produk.", 400);
                 }
             }
             $product = Product::create([
