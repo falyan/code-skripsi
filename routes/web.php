@@ -53,6 +53,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('reject/{order_id}', 'TransactionController@rejectOrder');
                     $router->post('awb-number/{order_id}/{awb}', 'TransactionController@addAwbNumberOrder');
                 });
+
+                $router->group(['prefix' => 'notification'], static function () use ($router) {
+                    $router->post('/read/{id}', 'NotificationController@sellerReadNotification');
+                    $router->delete('/delete/{id}', 'NotificationController@sellerDeleteNotification');
+                });
             });
 
             $router->group(['prefix' => 'query'], static function () use ($router) {
@@ -85,6 +90,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('/canceled', 'TransactionController@sellerTransactionCanceled');
                     $router->get('/search/{keyword}', 'TransactionController@sellerSearchTransaction');
                     $router->get('/detail/{id}', 'TransactionController@detailTransaction');
+                });
+
+                $router->group(['prefix' => 'notification'], static function () use ($router) {
+                    $router->get('/', 'NotificationController@sellerIndex');
+                    $router->get('/list', 'NotificationController@sellerNotificationList');
+                    $router->get('/list/{type}', 'NotificationController@sellerNotificationByType');
                 });
             });
         });

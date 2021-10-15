@@ -19,7 +19,7 @@ class MerchantQueries extends Service
     public static function homepageProfile($merchant_id)
     {
         try {
-            $merchant = Merchant::with(['operationals', 'district', 'city', 'province'])->find($merchant_id);
+            $merchant = Merchant::with(['operationals', 'district', 'city', 'province', 'expedition'])->find($merchant_id);
             $orders = [];
             
             $orders['success'] = static::getTotalTrx($merchant_id, 88)->toArray();

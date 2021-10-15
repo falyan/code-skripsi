@@ -128,5 +128,54 @@ class NotificationController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function sellerNotificationByType($type)
+    {
+        try {
+            if (!in_array($type, [1, 2, 3])) {
+                return $this->respondValidationError(['notification_type' => $type, 'error_message' => 'type yang diinput salah.']);
+            }
+
+            $data = $this->notificationQueries->getAllNotificationByType('merchant_id', Auth::user()->id, $type);
+
+            if ($data->total() > 0) {
+                return $this->respondWithData($data, 'sukses get data notifikasi ' . $this->notification_type[$type]);
+            } else {
+                return $this->respondWithResult(true, 'belum ada notifikasi . ' . $this->notification_type[$type]);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function sellerReadNotification($id)
+    {
+        try {
+            $data = $this->notificationCommand->updateRead($id);
+
+            if ($data) {
+                return $this->respondWithResult(true, 'sukses update status notifikasi', 200);
+            } else {
+                return $this->respondWithResult(false, 'gagal update status notifikasi', 400);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function sellerDeleteNotification($id)
+    {
+        try {
+            $data = $this->notificationCommand->destroy($id);
+
+            if ($data) {
+                return $this->respondWithResult(true, 'sukses hapus notifikasi', 200);
+            } else {
+                return $this->respondWithResult(false, 'gagal hapus notifikasi', 400);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
     # End Region
 }
