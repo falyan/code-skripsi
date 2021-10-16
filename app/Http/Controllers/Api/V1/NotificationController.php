@@ -129,6 +129,21 @@ class NotificationController extends Controller
         }
     }
 
+    public function sellerNotificationList()
+    {
+        try {
+            $data = $this->notificationQueries->getAllNotification('merchant_id', Auth::user()->merchant_id);
+            
+            if ($data->total() > 0) {
+                return $this->respondWithData($data, 'sukses get data notifikasi');
+            } else {
+                return $this->respondWithResult(true, 'belum ada notifikasi');
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function sellerNotificationByType($type)
     {
         try {
@@ -136,7 +151,7 @@ class NotificationController extends Controller
                 return $this->respondValidationError(['notification_type' => $type, 'error_message' => 'type yang diinput salah.']);
             }
 
-            $data = $this->notificationQueries->getAllNotificationByType('merchant_id', Auth::user()->id, $type);
+            $data = $this->notificationQueries->getAllNotificationByType('merchant_id', Auth::user()->merchant_id, $type);
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data notifikasi ' . $this->notification_type[$type]);
