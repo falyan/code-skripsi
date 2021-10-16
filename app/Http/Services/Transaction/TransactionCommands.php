@@ -14,6 +14,7 @@ use App\Http\Services\Service;
 use App\Models\Customer;
 use App\Models\OrderDelivery;
 use App\Models\OrderPayment;
+use Illuminate\Support\Facades\Log;
 use Monolog\Handler\IFTTTHandler;
 use Ramsey\Uuid\Uuid;
 
@@ -89,7 +90,7 @@ class TransactionCommands extends Service
 
                 $order_progress = new OrderProgress();
                 $order_progress->order_id = $order->id;
-                $order_progress->status_code = 0;
+                $order_progress->status_code = '00';
                 $order_progress->status_name = 'Pesanan Belum Dibayar';
                 $order_progress->note = null;
                 $order_progress->status = 1;
@@ -124,25 +125,33 @@ class TransactionCommands extends Service
             $customer = Customer::where('related_pln_mobile_customer_id', $related_pln_mobile_customer_id)->first();
 
             $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
+            $body = [
+                'no_reference' => $no_reference,
+                'transaction_date' => $trx_date,
+                'transaction_code' => '00',
+                'partner_reference' => $no_reference,
+                'product_id' => static::$productid,
+                'amount' => $total_price,
+                'customer_id' => $related_pln_mobile_customer_id,
+                'customer_name' => $customer['fullname'],
+                'email' => $customer['email'],
+                'phone_number' => $customer['phone'],
+                'expired_invoice' => $exp_date,
+            ];
 
             $response = static::$curl->request('POST', $url, [
                 'headers' => static::$header,
                 'http_errors' => false,
-                'json' => [
-                    'no_reference' => $no_reference,
-                    'transaction_date' => $trx_date,
-                    'transaction_code' => '00',
-                    'partner_reference' => $no_reference,
-                    'product_id' => static::$productid,
-                    'amount' => $total_price,
-                    'customer_id' => $related_pln_mobile_customer_id,
-                    'customer_name' => $customer['fullname'],
-                    'email' => $customer['email'],
-                    'phone_number' => $customer['phone'],
-                    'expired_invoice' => $exp_date,
-                ]
+                'json' => $body
             ]);
 
+            Log::info("E00001", [
+                'path_url' => "iconpay.endpoint/booking",
+                'body' => $body,
+                'query' => [],
+                'response' => $response
+            ]);
+            
             $response = json_decode($response->getBody());
 
             throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
@@ -180,7 +189,7 @@ class TransactionCommands extends Service
         $old_order_progress = OrderProgress::where('order_id', $order_id)->get();
         $total = count($old_order_progress) ?? 0;
         if ($total >= 0) {
-            for ($i=0; $i < $total; $i++) {
+            for ($i = 0; $i < $total; $i++) {
                 $old_order_progress[$i]->status = 0;
                 $old_order_progress[$i]->save();
             }
@@ -193,7 +202,7 @@ class TransactionCommands extends Service
         $new_order_progress->note = $note;
         $new_order_progress->status = 1;
 
-        if (!$new_order_progress->save()){
+        if (!$new_order_progress->save()) {
             $response['success'] = false;
             $response['message'] = 'Gagal merubah status pesanan';
             return $response;
@@ -204,11 +213,12 @@ class TransactionCommands extends Service
         return $response;
     }
 
-    public function addAwbNumber($order_id, $awb){
+    public function addAwbNumber($order_id, $awb)
+    {
         $delivery = OrderDelivery::where('order_id', $order_id)->first();
         $delivery->awb_number = $awb;
 
-        if (!$delivery->save()){
+        if (!$delivery->save()) {
             $response['success'] = false;
             $response['message'] = 'Gagal menambahkan nomor resi';
             return $response;
@@ -219,12 +229,13 @@ class TransactionCommands extends Service
         return $response;
     }
 
-    static function invoice_num ($input, $pad_len = 3, $prefix = null) {
+    static function invoice_num($input, $pad_len = 3, $prefix = null)
+    {
         if ($pad_len <= strlen($input))
-        $pad_len++;
+            $pad_len++;
 
         if (is_string($prefix))
-        return sprintf("%s%s", $prefix, str_pad($input, $pad_len, "0", STR_PAD_LEFT));
+            return sprintf("%s%s", $prefix, str_pad($input, $pad_len, "0", STR_PAD_LEFT));
 
         return str_pad($input, $pad_len, "0", STR_PAD_LEFT);
     }
