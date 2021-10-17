@@ -145,4 +145,13 @@ class ProductController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function getMerchantFeaturedProduct($merchant_id)
+    {
+        try {
+            return $this->productQueries->getMerchantFeaturedProduct($merchant_id);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
 }
