@@ -27,10 +27,13 @@ class CartQueries extends Service
 
     public static function getDetailCart($buyer_id = null, $related_id){
         if ($buyer_id != null){
-            $cart = Cart::with(['cart_detail' => function($product)
-            {$product->with(['product' => function($product_detail)
-            {$product_detail->with(['product_stock', 'product_photo', 'merchant']);}]);}])
-                ->where('buyer_id', $buyer_id)->get();
+            $cart = Cart::with(['merchants' => function ($merchant) {
+                $merchant->with('expedition');
+            }, 'cart_detail' => function($cart_detail) {
+                $cart_detail->with(['product' => function($product) {
+                    $product->with(['product_stock', 'product_photo']);
+                }]);
+            }])->where('buyer_id', $buyer_id)->get();
 
 //            if ($cart->isEmpty()){
 //                $response['success'] = false;
@@ -43,7 +46,7 @@ class CartQueries extends Service
             $response['data'] = $cart;
             return $response;
         }else{
-            // dd(Cart::with('merchants')->where('related_pln_mobile_customer_id', $related_id)->get());
+
             $cart = Cart::with(['merchants' => function ($merchant) {
                 $merchant->with('expedition');
             }, 'cart_detail' => function($cart_detail) {
