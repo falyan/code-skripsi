@@ -98,4 +98,11 @@ class MerchantQueries extends Service
             return $number;
         }
     }
+
+    public static function getListMerchant($request)
+    {
+        $data = Merchant::with(['district', 'city', 'province'])->paginate(0);
+
+        return $data;
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Services\Product;
 use App\Http\Services\Service;
 use App\Models\Merchant;
 use App\Models\Product;
+use Illuminate\Http\Request;
 
 class ProductQueries extends Service
 {
@@ -164,6 +165,15 @@ class ProductQueries extends Service
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk unggulan!';
         $response['data'] = ['nerchant' => $merchant, 'products' => $products];
+        return $response;
+    }
+
+    public function searchProductBySeller($merchant_id, $keyword, $limit)
+    {
+        $product = Product::with(['product_stock', 'product_photo'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']])->paginate($limit);
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $product;
         return $response;
     }
 }

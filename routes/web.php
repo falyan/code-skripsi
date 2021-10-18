@@ -75,6 +75,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('merchant', 'ProductController@getProductByMerchantSeller');
                     $router->get('detail/{id}', 'ProductController@getProductById');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
+                    $router->get('search/{keyword}[/{limit}]', 'ProductController@searchProductSeller');
+                    $router->get('filter', 'ProductController@getProductByFilter');
                 });
 
                 $router->group(['prefix' => 'category'], static function () use ($router) {
@@ -202,5 +204,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     $router->group(['prefix' => 'order'], static function () use ($router) {
         $router->post('/{id}/request-cancel', 'TransactionController@requestCancelOrder');
         $router->post('/{id}/confirm', 'TransactionController@confirmOrder');
+    });
+
+    $router->group(['prefix' => 'merchant'], static function () use ($router) {
+        $router->get('/list', 'MerchantController@requestMerchantList');
     });
 });

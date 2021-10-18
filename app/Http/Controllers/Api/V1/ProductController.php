@@ -154,4 +154,24 @@ class ProductController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+    
+    public function searchProductSeller($keyword, $limit = null)
+    {
+        try {
+            $merchant_id = Auth::user()->merchant_id;
+            $limit = !empty($limit) ?? 10;
+            return $this->productQueries->searchProductBySeller($merchant_id, $keyword, $limit);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getProductByFilter(Request $request)
+    {
+        try {
+            return $this->productQueries->getProductByFilter($request);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
 }

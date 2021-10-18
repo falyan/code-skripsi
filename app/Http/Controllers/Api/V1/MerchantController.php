@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\Merchant;
 use App\Models\User;
 use Exception, Input;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -65,6 +66,31 @@ class MerchantController extends Controller
         try {
             MerchantCommands::createOrUpdateExpedition(request()->get('list_expeditions'));
             return $this->respondWithData(Merchant::with('expedition')->where('id', Auth::user()->merchant->id)->firstOrFail(), 'Layanan ekspedisi berhasil disimpan');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function requestMerchantList(Request $request)
+    {
+        $validator = Validator::make(request()->all(), [
+            'key' => 'required',
+        ]);
+        
+        if ($validator->fails()) {
+            return $this->respondValidationError($validator->errors(), 'Validation Error!');
+        }
+        
+        try {
+            // return \Illuminate\Support\Str::random(32);
+            $key = "mbfxuavEyTjtfOGNR2bwrVlkgRnBsqUO";
+
+            if ($request->key != $key) {
+                return $this->respondValidationError(['key' => 'Your key is invalid'], 'Validation Error!');
+            }
+
+            $data = MerchantQueries::getListMerchant($request);
+            return $this->respondWithData($data, 'Berhasi mendapatkan data ist merchant');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
