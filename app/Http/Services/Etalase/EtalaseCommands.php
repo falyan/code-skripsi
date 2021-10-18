@@ -88,8 +88,13 @@ class EtalaseCommands extends Service
     {
         try {
             //find default etalase
-            $default = Etalase::where('merchant_id', Auth::user()->merchant_id)->whereIn('name', ['semua produk', 'Semua produk', 'Semua Produk', 'SEMUA PRODUK'])->firstOrFail();
+            $default = Etalase::where('merchant_id', Auth::user()->merchant_id)->whereIn('name', ['semua produk', 'Semua produk', 'Semua Produk', 'SEMUA PRODUK'])->first();
             
+            if ($default == null) {
+                $default = self::createDefault(Auth::user()->merchant_id);
+            }else {
+                throw new Exception('Failed to move product to default etalase', 400);
+            }
             //update etalase to default
             $total = count($products) ?? 0;
             for ($i=0; $i < $total; $i++) { 
@@ -100,5 +105,17 @@ class EtalaseCommands extends Service
         } catch (\Throwable $th) {
             throw new Exception($th->getMessage(), $th->getCode());
         }
+    }
+
+    public static function createDefault($merchant_id)
+    {
+        $request = [
+            'merchant_id' => $merchant_id,
+            'name' => "Semua Produk",
+            'full_name' => "System",
+        ];
+        $default = self::storeItem($request);
+
+        return $default;
     }
 }

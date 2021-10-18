@@ -10,7 +10,7 @@ use App\Models\Etalase;
 class EtalaseQueries extends Service
 {
     public static function getAll($id){
-        $paginate = Etalase::where('merchant_id', $id)->paginate();
+        $paginate = Etalase::where('merchant_id', $id)->paginate(10);
         return new EtalaseCollection($paginate);
     }
 
