@@ -38,7 +38,7 @@ class TransactionCommands extends Service
         self::$appsource = config('credentials.iconpay.app_source');
         self::$header = [
             'client-id' => static::$clientid,
-            'timestamp' => Carbon::now('Asia/Jakarta')->toISOString(),
+            'timestamp' => Carbon::now('Asia/Jakarta')->toIso8601String(),
             'appsource' => static::$appsource
         ];
     }
@@ -138,9 +138,8 @@ class TransactionCommands extends Service
                 'expired_invoice' => $exp_date,
             ];
 
-            static::$header['signature'] = hash_hmac('sha256', json_encode($body) . static::$clientid . Carbon::now('Asia/Jakarta')->toISOString(), sha1(static::$appkey));
+            static::$header['signature'] = hash_hmac('sha256', json_encode($body) . static::$clientid . Carbon::now('Asia/Jakarta')->toIso8601String(), sha1(static::$appkey));
 
-//            dd(static::$header);
             $response = static::$curl->request('POST', $url, [
                 'headers' => static::$header,
                 'http_errors' => false,
@@ -159,7 +158,7 @@ class TransactionCommands extends Service
             throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
             if ($response->response_code != 00) {
-                throw new Exception($response->response_message, $response->response_code);
+                throw new Exception($response->response_message);
             }
 
             return [
