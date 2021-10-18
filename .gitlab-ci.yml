@@ -28,19 +28,26 @@ Build Base:
   tags:
     - docker
 
-Package Development:
+Package Container:
   stage: package
   image: docker:20.10.5-git
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - mv .env.development .env
   script:
-    - docker build --no-cache -t $DOCKER_IMAGE_APP -f Dockerfile-App .
-    - docker push $DOCKER_IMAGE_APP
+    - >
+      if [ "$CI_COMMIT_REF_NAME" == "development" ]; then
+        cp .env.development .env &&
+        docker build --no-cache -t $DOCKER_IMAGE_APP -f Dockerfile-App . &&
+        docker push $DOCKER_IMAGE_APP
+      elif [ "$CI_COMMIT_REF_NAME" == "staging" ]; then
+        cp .env.staging .env &&
+        docker build --no-cache -t $DOCKER_IMAGE_APP -f Dockerfile-App . &&
+        docker push $DOCKER_IMAGE_APP
+      else
+        echo "No Process"
+      fi
   tags:
     - docker
-  only:
-    - development
 
 Deploy Development:
   stage: deploy
@@ -48,10 +55,24 @@ Deploy Development:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
     - docker stack deploy --orchestrator swarm -c docker-development.yml --with-registry-auth pln-marketplace
-  # environment:
-  #   name: URL Development
-  #   url: http://dev-sinjai.air.id
+  environment:
+    name: URL Development
+    url: https://api-central.air.id/plnmp-saruman-development/
   only:
     - development
+  tags:
+    - site-dd
+
+Deploy Staging:
+  stage: deploy
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker stack deploy --orchestrator swarm -c docker-staging.yml --with-registry-auth pln-marketplace
+  environment:
+    name: URL Staging
+    url: https://api-central.air.id/plnmp-saruman-staging/
+  only:
+    - staging
   tags:
     - site-dd
