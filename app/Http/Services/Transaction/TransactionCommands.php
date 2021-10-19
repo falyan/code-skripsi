@@ -52,14 +52,14 @@ class TransactionCommands extends Service
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now()->addDay())->setTimezone('Asia/Jakarta')->timestamp);
             $total_price = 0;
 
-            array_map(function ($data) use ($datas, $related_pln_mobile_customer_id, $no_reference, $trx_date, $exp_date, $total_price) {
+            array_map(function ($data) use ($datas, $related_pln_mobile_customer_id, $no_reference, $trx_date, $exp_date, &$total_price) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
                 $order->buyer_id = Customer::where('related_pln_mobile_customer_id', $related_pln_mobile_customer_id)->first()->id;
                 $order->trx_no = static::invoice_num(static::nextOrderId(), 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
                 $order->order_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now())->setTimezone('Asia/Jakarta')->timestamp);
                 $order->total_amount = data_get($data, 'total_amount');
-                $order->payment_amount = data_get($data, 'payment_amount');
+                $order->payment_amount = data_get($data, 'total_payment');
                 $order->total_weight = data_get($data, 'total_weight');
                 $order->payment_method = null;
                 $order->delivery_method = data_get($data, 'delivery_method');
@@ -67,7 +67,7 @@ class TransactionCommands extends Service
                 $order->no_reference = $no_reference;
                 $order->save();
 
-                $total_price += $order->payment_amount;
+                $total_price += data_get($data, 'total_payment');
 
                 array_map(function ($product) use ($order) {
                     $order_detail = new OrderDetail();
@@ -132,18 +132,21 @@ class TransactionCommands extends Service
                 'product_id' => static::$productid,
                 'amount' => $total_price,
                 'customer_id' => $related_pln_mobile_customer_id,
-                'customer_name' => $customer['fullname'],
+                'customer_name' => $customer['full_name'],
                 'email' => $customer['email'],
                 'phone_number' => $customer['phone'],
                 'expired_invoice' => $exp_date,
             ];
 
-            static::$header['signature'] = hash_hmac('sha256', json_encode($body) . static::$clientid . Carbon::now('Asia/Jakarta')->toIso8601String(), sha1(static::$appkey));
+            $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
+
+            static::$header['signature'] = hash_hmac('sha256', $encode_body . static::$clientid . Carbon::now('Asia/Jakarta')->toIso8601String(), sha1(static::$appkey));
+            static::$header['content-type'] = 'application/json';
 
             $response = static::$curl->request('POST', $url, [
                 'headers' => static::$header,
                 'http_errors' => false,
-                'json' => $body
+                'body' => $encode_body
             ]);
 
             Log::info("E00001", [
