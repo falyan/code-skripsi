@@ -38,7 +38,6 @@ class TransactionCommands extends Service
         self::$appsource = config('credentials.iconpay.app_source');
         self::$header = [
             'client-id' => static::$clientid,
-            'timestamp' => Carbon::now('Asia/Jakarta')->toIso8601String(),
             'appsource' => static::$appsource
         ];
     }
@@ -48,8 +47,9 @@ class TransactionCommands extends Service
         DB::beginTransaction();
         try {
             $no_reference = Uuid::uuid4();
-            $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now())->setTimezone('Asia/Jakarta')->timestamp);
-            $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now()->addDay())->setTimezone('Asia/Jakarta')->timestamp);
+            $timestamp = Carbon::now('Asia/Jakarta')->toIso8601String();
+            $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
+            $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDay())->timestamp);
             $total_price = 0;
 
             array_map(function ($data) use ($datas, $related_pln_mobile_customer_id, $no_reference, $trx_date, $exp_date, &$total_price) {
@@ -140,7 +140,8 @@ class TransactionCommands extends Service
 
             $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
 
-            static::$header['signature'] = hash_hmac('sha256', $encode_body . static::$clientid . Carbon::now('Asia/Jakarta')->toIso8601String(), sha1(static::$appkey));
+            static::$header['timestamp'] = $timestamp;
+            static::$header['signature'] = hash_hmac('sha256', $encode_body . static::$clientid . $timestamp, sha1(static::$appkey));
             static::$header['content-type'] = 'application/json';
 
             $response = static::$curl->request('POST', $url, [
@@ -160,8 +161,8 @@ class TransactionCommands extends Service
 
             throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
-            if ($response->response_code != 00) {
-                throw new Exception($response->response_message);
+            if ($response->response_details[0]->response_code != 00) {
+                throw new Exception($response->response_details[0]->response_message);
             }
 
             return [
