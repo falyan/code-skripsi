@@ -19,6 +19,8 @@ class CreateReviewTable extends Migration
             $table->unsignedBigInteger('customer_id')->nullable();
             $table->unsignedBigInteger('order_id')->nullable();
             $table->unsignedBigInteger('product_id')->nullable();
+            $table->string('message')->nullable();
+            $table->string('reply_message')->nullable();
             $table->integer('rate')->nullable();
             $table->string('related_pln_mobile_customer_id')->nullable();
             $table->boolean('is_valid')->nullable();

@@ -16,11 +16,9 @@ class CreatePromotionBindingTable extends Migration
         Schema::create('promotion_binding', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('promotion_id');
-            $table->string('binding_type');
-            $table->string('value_type');
-            $table->string('value');
-            $table->string('created_by')->nullable();
-            $table->string('updated_by')->nullable();
+            $table->dateTime('usage_date');
+            $table->string('trx_no');
+            $table->integer('remaining_usage');
             $table->timestamps();
 
             $table->foreign('promotion_id')->references('id')->on('promotion')->onDelete('cascade');
