@@ -111,14 +111,15 @@ class ProductQueries extends Service
             $region->with(['province', 'city', 'district', 'expedition']);
         }, 'etalase', 'category'])->where('id', $id)->first();
 
-        $data['avg_rating'] = round($data->reviews()->avg('rate'), 2);
-
         if (!$data) {
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data produk!';
             $response['data'] = $data;
             return $response;
         }
+
+        $data['avg_rating'] = round($data->reviews()->avg('rate'), 2);
+        
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
