@@ -48,6 +48,37 @@ class MerchantCommands extends Service
         }
     }
 
+    public static function updateLokasi($request, $merchant_id)
+    {
+        $merchant = Merchant::findOrFail($merchant_id);
+        $merchant->name = strtoupper($merchant->name);
+        $merchant->phone_office = $merchant->phone_office;
+        $merchant->corporate_id = $merchant->corporate_id;
+        $merchant->address = $request->address == null ? $merchant->address : $request->address;
+        $merchant->province_id = $request->province_id == null ? $merchant->province_id : $request->province_id;
+        $merchant->city_id = $request->city_id == null ? $merchant->city_id : $request->city_id;
+        $merchant->district_id = $request->district_id == null ? $merchant->district_id : $request->district_id;
+        $merchant->postal_code = $request->postal_code == null ? $merchant->postal_code : $request->postal_code;
+        $merchant->longitude = $request->longitude == null ? $merchant->longitude : $request->longitude;
+        $merchant->latitude = $request->latitude == null ? $merchant->latitude : $request->latitude;
+        $merchant->email = strtolower($merchant->email);
+        $merchant->photo_url = $merchant->photo_url;
+        $merchant->pic_id = $merchant->pic_id;
+        $merchant->nib_url = $request->nib_url;
+        $merchant->registration_form_url = $merchant->registration_form_url;
+        $merchant->status = $merchant->status;
+        $merchant->is_open = $merchant->is_open;
+        $merchant->created_by = $merchant->created_by;
+        $merchant->updated_by = $request->full_name;
+        $merchant->reference_customer_id = $merchant->reference_customer_id;
+
+        if ($merchant->save()) {
+            return $merchant;
+        } else {
+            return false;
+        }
+    }
+
     public static function createOrUpdateExpedition($list_expeditions)
     {
         try {

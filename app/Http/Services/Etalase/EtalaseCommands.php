@@ -92,9 +92,8 @@ class EtalaseCommands extends Service
             
             if ($default == null) {
                 $default = self::createDefault(Auth::user()->merchant_id);
-            }else {
-                throw new Exception('Failed to move product to default etalase', 400);
             }
+            
             //update etalase to default
             $total = count($products) ?? 0;
             for ($i=0; $i < $total; $i++) { 

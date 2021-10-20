@@ -28,7 +28,7 @@ class MerchantController extends Controller
             if ($validator->fails()) {
                 return response()->json(['success' => false, 'message' => 'Validasi gagal', 'data' => $validator->errors()], 400);
             };
-            
+
             return MerchantCommands::aturToko(request()->all(), Auth::user()->merchant_id);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -71,16 +71,43 @@ class MerchantController extends Controller
         }
     }
 
+    public function aturLokasi(Request $request)
+    {
+        $validator = Validator::make(request()->all(), [
+            'address' => 'required|min:3',
+            'province_id' => 'required|exists:province,id',
+            'city_id' => 'required|exists:city,id',
+            'district_id' => 'required|exists:district,id',
+            'postal_code' => 'required|max:5',
+            'longitude' => 'nullable',
+            'latitude' => 'nullable',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->respondValidationError($validator->errors(), 'Validation Error!');
+        }
+
+        try {
+            request()->request->add([
+                'full_name' => Auth::user()->full_name
+            ]);
+            $data = MerchantCommands::updateLokasi($request, Auth::user()->merchant_id);
+            return $this->respondWithData($data, 'Layanan ekspedisi berhasil disimpan');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function requestMerchantList(Request $request)
     {
         $validator = Validator::make(request()->all(), [
             'key' => 'required',
         ]);
-        
+
         if ($validator->fails()) {
             return $this->respondValidationError($validator->errors(), 'Validation Error!');
         }
-        
+
         try {
             // return \Illuminate\Support\Str::random(32);
             $key = "mbfxuavEyTjtfOGNR2bwrVlkgRnBsqUO";
