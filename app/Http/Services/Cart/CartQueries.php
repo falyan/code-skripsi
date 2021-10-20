@@ -28,7 +28,7 @@ class CartQueries extends Service
     public static function getDetailCart($buyer_id = null, $related_id){
         if ($buyer_id != null){
             $cart = Cart::with(['merchants' => function ($merchant) {
-                $merchant->with('expedition');
+                $merchant->with(['expedition', 'city']);
             }, 'cart_detail' => function($cart_detail) {
                 $cart_detail->with(['product' => function($product) {
                     $product->with(['product_stock', 'product_photo']);
@@ -48,7 +48,7 @@ class CartQueries extends Service
         }else{
 
             $cart = Cart::with(['merchants' => function ($merchant) {
-                $merchant->with('expedition');
+                $merchant->with('expedition', 'city');
             }, 'cart_detail' => function($cart_detail) {
                 $cart_detail->with(['product' => function($product) {
                     $product->with(['product_stock', 'product_photo']);
