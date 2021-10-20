@@ -100,6 +100,11 @@ class Product extends Model
         return $this->hasMany(ProductStock::class);
     }
 
+    public function stock_active()
+    {
+        return $this->hasOne(ProductStock::class)->where('status',1);
+    }
+
     public function product_photo(){
         return $this->hasMany(ProductPhoto::class);
     }

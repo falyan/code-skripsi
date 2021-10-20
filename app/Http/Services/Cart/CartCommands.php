@@ -8,6 +8,7 @@ use App\Models\CartDetail;
 use App\Models\Customer;
 use App\Models\Etalase;
 use App\Models\Merchant;
+use App\Models\Product;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -27,12 +28,21 @@ class CartCommands extends Service
 
         try {
             $cart = Cart::where([['related_pln_mobile_customer_id', $getRelationMobile], ['merchant_id', $related_merchant_id]])->first();
+            $product = Product::with(['stock_active'])->find($getProductId);
+            
+            if (empty($product->stock_active) || (empty($product->stock_active) && $product->stock_active->amount <= 0)) {
+                throw new Exception('Stok produk ' . $product->name . ' belum tersedia', 400);
+            }
 
             if ($cart) {
                 $productExists = $cart->cart_detail->where('product_id', $getProductId)
                     ->first();
 
                 if ($productExists) {
+                    if ($productExists->quantity + 1 > $product->stock_active->amount) {
+                        throw new Exception("Stok yang tersedia untuk produk ini sisa " . $product->stock_active->amount);
+                    }
+
                     $cartDetail = $productExists->update([
                         'quantity' => $productExists->quantity + 1
                     ]);

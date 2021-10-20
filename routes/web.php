@@ -209,4 +209,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     $router->group(['prefix' => 'merchant'], static function () use ($router) {
         $router->get('/list', 'MerchantController@requestMerchantList');
     });
+
+    $router->get('/test', function(){
+        return \App\Models\Product::wheredoesnthave('stock_active')->get();
+    });
 });
