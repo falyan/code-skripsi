@@ -75,7 +75,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('merchant', 'ProductController@getProductByMerchantSeller');
                     $router->get('detail/{id}', 'ProductController@getProductById');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
-                    $router->get('search/{keyword}[/{limit}]', 'ProductController@searchProductSeller');
+                    $router->get('search', 'ProductController@searchProductSeller');
                     $router->get('filter', 'ProductController@getProductByFilter');
                 });
 
@@ -90,7 +90,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('/on-delivery', 'TransactionController@orderInDelivery');
                     $router->get('/done', 'TransactionController@orderDone');
                     $router->get('/canceled', 'TransactionController@sellerTransactionCanceled');
-                    $router->get('/search/{keyword}', 'TransactionController@sellerSearchTransaction');
+                    $router->get('/search', 'TransactionController@sellerSearchTransaction');
                     $router->get('/detail/{id}', 'TransactionController@detailTransaction');
                 });
 
@@ -117,7 +117,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'product'], static function () use ($router) {
                 $router->get('recommend', 'ProductController@getRecommendProduct');
                 $router->get('special', 'ProductController@getSpecialProduct');
-                $router->get('search/{keyword}[/{limit}]', 'ProductController@SearchProductByName');
+                $router->get('search', 'ProductController@SearchProductByName');
                 $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchantBuyer');
                 $router->get('category/{category_id}', 'ProductController@getProductByCategory');
                 $router->get('/merchant/{merchant_id}/featured', 'ProductController@getMerchantFeaturedProduct');
@@ -138,7 +138,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'region'], static function () use ($router) {
-                $router->get('search/{keyword}[/{limit}]', 'RegionController@searchDistrict');
+                $router->get('search', 'RegionController@searchDistrict');
             });
 
             $router->group(['prefix' => 'transaction'], static function () use ($router) {
@@ -149,7 +149,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/{related_id}/on-delivery', 'TransactionController@transactionOnDelivery');
                 $router->get('/{related_id}/done', 'TransactionController@buyerTransactionDone');
                 $router->get('/{related_id}/canceled', 'TransactionController@buyerTransactionCanceled');
-                $router->get('/{related_id}/search/{keyword}', 'TransactionController@buyerSearchTransaction');
+                $router->get('/{related_id}/search', 'TransactionController@buyerSearchTransaction');
                 $router->get('/{related_id}/detail/{id}/invoice', 'TransactionController@getDetailInvoice');
             });
 

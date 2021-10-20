@@ -8,6 +8,7 @@ use App\Http\Services\Product\ProductQueries;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
@@ -16,6 +17,7 @@ class ProductController extends Controller
      *
      * @return void
      */
+    protected $productCommands, $productQueries;
     public function __construct()
     {
         $this->productCommands = new ProductCommands();
@@ -93,8 +95,20 @@ class ProductController extends Controller
     }
 
     //Search Produk
-    public function searchProductByName($keyword, $limit = 10){
+    public function searchProductByName(Request $request){
         try {
+            $validator = Validator::make(request()->all(), [
+                'keyword' => 'required|min:3',
+                'limit' => 'nullable'
+            ]);
+    
+            if ($validator->fails()) {
+                return $this->respondValidationError($validator->messages()->get('*'), 'Validation Error!');
+            }
+            
+            $keyword = $request->keyword;
+            $limit = $request->limit ?? 10;
+
             return $this->productQueries->searchProductByName($keyword, $limit);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -155,11 +169,21 @@ class ProductController extends Controller
         }
     }
     
-    public function searchProductSeller($keyword, $limit = null)
+    public function searchProductSeller(Request $request)
     {
         try {
+            $validator = Validator::make(request()->all(), [
+                'keyword' => 'required|min:3',
+                'limit' => 'nullable'
+            ]);
+    
+            if ($validator->fails()) {
+                return $this->respondValidationError($validator->messages()->get('*'), 'Validation Error!');
+            }
+            
             $merchant_id = Auth::user()->merchant_id;
-            $limit = !empty($limit) ?? 10;
+            $keyword = $request->keyword;
+            $limit = $request->limit ?? 10;
             return $this->productQueries->searchProductBySeller($merchant_id, $keyword, $limit);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -169,7 +193,7 @@ class ProductController extends Controller
     public function getProductByFilter(Request $request)
     {
         try {
-            return $this->productQueries->getProductByFilter($request);
+            // return $this->productQueries->getProductByFilter($request);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

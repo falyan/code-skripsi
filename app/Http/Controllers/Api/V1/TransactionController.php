@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Merchant;
 use App\Models\Product;
 use Exception, Input;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use stdClass;
@@ -223,16 +224,24 @@ class TransactionController extends Controller
         }
     }
 
-    public function buyerSearchTransaction($related_id, $keyword)
+    public function buyerSearchTransaction($related_id, Request $request)
     {
         try {
             if (empty($related_id)) {
                 return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
             }
 
-            if (strlen(trim($keyword)) < 3) {
-                return $this->respondWithResult(false, 'Kata kunci minimal 3 karakter', 400);
+            $validator = Validator::make(request()->all(), [
+                'keyword' => 'required|min:3',
+                'limit' => 'nullable'
+            ]);
+    
+            if ($validator->fails()) {
+                return $this->respondValidationError($validator->messages()->get('*'), 'Validation Error!');
             }
+            
+            $keyword = $request->keyword;
+            $limit = $request->limit ?? 10;
 
             if (Auth::check()) {
                 $user = Customer::find(Auth::id());
@@ -344,13 +353,20 @@ class TransactionController extends Controller
         }
     }
 
-    public function sellerSearchTransaction($keyword)
+    public function sellerSearchTransaction(Request $request)
     {
         try {
-
-            if (strlen(trim($keyword)) < 3) {
-                return $this->respondWithResult(false, 'Kata kunci minimal 3 karakter', 400);
+            $validator = Validator::make(request()->all(), [
+                'keyword' => 'required|min:3',
+                'limit' => 'nullable'
+            ]);
+    
+            if ($validator->fails()) {
+                return $this->respondValidationError($validator->messages()->get('*'), 'Validation Error!');
             }
+
+            $keyword = $request->keyword;
+            $limit = $request->limit ?? 10;
 
             $data = $this->transactionQueries->searchTransaction('merchant_id', Auth::user()->merchant_id, $keyword);
 
