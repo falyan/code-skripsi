@@ -17,11 +17,20 @@ use Illuminate\Support\Facades\Auth;
 class CartQueries extends Service
 {
     public static function getTotalCart($related_customer_id, $buyer_id = null){
-        $cart = Cart::findByRelatedId($buyer_id, $related_customer_id);
+        $carts = Cart::findByRelatedId($buyer_id, $related_customer_id);
+        // dd($carts[4]->cart_detail);
+        $per_quantities = [];
+        foreach ($carts as $cart) {
+            array_push($per_quantities, $cart->cart_detail->pluck('quantity')->first());
+        }
+
+        $validated_quantities = array_filter($per_quantities, function($qty) {
+            return isset($qty);
+        });
 
         return [
-            'product' => count($cart->cart_detail->toArray()),
-            'total_item' => array_sum($cart->cart_detail->pluck('quantity')->toArray())
+            'product' => count($validated_quantities),
+            'total_item' => array_sum($validated_quantities)
         ];
     }
 
