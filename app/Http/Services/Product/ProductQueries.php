@@ -216,7 +216,12 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo'])->latest()->limit(10)->get();
+        }])->with(['product_stock', 'product_photo'])->latest()->limit(10);
+
+        $immutable_data = $products->get()->map(function($product) {
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
+            return $product;
+        });
 
         //        if ($product->isEmpty()){
         //            $response['success'] = false;
@@ -225,7 +230,7 @@ class ProductQueries extends Service
         //        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $products;
+        $response['data'] = $immutable_data;
         return $response;
     }
 
@@ -236,7 +241,12 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo'])->latest()->limit(10)->get();
+        }])->with(['product_stock', 'product_photo'])->latest()->limit(10);
+
+        $immutable_data = $products->get()->map(function($product) {
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
+            return $product;
+        });
 
         //        if ($product->isEmpty()){
         //            $response['success'] = false;
@@ -245,7 +255,7 @@ class ProductQueries extends Service
         //        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $products;
+        $response['data'] = $immutable_data;
         return $response;
     }
 
@@ -262,11 +272,16 @@ class ProductQueries extends Service
             $trx->whereHas('order', function ($j) {
                 $j->whereHas('progress_done');
             });
-        }, 'product_photo', 'product_stock'])->where([['merchant_id', $merchant_id], ['is_featured_product', true]])->get();
+        }, 'product_photo', 'product_stock'])->where([['merchant_id', $merchant_id], ['is_featured_product', true]]);
+
+        $immutable_data = $products->get()->map(function($product) {
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
+            return $product;
+        });
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk unggulan!';
-        $response['data'] = ['nerchant' => $merchant, 'products' => $products];
+        $response['data'] = ['nerchant' => $merchant, 'products' => $immutable_data];
         return $response;
     }
 
