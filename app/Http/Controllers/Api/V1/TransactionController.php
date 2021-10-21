@@ -454,10 +454,39 @@ class TransactionController extends Controller
         $error;
     }
 
-    public function acceptOrder($order_id)
+    public function acceptOrder(Request $request)
     {
         try {
-            return $this->transactionCommand->updateOrderStatus($order_id, '02');
+            $rules = [
+                'id.*' => 'required',
+            ];
+
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => ':attribute diperlukan.',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            foreach ($request->id as $order_id){
+                $response = $this->transactionCommand->updateOrderStatus($order_id, '02');
+                if ($response['success'] == false){
+                    return $response;
+                }
+            }
+
+            $response['success'] = true;
+            $response['message'] = 'Berhasil merubah status pesanan';
+            return $response;
+
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
