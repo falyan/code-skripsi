@@ -50,7 +50,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('/{id}/approve', 'TransactionController@approveOrder');
                     $router->post('/{id}/reject', 'TransactionController@rejectOrder');
                     $router->post('/{id}/deliver', 'TransactionController@deliverOrder');
-                    $router->post('accept/{order_id}', 'TransactionController@acceptOrder');
+                    $router->post('accept', 'TransactionController@acceptOrder');
                     $router->post('reject/{order_id}', 'TransactionController@rejectOrder');
                     $router->post('awb-number/{order_id}/{awb}', 'TransactionController@addAwbNumberOrder');
                 });
@@ -179,6 +179,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'notification'], static function () use ($router) {
                 $router->post('/read/{id}/{rlc_id}', 'NotificationController@buyerReadNotification');
                 $router->delete('/delete/{id}/{rlc_id}', 'NotificationController@buyerDeleteNotification');
+            });
+
+            $router->group(['prefix' => 'review'], static function () use ($router) {
+                $router->post('add', 'ReviewController@addReview');
             });
         });
     });
