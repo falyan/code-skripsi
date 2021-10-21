@@ -18,19 +18,19 @@ class CartQueries extends Service
 {
     public static function getTotalCart($related_customer_id, $buyer_id = null){
         $carts = Cart::findByRelatedId($buyer_id, $related_customer_id);
-        // dd($carts[4]->cart_detail);
+        
         $per_quantities = [];
         foreach ($carts as $cart) {
-            array_push($per_quantities, $cart->cart_detail->pluck('quantity')->first());
-        }
+            $products = $cart->cart_detail->pluck('quantity')->toArray();
 
-        $validated_quantities = array_filter($per_quantities, function($qty) {
-            return isset($qty);
-        });
+            foreach ($products as $product) {
+                array_push($per_quantities, $product);
+            }
+        };
 
         return [
-            'product' => count($validated_quantities),
-            'total_item' => array_sum($validated_quantities)
+            'product' => count($per_quantities),
+            'total_item' => array_sum($per_quantities)
         ];
     }
 
