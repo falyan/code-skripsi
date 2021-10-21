@@ -130,7 +130,7 @@ class ProductQueries extends Service
             $order_details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['reviews', 'merchant' => function ($merchant) {
+        }])->with(['merchant' => function ($merchant) {
             $merchant->with('city:id,name');
         }, 'order_details' => function ($trx) {
             $trx->whereHas('order', function ($j) {
