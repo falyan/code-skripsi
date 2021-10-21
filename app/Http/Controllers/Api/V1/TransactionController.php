@@ -51,20 +51,28 @@ class TransactionController extends Controller
             'merchants.*.products.*.total_insurance_cost' => 'required',
             'merchants.*.products.*.total_amount' => 'required',
             'merchants.*.products.*.payment_note' => 'sometimes',
+        ], [
+            'required' => ':attribute diperlukan.'
         ]);
 
         if ($validator->fails()) {
-            return $this->respondValidationError($validator->messages()->get('*'), 'Validation Error!');
-        }
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
 
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
 
         try {
             if (!Customer::where('related_pln_mobile_customer_id', $related_pln_mobile_customer_id)->exists()) {
                 throw new Exception('Customer tidak ditemukan', 404);
             }
 
-            array_map(function($merchant) {
-                array_map(function($item) {
+            array_map(function ($merchant) {
+                array_map(function ($item) {
                     if (!$product = Product::find(data_get($item, 'product_id'))) {
                         throw new Exception('Produk dengan id ' . data_get($item, 'product_id') . ' tidak ditemukan', 404);
                     }
@@ -96,7 +104,7 @@ class TransactionController extends Controller
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
-            }else {
+            } else {
                 return $this->respondWithResult(true, 'belum ada transaksi');
             }
         } catch (Exception $e) {
@@ -120,7 +128,7 @@ class TransactionController extends Controller
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
-            }else {
+            } else {
                 return $this->respondWithResult(true, 'tidak ada transaksi yang belum dibayar');
             }
         } catch (Exception $e) {
@@ -144,7 +152,7 @@ class TransactionController extends Controller
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
-            }else {
+            } else {
                 return $this->respondWithResult(true, 'tidak ada transaksi yang menunggu persetujuan');
             }
         } catch (Exception $e) {
@@ -168,7 +176,7 @@ class TransactionController extends Controller
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
-            }else {
+            } else {
                 return $this->respondWithResult(true, 'tidak ada transaksi yang sedang dikirim');
             }
         } catch (Exception $e) {
@@ -192,7 +200,7 @@ class TransactionController extends Controller
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
-            }else {
+            } else {
                 return $this->respondWithResult(true, 'belum ada transaksi yang selesai');
             }
         } catch (Exception $e) {
@@ -216,7 +224,7 @@ class TransactionController extends Controller
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
-            }else {
+            } else {
                 return $this->respondWithResult(true, 'tidak ada transaksi yang dibatalkan');
             }
         } catch (Exception $e) {
@@ -234,12 +242,24 @@ class TransactionController extends Controller
             $validator = Validator::make(request()->all(), [
                 'keyword' => 'required|min:3',
                 'limit' => 'nullable'
+            ], [
+                'exists' => 'ID :attribute tidak ditemukan.',
+                'required' => ':attribute diperlukan.',
+                'max' => 'panjang :attribute maksimum :max karakter.',
+                'min' => 'panjang :attribute minimum :min karakter.',
             ]);
-    
+
             if ($validator->fails()) {
-                return $this->respondValidationError($validator->messages()->get('*'), 'Validation Error!');
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
             }
-            
+
             $keyword = $request->keyword;
             $limit = $request->limit ?? 10;
 
@@ -252,7 +272,7 @@ class TransactionController extends Controller
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
-            }else {
+            } else {
                 return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan');
             }
         } catch (Exception $e) {
@@ -269,7 +289,7 @@ class TransactionController extends Controller
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
-            }else {
+            } else {
                 return $this->respondWithResult(true, 'belum ada transaksi');
             }
         } catch (Exception $e) {
@@ -285,7 +305,7 @@ class TransactionController extends Controller
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
-            }else {
+            } else {
                 return $this->respondWithResult(true, 'belum ada pesanan baru');
             }
         } catch (Exception $e) {
@@ -300,7 +320,7 @@ class TransactionController extends Controller
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
-            }else {
+            } else {
                 return $this->respondWithResult(true, 'belum ada pesanan yang siap dikirim');
             }
         } catch (Exception $e) {
@@ -315,7 +335,7 @@ class TransactionController extends Controller
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
-            }else {
+            } else {
                 return $this->respondWithResult(true, 'tidak ada pesanan yang sedang dikirim');
             }
         } catch (Exception $e) {
@@ -330,7 +350,7 @@ class TransactionController extends Controller
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
-            }else {
+            } else {
                 return $this->respondWithResult(true, 'belum ada pesanan yang berhasil');
             }
         } catch (Exception $e) {
@@ -345,7 +365,7 @@ class TransactionController extends Controller
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
-            }else {
+            } else {
                 return $this->respondWithResult(true, 'belum ada pesanan yang dibatalkan');
             }
         } catch (Exception $e) {
@@ -359,10 +379,22 @@ class TransactionController extends Controller
             $validator = Validator::make(request()->all(), [
                 'keyword' => 'required|min:3',
                 'limit' => 'nullable'
+            ], [
+                'exists' => 'ID :attribute tidak ditemukan.',
+                'required' => ':attribute diperlukan.',
+                'max' => 'panjang :attribute maksimum :max karakter.',
+                'min' => 'panjang :attribute minimum :min karakter.',
             ]);
-    
+
             if ($validator->fails()) {
-                return $this->respondValidationError($validator->messages()->get('*'), 'Validation Error!');
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
             }
 
             $keyword = $request->keyword;
@@ -372,7 +404,7 @@ class TransactionController extends Controller
 
             if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
-            }else {
+            } else {
                 return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan');
             }
         } catch (Exception $e) {
@@ -388,7 +420,7 @@ class TransactionController extends Controller
 
             if (!empty($data)) {
                 return $this->respondWithData($data, 'sukses get detail transaksi');;
-            }else {
+            } else {
                 return $this->respondWithResult(false, 'ID transaksi salah', 400);
             }
         } catch (Exception $e) {
@@ -399,8 +431,8 @@ class TransactionController extends Controller
     private function validateProduct($merchants)
     {
         $error = new stdClass();
-        array_map(function($merchant) use ($error) {
-            array_map(function($item) use ($error) {
+        array_map(function ($merchant) use ($error) {
+            array_map(function ($item) use ($error) {
                 if (!$product = Product::find(data_get($item, 'product_id'))) {
                     if (isset($error->message) && isset($error->code)) {
                         return [
@@ -422,49 +454,53 @@ class TransactionController extends Controller
         $error;
     }
 
-    public function acceptOrder($order_id){
+    public function acceptOrder($order_id)
+    {
         try {
             return $this->transactionCommand->updateOrderStatus($order_id, '02');
-        }catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function rejectOrder($order_id){
+    public function rejectOrder($order_id)
+    {
         try {
             $notes = request()->input('notes');
             return $this->transactionCommand->updateOrderStatus($order_id, '99', $notes);
-        }catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function addAwbNumberOrder($order_id, $awb){
+    public function addAwbNumberOrder($order_id, $awb)
+    {
         try {
             $response = $this->transactionCommand->addAwbNumber($order_id, $awb);
-            if ($response['success'] == false){
+            if ($response['success'] == false) {
                 return $response;
             }
             $status = $this->transactionCommand->updateOrderStatus($order_id, '03');
-            if ($status['success'] == false){
+            if ($status['success'] == false) {
                 return $status;
             }
 
             return $response;
-        }catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function getInvoice($id){
+    public function getInvoice($id)
+    {
         try {
             $data = $this->transactionQueries->getDetailTransaction($id);
             if (!empty($data)) {
                 return $this->respondWithData($data, 'sukses get detail Invoice');;
-            }else {
+            } else {
                 return $this->respondWithResult(false, 'ID transaksi salah', 400);
             }
-        }catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }

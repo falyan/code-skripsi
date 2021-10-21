@@ -43,15 +43,28 @@ class CartController extends Controller
     public function add()
     {
         try {
-            $validator = Validator::make(request()->all(), [
-                'product_id' => 'required|exists:product,id',
-                'buyer_id' => 'nullable|exists:customer,id',
-                'related_merchant_id' => 'required|exists:merchant,id',
-                'related_pln_mobile_customer_id' => 'required'
-            ]);
+            $validator = Validator::make(
+                request()->all(),
+                [
+                    'product_id' => 'required|exists:product,id',
+                    'buyer_id' => 'nullable|exists:customer,id',
+                    'related_merchant_id' => 'required|exists:merchant,id',
+                    'related_pln_mobile_customer_id' => 'required'
+                ],
+                [
+                    'exists' => 'ID :attribute tidak ditemukan.',
+                    'required' => ':attribute diperlukan.',
+                ]
+            );
 
             if ($validator->fails()) {
-                return $this->respondValidationError($validator->messages()->get('*'), 'Validation Error!');
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+                return $this->respondValidationError($errors, 'Validation Error!');
             }
 
             $data = CartCommands::addCart();
@@ -67,13 +80,28 @@ class CartController extends Controller
 
     public function qtyUpdate(Request $request, $cart_detail_id, $cart_id)
     {
-        $validator = Validator::make($request->all(), [
-            'quantity' => 'required'
-        ]);
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'quantity' => 'required'
+            ],
+            [
+                'exists' => 'ID :attribute tidak ditemukan.',
+                'required' => ':attribute diperlukan.',
+                'max' => 'panjang :attribute maksimum :max karakter.',
+                'min' => 'panjang :attribute minimum :min karakter.',
+            ]
+        );
 
         try {
             if ($validator->fails()) {
-                throw new Exception($validator->errors(), 400);
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+                return $this->respondValidationError($errors, 'Validation Error!');
             }
 
             return CartCommands::QuantityUpdate($cart_detail_id, $cart_id);
@@ -91,7 +119,8 @@ class CartController extends Controller
         }
     }
 
-    public function showDetail($buyer_id = null, $related_id){
+    public function showDetail($buyer_id = null, $related_id)
+    {
         try {
             return CartQueries::getDetailCart($buyer_id, $related_id);
         } catch (Exception $e) {
@@ -99,12 +128,13 @@ class CartController extends Controller
         }
     }
 
-    public function deleteAllCart($related_id, $buyer_id = null){
+    public function deleteAllCart($related_id, $buyer_id = null)
+    {
         try {
             $cartCommands = new CartCommands();
             return $cartCommands->deleteAllCart($related_id, $buyer_id);
         } catch (Exception $e) {
-//            return $this->respondErrorException($e, request());
+            //            return $this->respondErrorException($e, request());
         }
     }
 }

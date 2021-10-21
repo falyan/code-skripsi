@@ -38,10 +38,16 @@ class EtalaseController extends Controller
 
     public function store()
     {
-        $validator = Validator::make(request()->all(), [
-            'merchant_id' => 'required',
-            'name' => 'required'
-        ]);
+        $validator = Validator::make(
+            request()->all(),
+            [
+                'merchant_id' => 'required',
+                'name' => 'required'
+            ],
+            [
+                'required' => ':attribute diperlukan.',
+            ]
+        );
 
         request()->request->add([
             'full_name' => Auth::user()->full_name
@@ -49,7 +55,13 @@ class EtalaseController extends Controller
 
         try {
             if ($validator->fails()) {
-                return $this->respondValidationError($validator->messages()->get('*'));
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+                return $this->respondValidationError($errors, 'Validation Error!');
             }
 
             $record = EtalaseCommands::storeItem(request()->all());
@@ -63,12 +75,27 @@ class EtalaseController extends Controller
     public function update($id)
     {
         try {
-            $validator = Validator::make(request()->all(), [
-                'name' => 'required'
-            ]);
+            $validator = Validator::make(
+                request()->all(),
+                [
+                    'name' => 'required'
+                ],
+                [
+                    'exists' => 'ID :attribute tidak ditemukan.',
+                    'required' => ':attribute diperlukan.',
+                    'max' => 'panjang :attribute maksimum :max karakter.',
+                    'min' => 'panjang :attribute minimum :min karakter.',
+                ]
+            );
 
             if ($validator->fails()) {
-                return $this->respondValidationError($validator->messages()->get('*'));
+                $data = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $data->push($error);
+                    }
+                }
+                return $this->respondValidationError($data, 'Validation Error!');
             }
 
             EtalaseCommands::updateItem($id, request()->all());

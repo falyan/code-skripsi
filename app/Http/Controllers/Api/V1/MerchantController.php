@@ -22,11 +22,19 @@ class MerchantController extends Controller
             'slogan' => 'required',
             'description' => 'required',
             'operational' => 'required'
+        ], [
+            'required' => ':attribute diperlukan.'
         ]);
 
         try {
             if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => 'Validasi gagal', 'data' => $validator->errors()], 400);
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+                return $this->respondValidationError($errors, 'Validation Error!');
             };
 
             return MerchantCommands::aturToko(request()->all(), Auth::user()->merchant_id);
@@ -57,10 +65,18 @@ class MerchantController extends Controller
     {
         $validator = Validator::make(request()->all(), [
             'list_expeditions' => 'required',
+        ], [
+            'required' => ':attribute diperlukan.'
         ]);
 
         if ($validator->fails()) {
-            return $this->respondValidationError($validator->errors(), 'Validation Error!');
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors, 'Validation Error!');
         }
 
         try {
@@ -73,18 +89,33 @@ class MerchantController extends Controller
 
     public function aturLokasi(Request $request)
     {
-        $validator = Validator::make(request()->all(), [
-            'address' => 'required|min:3',
-            'province_id' => 'required|exists:province,id',
-            'city_id' => 'required|exists:city,id',
-            'district_id' => 'required|exists:district,id',
-            'postal_code' => 'required|max:5',
-            'longitude' => 'nullable',
-            'latitude' => 'nullable',
-        ]);
+        $validator = Validator::make(
+            request()->all(),
+            [
+                'address' => 'required|min:3',
+                'province_id' => 'required|exists:province,id',
+                'city_id' => 'required|exists:city,id',
+                'district_id' => 'required|exists:district,id',
+                'postal_code' => 'required|max:5',
+                'longitude' => 'nullable',
+                'latitude' => 'nullable',
+            ],
+            [
+                'exists' => 'ID :attribute tidak ditemukan.',
+                'required' => ':attribute diperlukan.',
+                'max' => 'panjang :attribute maksimum :max karakter.',
+                'min' => 'panjang :attribute minimum :min karakter.',
+            ]
+        );
 
         if ($validator->fails()) {
-            return $this->respondValidationError($validator->errors(), 'Validation Error!');
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors, 'Validation Error!');
         }
 
         try {
@@ -102,10 +133,18 @@ class MerchantController extends Controller
     {
         $validator = Validator::make(request()->all(), [
             'key' => 'required',
+        ], [
+            'required' => ':attribute diperlukan.'
         ]);
 
         if ($validator->fails()) {
-            return $this->respondValidationError($validator->errors(), 'Validation Error!');
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors, 'Validation Error!');
         }
 
         try {

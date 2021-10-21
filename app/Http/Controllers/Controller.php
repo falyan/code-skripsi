@@ -112,7 +112,7 @@ class Controller extends BaseController
             'status' => 'error',
             'status_code' => 400,
             'message' => $message,
-            'data' => [$data]
+            'data' => $data
         ];
 
         return response()->json($result, 400, $headers);

@@ -91,7 +91,7 @@ class RajaOngkirController extends Controller
             set_time_limit(0);
             DB::beginTransaction();
             $cities = City::all()->count();
-            for ($i=1; $i <= $cities; $i++) {
+            for ($i = 1; $i <= $cities; $i++) {
                 array_map(function ($item) {
                     District::firstOrCreate([
                         'name' => data_get($item, 'subdistrict_name'),
@@ -139,14 +139,22 @@ class RajaOngkirController extends Controller
             'width' => 'sometimes',
             'height' => 'sometimes',
             'diameter' => 'sometimes',
+        ], [
+            'required' => ':attribute diperlukan.'
         ]);
 
         if ($validator->fails()) {
-            return $this->respondValidationError($validator->messages()->get('*'), 'Validation Error!');
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors, 'Validation Error!');
         }
 
         try {
-            return RajaOngkirManager::getOngkir(request()->only(['origin_district_id','destination_district_id','weight','courier']));
+            return RajaOngkirManager::getOngkir(request()->only(['origin_district_id', 'destination_district_id', 'weight', 'courier']));
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -156,7 +164,7 @@ class RajaOngkirController extends Controller
     {
         try {
             return [
-                'data' => array_map(function($item) {
+                'data' => array_map(function ($item) {
                     return [
                         'name' => data_get($item, 'value'),
                         'value' => data_get($item, 'reference_third_party_id'),
