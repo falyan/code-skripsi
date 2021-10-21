@@ -6,12 +6,25 @@ use App\Http\Services\Service;
 use App\Models\Merchant;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\Paginator;
 
 class ProductQueries extends Service
 {
     public function getAllProduct()
     {
-        $data = Product::with(['product_stock', 'product_photo'])->paginate(10);
+        $product = new Product();
+        $products = $product->withCount(['reviews', 'order_details' => function($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo']); //todo paginate 10
+
+        $immutable_data = $products->get()->map(function($product) {
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
+            return $product;
+        });
+
+        $data = static::paginate($immutable_data->toArray());
 
         //        if ($data->isEmpty()){
         //            $response['success'] = false;
@@ -26,7 +39,19 @@ class ProductQueries extends Service
 
     public function getProductByMerchantIdSeller($merchant_id)
     {
-        $data = Product::with(['product_stock', 'product_photo'])->where('merchant_id', $merchant_id)->paginate(10);
+        $product = new Product();
+        $products = $product->withCount(['reviews', 'order_details' => function($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo'])->where('merchant_id', $merchant_id);
+
+        $immutable_data = $products->get()->map(function($product) {
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
+            return $product;
+        });
+
+        $data = static::paginate($immutable_data->toArray());
 
         //        if ($data->isEmpty()){
         //            $response['success'] = false;
@@ -41,7 +66,19 @@ class ProductQueries extends Service
 
     public function getProductByEtalaseId($etalase_id)
     {
-        $data = Product::with(['product_stock', 'product_photo'])->where('etalase_id', $etalase_id)->paginate(10);
+        $product = new Product();
+        $products = $product->withCount(['reviews', 'order_details' => function($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo'])->where('etalase_id', $etalase_id);
+
+        $immutable_data = $products->get()->map(function($product) {
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
+            return $product;
+        });
+
+        $data = static::paginate($immutable_data->toArray());
 
         //        if ($data->isEmpty()){
         //            $response['success'] = false;
@@ -60,7 +97,20 @@ class ProductQueries extends Service
             return false;
         }
 
-        $product = Product::with(['product_stock', 'product_photo'])->where('name', 'ILIKE', '%' . $keyword . '%')->paginate($limit);
+        $product = new Product();
+        $products = $product->withCount(['reviews', 'order_details' => function($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo'])->where('name', 'ILIKE', '%' . $keyword . '%');
+
+        $immutable_data = $products->get()->map(function($product) {
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
+            return $product;
+        });
+
+        $data = static::paginate($immutable_data->toArray(), $limit);
+
         //        if ($product->isEmpty()){
         //            $response['success'] = false;
         //            $response['message'] = 'Produk tidak tersedia.';
@@ -69,28 +119,53 @@ class ProductQueries extends Service
 
         $response['success'] = true;
         $response['message'] = 'Produk berhasil didapatkan.';
-        $response['data'] = $product;
+        $response['data'] = $data;
         return $response;
     }
     public function getProductByMerchantIdBuyer($merchant_id, $size)
     {
-        $products = Product::with(['reviews', 'merchant' => function ($merchant) {
+        $product = new Product();
+
+        $products = $product->withCount(['reviews', 'order_details' => function($order_details) {
+            $order_details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['reviews', 'merchant' => function ($merchant) {
             $merchant->with('city:id,name');
         }, 'order_details' => function ($trx) {
             $trx->whereHas('order', function ($j) {
                 $j->whereHas('progress_done');
             });
-        }, 'product_photo', 'product_stock'])->where('merchant_id', $merchant_id)->paginate($size);
+        }, 'product_photo', 'product_stock'])->where('merchant_id', $merchant_id);
+
+        $immutable_data = $products->get()->map(function($product) {
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
+            return $product;
+        });
+
+        $data = static::paginate($immutable_data->toArray(), $size);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $products;
+        $response['data'] = $data;
         return $response;
     }
 
     public function getProductByCategory($category_id)
     {
-        $data = Product::with(['product_stock', 'product_photo'])->where('category_id', $category_id)->paginate(10);
+        $product = new Product();
+        $products = $product->withCount(['reviews', 'order_details' => function($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo'])->where('category_id', $category_id);
+
+        $immutable_data = $products->get()->map(function($product) {
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
+            return $product;
+        });
+
+        $data = static::paginate($immutable_data->toArray());
 
         //        if ($data->isEmpty()){
         //            $response['success'] = false;
@@ -105,11 +180,19 @@ class ProductQueries extends Service
 
     public function getProductById($id)
     {
-        $data = Product::withCount('reviews')->with(['reviews' => function ($reviews) {
+        $data = Product::withCount(['reviews', 'order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['reviews' => function ($reviews) {
             $reviews->with('customer:id,full_name,image_url')->paginate(10);
         }, 'product_stock', 'product_photo', 'merchant' => function ($region) {
             $region->with(['province', 'city', 'district', 'expedition']);
-        }, 'etalase', 'category'])->where('id', $id)->first();
+        }, 'etalase', 'category', 'order_details' => function($order_details) {
+            $order_details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where('id', $id)->first();
 
         if (!$data) {
             $response['success'] = false;
@@ -128,7 +211,12 @@ class ProductQueries extends Service
 
     public function getRecommendProduct()
     {
-        $product = Product::with(['product_stock', 'product_photo'])->latest()->limit(10)->get();
+        $product = new Product();
+        $products = $product->withCount(['reviews', 'order_details' => function($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo'])->latest()->limit(10)->get();
 
         //        if ($product->isEmpty()){
         //            $response['success'] = false;
@@ -137,13 +225,18 @@ class ProductQueries extends Service
         //        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $product;
+        $response['data'] = $products;
         return $response;
     }
 
     public function getSpecialProduct()
     {
-        $product = Product::with(['product_stock', 'product_photo'])->latest()->limit(10)->get();
+        $product = new Product();
+        $products = $product->withCount(['reviews', 'order_details' => function($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo'])->latest()->limit(10)->get();
 
         //        if ($product->isEmpty()){
         //            $response['success'] = false;
@@ -152,14 +245,20 @@ class ProductQueries extends Service
         //        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $product;
+        $response['data'] = $products;
         return $response;
     }
 
     public function getMerchantFeaturedProduct($merchant_id)
     {
         $merchant = Merchant::with('city:id,name')->findOrFail($merchant_id);
-        $products = Product::with(['reviews', 'order_details' => function ($trx) {
+        $product = new Product();
+
+        $products = $product->withCount(['reviews', 'order_details' => function($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['reviews', 'order_details' => function ($trx) {
             $trx->whereHas('order', function ($j) {
                 $j->whereHas('progress_done');
             });
@@ -173,10 +272,23 @@ class ProductQueries extends Service
 
     public function searchProductBySeller($merchant_id, $keyword, $limit)
     {
-        $product = Product::with(['product_stock', 'product_photo'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']])->paginate($limit);
+        $product = new Product();
+        $products = $product->withCount(['reviews', 'order_details' => function($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']]);
+
+        $immutable_data = $products->get()->map(function($product) {
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
+            return $product;
+        });
+
+        $data = static::paginate($immutable_data->toArray(), $limit);
+
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $product;
+        $response['data'] = $data;
         return $response;
     }
 }
