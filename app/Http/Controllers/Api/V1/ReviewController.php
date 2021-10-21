@@ -1,0 +1,58 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Controllers\Controller;
+use App\Http\Services\Review\ReviewCommands;
+use App\Http\Services\Review\ReviewQueries;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+
+class ReviewController extends Controller
+{
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    protected $reviewCommands, $reviewQueries;
+    public function __construct()
+    {
+        $this->reviewCommands = new ReviewCommands();
+        $this->reviewQueries = new ReviewQueries();
+    }
+
+    //Add Review Produk
+    public function addReview(Request $request)
+    {
+        try {
+            $rules = [
+                'merchant_id' => 'required',
+                'product_id' => 'required',
+                'rate' => 'required|numeric'
+            ];
+
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => ':attribute diperlukan.'
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            return $this->reviewCommands->addReview($request);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, $request);
+        }
+    }
+
+}

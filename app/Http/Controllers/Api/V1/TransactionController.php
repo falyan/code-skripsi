@@ -483,8 +483,6 @@ class TransactionController extends Controller
                 }
             }
 
-            $response['success'] = true;
-            $response['message'] = 'Berhasil merubah status pesanan';
             return $response;
 
         } catch (Exception $e) {

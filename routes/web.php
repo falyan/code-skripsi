@@ -180,6 +180,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->post('/read/{id}/{rlc_id}', 'NotificationController@buyerReadNotification');
                 $router->delete('/delete/{id}/{rlc_id}', 'NotificationController@buyerDeleteNotification');
             });
+
+            $router->group(['prefix' => 'review'], static function () use ($router) {
+                $router->post('add', 'ReviewController@addReview');
+            });
         });
     });
 
