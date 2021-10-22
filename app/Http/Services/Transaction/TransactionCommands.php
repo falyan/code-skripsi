@@ -42,7 +42,7 @@ class TransactionCommands extends Service
         ];
     }
 
-    public function createOrder($datas, $related_pln_mobile_customer_id)
+    public function createOrder($datas, $customer_id)
     {
         DB::beginTransaction();
         try {
@@ -52,18 +52,15 @@ class TransactionCommands extends Service
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDay())->timestamp);
             $total_price = 0;
 
-            array_map(function ($data) use ($datas, $related_pln_mobile_customer_id, $no_reference, $trx_date, $exp_date, &$total_price) {
+            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, &$total_price) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
-                $order->buyer_id = Customer::where('related_pln_mobile_customer_id', $related_pln_mobile_customer_id)->first()->id;
+                $order->buyer_id = $customer_id;
                 $order->trx_no = static::invoice_num(static::nextOrderId(), 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
                 $order->order_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now())->setTimezone('Asia/Jakarta')->timestamp);
                 $order->total_amount = data_get($data, 'total_amount');
-                $order->payment_amount = data_get($data, 'total_payment');
                 $order->total_weight = data_get($data, 'total_weight');
-                $order->payment_method = null;
-                $order->delivery_method = data_get($data, 'delivery_method');
-                $order->related_pln_mobile_customer_id = $related_pln_mobile_customer_id;
+                $order->related_pln_mobile_customer_id = null;
                 $order->no_reference = $no_reference;
                 $order->save();
 
@@ -110,18 +107,19 @@ class TransactionCommands extends Service
                 $order_delivery->save();
 
                 $order_payment = new OrderPayment();
-                $order_payment->order_id = $order->id;
-                $order_payment->customer_id = $related_pln_mobile_customer_id;
+                $order_payment->customer_id = $customer_id;
                 $order_payment->payment_amount = data_get($data, 'payment_amount');
                 $order_payment->date_created = $trx_date;
                 $order_payment->date_expired = $exp_date;
                 $order_payment->payment_method = null;
+                $order_payment->no_reference = $no_reference;
                 $order_payment->booking_code = null;
                 $order_payment->payment_note = data_get($data, 'payment_note') ?? null;
+                $order_payment->save();
             }, data_get($datas, 'merchants'));
             DB::commit();
 
-            $customer = Customer::where('related_pln_mobile_customer_id', $related_pln_mobile_customer_id)->first();
+            $customer = Customer::findOrFail($customer_id);
 
             $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
             $body = [
@@ -131,7 +129,7 @@ class TransactionCommands extends Service
                 'partner_reference' => $no_reference,
                 'product_id' => static::$productid,
                 'amount' => $total_price,
-                'customer_id' => $related_pln_mobile_customer_id,
+                'customer_id' => $customer_id,
                 'customer_name' => $customer['full_name'],
                 'email' => $customer['email'],
                 'phone_number' => $customer['phone'],
@@ -165,6 +163,7 @@ class TransactionCommands extends Service
                 throw new Exception($response->response_details[0]->response_message);
             }
 
+            $response->response_details[0]->amount = $total_price;
             return [
                 'success' => true,
                 'message' => 'Berhasil create order',
