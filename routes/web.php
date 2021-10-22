@@ -137,7 +137,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('profile', 'SettingProfileController@index');
             });
 
-            $router->group(['prefix' => 'cart'], static function () use ($router) {
+            $router->group(['prefix' => 'cart', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('detail/{related_id}[/{buyer_id}]', 'CartController@showDetail');
                 $router->get('{rlc_id}[/{buyer_id}]', 'CartController@index');
             });
@@ -146,7 +146,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('search', 'RegionController@searchDistrict');
             });
 
-            $router->group(['prefix' => 'transaction'], static function () use ($router) {
+            $router->group(['prefix' => 'transaction', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('/{related_id}', 'TransactionController@buyerIndex');
                 $router->get('/{related_id}/detail/{id}', 'TransactionController@detailTransaction');
                 $router->get('/{related_id}/on-payment', 'TransactionController@transactionToPay');
@@ -158,30 +158,30 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/{related_id}/detail/{id}/invoice', 'TransactionController@getDetailInvoice');
             });
 
-            $router->group(['prefix' => 'notification'], static function () use ($router) {
+            $router->group(['prefix' => 'notification', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('/{rlc_id}', 'NotificationController@buyerIndex');
                 $router->get('/list/{rlc_id}', 'NotificationController@buyerNotificationList');
                 $router->get('/list/{type}/{rlc_id}', 'NotificationController@buyerNotificationByType');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
-            $router->group(['prefix' => 'order'], static function () use ($router) {
+            $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('checkout/{related_pln_mobile_customer_id}', 'TransactionController@checkout');
             });
 
-            $router->group(['prefix' => 'cart'], static function () use ($router) {
+            $router->group(['prefix' => 'cart', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('add', 'CartController@add');
                 $router->delete('delete/{cart_detail_id}/{cart_id}', 'CartController@destroy');
                 $router->post('qty/update/{cart_detail_id}/{cart_id}', 'CartController@qtyUpdate');
                 $router->delete('all/delete/{related_id}[/{buyer_id}]', 'CartController@deleteAllCart');
             });
 
-            $router->group(['prefix' => 'notification'], static function () use ($router) {
+            $router->group(['prefix' => 'notification', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('/read/{id}/{rlc_id}', 'NotificationController@buyerReadNotification');
                 $router->delete('/delete/{id}/{rlc_id}', 'NotificationController@buyerDeleteNotification');
             });
 
-            $router->group(['prefix' => 'review'], static function () use ($router) {
+            $router->group(['prefix' => 'review', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('add', 'ReviewController@addReview');
             });
         });
@@ -210,7 +210,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('track', 'RajaOngkirController@trackOrder');
     });
 
-    $router->group(['prefix' => 'order'], static function () use ($router) {
+    $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
         $router->post('/{id}/request-cancel', 'TransactionController@requestCancelOrder');
         $router->post('/{id}/confirm', 'TransactionController@confirmOrder');
     });
@@ -220,6 +220,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     });
 
     $router->get('/test', function(){
-        return \App\Models\Product::wheredoesnthave('stock_active')->get();
+        // return \App\Models\Cart::withCount('cart_detail')->where('id', 3)->get();
+        return \App\Models\Cart::whereDoesntHave('cart_detail')->get();
     });
 });

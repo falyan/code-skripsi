@@ -9,6 +9,7 @@ use App\Models\Cart;
 use App\Models\CartDetail;
 use Illuminate\Http\Request;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class CartController extends Controller
@@ -34,6 +35,7 @@ class CartController extends Controller
     public function index($rlc_id, $buyer_id = null)
     {
         try {
+            $buyer_id = Auth::id();
             return $this->respondWithData(CartQueries::getTotalCart($rlc_id, $buyer_id), 'Sukses ambil data keranjang');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -122,6 +124,7 @@ class CartController extends Controller
     public function showDetail($buyer_id = null, $related_id)
     {
         try {
+            $buyer_id = Auth::id();
             return CartQueries::getDetailCart($buyer_id, $related_id);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -131,6 +134,7 @@ class CartController extends Controller
     public function deleteAllCart($related_id, $buyer_id = null)
     {
         try {
+            $buyer_id = Auth::id();
             $cartCommands = new CartCommands();
             return $cartCommands->deleteAllCart($related_id, $buyer_id);
         } catch (Exception $e) {
