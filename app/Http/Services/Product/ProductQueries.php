@@ -202,7 +202,7 @@ class ProductQueries extends Service
         }
 
         $data['avg_rating'] = round($data->reviews()->avg('rate'), 2);
-        
+
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -216,7 +216,7 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo'])->latest()->limit(10);
+        }])->with(['product_stock', 'product_photo'])->orderBy('order_details_count', 'DESC')->limit(10);
 
         $immutable_data = $products->get()->map(function($product) {
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;

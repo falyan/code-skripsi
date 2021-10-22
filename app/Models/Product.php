@@ -120,7 +120,7 @@ class Product extends Model
 
     public function order_details()
     {
-        return $this->hasMany(OrderDetail::class);
+        return $this->hasMany(OrderDetail::class, 'product_id');
     }
 
     public function etalase(){
