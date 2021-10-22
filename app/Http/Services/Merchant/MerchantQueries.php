@@ -46,7 +46,7 @@ class MerchantQueries extends Service
     public static function publicProfile($merchant_id)
     {
         try {
-            $merchant = Merchant::where('id', (int) $merchant_id)->first(['id', 'name', 'photo_url', 'slogan', 'description', 'city_id']);
+            $merchant = Merchant::where('id', (int) $merchant_id)->first(['id', 'name', 'photo_url', 'slogan', 'description', 'city_id', 'whatsapp_number']);
 
             $mc = $merchant->toArray();
             $cityname = $merchant->city->toArray();
