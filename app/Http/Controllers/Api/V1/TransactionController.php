@@ -28,7 +28,7 @@ class TransactionController extends Controller
     }
 
     // Checkout
-    public function checkout($related_pln_mobile_customer_id)
+    public function checkout($customer_id)
     {
         $validator = Validator::make(request()->all(), [
             'destination_info.receiver_name' => 'required',
@@ -67,7 +67,7 @@ class TransactionController extends Controller
         }
 
         try {
-            if (!Customer::where('related_pln_mobile_customer_id', $related_pln_mobile_customer_id)->exists()) {
+            if (!Customer::where('id', $customer_id)->exists()) {
                 throw new Exception('Customer tidak ditemukan', 404);
             }
 
@@ -81,7 +81,7 @@ class TransactionController extends Controller
                     }
                 }, data_get($merchant, 'products'));
             }, request()->get('merchants'));
-            return $this->transactionCommand->createOrder(request()->all(), $related_pln_mobile_customer_id);
+            return $this->transactionCommand->createOrder(request()->all(), $customer_id);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
