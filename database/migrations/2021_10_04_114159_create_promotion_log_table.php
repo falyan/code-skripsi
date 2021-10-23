@@ -13,7 +13,7 @@ class CreatePromotionBindingTable extends Migration
      */
     public function up()
     {
-        Schema::create('promotion_binding', function (Blueprint $table) {
+        Schema::create('promotion_log', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('promotion_id');
             $table->string('trx_no');
@@ -33,6 +33,6 @@ class CreatePromotionBindingTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('promotion_binding');
+        Schema::dropIfExists('promotion_log');
     }
 }

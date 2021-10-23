@@ -39,6 +39,6 @@ class CreatePaymentTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('order_payment');
+        Schema::dropIfExists('payment');
     }
 }
