@@ -27,7 +27,7 @@ class CreateProductDiscussionTable extends Migration
             $table->softDeletes();
 
             $table->foreign('buyer_id')->references('id')->on('customer')->onDelete('cascade');
-            $table->foreign('seller_id')->references('id')->on('customer')->onDelete('cascade');
+            $table->foreign('nerchant_id')->references('id')->on('merchant')->onDelete('cascade');
             $table->foreign('product_id')->references('id')->on('product')->onDelete('cascade');
         });
     }
