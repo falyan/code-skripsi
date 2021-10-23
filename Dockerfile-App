@@ -1,0 +1,12 @@
+FROM registry-iconx.air.id/plnmobile/pln-marketplace/gandalf:7.3.30-fpm-alpine3.13
+COPY ./docker/php.ini /usr/local/etc/php/php.ini
+COPY ./docker/fpm-pool.conf /usr/local/etc/php-fpm.d/fpm-pool.conf
+COPY ./docker/nginx.conf /etc/nginx/nginx.conf
+COPY ./docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY --chown=www-data . /var/www/html/
+RUN composer update
+RUN php artisan swagger-lume:generate
+RUN rm -Rf docker/
+WORKDIR /var/www/html
+EXPOSE 80
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
