@@ -30,7 +30,7 @@ class NotificationController extends Controller
         try {
             $data = null;
             if (Auth::check()) {
-                $data = $this->notificationQueries->getTotalNotification('buyer_id', Auth::user()->id);
+                $data = $this->notificationQueries->getTotalNotification('customer_id', Auth::user()->id);
             } else {
                 $data = $this->notificationQueries->getTotalNotification('related_pln_mobile_customer_id', $rlc_id);
             }
@@ -46,7 +46,7 @@ class NotificationController extends Controller
         try {
             $data = null;
             if (Auth::check()) {
-                $data = $this->notificationQueries->getAllNotification('buyer_id', Auth::user()->id);
+                $data = $this->notificationQueries->getAllNotification('customer_id', Auth::user()->id);
             } else {
                 $data = $this->notificationQueries->getAllNotification('related_pln_mobile_customer_id', $rlc_id);
             }
@@ -70,7 +70,7 @@ class NotificationController extends Controller
 
             $data = null;
             if (Auth::check()) {
-                $data = $this->notificationQueries->getAllNotificationByType('buyer_id', Auth::user()->id, $type);
+                $data = $this->notificationQueries->getAllNotificationByType('customer_id', Auth::user()->id, $type);
             } else {
                 $data = $this->notificationQueries->getAllNotificationByType('related_pln_mobile_customer_id', $rlc_id, $type);
             }
