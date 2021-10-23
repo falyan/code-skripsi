@@ -44,7 +44,9 @@ Package Container:
         docker build --no-cache -t $DOCKER_IMAGE_APP -f Dockerfile-App . &&
         docker push $DOCKER_IMAGE_APP
       else
-        echo "No Process"
+        cp .env.production .env &&
+        docker build --no-cache -t $DOCKER_IMAGE_APP -f Dockerfile-App . &&
+        docker push $DOCKER_IMAGE_APP
       fi
   tags:
     - docker
@@ -76,3 +78,18 @@ Deploy Staging:
     - staging
   tags:
     - site-dd
+
+Deploy Production:
+  stage: deploy
+  image: docker:20.10.5
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker stack deploy --orchestrator swarm -c docker-production.yml --with-registry-auth pln-marketplace
+  environment:
+    name: URL Production
+    url: https://api-mkp.iconcash.id/v1/core/
+  only:
+    - tags
+  tags:
+    - docker
