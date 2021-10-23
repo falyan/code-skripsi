@@ -24,6 +24,8 @@ class CreateOrderProgressTable extends Migration
             $table->softDeletes();
             $table->string('created_by');
             $table->string('updated_by');
+
+            $table->foreign('order_id')->references('id')->on('order')->onDelete('cascade');
         });
     }
 
