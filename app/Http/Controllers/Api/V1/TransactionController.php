@@ -28,7 +28,7 @@ class TransactionController extends Controller
     }
 
     // Checkout
-    public function checkout($customer_id)
+    public function checkout()
     {
         $validator = Validator::make(request()->all(), [
             'destination_info.receiver_name' => 'required',
@@ -67,10 +67,7 @@ class TransactionController extends Controller
         }
 
         try {
-            if (!Customer::where('id', $customer_id)->exists()) {
-                throw new Exception('Customer tidak ditemukan', 404);
-            }
-
+            $customer_id = Auth::id();
             array_map(function ($merchant) {
                 array_map(function ($item) {
                     if (!$product = Product::find(data_get($item, 'product_id'))) {
@@ -96,8 +93,7 @@ class TransactionController extends Controller
             }
 
             if (Auth::check()) {
-                $user = Customer::find(Auth::id());
-                $data = $this->transactionQueries->getTransaction('buyer_id', $user->id);
+                $data = $this->transactionQueries->getTransaction('buyer_id', Auth::id());
             } else {
                 $data = $this->transactionQueries->getTransaction('related_pln_mobile_customer_id', $related_id);
             }
@@ -120,8 +116,7 @@ class TransactionController extends Controller
             }
 
             if (Auth::check()) {
-                $user = Customer::find(Auth::id());
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, ['00']);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['00']);
             } else {
                 $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['00']);
             }
@@ -144,8 +139,7 @@ class TransactionController extends Controller
             }
 
             if (Auth::check()) {
-                $user = Customer::find(Auth::id());
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, [1]);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), [1]);
             } else {
                 $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['01']);
             }
@@ -168,8 +162,7 @@ class TransactionController extends Controller
             }
 
             if (Auth::check()) {
-                $user = Customer::find(Auth::id());
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, ['03', '08']);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['03', '08']);
             } else {
                 $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['03', '08']);
             }
@@ -192,8 +185,7 @@ class TransactionController extends Controller
             }
 
             if (Auth::check()) {
-                $user = Customer::find(Auth::id());
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, ['88']);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['88']);
             } else {
                 $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['88']);
             }
@@ -216,8 +208,7 @@ class TransactionController extends Controller
             }
 
             if (Auth::check()) {
-                $user = Customer::find(Auth::id());
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', $user->id, ['99']);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['99']);
             } else {
                 $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['99']);
             }
@@ -235,10 +226,6 @@ class TransactionController extends Controller
     public function buyerSearchTransaction($related_id, Request $request)
     {
         try {
-            if (empty($related_id)) {
-                return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
-            }
-
             $validator = Validator::make(request()->all(), [
                 'keyword' => 'required|min:3',
                 'limit' => 'nullable'
@@ -264,8 +251,7 @@ class TransactionController extends Controller
             $limit = $request->limit ?? 10;
 
             if (Auth::check()) {
-                $user = Customer::find(Auth::id());
-                $data = $this->transactionQueries->searchTransaction('buyer_id', $user->id, $keyword);
+                $data = $this->transactionQueries->searchTransaction('buyer_id', Auth::id(), $keyword);
             } else {
                 $data = $this->transactionQueries->searchTransaction('related_pln_mobile_customer_id', $related_id, $keyword);
             }
@@ -476,15 +462,14 @@ class TransactionController extends Controller
                 return $this->respondValidationError($errors, 'Validation Error!');
             }
 
-            foreach ($request->id as $order_id){
+            foreach ($request->id as $order_id) {
                 $response = $this->transactionCommand->updateOrderStatus($order_id, '02');
-                if ($response['success'] == false){
+                if ($response['success'] == false) {
                     return $response;
                 }
             }
 
             return $response;
-
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
