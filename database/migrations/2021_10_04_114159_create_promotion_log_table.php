@@ -13,12 +13,13 @@ class CreatePromotionBindingTable extends Migration
      */
     public function up()
     {
-        Schema::create('promotion_binding', function (Blueprint $table) {
+        Schema::create('promotion_log', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('promotion_id');
-            $table->dateTime('usage_date');
             $table->string('trx_no');
-            $table->integer('remaining_usage');
+            $table->dateTime('usage_date');
+            $table->integer('remaining_usage')->nullable();
+            $table->smallInteger('small')->nullable();
             $table->timestamps();
 
             $table->foreign('promotion_id')->references('id')->on('promotion')->onDelete('cascade');
@@ -32,6 +33,6 @@ class CreatePromotionBindingTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('promotion_binding');
+        Schema::dropIfExists('promotion_log');
     }
 }

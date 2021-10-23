@@ -27,6 +27,8 @@ class CreateTableMasterData extends Migration
             $table->string('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
+
+            $table->foreign('parent_id')->references('id')->on('master_data')->onDelete('cascade');
         });
     }
 

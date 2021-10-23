@@ -18,17 +18,17 @@ class CreateOrderDetailTable extends Migration
             $table->unsignedBigInteger('order_id')->nullable();
             $table->integer('detail_type')->nullable();
             $table->unsignedBigInteger('product_id')->nullable();
-            $table->unsignedBigInteger('promotion_id')->nullable();
             $table->integer('quantity')->nullable();
             $table->float('price')->nullable();
             $table->float('weight')->nullable();
             $table->float('insurance_cost')->nullable();
             $table->float('discount')->nullable();
-            $table->float('total_price')->nullable();
             $table->float('total_weight')->nullable();
+            $table->float('total_price')->nullable();
             $table->float('total_discount')->nullable();
             $table->float('total_insurance_cost')->nullable();
             $table->float('total_amount')->nullable();
+            $table->string('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

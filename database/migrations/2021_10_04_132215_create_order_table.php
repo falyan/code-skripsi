@@ -20,11 +20,13 @@ class CreateOrderTable extends Migration
             $table->string('trx_no')->nullable();
             $table->dateTime('order_date')->nullable();
             $table->float('total_amount')->nullable();
-            $table->float('payment_amount')->nullable();
+            $table->unsignedBigInteger('payment_id')->nullable();
             $table->float('total_weight')->nullable();
-            $table->string('payment_method')->nullable();
             $table->string('delivery_method')->nullable();
             $table->string('related_pln_mobile_customer_id')->nullable();
+            $table->string('buyer_phone')->nullable();
+            $table->string('buyer_email')->nullable();
+            $table->string('no_reference')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();
@@ -32,6 +34,7 @@ class CreateOrderTable extends Migration
 
             $table->foreign('merchant_id')->references('id')->on('merchant')->onDelete('cascade');
             $table->foreign('buyer_id')->references('id')->on('customer')->onDelete('cascade');
+            $table->foreign('payment_id')->references('id')->on('payment')->onDelete('cascade');
         });
     }
 

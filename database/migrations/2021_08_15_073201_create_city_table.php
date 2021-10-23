@@ -17,10 +17,12 @@ class CreateCityTable extends Migration
             $table->bigIncrements('id');
             $table->string('name')->nullable();
             $table->unsignedBigInteger('province_id')->nullable();
-            $table->foreign('province_id')->references('id')->on('province')->onDelete('cascade');
+            $table->bigInteger('rajaongkir_city_id')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();
+
+            $table->foreign('province_id')->references('id')->on('province')->onDelete('cascade');
         });
     }
 

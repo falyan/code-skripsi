@@ -18,10 +18,12 @@ class CreateCartDetailTable extends Migration
             $table->unsignedBigInteger('cart_id');
             $table->unsignedBigInteger('product_id')->nullable();
             $table->integer('quantity')->nullable();
+            $table->unsignedBigInteger('related_merchant_id')->nullable();
             $table->timestamps();
 
             $table->foreign('cart_id')->references('id')->on('cart')->onDelete('cascade');
             $table->foreign('product_id')->references('id')->on('product')->onDelete('cascade');
+            $table->foreign('related_merchant_id')->references('id')->on('merchant')->onDelete('cascade');
         });
     }
 

@@ -1,0 +1,48 @@
+version: "3.8"
+
+networks:
+  loadbalancer:
+    external: true
+
+services:
+  pln-marketplace-saruman-production:
+    image: $DOCKER_IMAGE_APP
+    networks:
+      - loadbalancer
+    # ports:
+    #   - target: 80
+    #     published: 8080
+    #     protocol: tcp
+    #     mode: host
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    logging:
+      driver: loki
+      options:
+        loki-url: "$DATASOURCE_LOKI"
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.services.pln-marketplace-saruman-production.loadbalancer.server.port=8080"
+        - "traefik.http.middlewares.redirectscheme-pln-marketplace-saruman-production.redirectscheme.scheme=https"
+        - "traefik.http.middlewares.compress-pln-marketplace-saruman-production.compress=true"
+        - "traefik.http.middlewares.stripprefix-public-pln-marketplace-saruman-production.stripprefix.prefixes=/v1/core"
+        - "traefik.http.routers.public-pln-marketplace-saruman-production-web.rule=Host(`api-mkp.iconcash.id`) && PathPrefix(`/v1/core`)"
+        - "traefik.http.routers.public-pln-marketplace-saruman-production-web.middlewares=redirectscheme-pln-marketplace-saruman-production"
+        - "traefik.http.routers.public-pln-marketplace-saruman-production-web.entrypoints=web"
+        - "traefik.http.routers.public-pln-marketplace-saruman-production-websecure.rule=Host(`api-mkp.iconcash.id`) && PathPrefix(`/v1/core`)"
+        - "traefik.http.routers.public-pln-marketplace-saruman-production-websecure.middlewares=stripprefix-public-pln-marketplace-saruman-production,compress-pln-marketplace-saruman-production"
+        - "traefik.http.routers.public-pln-marketplace-saruman-production-websecure.tls=true"
+        - "traefik.http.routers.public-pln-marketplace-saruman-production-websecure.entrypoints=websecure"
+      mode: replicated
+      replicas: 1
+      endpoint_mode: dnsrr
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+          - node.labels.plnmp == gandul
+        preferences:
+          - spread: node.labels.plnmp
+      resources:
+        limits:
+          memory: 512M

@@ -17,6 +17,7 @@ class CreateDistrictTable extends Migration
             $table->bigIncrements('id');
             $table->string('name')->nullable();
             $table->unsignedBigInteger('city_id')->nullable();
+            $table->bigInteger('rajaongkir_district_id')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();
