@@ -17,6 +17,7 @@ class CreateCustomerAddressTable extends Migration
             $table->bigIncrements('id');
             $table->unsignedInteger('customer_id');
             $table->longText('address');
+            $table->unsignedBigInteger('district_id');
             $table->unsignedBigInteger('city_id');
             $table->unsignedBigInteger('province_id');
             $table->string('postal_code');
@@ -27,6 +28,7 @@ class CreateCustomerAddressTable extends Migration
             $table->timestamps();
 
             $table->foreign('customer_id')->references('id')->on('customer')->onDelete('cascade');
+            $table->foreign('district_id')->references('id')->on('district')->onDelete('cascade');
             $table->foreign('city_id')->references('id')->on('city')->onDelete('cascade');
             $table->foreign('province_id')->references('id')->on('province')->onDelete('cascade');
         });

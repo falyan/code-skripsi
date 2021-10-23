@@ -20,8 +20,6 @@ class CreateMerchantTable extends Migration
             $table->unsignedBigInteger('corporate_id');
             $table->unsignedBigInteger('industry_type_id')->nullable();
             $table->longText('address');
-            $table->string('slogan');
-            $table->longText('description');
             $table->unsignedBigInteger('province_id');
             $table->unsignedBigInteger('city_id');
             $table->unsignedBigInteger('district_id');
@@ -32,9 +30,11 @@ class CreateMerchantTable extends Migration
             $table->string('photo_url')->nullable();
             $table->unsignedBigInteger('pic_id');
             $table->string('nib_url')->nullable();
-            $table->string('registration_form_url')->nullable();
             $table->smallInteger('status');
             $table->boolean('is_open');
+            $table->string('slogan');
+            $table->longText('description');
+            $table->string('registration_form_url')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->string('reference_customer_id')->nullable();

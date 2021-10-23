@@ -17,10 +17,10 @@ class CreateProductDiscussionTable extends Migration
             $table->bigIncrements('id');
             $table->unsignedBigInteger('product_id')->nullable();
             $table->unsignedBigInteger('buyer_id')->nullable();
-            $table->unsignedBigInteger('seller_id')->nullable();
-            $table->string('related_pln_mobile_customer_id')->nullable();
+            $table->unsignedBigInteger('merchant_id')->nullable();
             $table->string('message')->nullable();
             $table->string('reply_message')->nullable();
+            $table->string('related_pln_mobile_customer_id')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

@@ -16,8 +16,8 @@ class CreateProductPriceTable extends Migration
         Schema::create('product_price', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('product_id');
-            $table->integer('min_quantity');
             $table->float('price');
+            $table->integer('minimum_purchase');
             $table->timestamps();
 
             $table->foreign('product_id')->references('id')->on('product')->onDelete('cascade');

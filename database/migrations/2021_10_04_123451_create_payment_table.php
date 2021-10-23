@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateOrderPaymentTable extends Migration
+class CreatePaymentTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,19 +13,21 @@ class CreateOrderPaymentTable extends Migration
      */
     public function up()
     {
-        Schema::create('order_payment', function (Blueprint $table) {
+        Schema::create('payment', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('order_id')->nullable();
             $table->unsignedBigInteger('customer_id')->nullable();
+            $table->string('promo_code')->nullable();
             $table->float('payment_amount')->nullable();
             $table->dateTime('date_created')->nullable();
             $table->dateTime('date_expired')->nullable();
             $table->string('payment_method')->nullable();
-            $table->string('payment_reference')->nullable();
+            $table->string('no_reference')->nullable();
             $table->string('payment_note')->nullable();
+            $table->string('booking_code')->nullable();
+            $table->smallInteger('status')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
-            $table->foreign('order_id')->references('id')->on('order')->onDelete('cascade');
             $table->foreign('customer_id')->references('id')->on('customer')->onDelete('cascade');
         });
     }

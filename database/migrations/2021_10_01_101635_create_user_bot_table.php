@@ -20,8 +20,9 @@ class CreateUserBotTable extends Migration
             $table->string('password');
             $table->string('email');
             $table->unsignedBigInteger('role_id');
-            $table->unsignedBigInteger('corporate_id');
+            $table->unsignedBigInteger('corporate_id')->nullable();
             $table->smallInteger('status');
+            $table->string('remember_token')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

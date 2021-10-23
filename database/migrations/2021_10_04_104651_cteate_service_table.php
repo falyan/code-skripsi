@@ -17,8 +17,8 @@ class CteateServiceTable extends Migration
             $table->bigIncrements('id');
             $table->string('name');
             $table->text('description')->nullable();
-            $table->text('benefit')->nullable();
-            $table->text('term_condition')->nullable();
+            $table->longText('benefit')->nullable();
+            $table->longText('term_condition')->nullable();
             $table->boolean('is_active_status')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();

@@ -17,10 +17,12 @@ class CreateProvinceTable extends Migration
             $table->bigIncrements('id');
             $table->string('name')->nullable();
             $table->unsignedInteger('state_id')->nullable();
-            $table->foreign('state_id')->references('id')->on('state')->onDelete('cascade');
+            $table->bigInteger('rajaongkir_province_id')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();
+
+            $table->foreign('state_id')->references('id')->on('state')->onDelete('cascade');
         });
     }
 
