@@ -26,6 +26,7 @@ class CreateOrderDeliveryTable extends Migration
             $table->string('shipping_type')->nullable();
             $table->string('receiver_name')->nullable();
             $table->string('receiver_phone')->nullable();
+            $table->float('delivery_fee')->nullable();
             $table->string('awb_number')->nullable();
             $table->timestamps();
 
