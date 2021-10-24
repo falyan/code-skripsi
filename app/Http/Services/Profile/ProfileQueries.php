@@ -35,4 +35,19 @@ class ProfileQueries extends Service
         }
         return $data;
     }
+
+    public function validatePassword($password)
+    {
+        $messages = collect();
+
+        $uppercase = preg_match('@[A-Z]@', $password);
+        $lowercase = preg_match('@[a-z]@', $password);
+        $number    = preg_match('@[0-9]@', $password);
+
+        if (!$uppercase || !$lowercase || !$number || strlen($password) < 8) {
+            $messages->push("kombinasi password harus berisi minimal 8 karakter yang mengandung huruf besar, huruf kecil, dan angka.");
+        }
+
+        return $messages;
+    }
 }
