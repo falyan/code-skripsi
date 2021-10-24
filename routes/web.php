@@ -219,8 +219,4 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->get('/list', 'MerchantController@requestMerchantList');
     });
 
-    $router->get('/test', function(){
-        // return \App\Models\Cart::withCount('cart_detail')->where('id', 3)->get();
-        return \App\Models\Cart::whereDoesntHave('cart_detail')->get();
-    });
 });

@@ -129,7 +129,7 @@ class TransactionCommands extends Service
                 'partner_reference' => $no_reference,
                 'product_id' => static::$productid,
                 'amount' => $total_price,
-                'customer_id' => $customer_id,
+                'customer_id' => $no_reference,
                 'customer_name' => $customer['full_name'],
                 'email' => $customer['email'],
                 'phone_number' => $customer['phone'],
