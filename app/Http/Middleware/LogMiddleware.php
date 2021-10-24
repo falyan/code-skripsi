@@ -19,14 +19,18 @@ class LogMiddleware
         $response = $next($request);
 
         $log_response = $response->original;
-        if (!empty(data_get($log_response, 'token'))) {
-            $log_response->token = "hiddentoken";
+        if (data_get($log_response, 'token')) {
+            $log_response['token'] = "hiddentoken";
+        }
+        
+        if (data_get($log_response, 'data') && data_get($log_response['data'], 'token')) {
+            $log_response['data']['token'] = "hiddentoken";
         }
 
         Log::info($uid, [
             'path_url' => $request->path(),
             'query' =>  $request->query(),
-            'body' => $request->except(['password', 'c_password', 'bearer', 'bearer_token', 'related_id', 'related_customer_id']),
+            'body' => $request->except(['password', 'old_password', 'password_confirmation', 'bearer', 'bearer_token', 'related_id', 'related_customer_id']),
             'response' => $log_response
         ]);
 
