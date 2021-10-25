@@ -21,10 +21,10 @@ class MerchantQueries extends Service
         try {
             $merchant = Merchant::with(['operationals', 'district', 'city', 'province', 'expedition'])->find($merchant_id);
             $orders = [];
-            
+
             $orders['success'] = static::getTotalTrx($merchant_id, 88)->toArray();
             $orders['canceled'] = static::getTotalTrx($merchant_id, 99)->toArray();
-            
+
             return [
                 'data' => [
                     'merchant' => $merchant,
@@ -74,7 +74,7 @@ class MerchantQueries extends Service
 
     public static function unsetValue(array $array, $value, $strict = TRUE)
     {
-        if(($key = array_search($value, $array, $strict)) !== FALSE) {
+        if (($key = array_search($value, $array, $strict)) !== FALSE) {
             unset($array[$key]);
         }
         return $array;
@@ -82,27 +82,31 @@ class MerchantQueries extends Service
 
     public static function getTotalTrx($merchant_id, $status_code)
     {
-        return OrderProgress::with(['order' => function($orders_query) use ($merchant_id){
+        return OrderProgress::with(['order' => function ($orders_query) use ($merchant_id) {
             $orders_query->where('merchant_id', $merchant_id);
         }])->where('status_code', $status_code)->get();
     }
 
-    static function format_number($number) {
-        if($number >= 1000 && $number <= 999999) {
-           return $number/1000 . ' ribu';   // NB: you will want to round this
+    static function format_number($number)
+    {
+        if ($number >= 1000 && $number <= 999999) {
+            return $number / 1000 . ' ribu';   // NB: you will want to round this
         }
-        if($number >= 1000000) {
-            return $number/1000000 . ' juta';   // NB: you will want to round this
-        }
-        else {
+        if ($number >= 1000000) {
+            return $number / 1000000 . ' juta';   // NB: you will want to round this
+        } else {
             return $number;
         }
     }
 
     public static function getListMerchant($request)
     {
-        $data = Merchant::with(['district', 'city', 'province'])->paginate(0);
+        $data = Merchant::with(['province:id,name', 'city:id,name', 'district:id,name'])->get(['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url'])->forget(['province_id', 'city_id', 'district_id']);
+        foreach ($data as $merchant) {
+            $merchant['url_deeplink'] = 'url_deeplink';
+        }
 
-        return $data;
+        $result = static::paginate($data->toArray());
+        return $result;
     }
 }

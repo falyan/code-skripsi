@@ -253,7 +253,11 @@ class ProductQueries extends Service
 
     public function getMerchantFeaturedProduct($merchant_id)
     {
-        $merchant = Merchant::with('city:id,name')->findOrFail($merchant_id);
+        $merchant = Merchant::with(['province:id,name', 'city:id,name', 'district:id,name'])->find($merchant_id, ['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url']);
+        // foreach ($merchant as $data) {
+        //     $data['url_deeplink'] = 'url_deeplink';
+        // }
+
         $product = new Product();
 
         $products = $product->withCount(['reviews', 'order_details' => function ($details) {
@@ -264,16 +268,18 @@ class ProductQueries extends Service
             $trx->whereHas('order', function ($j) {
                 $j->whereHas('progress_done');
             });
-        }, 'product_photo', 'product_stock'])->where([['merchant_id', $merchant_id], ['is_featured_product', true]]);
+        }, 'product_photo:id,product_id,url', 'product_stock'])->where([['merchant_id', $merchant_id], ['is_featured_product', true]])
+        ->select('id', 'name', 'price');
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
+            $product->url_deeplink = 'url_deeplink';
             return $product;
         });
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk unggulan!';
-        $response['data'] = ['nerchant' => $merchant, 'products' => $immutable_data];
+        $response['data'] = ['merchant' => $merchant, 'products' => $immutable_data];
         return $response;
     }
 
