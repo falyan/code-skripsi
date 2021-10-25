@@ -122,7 +122,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'product'], static function () use ($router) {
                 $router->get('recommend', 'ProductController@getRecommendProduct');
                 $router->get('special', 'ProductController@getSpecialProduct');
-                $router->get('search', 'ProductController@SearchProductByName');
+                $router->get('search', 'ProductController@searchProductByName');
                 $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchantBuyer');
                 $router->get('category/{category_id}', 'ProductController@getProductByCategory');
                 $router->get('/merchant/{merchant_id}/featured', 'ProductController@getMerchantFeaturedProduct');

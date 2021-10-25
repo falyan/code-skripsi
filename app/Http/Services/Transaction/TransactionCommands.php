@@ -81,6 +81,7 @@ class TransactionCommands extends Service
                     $order_detail->total_discount = data_get($product, 'total_discount');
                     $order_detail->total_insurance_cost = data_get($product, 'total_insurance_cost');
                     $order_detail->total_amount = data_get($product, 'total_amount');
+                    $order_detail->notes = data_get($product, 'notes');
                     $order_detail->save();
                 }, data_get($data, 'products'));
 
@@ -104,6 +105,8 @@ class TransactionCommands extends Service
                 $order_delivery->longitude = data_get($datas, 'destination_info.longitude');
                 $order_delivery->shipping_type = data_get($data, 'delivery_service');
                 $order_delivery->awb_number = null;
+                $order_delivery->delivery_method = data_get($data, 'delivery_method');
+                $order_delivery->delivery_fee = data_get($data, 'delivery_fee');
                 $order_delivery->save();
 
                 $order_payment = new OrderPayment();

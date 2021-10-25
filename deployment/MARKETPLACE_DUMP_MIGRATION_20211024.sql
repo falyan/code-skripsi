@@ -7033,12 +7033,12 @@ INSERT INTO "public"."permission" VALUES (8, 'Role', 'delete-role', 'Delete Role
 -- End Insert Table Permission
 
 -- Begin Insert Table Role
-INSERT INTO "public"."role" (id, key_name, display_name, role_type, created_by, updated_by, created_at, updated_at, deleted_at) VALUES (1, 'globaladmin', 'Global Admin', 'internal', 'Manual Input', '', '2021-10-02 07:08:01', '2021-10-02 07:08:01', ''),(2, 'admin-toko', 'Admin Toko', 'merchant', 'Manual Input', '', '2021-10-02 07:08:01', '2021-10-02 07:08:01', '');
+INSERT INTO "public"."role" (id, key_name, display_name, role_type, created_by, updated_by, created_at, updated_at, deleted_at) VALUES (1, 'globaladmin', 'Global Admin', 'internal', 'Manual Input', '', '2021-10-02 07:08:01', '2021-10-02 07:08:01', NULL),(2, 'admin-toko', 'Admin Toko', 'merchant', 'Manual Input', '', '2021-10-02 07:08:01', '2021-10-02 07:08:01', NULL);
 -- End Insert Table Role
 
 
 -- Begin Insert Table User BOT
-INSERT INTO "public"."user_bot" VALUES (1, 'Service Provider', 'serviceprovider', '$2y$10$Exjm/T5FQ/Jp8ABrxmTFxOEbDiH95F8K0Oii6SltMiL103vbhqBj.', 'serviceprovider@email.com', 1, 1, 1, NULL, NULL, '2021-10-07 14:47:35', '2021-10-07 14:47:35', NULL, '');
+INSERT INTO "public"."user_bot" VALUES (1, 'Service Provider', 'serviceprovider', '$2y$10$Exjm/T5FQ/Jp8ABrxmTFxOEbDiH95F8K0Oii6SltMiL103vbhqBj.', 'serviceprovider@email.com', 1, NULL, 1, NULL, NULL, '2021-10-07 14:47:35', '2021-10-07 14:47:35', NULL, '');
 -- End Insert Table User BOT
 
 -- Begin Insert Table Service
@@ -7057,3 +7057,12 @@ INSERT INTO "public"."service" VALUES (3, 'Bayar Ditempat', 'Pembeli dapat melak
 <li>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Esse explicabo corporis ut perspiciatis.</li>
 </ul>', NULL, 'Manual Input', NULL, NULL, NULL, NULL);
 -- End Insert Table Service
+
+ALTER SEQUENCE master_data_id_seq RESTART WITH 100;
+ALTER SEQUENCE state_id_seq RESTART WITH 10;
+ALTER SEQUENCE province_id_seq RESTART WITH 50;
+ALTER SEQUENCE city_id_seq RESTART WITH 600;
+ALTER SEQUENCE district_id_seq RESTART WITH 7000;
+ALTER SEQUENCE permission_id_seq RESTART WITH 10;
+ALTER SEQUENCE user_bot_id_seq RESTART WITH 10;
+ALTER SEQUENCE service_id_seq RESTART WITH 10;
