@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Http\Resources\Etalase\EtalaseCollection;
 use App\Http\Services\Manager\RajaOngkirManager;
+use App\Http\Services\Service;
 use App\Http\Services\Transaction\TransactionCommands;
 use Illuminate\Support\ServiceProvider;
 
@@ -24,5 +25,6 @@ class AppServiceProvider extends ServiceProvider
         EtalaseCollection::withoutWrapping();
         RajaOngkirManager::init();
         TransactionCommands::init();
+        Service::init();
     }
 }

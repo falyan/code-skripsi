@@ -98,7 +98,7 @@ class ProductController extends Controller
         try {
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
-            $sorting = $request->sortby ?? [];
+            $sorting = $request->sortby ?? null;
             return $this->productQueries->getAllProduct($limit, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -112,7 +112,7 @@ class ProductController extends Controller
             $merchant_id = Auth::user()->merchant_id;
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
-            $sorting = $request->sortby ?? [];
+            $sorting = $request->sortby ?? null;
             return $this->productQueries->getProductByMerchantIdSeller($merchant_id, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -125,7 +125,7 @@ class ProductController extends Controller
         try {
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
-            $sorting = $request->sortby ?? [];
+            $sorting = $request->sortby ?? null;
             return $this->productQueries->getProductByEtalaseId($etalase_id, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -168,7 +168,8 @@ class ProductController extends Controller
 
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
-            $sorting = $request->sortby ?? [];
+            $sorting = $request->sortby ?? null;
+            
             return $this->productQueries->searchProductByName($request->keyword, $limit, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -181,7 +182,7 @@ class ProductController extends Controller
         try {
             $size = request()->query('size', 10);
             $filter = $request->filter ?? [];
-            $sorting = $request->sortby ?? [];
+            $sorting = $request->sortby ?? null;
             return $this->productQueries->getProductByMerchantIdBuyer($merchant_id, $size, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -194,7 +195,7 @@ class ProductController extends Controller
         try {
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
-            $sorting = $request->sortby ?? [];
+            $sorting = $request->sortby ?? null;
             return $this->productQueries->getProductByCategory($category_id, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -264,7 +265,7 @@ class ProductController extends Controller
             $keyword = $request->keyword;
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
-            $sorting = $request->sortby ?? [];
+            $sorting = $request->sortby ?? null;
             return $this->productQueries->searchProductBySeller($merchant_id, $keyword, $limit, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
