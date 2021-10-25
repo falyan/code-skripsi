@@ -119,6 +119,9 @@ class TransactionCommands extends Service
                 $order_payment->booking_code = null;
                 $order_payment->payment_note = data_get($data, 'payment_note') ?? null;
                 $order_payment->save();
+
+                $order->payment_id = $order_payment->id;
+                $order->save();
             }, data_get($datas, 'merchants'));
             DB::commit();
 
