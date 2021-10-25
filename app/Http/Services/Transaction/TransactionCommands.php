@@ -81,6 +81,7 @@ class TransactionCommands extends Service
                     $order_detail->total_discount = data_get($product, 'total_discount');
                     $order_detail->total_insurance_cost = data_get($product, 'total_insurance_cost');
                     $order_detail->total_amount = data_get($product, 'total_amount');
+                    $order_detail->notes = data_get($product, 'notes');
                     $order_detail->save();
                 }, data_get($data, 'products'));
 
