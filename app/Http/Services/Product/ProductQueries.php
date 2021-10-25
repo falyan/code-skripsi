@@ -10,7 +10,7 @@ use Illuminate\Pagination\Paginator;
 
 class ProductQueries extends Service
 {
-    public function getAllProduct()
+    public function getAllProduct($limit, $filter = [], $sorting = [])
     {
         $product = new Product();
         $products = $product->withCount(['reviews', 'order_details' => function ($details) {
@@ -24,7 +24,7 @@ class ProductQueries extends Service
             return $product;
         });
 
-        $data = static::paginate($immutable_data->toArray());
+        $data = static::paginate($immutable_data->toArray(), $limit);
 
         //        if ($data->isEmpty()){
         //            $response['success'] = false;
@@ -37,7 +37,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByMerchantIdSeller($merchant_id)
+    public function getProductByMerchantIdSeller($merchant_id, $filter = [], $sorting = [])
     {
         $product = new Product();
         $products = $product->withCount(['reviews', 'order_details' => function ($details) {
@@ -64,7 +64,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByEtalaseId($etalase_id)
+    public function getProductByEtalaseId($etalase_id, $filter = [], $sorting = [])
     {
         $product = new Product();
         $products = $product->withCount(['reviews', 'order_details' => function ($details) {
@@ -91,12 +91,8 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function searchProductByName($keyword, $limit = 10)
+    public function searchProductByName($keyword, $limit, $filter = [], $sorting = [])
     {
-        if (strlen($keyword) < 3) {
-            return false;
-        }
-
         $product = new Product();
         $products = $product->withCount(['reviews', 'order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
@@ -104,8 +100,8 @@ class ProductQueries extends Service
             });
         }])->with(['product_stock', 'product_photo'])->where('name', 'ILIKE', '%' . $keyword . '%');
 
-        
-        
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sorting);
         $immutable_data = $products->get()->map(function ($product) {
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
             return $product;
@@ -118,7 +114,7 @@ class ProductQueries extends Service
         $response['data'] = $data;
         return $response;
     }
-    public function getProductByMerchantIdBuyer($merchant_id, $size)
+    public function getProductByMerchantIdBuyer($merchant_id, $size, $filter = [], $sorting = [])
     {
         $product = new Product();
 
@@ -147,7 +143,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByCategory($category_id)
+    public function getProductByCategory($category_id, $filter = [], $sorting = [])
     {
         $product = new Product();
         $products = $product->withCount(['reviews', 'order_details' => function ($details) {
@@ -205,7 +201,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getRecommendProduct()
+    public function getRecommendProduct($filter = [], $sorting = [])
     {
         $product = new Product();
         $products = $product->withCount(['reviews', 'order_details' => function ($details) {
@@ -230,7 +226,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getSpecialProduct()
+    public function getSpecialProduct($filter = [], $sorting = [])
     {
         $product = new Product();
         $products = $product->withCount(['reviews', 'order_details' => function ($details) {
@@ -281,7 +277,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function searchProductBySeller($merchant_id, $keyword, $limit)
+    public function searchProductBySeller($merchant_id, $keyword, $limit, $filter = [], $sorting = [])
     {
         $product = new Product();
         $products = $product->withCount(['reviews', 'order_details' => function ($details) {
@@ -303,41 +299,64 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function filter($model, $keyword = null, $category = null, $location = null, $condition = null, $min_price = null, $max_price = null)
+    public function filter($model, $filter = [])
     {
-        $data = $model->when(!empty($keyword), function ($query) use ($keyword) {
-            $query->where('name', 'LIKE', "%{$keyword}%");
-        })->when(!empty($category_id), function ($query) use ($category) {
-            if (strpos($category, ',')) {
-                $query->whereIn('category_id', explode(',', $category));
-            } else {
-                $query->where('category_id', $category);
-            }
-        })->when(!empty($location), function ($query) use ($location) {
-            $query->whereHas('merchant.city', function($city) use($location){
-                if (strpos($location, ',')) {
-                    $city->whereIn('category_id', explode(',', $location));
-                } else {
-                    $city->where('category_id', 'LIKE', $location);
-                }
-            });
-        })->when(!empty($condition), function ($query) use ($condition) {
-            if (strpos($condition, ',')) {
-                $query->whereIn('category_id', explode(',', $condition));
-            } else {
-                $query->where('category_id', 'LIKE',$condition);
-            }
-        })->when(!empty($min_price), function ($query) use ($min_price) {
-            $query->where('price', '>=', $min_price);
-        })->when(!empty($max_price), function ($query) use ($max_price) {
-            $query->where('price', '<=', $max_price);
-        });
+        if (count($filter) > 0) {
+            $keyword = $filter['keyword'] ?? null;
+            $category = $filter['category'] ?? null;
+            $location = $filter['location'] ?? null;
+            $condition = $filter['condition'] ?? null;
+            $min_price = $filter['min_price'] ?? null;
+            $max_price = $filter['max_price'] ?? null;
 
-        return $data;
+            $data = $model->when(!empty($keyword), function ($query) use ($keyword) {
+                $query->where('name', 'LIKE', "%{$keyword}%");
+            })->when(!empty($category_id), function ($query) use ($category) {
+                if (strpos($category, ',')) {
+                    $query->whereIn('category_id', explode(',', $category));
+                } else {
+                    $query->where('category_id', $category);
+                }
+            })->when(!empty($location), function ($query) use ($location) {
+                $query->whereHas('merchant:city_id', function ($city) use ($location) {
+                    if (strpos($location, ',')) {
+                        $city->whereIn('merchant:city_id', explode(',', $location));
+                    } else {
+                        $city->where('merchant:city_id', 'LIKE', $location);
+                    }
+                });
+            })->when(!empty($condition), function ($query) use ($condition) {
+                if (strpos($condition, ',')) {
+                    $query->whereIn('condition', explode(',', strtolower($condition)));
+                } else {
+                    $query->where('condition', 'ILIKE', $condition);
+                }
+            })->when(!empty($min_price), function ($query) use ($min_price) {
+                $query->where('price', '>=', $min_price);
+            })->when(!empty($max_price), function ($query) use ($max_price) {
+                $query->where('price', '<=', $max_price);
+            });
+
+            return $data;
+        } else {
+            return $model;
+        }
     }
 
-    public function orderBy($param)
+    public function sorting($model, $sorting = null)
     {
-        # code...
+        if (!empty($sorting)) {
+            $data = $model->when($sorting = 'newest', function ($query) {
+                $query->orderBy('created_at', 'desc');
+            })->when($sorting = 'lower_price', function ($query) {
+                $query->orderBy('price', 'asc');
+            })->when($sorting = 'higher_price', function ($query) {
+                $query->orderBy('price', 'desc');
+            });
+
+            return $data;
+        } else {
+            return $model;
+        }
     }
 }

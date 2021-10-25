@@ -93,31 +93,40 @@ class ProductController extends Controller
     }
 
     //Get Semua Produk
-    public function getAllProduct()
+    public function getAllProduct($request)
     {
         try {
-            return $this->productQueries->getAllProduct();
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? [];
+            return $this->productQueries->getAllProduct($limit, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
     //Get Produk Berdasarkan Merchant Seller
-    public function getProductByMerchantSeller()
+    public function getProductByMerchantSeller(Request $request)
     {
         try {
             $merchant_id = Auth::user()->merchant_id;
-            return $this->productQueries->getProductByMerchantIdSeller($merchant_id);
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? [];
+            return $this->productQueries->getProductByMerchantIdSeller($merchant_id, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
     //Get Produk Berdasarkan Etalase
-    public function getProductByEtalase($etalase_id)
+    public function getProductByEtalase($etalase_id, Request $request)
     {
         try {
-            return $this->productQueries->getProductByEtalaseId($etalase_id);
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? [];
+            return $this->productQueries->getProductByEtalaseId($etalase_id, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -143,7 +152,7 @@ class ProductController extends Controller
                 'keyword' => 'required|min:3',
                 'limit' => 'nullable'
             ], [
-                'required' => ':attribute diperlukan.',
+                'required' => ':attribute wajib diisi.',
                 'min' => 'panjang :attribute minimum :min karakter.',
             ]);
 
@@ -157,31 +166,36 @@ class ProductController extends Controller
                 return $this->respondValidationError($errors, 'Validation Error!');
             }
 
-            $keyword = $request->keyword;
             $limit = $request->limit ?? 10;
-
-            return $this->productQueries->searchProductByName($keyword, $limit);
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? [];
+            return $this->productQueries->searchProductByName($request->keyword, $limit, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
     //Get Produk Berdasarkan Merchant Buyer
-    public function getProductByMerchantBuyer($merchant_id)
+    public function getProductByMerchantBuyer($merchant_id, Request $request)
     {
         try {
             $size = request()->query('size', 10);
-            return $this->productQueries->getProductByMerchantIdBuyer($merchant_id, $size);
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? [];
+            return $this->productQueries->getProductByMerchantIdBuyer($merchant_id, $size, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
     //Get Produk Berdasarkan Kategori
-    public function getProductByCategory($category_id)
+    public function getProductByCategory($category_id, Request $request)
     {
         try {
-            return $this->productQueries->getProductByCategory($category_id);
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? [];
+            return $this->productQueries->getProductByCategory($category_id, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -249,16 +263,9 @@ class ProductController extends Controller
             $merchant_id = Auth::user()->merchant_id;
             $keyword = $request->keyword;
             $limit = $request->limit ?? 10;
-            return $this->productQueries->searchProductBySeller($merchant_id, $keyword, $limit);
-        } catch (Exception $e) {
-            return $this->respondErrorException($e, request());
-        }
-    }
-
-    public function getProductByFilter(Request $request)
-    {
-        try {
-            // return $this->productQueries->getProductByFilter($request);
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? [];
+            return $this->productQueries->searchProductBySeller($merchant_id, $keyword, $limit, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
