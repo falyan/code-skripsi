@@ -52,7 +52,7 @@ return [
             'driver' => 'daily',
             'path' => storage_path('logs/lumen.log'),
             'level' => 'debug',
-            'days' => 7,
+            'days' => 30,
         ],
 
         'slack' => [
