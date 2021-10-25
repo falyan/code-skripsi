@@ -7057,3 +7057,12 @@ INSERT INTO "public"."service" VALUES (3, 'Bayar Ditempat', 'Pembeli dapat melak
 <li>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Esse explicabo corporis ut perspiciatis.</li>
 </ul>', NULL, 'Manual Input', NULL, NULL, NULL, NULL);
 -- End Insert Table Service
+
+ALTER SEQUENCE master_data_id_seq RESTART WITH 60;
+ALTER SEQUENCE state_id_seq RESTART WITH 10;
+ALTER SEQUENCE province_id_seq RESTART WITH 50;
+ALTER SEQUENCE city_id_seq RESTART WITH 600;
+ALTER SEQUENCE district_id_seq RESTART WITH 7000;
+ALTER SEQUENCE permission_id_seq RESTART WITH 10;
+ALTER SEQUENCE user_bot_id_seq RESTART WITH 10;
+ALTER SEQUENCE service_id_seq RESTART WITH 10;
