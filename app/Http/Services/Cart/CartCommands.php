@@ -28,14 +28,15 @@ class CartCommands extends Service
         DB::beginTransaction();
 
         try {
-            $cart = Cart::when(!empty($buyerID), function($q) use($buyerID){
+            $cart = Cart::when(!empty($buyerID), function ($q) use ($buyerID) {
                 $q->where('buyer_id', $buyerID);
-            })->when(empty($buyerID), function($q) use($getRelationMobile){
+            })->when(empty($buyerID), function ($q) use ($getRelationMobile) {
                 $q->where('related_pln_mobile_customer_id', $getRelationMobile);
             })->where('merchant_id', $related_merchant_id)->first();
 
-            $product_stock = ProductStock::where([['product_id', $getProductId], ['status',1]])->first();
-            
+            $product_stock = ProductStock::where([['product_id', $getProductId], ['status', 1]])->first();
+            $minimum_purchase = Product::find($getProductId)->minimum_purchase ?? 1;
+
             if (empty($product_stock->amount) || (!empty($product_stock->amount) && $product_stock->amount <= 0)) {
                 throw new Exception('Stok produk belum tersedia', 400);
             }
@@ -56,7 +57,7 @@ class CartCommands extends Service
                     $cartDetail = CartDetail::create([
                         'cart_id' => $cart->id,
                         'product_id' => $getProductId,
-                        'quantity' => 1,
+                        'quantity' => $minimum_purchase,
                         'related_merchant_id' => $related_merchant_id
                     ]);
                 }
@@ -70,7 +71,7 @@ class CartCommands extends Service
                 $cartDetail = CartDetail::create([
                     'cart_id' => $cartCreate->id,
                     'product_id' => request('product_id'),
-                    'quantity' => 1,
+                    'quantity' => $minimum_purchase,
                     'related_merchant_id' => $related_merchant_id
                 ]);
             }
@@ -114,51 +115,53 @@ class CartCommands extends Service
 
     public static function QuantityUpdate($cart_detail_id, $cart_id)
     {
-        try {
-            $data = CartDetail::where([['id', $cart_detail_id], ['cart_id', $cart_id]])->first();
+        $data = CartDetail::where([['id', $cart_detail_id], ['cart_id', $cart_id]])->first();
 
-            if ($data) {
-                $product_stock = ProductStock::where([['product_id', $data->product_id], ['status',1]])->first();
-                $quantity = (int)$data->quantity + (int)request('quantity');
-                
-                if (empty($product_stock->amount) || (!empty($product_stock->amount) && $product_stock->amount <= 0) ) {
-                    // self::deleteProduct($cart_detail_id, $cart_id);
-                    throw new Exception('Stok produk belum tersedia', 400);
-                }
+        if ($data) {
+            $product_stock = ProductStock::where([['product_id', $data->product_id], ['status', 1]])->first();
+            $quantity = (int)$data->quantity + (int)request('quantity');
+            $minimum_purchase = Product::find($data->product_id)->minimum_purchase ?? 1;
 
-                if ($quantity > $product_stock->amount) {
-                    throw new Exception("Stok produk habis. {$product_stock->amount} stok yang tersedia sudah kamu masukkan ke keranjangmu.", 400);
-                }
-
-                $data->quantity = $quantity;
-                $data->save();
-
-                if ($data->quantity < 1){
-                    self::deleteProduct($cart_detail_id, $cart_id);
-                }
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Produk berhasil diubah',
-                ], 200);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error: ID tidak ditemukan!',
-                ], 404);
+            if (empty($product_stock->amount) || (!empty($product_stock->amount) && $product_stock->amount <= 0)) {
+                self::deleteProduct($cart_detail_id, $cart_id);
+                throw new Exception("Stok produk belum tersedia", 400);
             }
-        } catch (Exception $th) {
-            throw new Exception($th->getMessage(), $th->getCode());
+
+            if ($quantity > $product_stock->amount) {
+                throw new Exception("Stok produk habis. {$product_stock->amount} stok yang tersedia sudah kamu masukkan ke keranjangmu.", 400);
+            }
+
+            if ($quantity < $minimum_purchase) {
+                throw new Exception("Minimum pembelian untuk produk ini adalah {$minimum_purchase}.", 400);
+            }
+
+            $data->quantity = $quantity;
+            $data->save();
+
+            if ($data->quantity < 1) {
+                self::deleteProduct($cart_detail_id, $cart_id);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Produk berhasil diubah',
+            ], 200);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ID tidak ditemukan!',
+            ], 404);
         }
 
         return null;
     }
 
-    public function deleteAllCart($related_id, $buyer_id = null){
-        if ($buyer_id != null){
+    public function deleteAllCart($related_id, $buyer_id = null)
+    {
+        if ($buyer_id != null) {
             $carts = Cart::where('buyer_id', $buyer_id)->get();
-            foreach ($carts as $cart){
-                if ($cart->delete() < 1){
+            foreach ($carts as $cart) {
+                if ($cart->delete() < 1) {
                     $response['success'] = false;
                     $response['message'] = 'Gagal menghapus keranjang';
                     return $response;
@@ -169,8 +172,8 @@ class CartCommands extends Service
             return $response;
         }
         $carts = Cart::where('related_pln_mobile_customer_id', $related_id)->get();
-        foreach ($carts as $cart){
-            if ($cart->delete() < 1){
+        foreach ($carts as $cart) {
+            if ($cart->delete() < 1) {
                 $response['success'] = false;
                 $response['message'] = 'Gagal menghapus keranjang';
                 return $response;
