@@ -253,27 +253,18 @@ class ProductQueries extends Service
 
     public function getMerchantFeaturedProduct($merchant_id)
     {
-        $merchant = Merchant::with(['province:id,name', 'city:id,name', 'district:id,name'])->find($merchant_id, ['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url']);
-        // foreach ($merchant as $data) {
-        //     $data['url_deeplink'] = 'url_deeplink';
-        // }
+        $merchant = Merchant::with(['province:id,name', 'city:id,name', 'district:id,name'])->where('id',$merchant_id)->first(['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url']);
+        $merchant['url_deeplink'] = 'https://plnmarketplace.page.link/?link=https://plnmarketplace.page.link/profile-toko-seller?id=' . $merchant_id;
+
 
         $product = new Product();
 
-        $products = $product->withCount(['reviews', 'order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->with(['reviews', 'order_details' => function ($trx) {
-            $trx->whereHas('order', function ($j) {
-                $j->whereHas('progress_done');
-            });
-        }, 'product_photo:id,product_id,url', 'product_stock'])->where([['merchant_id', $merchant_id], ['is_featured_product', true]])
+        $products = $product->with(['product_photo:id,product_id,url'])->where([['merchant_id', $merchant_id], ['is_featured_product', true]])
         ->select('id', 'name', 'price');
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
-            $product->url_deeplink = 'url_deeplink';
+            $product->url_deeplink = 'https://plnmarketplace.page.link?link=https://plnmarketplace.page.link/detail-product?id=' . $product->id;
             return $product;
         });
 
