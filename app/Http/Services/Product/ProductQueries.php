@@ -13,7 +13,7 @@ class ProductQueries extends Service
     public function getAllProduct($limit, $filter = [], $sortby = null)
     {
         $product = new Product();
-        $products = $product->withCount(['reviews', 'order_details' => function ($details) {
+        $products = $product->withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
@@ -21,8 +21,8 @@ class ProductQueries extends Service
 
         $immutable_data = $products->get()->map(function ($product) {
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
-            $product->reviews =  null;
             $product->avg_rating =  null;
+            $product->reviews = null;
             return $product;
         });
 
@@ -42,7 +42,7 @@ class ProductQueries extends Service
     public function getProductByMerchantIdSeller($merchant_id, $filter = [], $sortby = null)
     {
         $product = new Product();
-        $products = $product->withCount(['reviews', 'order_details' => function ($details) {
+        $products = $product->withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
@@ -50,7 +50,7 @@ class ProductQueries extends Service
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->avg_rating =  null;
-            $product->reviews =  null;
+            $product->reviews = null;
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
             return $product;
         });
@@ -71,15 +71,15 @@ class ProductQueries extends Service
     public function getProductByEtalaseId($etalase_id, $filter = [], $sortby = null)
     {
         $product = new Product();
-        $products = $product->withCount(['reviews', 'order_details' => function ($details) {
+        $products = $product->withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
         }])->with(['product_stock', 'product_photo'])->where('etalase_id', $etalase_id);
 
         $immutable_data = $products->get()->map(function ($product) {
-            $product->reviews =  null;
             $product->avg_rating =  null;
+            $product->reviews = null;
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
             return $product;
         });
@@ -100,7 +100,7 @@ class ProductQueries extends Service
     public function searchProductByName($keyword, $limit, $filter = [], $sortby = null)
     {
         $product = new Product();
-        $products = $product->withCount(['reviews', 'order_details' => function ($details) {
+        $products = $product->withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
@@ -111,7 +111,7 @@ class ProductQueries extends Service
 
         $immutable_data = $sorted_data->get()->map(function ($product) {
             $product->avg_rating =  null;
-            $product->reviews =  null;
+            $product->reviews = null;
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
             return $product;
         });
@@ -127,7 +127,7 @@ class ProductQueries extends Service
     {
         $product = new Product();
 
-        $products = $product->withCount(['reviews', 'order_details' => function ($order_details) {
+        $products = $product->withCount(['order_details' => function ($order_details) {
             $order_details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
@@ -143,8 +143,8 @@ class ProductQueries extends Service
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
         $immutable_data = $sorted_data->get()->map(function ($product) {
-            $product->reviews =  null;
             $product->avg_rating =  null;
+            $product->reviews = null;
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
             return $product;
         });
@@ -160,7 +160,7 @@ class ProductQueries extends Service
     public function getProductByCategory($category_id, $filter = [], $sortby = null)
     {
         $product = new Product();
-        $products = $product->withCount(['reviews', 'order_details' => function ($details) {
+        $products = $product->withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
@@ -170,8 +170,8 @@ class ProductQueries extends Service
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
         $immutable_data = $sorted_data->get()->map(function ($product) {
-            $product->reviews =  null;
             $product->avg_rating =  null;
+            $product->reviews = null;
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
             return $product;
         });
@@ -191,13 +191,25 @@ class ProductQueries extends Service
 
     public function getProductById($id)
     {
-        $data = Product::withCount(['reviews', 'order_details' => function ($details) {
+        // $data = Product::withCount(['reviews', 'order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])->with(['reviews' => function ($reviews) {
+        //     $reviews->with('customer:id,full_name,image_url')->paginate(10);
+        // }, 'product_stock', 'product_photo', 'merchant' => function ($region) {
+        //     $region->with(['province', 'city', 'district', 'expedition']);
+        // }, 'etalase', 'category', 'order_details' => function ($order_details) {
+        //     $order_details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])->where('id', $id)->first();
+
+        $data = Product::withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['reviews' => function ($reviews) {
-            $reviews->with('customer:id,full_name,image_url')->paginate(10);
-        }, 'product_stock', 'product_photo', 'merchant' => function ($region) {
+        }])->with(['product_stock', 'product_photo', 'merchant' => function ($region) {
             $region->with(['province', 'city', 'district', 'expedition']);
         }, 'etalase', 'category', 'order_details' => function ($order_details) {
             $order_details->whereHas('order', function ($order) {
@@ -212,8 +224,8 @@ class ProductQueries extends Service
             return $response;
         }
 
-        $data['avg_rating'] = null;
-        $data['reviews'] =  null;
+        $data->avg_rating = null;
+        $data->reviews = null;
         // $data['avg_rating'] = round($data->reviews()->avg('rate'), 2);
 
         $response['success'] = true;
@@ -225,7 +237,7 @@ class ProductQueries extends Service
     public function getRecommendProduct($filter = [], $sortby = null)
     {
         $product = new Product();
-        $products = $product->withCount(['reviews', 'order_details' => function ($details) {
+        $products = $product->withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
@@ -236,7 +248,7 @@ class ProductQueries extends Service
 
         $immutable_data = $sorted_data->get()->map(function ($product) {
             $product->avg_rating =  null;
-            $product->reviews =  null;
+            $product->reviews = null;
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
             return $product;
         });
@@ -255,7 +267,7 @@ class ProductQueries extends Service
     public function getSpecialProduct($filter = [], $sortby = null)
     {
         $product = new Product();
-        $products = $product->withCount(['reviews', 'order_details' => function ($details) {
+        $products = $product->withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
@@ -266,7 +278,7 @@ class ProductQueries extends Service
 
         $immutable_data = $sorted_data->get()->map(function ($product) {
             $product->avg_rating =  null;
-            $product->reviews =  null;
+            $product->reviews = null;
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
             return $product;
         });
@@ -307,7 +319,7 @@ class ProductQueries extends Service
     public function searchProductBySeller($merchant_id, $keyword, $limit, $filter = [], $sortby = null)
     {
         $product = new Product();
-        $products = $product->withCount(['reviews', 'order_details' => function ($details) {
+        $products = $product->withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
@@ -315,7 +327,8 @@ class ProductQueries extends Service
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->avg_rating =  null;
-            $product->reviews =  null;
+            $product->reviews = null;
+
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
             return $product;
         });

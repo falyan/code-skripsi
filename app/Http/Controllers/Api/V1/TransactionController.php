@@ -77,6 +77,9 @@ class TransactionController extends Controller
                     if ($product->product_stock->pluck('amount')->first() < data_get($item, 'quantity')) {
                         throw new Exception('Stok produk dengan id ' . $product->id . ' tidak mencukupi', 400);
                     }
+                    if (data_get($item, 'quantity') < $product->minimum_purchase) {
+                        throw new Exception('Pembelian minimum untuk produk ' . $product->name . ' adalah ' . $product->minimum_purchase, 400);
+                    }
                 }, data_get($merchant, 'products'));
             }, request()->get('merchants'));
             return $this->transactionCommand->createOrder(request()->all(), $customer_id);
