@@ -241,7 +241,7 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo'])->orderBy('order_details_count', 'DESC')->limit(10);
+        }])->with(['product_stock', 'product_photo', 'merchant.city:id,name'])->orderBy('order_details_count', 'DESC')->limit(10);
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -271,7 +271,7 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo'])->latest()->limit(10);
+        }])->with(['product_stock', 'product_photo', 'merchant.city:id,name'])->latest()->limit(10);
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
