@@ -104,6 +104,8 @@ class TransactionCommands extends Service
                 $order_delivery->longitude = data_get($datas, 'destination_info.longitude');
                 $order_delivery->shipping_type = data_get($data, 'delivery_service');
                 $order_delivery->awb_number = null;
+                $order_delivery->delivery_method = data_get($data, 'delivery_method');
+                $order_delivery->delivery_fee = data_get($data, 'delivery_fee');
                 $order_delivery->save();
 
                 $order_payment = new OrderPayment();
