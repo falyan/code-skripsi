@@ -21,6 +21,7 @@ class TransactionController extends Controller
      *
      * @return void
      */
+    protected $transactionQueries, $transactionCommand;
     public function __construct()
     {
         $this->transactionQueries = new TransactionQueries();
