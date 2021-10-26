@@ -21,7 +21,7 @@ class IconcashController extends Controller
             return $this->respondWithResult(false, 'pin tidak boleh kosong!', 400);
         }
 
-        if (strlen($pin) != 64 || preg_match("/[g-zG-Z]/i", $pin)) {
+        if (strlen($pin) != 64 || preg_match("/[g-zG-Z\'^£$%&*()}{@#~?><>,:|=_+¬-]/", $pin)) {
             return $this->respondWithResult(false, 'pin yang diberikan tidak valid!', 400);
         }
 
