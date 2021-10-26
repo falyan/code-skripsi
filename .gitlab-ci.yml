@@ -92,4 +92,4 @@ Deploy Production:
   only:
     - production
   tags:
-    - site-dd
+    - docker
