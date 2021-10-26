@@ -62,6 +62,8 @@ class TransactionCommands extends Service
                 $order->total_weight = data_get($data, 'total_weight');
                 $order->related_pln_mobile_customer_id = null;
                 $order->no_reference = $no_reference;
+                $order->created_by = 'user';
+                $order->updated_by = 'user';
                 $order->save();
 
                 $total_price += data_get($data, 'total_payment');
@@ -91,6 +93,8 @@ class TransactionCommands extends Service
                 $order_progress->status_name = 'Pesanan Belum Dibayar';
                 $order_progress->note = null;
                 $order_progress->status = 1;
+                $order_progress->created_by = 'user';
+                $order_progress->updated_by = 'user';
                 $order_progress->save();
 
                 $order_delivery = new OrderDelivery();
