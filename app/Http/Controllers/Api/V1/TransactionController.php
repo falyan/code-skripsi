@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
 use App\Models\Customer;
@@ -26,6 +27,7 @@ class TransactionController extends Controller
     {
         $this->transactionQueries = new TransactionQueries();
         $this->transactionCommand = new TransactionCommands();
+        $this->notificationCommand = new NotificationCommands();
     }
 
     // Checkout
@@ -82,7 +84,19 @@ class TransactionController extends Controller
                     }
                 }, data_get($merchant, 'products'));
             }, request()->get('merchants'));
-            return $this->transactionCommand->createOrder(request()->all(), $customer_id);
+            $response = $this->transactionCommand->createOrder(request()->all(), $customer_id);
+
+            if ($response){
+                $column_name = 'customer_id';
+                $column_value = $customer_id;
+                $type = 2;
+                $title = 'Transaksi berhasil dibuat';
+                $message = 'Transaksimu berhasil dibuat, silahkan melanjutkan pembayaran.';
+                $url_path = 'v1/buyer/query/transaction/1/detail?no_ref=' . $response['data']->response_details[0]->partner_reference;
+                $this->notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
+            }
+
+            return $response;
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -403,15 +417,16 @@ class TransactionController extends Controller
     }
     #End Region
 
-    public function detailTransaction($id)
+    public function detailTransaction()
     {
         try {
-            $data = $this->transactionQueries->getDetailTransaction($id);
+            $no_ref = request()->get('no_ref');
+            $data = $this->transactionQueries->getDetailTransaction($no_ref);
 
             if (!empty($data)) {
                 return $this->respondWithData($data, 'sukses get detail transaksi');;
             } else {
-                return $this->respondWithResult(false, 'ID transaksi salah', 400);
+                return $this->respondWithResult(false, 'No reference salah', 400);
             }
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());

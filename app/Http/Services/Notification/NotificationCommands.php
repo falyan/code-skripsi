@@ -20,6 +20,7 @@ class NotificationCommands extends Service
         $new_notification->status = 0;
         $new_notification->related_pln_mobile_customer_id = $related_pln_mobile_customer_id;
         $new_notification->created_by = $created_by ?? 'system';
+        $new_notification->updated_by = $created_by ?? 'system';
         $new_notification->save();
 
         return $new_notification;

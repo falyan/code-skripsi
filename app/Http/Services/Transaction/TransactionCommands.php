@@ -46,22 +46,22 @@ class TransactionCommands extends Service
     {
         DB::beginTransaction();
         try {
-            $no_reference = Uuid::uuid4();
+            $trx_no = static::invoice_num(static::nextOrderId(), 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
             $timestamp = Carbon::now('Asia/Jakarta')->toIso8601String();
             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDay())->timestamp);
             $total_price = 0;
 
-            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, &$total_price) {
+            array_map(function ($data) use ($datas, $customer_id, $trx_no, $trx_date, $exp_date, &$total_price) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
                 $order->buyer_id = $customer_id;
-                $order->trx_no = static::invoice_num(static::nextOrderId(), 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
+                $order->trx_no = $trx_no;
                 $order->order_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now())->setTimezone('Asia/Jakarta')->timestamp);
                 $order->total_amount = data_get($data, 'total_amount');
                 $order->total_weight = data_get($data, 'total_weight');
                 $order->related_pln_mobile_customer_id = null;
-                $order->no_reference = $no_reference;
+                $order->no_reference = $trx_no;
                 $order->created_by = 'user';
                 $order->updated_by = 'user';
                 $order->save();
@@ -119,7 +119,7 @@ class TransactionCommands extends Service
                 $order_payment->date_created = $trx_date;
                 $order_payment->date_expired = $exp_date;
                 $order_payment->payment_method = null;
-                $order_payment->no_reference = $no_reference;
+                $order_payment->no_reference = $trx_no;
                 $order_payment->booking_code = null;
                 $order_payment->payment_note = data_get($data, 'payment_note') ?? null;
                 $order_payment->save();
@@ -133,13 +133,13 @@ class TransactionCommands extends Service
 
             $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
             $body = [
-                'no_reference' => $no_reference,
+                'no_reference' => $trx_no,
                 'transaction_date' => $trx_date,
                 'transaction_code' => '00',
-                'partner_reference' => $no_reference,
+                'partner_reference' => $trx_no,
                 'product_id' => static::$productid,
                 'amount' => $total_price,
-                'customer_id' => $no_reference,
+                'customer_id' => $trx_no,
                 'customer_name' => $customer['full_name'],
                 'email' => $customer['email'],
                 'phone_number' => $customer['phone'],
