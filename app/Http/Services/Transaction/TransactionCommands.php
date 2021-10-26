@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\Transaction;
 
+use App\Http\Services\Notification\NotificationCommands;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderProgress;
@@ -46,22 +47,22 @@ class TransactionCommands extends Service
     {
         DB::beginTransaction();
         try {
-            $trx_no = static::invoice_num(static::nextOrderId(), 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
+            $no_reference = Uuid::uuid4();
             $timestamp = Carbon::now('Asia/Jakarta')->toIso8601String();
             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDay())->timestamp);
             $total_price = 0;
 
-            array_map(function ($data) use ($datas, $customer_id, $trx_no, $trx_date, $exp_date, &$total_price) {
+            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, &$total_price) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
                 $order->buyer_id = $customer_id;
-                $order->trx_no = $trx_no;
+                $order->trx_no = static::invoice_num(static::nextOrderId(), 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
                 $order->order_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now())->setTimezone('Asia/Jakarta')->timestamp);
                 $order->total_amount = data_get($data, 'total_amount');
                 $order->total_weight = data_get($data, 'total_weight');
                 $order->related_pln_mobile_customer_id = null;
-                $order->no_reference = $trx_no;
+                $order->no_reference = $no_reference;
                 $order->created_by = 'user';
                 $order->updated_by = 'user';
                 $order->save();
@@ -119,13 +120,23 @@ class TransactionCommands extends Service
                 $order_payment->date_created = $trx_date;
                 $order_payment->date_expired = $exp_date;
                 $order_payment->payment_method = null;
-                $order_payment->no_reference = $trx_no;
+                $order_payment->no_reference = $no_reference;
                 $order_payment->booking_code = null;
                 $order_payment->payment_note = data_get($data, 'payment_note') ?? null;
                 $order_payment->save();
 
                 $order->payment_id = $order_payment->id;
-                $order->save();
+                if($order->save()){
+                    $column_name = 'customer_id';
+                    $column_value = $customer_id;
+                    $type = 2;
+                    $title = 'Transaksi berhasil dibuat';
+                    $message = 'Transaksimu berhasil dibuat, silahkan melanjutkan pembayaran.';
+                    $url_path = 'v1/buyer/query/transaction/1/detail/' . $order->id;
+
+                    $notificationCommand = new NotificationCommands();
+                    $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
+                }
             }, data_get($datas, 'merchants'));
             DB::commit();
 
@@ -133,13 +144,13 @@ class TransactionCommands extends Service
 
             $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
             $body = [
-                'no_reference' => $trx_no,
+                'no_reference' => $no_reference,
                 'transaction_date' => $trx_date,
                 'transaction_code' => '00',
-                'partner_reference' => $trx_no,
+                'partner_reference' => $no_reference,
                 'product_id' => static::$productid,
                 'amount' => $total_price,
-                'customer_id' => $trx_no,
+                'customer_id' => $no_reference,
                 'customer_name' => $customer['full_name'],
                 'email' => $customer['email'],
                 'phone_number' => $customer['phone'],

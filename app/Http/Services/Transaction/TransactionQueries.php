@@ -35,7 +35,7 @@ class TransactionQueries extends Service
         return $data;
     }
 
-    public function getDetailTransaction($trx_no)
+    public function getDetailTransaction($id)
     {
         $data = Order::with([
             'detail' => function ($product){
@@ -47,7 +47,7 @@ class TransactionQueries extends Service
             }, 'delivery' => function($region){
                 $region->with(['city', 'district']);
             }, 'buyer'
-        ])->where('trx_no', $trx_no)->get();
+        ])->find($id);
 
         $data->iconpay_product_id = static::$productid;
 

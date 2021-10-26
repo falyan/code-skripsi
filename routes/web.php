@@ -151,7 +151,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'transaction', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('/{related_id}', 'TransactionController@buyerIndex');
-                $router->get('/{related_id}/detail', 'TransactionController@detailTransaction');
+                $router->get('/{related_id}/detail/{id}', 'TransactionController@detailTransaction');
                 $router->get('/{related_id}/on-payment', 'TransactionController@transactionToPay');
                 $router->get('/{related_id}/on-approve', 'TransactionController@transactionOnApprove');
                 $router->get('/{related_id}/on-delivery', 'TransactionController@transactionOnDelivery');
