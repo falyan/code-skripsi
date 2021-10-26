@@ -84,19 +84,7 @@ class TransactionController extends Controller
                     }
                 }, data_get($merchant, 'products'));
             }, request()->get('merchants'));
-            $response = $this->transactionCommand->createOrder(request()->all(), $customer_id);
-
-            if ($response){
-                $column_name = 'customer_id';
-                $column_value = $customer_id;
-                $type = 2;
-                $title = 'Transaksi berhasil dibuat';
-                $message = 'Transaksimu berhasil dibuat, silahkan melanjutkan pembayaran.';
-                $url_path = 'v1/buyer/query/transaction/1/detail?no_ref=' . $response['data']->response_details[0]->partner_reference;
-                $this->notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
-            }
-
-            return $response;
+            return $this->transactionCommand->createOrder(request()->all(), $customer_id);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -417,11 +405,10 @@ class TransactionController extends Controller
     }
     #End Region
 
-    public function detailTransaction()
+    public function detailTransaction($id)
     {
         try {
-            $no_ref = request()->get('no_ref');
-            $data = $this->transactionQueries->getDetailTransaction($no_ref);
+            $data = $this->transactionQueries->getDetailTransaction($id);
 
             if (!empty($data)) {
                 return $this->respondWithData($data, 'sukses get detail transaksi');;
