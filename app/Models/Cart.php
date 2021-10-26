@@ -78,7 +78,7 @@ class Cart extends Model
     protected function serializeDate($date){
         return $date->format('Y-m-d H:i:s');
     }
-    
+
     public function cart_detail()
     {
         return $this->hasMany(CartDetail::class, 'cart_id');
@@ -98,9 +98,9 @@ class Cart extends Model
      * @var array Custom Static Functions
      */
 
-    public static function findByRelatedId($buyer_id, $related_customer_id)
+    public static function findByRelatedId($buyer_id)
     {
-        $cart = static::whereNotNull('buyer_id')->where('buyer_id', $buyer_id)->orWhere('related_pln_mobile_customer_id', $related_customer_id)->get();
+        $cart = static::whereNotNull('buyer_id')->where('buyer_id', $buyer_id)->get();
         throw_if(!$cart, new Exception('List cart tidak ditemukan'));
         return $cart;
     }
