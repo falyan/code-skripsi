@@ -23,7 +23,7 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.services.pln-marketplace-saruman-production.loadbalancer.server.port=8080"
+        - "traefik.http.services.pln-marketplace-saruman-production.loadbalancer.server.port=80"
         - "traefik.http.middlewares.redirectscheme-pln-marketplace-saruman-production.redirectscheme.scheme=https"
         - "traefik.http.middlewares.compress-pln-marketplace-saruman-production.compress=true"
         - "traefik.http.middlewares.stripprefix-public-pln-marketplace-saruman-production.stripprefix.prefixes=/v1/core"
