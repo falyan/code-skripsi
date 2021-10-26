@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\Auth;
 
 class CartQueries extends Service
 {
-    public static function getTotalCart($related_customer_id, $buyer_id = null){
-        $carts = Cart::findByRelatedId($buyer_id, $related_customer_id);
-        
+    public static function getTotalCart($buyer_id = null){
+        $carts = Cart::findByRelatedId($buyer_id);
+
         $per_quantities = [];
         foreach ($carts as $cart) {
             $products = $cart->cart_detail->pluck('quantity')->toArray();
