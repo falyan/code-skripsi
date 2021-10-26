@@ -35,10 +35,10 @@ class CartController extends Controller
     public function index()
     {
         try {
+            $buyer_id = null;
             if (Auth::check()){
                 $buyer_id = Auth::id();
             }
-            $buyer_id = null;
             return $this->respondWithData(CartQueries::getTotalCart($buyer_id), 'Sukses ambil data keranjang');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
