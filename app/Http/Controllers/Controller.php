@@ -134,7 +134,7 @@ class Controller extends BaseController
 
         $data = [
             'success' => false, 
-            'status_code' => $e->getCode(), 
+            'status_code' => in_array($e->getCode(), $this->error_codes) ? $e->getCode() : 404,
             'message' => $message
         ];
 
