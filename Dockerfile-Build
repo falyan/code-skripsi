@@ -1,0 +1,22 @@
+# Composer
+FROM composer:2.1.8 as composer
+
+# Build PHP FPM & NGINX
+FROM php:7.4.25-fpm-alpine3.13
+
+RUN apk update \
+    && apk add --no-cache nginx supervisor ca-certificates zlib-dev libzip-dev oniguruma-dev postgresql-dev \
+    && docker-php-ext-install mysqli pgsql pdo pdo_mysql pdo_pgsql zip bcmath mbstring \
+    && docker-php-ext-enable mysqli pgsql pdo pdo_mysql pdo_pgsql zip bcmath mbstring
+
+COPY --from=composer /usr/bin/composer /usr/bin/composer
+COPY ./docker/php.ini /usr/local/etc/php/php.ini
+COPY ./docker/fpm-pool.conf /usr/local/etc/php-fpm.d/fpm-pool.conf
+COPY ./docker/nginx.conf /etc/nginx/nginx.conf
+COPY ./docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+RUN rm -Rf /etc/nginx/conf.d/default.conf \
+    && composer --version
+
+EXPOSE 80
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

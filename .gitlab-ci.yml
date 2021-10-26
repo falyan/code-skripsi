@@ -1,0 +1,95 @@
+stages:
+  - build
+  - package
+  - deploy
+
+variables:
+  # CI VARIABLES
+  CI_REGISTRY_USER: hendrik.nurfuad
+  CI_REGISTRY_PASSWORD: 1RYdzv7i6xepZTjH1xHu
+  CI_REGISTRY: registry-iconx.air.id
+
+  # DATASOURCE LOKI
+  DATASOURCE_LOKI: http://10.14.204.239/log/loki/loki/api/v1/push
+
+  # IMAGE VARIABLES
+  DOCKER_IMAGE_APP: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+  DOCKER_IMAGE_PHPFPM: $CI_REGISTRY_IMAGE:7.4.25-fpm-alpine3.13
+
+Build Base:
+  stage: build
+  image: docker:20.10.5
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build --no-cache -t $DOCKER_IMAGE_PHPFPM -f Dockerfile-Build .
+    - docker push $DOCKER_IMAGE_PHPFPM
+  when: manual
+  tags:
+    - docker
+
+Package Container:
+  stage: package
+  image: docker:20.10.5-git
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - >
+      if [ "$CI_COMMIT_REF_NAME" == "development" ]; then
+        cp .env.development .env &&
+        docker build --no-cache -t $DOCKER_IMAGE_APP -f Dockerfile-App . &&
+        docker push $DOCKER_IMAGE_APP
+      elif [ "$CI_COMMIT_REF_NAME" == "staging" ]; then
+        cp .env.staging .env &&
+        docker build --no-cache -t $DOCKER_IMAGE_APP -f Dockerfile-App . &&
+        docker push $DOCKER_IMAGE_APP
+      else
+        cp .env.production .env &&
+        docker build --no-cache -t $DOCKER_IMAGE_APP -f Dockerfile-App . &&
+        docker push $DOCKER_IMAGE_APP
+      fi
+  tags:
+    - docker
+
+Deploy Development:
+  stage: deploy
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker stack deploy --orchestrator swarm -c docker-development.yml --with-registry-auth pln-marketplace
+  environment:
+    name: URL Development
+    url: https://api-central.air.id/plnmp-saruman-development/
+  only:
+    - development
+  tags:
+    - site-dd
+
+Deploy Staging:
+  stage: deploy
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker stack deploy --orchestrator swarm -c docker-staging.yml --with-registry-auth pln-marketplace
+  environment:
+    name: URL Staging
+    url: https://api-central.air.id/plnmp-saruman-staging/
+  only:
+    - staging
+  tags:
+    - site-dd
+
+Deploy Production:
+  stage: deploy
+  image: docker:20.10.5
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker stack deploy --orchestrator swarm -c docker-production.yml --with-registry-auth pln-marketplace
+  environment:
+    name: URL Production
+    url: https://api-mkp.iconcash.id/v1/core/
+  only:
+    - tags
+  tags:
+    - docker
