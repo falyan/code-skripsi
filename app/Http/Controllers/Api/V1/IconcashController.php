@@ -21,6 +21,10 @@ class IconcashController extends Controller
             return $this->respondWithResult(false, 'pin tidak boleh kosong!', 400);
         }
 
+        if (strlen($pin) != 64 || preg_match("/[g-zG-Z]/i", $pin)) {
+            return $this->respondWithResult(false, 'pin yang diberikan tidak valid!', 400);
+        }
+
         if (!Auth::user()->phone) {
             return $this->respondWithResult(false, 'user harus mengisi nomor telepon terlebih dahulu!', 400);
         }
@@ -52,7 +56,7 @@ class IconcashController extends Controller
                 throw new Exception('nomor telepon user tidak valid!', 400);
             }
 
-            $response = IconcashManager::register($name, $user->phone, $this->hash_salt_sha256($pin, 'exception'), $this->corporate_id, $user->email); //TODO temporarily using self function for hashing pin, till api public to fe
+            $response = IconcashManager::register($name, $user->phone, $pin, $this->corporate_id, $user->email); //TODO temporarily using self function for hashing pin, till api public to fe
 
             IconcashCommands::register($user);
 
