@@ -2,16 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
+use Exception, Input, Response;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use SimpleXMLElement;
 
 class Controller extends BaseController
 {
+    protected $fractal, $statusCode = 200;
+
+    const CODE_WRONG_ARGS = 'WRONG_ARGS';
+    const CODE_NOT_FOUND = 'NOT_FOUND';
+    const CODE_INTERNAL_ERROR = 'INTERNAL_ERROR';
+    const CODE_UNAUTHORIZED = 'UNAUTHORIZED';
+    const CODE_FORBIDDEN = 'FORBIDDEN';
+    const CODE_INVALID_MIME_TYPE = 'INVALID_MIME_TYPE';
+
+    public function __construct(Manager $fractal)
+    {
+        $this->fractal = $fractal;
+    }
     /**
      * @OA\Info(
      *   title="API Saruman",
@@ -45,6 +61,8 @@ class Controller extends BaseController
      * ),
      */
     protected $error_codes = [400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 421, 422, 423, 424, 425, 426, 428, 429, 431, 451, 500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511];
+
+    protected $valid_sha256_char = ['a', 'b', 'c', 'd', 'e', 'f'];
 
     protected function userInfo()
     {
@@ -106,6 +124,82 @@ class Controller extends BaseController
         ], $statusCode);
     }
 
+    protected function setStatusCode($statusCode)
+    {
+        $this->statusCode = $statusCode;
+        return $this;
+    }
+
+    protected function respondWithCollection($collection, $callback, $key = null)
+    {
+        $resource = new Collection($collection, $callback, $key);
+
+        $rootScope = $this->fractal->createData($resource);
+
+        return $this->respondWithArray($rootScope->toArray());
+    }
+
+    protected function respondWithArray(array $array, array $headers = [])
+    {
+        $mimeTypeRaw = request()->server('HTTP_ACCEPT', '*/*');
+
+        // Jika kosong atau memiliki */* maka default ke JSON
+        if ($mimeTypeRaw === '*/*') {
+            $mimeType = 'application/json';
+        } else {
+             // You will probably want to do something intelligent with charset if provided.
+            // This chapter just assumes UTF8 everything everywhere.
+            $mimeParts = (array) preg_split( "/(,|;)/", $mimeTypeRaw );
+            $mimeType = strtolower(trim($mimeParts[0]));
+        }
+
+        switch ($mimeType) {
+            case 'application/json':
+                $content = json_encode($array);
+                break;
+
+            case 'application/xml':
+                $xml = new SimpleXMLElement('<response/>');
+                $this->arrayToXml($array, $xml);
+                $content = $xml->asXML();
+                break;
+            default:
+                $content = json_encode([
+                    'error' => [
+                        'code' => static::CODE_INVALID_MIME_TYPE,
+                        'http_code' => 415,
+                        'message' => sprintf('Content of type %s is not supported.', $mimeType),
+                    ]
+                ]);
+                $mimeType = 'application/json';
+        }
+
+        $response = response()->make($content, $this->statusCode, $headers);
+        $response->header('Content-Type', $mimeType);
+
+        return $response;
+    }
+
+    /**
+     * Convert array ke XML
+     * @param array $array
+     * @param SimpleXMLElement $xml
+     */
+    protected function arrayToXml($array, &$xml){
+        foreach ($array as $key => $value) {
+            if(is_array($value)){
+                if(is_int($key)){
+                    $key = "item";
+                }
+                $label = $xml->addChild($key);
+                $this->arrayToXml($value, $label);
+            }
+            else {
+                $xml->addChild($key, $value);
+            }
+        }
+    }
+
     protected function respondValidationError($data = [], $message = 'Validation Error!', $headers = [])
     {
         $result = [
@@ -134,7 +228,7 @@ class Controller extends BaseController
 
         $data = [
             'success' => false, 
-            'status_code' => $e->getCode(), 
+            'status_code' => in_array($e->getCode(), $this->error_codes) ? $e->getCode() : 404,
             'message' => $message
         ];
 
