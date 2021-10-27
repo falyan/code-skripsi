@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Resources\Etalase\EtalaseCollection;
+use App\Http\Services\Manager\IconcashManager;
 use App\Http\Services\Manager\RajaOngkirManager;
 use App\Http\Services\Service;
 use App\Http\Services\Transaction\TransactionCommands;
@@ -26,5 +27,6 @@ class AppServiceProvider extends ServiceProvider
         RajaOngkirManager::init();
         TransactionCommands::init();
         Service::init();
+        IconcashManager::init();
     }
 }

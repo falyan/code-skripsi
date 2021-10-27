@@ -41,6 +41,11 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         return [];
     }
 
+    public function iconcash()
+    {
+        return $this->hasOne(IconcashCredential::class, 'customer_id');
+    }
+
     public function merchant()
     {
         return $this->belongsTo(Merchant::class);
