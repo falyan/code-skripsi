@@ -154,10 +154,14 @@ class RajaOngkirManager
 
     $url = sprintf('%s/%s', static::$apiendpoint, 'api/waybill');
     
-    $order = Order::where('trx_no', $trx_no)->first();
+    $order = Order::with(['delivery'])->where('trx_no', $trx_no)->first();
+    if (!$order) {
+      throw new Exception("Nomor invoice tidak ditemukan", 404);
+    }
+    
     $body = [
       'waybill' => $order->delivery->awb_number,
-      'courier' => $order->delivery_method,
+      'courier' => $order->delivery->delivery_method,
     ];
     
     $response = static::$curl->request('POST', $url, [

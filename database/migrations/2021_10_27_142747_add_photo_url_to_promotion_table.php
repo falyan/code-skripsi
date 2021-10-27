@@ -14,6 +14,7 @@ class AddPhotoUrlToPtomotionTable extends Migration
     public function up()
     {
         Schema::table('ptomotion', function (Blueprint $table) {
+            $table->text('description')->nullable();
             $table->string('photo_url')->nullable();
             $table->smallInteger('status')->nullable();
         });
@@ -27,6 +28,7 @@ class AddPhotoUrlToPtomotionTable extends Migration
     public function down()
     {
         Schema::table('ptomotion', function (Blueprint $table) {
+            $table->dropColumn('description');
             $table->dropColumn('photo_url');
             $table->dropColumn('status');
         });
