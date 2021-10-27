@@ -31,4 +31,9 @@ class IconcashCredential extends Model
     {
         return $this->belongsTo(Customer::class);
     }
+
+    public function inquiry()
+    {
+        return $this->hasMany(IconcashInquiry::class);
+    }
 }

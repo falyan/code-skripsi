@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Services\Iconcash\IconcashCommands;
 use App\Http\Services\Manager\IconcashManager;
+use App\Models\IconcashInquiry;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class IconcashController extends Controller
 {
@@ -174,6 +176,41 @@ class IconcashController extends Controller
                     'balance'                   => $item->balance
                 ];
             });
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function withdrawalInquiry()
+    {
+        if (!$bank_account_name = request()->get('bank_account_name')) {
+            return $this->respondWithResult(false, 'field bank_account_name kosong', 400);
+        }
+        if (!$bank_account_no = request()->get('bank_account_no')) {
+            return $this->respondWithResult(false, 'field bank_account_no kosong', 400);
+        }
+        if (!$bank_id = request()->get('bank_id')) {
+            return $this->respondWithResult(false, 'field bank_id kosong', 400);
+        }
+        if (!$nominal = request()->get('nominal')) {
+            return $this->respondWithResult(false, 'field nominal kosong', 400);
+        }
+        if (!$source_account_id = request()->get('source_account_id')) {
+            return $this->respondWithResult(false, 'field source_account_id kosong', 400);
+        }
+
+        try {
+            $iconcash = Auth::user()->iconcash;
+            
+            if (!isset($iconcash->token)) {
+                return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi iconcash / token expired'], 200);
+            }
+
+            $response = IconcashInquiry::createWithdrawalInquiry($iconcash, $bank_account_name, $bank_account_no, $bank_id, $nominal, $source_account_id);
+
+            return $this->respondWithData([
+                "data" => $response
+            ], 'Proses Inquiry Berhasil!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

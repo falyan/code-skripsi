@@ -187,6 +187,35 @@ class IconcashManager
       return data_get($response, 'data');
   }
 
+  public static function withdrawalInquiry($token, $bankAccountName, $bankAccountNo, $bankId, $nominal, $sourceAccountId)
+  {
+    $param = self::setParamAPI([]);
+
+      $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal/inquiry' . $param);
+
+      $response = self::$curl->request('POST', $url, [
+          'headers' => ['Authorization' => $token],
+          'http_errors' => false,
+          'json' => [
+            'bankAccountName' => $bankAccountName,
+            'bankAccountNo' => $bankAccountNo,
+            'bankId' => $bankId,
+            'nominal' => $nominal,
+            'sourceAccountId' => $sourceAccountId
+          ]
+      ]);
+
+      $response = json_decode($response->getBody());
+
+      throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+      if ($response->success != true) {
+          throw new Exception($response->message, $response->code);
+      }
+
+      return data_get($response, 'data');
+  }
+
   static function setParamAPI($data = [])
   {
     $param = [];
