@@ -232,6 +232,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->post('auth/login', 'IconcashController@login');
             $router->get('auth/logout', 'IconcashController@logout');
             $router->get('query/balance/customer', 'IconcashController@getCustomerAllBalance');
+            $router->post('command/withdrawal/inquiry', 'IconcashController@withdrawalInquiry');
         });
     });
 });
