@@ -90,7 +90,7 @@ class IconcashController extends Controller
                 "success"   => true,
                 "phone"     => $response->phoneNumber,
                 "status"    => $response->status
-            ], 200);
+            ], 'Request OTP Berhasil Dikirim!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -130,7 +130,7 @@ class IconcashController extends Controller
                 "iconcash_username"      => $response->username,
                 "iconcash_customer_id"   => $response->customerId,
                 "iconcash_customer_name" => $response->customerName
-            ], 200);
+            ], 'Berhasil login!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -149,6 +149,31 @@ class IconcashController extends Controller
             IconcashCommands::logout(Auth::user());
 
             return $this->respondWithResult(true, $response->data);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getCustomerAllBalance()
+    {
+        try {
+            $iconcash = Auth::user()->iconcash;
+
+            if (!isset($iconcash->token)) {
+                return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi iconcash / token expired'], 200);
+            }
+
+            $response = IconcashManager::getCustomerAllBalance($iconcash->token);
+
+            return $this->respondWithCollection($response, function ($item) {
+                return [
+                    'id'                        => $item->id,
+                    'name'                      => $item->name,
+                    'account_type'              => $item->accountType,
+                    'account_type_alias_name'   => $item->acountTypeAliasName,
+                    'balance'                   => $item->balance
+                ];
+            });
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

@@ -165,6 +165,28 @@ class IconcashManager
       return $response;
   }
 
+  public static function getCustomerAllBalance($token = "")
+  {
+    $param = self::setParamAPI([]);
+
+      $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/balance/customer' . $param);
+
+      $response = self::$curl->request('GET', $url, [
+          'headers' => ['Authorization' => $token],
+          'http_errors' => false,
+      ]);
+
+      $response = json_decode($response->getBody());
+      
+      throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+      if ($response->success != true) {
+          throw new Exception($response->message, $response->code);
+      }
+
+      return data_get($response, 'data');
+  }
+
   static function setParamAPI($data = [])
   {
     $param = [];
