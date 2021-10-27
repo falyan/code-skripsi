@@ -16,8 +16,7 @@
         "netflie/monolog-stackdriver-handler": "^0.0.1",
         "phpseclib/phpseclib": "^3.0",
         "tymon/jwt-auth": "^1.0",
-        "zircote/swagger-php": "3.*",
-        "anik/elastic-apm-php": "^1.0"
+        "zircote/swagger-php": "3.*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
