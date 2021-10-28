@@ -231,6 +231,31 @@ class IconcashManager
       return data_get($response, 'data');
   }
 
+  public static function withdrawal($token, $pin, $orderId)
+  {
+    $param = self::setParamAPI([]);
+
+      $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal' . $param);
+
+      $response = self::$curl->request('POST', $url, [
+          'headers' => ['Authorization' => $token, 'Credentials' => $pin],
+          'http_errors' => false,
+          'json' => [
+            'orderId' => $orderId
+          ]
+      ]);
+
+      $response = json_decode($response->getBody());
+      
+      throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+      if ($response->success != true) {
+          throw new Exception($response->message, $response->code);
+      }
+
+      return data_get($response, 'data');
+  }
+
   /* Topup Services */
 
   public static function topupInquiry($phone, $account_type_id, $amount, $client_ref, $corporate_id = 10)
