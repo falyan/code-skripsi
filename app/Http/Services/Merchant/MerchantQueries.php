@@ -84,7 +84,7 @@ class MerchantQueries extends Service
     {
         return OrderProgress::with(['order' => function ($orders_query) use ($merchant_id) {
             $orders_query->where('merchant_id', $merchant_id);
-        }])->where('status_code', $status_code)->get();
+        }])->where('status', 1)->where('status_code', $status_code)->get();
     }
 
     static function format_number($number)
