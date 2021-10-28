@@ -22,8 +22,8 @@ class MerchantQueries extends Service
             $merchant = Merchant::with(['operationals', 'district', 'city', 'province', 'expedition'])->find($merchant_id);
             $orders = [];
 
-            $orders['success'] = static::getTotalTrx($merchant_id, 88)->toArray();
-            $orders['canceled'] = static::getTotalTrx($merchant_id, 99)->toArray();
+            $orders['success'] = static::getTotalTrx($merchant_id, 88);
+            $orders['canceled'] = static::getTotalTrx($merchant_id, 99);
 
             return [
                 'data' => [
@@ -82,9 +82,14 @@ class MerchantQueries extends Service
 
     public static function getTotalTrx($merchant_id, $status_code)
     {
-        return OrderProgress::with(['order' => function ($orders_query) use ($merchant_id) {
-            $orders_query->where('merchant_id', $merchant_id);
-        }])->where('status', 1)->where('status_code', $status_code)->get();
+        $data = Order::withCount(['progress' => function ($progress) use ($status_code){
+            $progress->where('status', 1)->where('status_code', $status_code);
+        }])->where('merchant_id', $merchant_id)->get();
+
+        $data = $data->toArray();
+        return array_filter($data, function ($order){
+           return $order['progress_count'] != 0;
+        });
     }
 
     static function format_number($number)
