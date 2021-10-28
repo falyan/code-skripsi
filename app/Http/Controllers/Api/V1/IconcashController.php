@@ -209,8 +209,57 @@ class IconcashController extends Controller
             $response = IconcashInquiry::createWithdrawalInquiry($iconcash, $bank_account_name, $bank_account_no, $bank_id, $nominal, $source_account_id);
 
             return $this->respondWithData([
-                "data" => $response
+                'order_id'              => $response->orderId,
+                'invoice_id'            => $response->invoiceId,
+                'source_account_id'     => $response->sourceAccountId,
+                'source_account_name'   => $response->sourceAccountName,
+                'nominal'               => $response->nominal,
+                'fee'                   => $response->fee,
+                'total'                 => $response->total,
+                'bank_id'               => $response->bankId,
+                'bank_code'             => $response->bankCode,
+                'bank_name'             => $response->bankName,
+                'bank_account_no'       => $response->bankAccountNo,
+                'bank_account_name'     => $response->bankAccountName
             ], 'Proses Inquiry Berhasil!');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function withdrawal()
+    {
+        if (!$pin = request()->get('pin')) {
+            return $this->respondWithResult(false, 'field PIN kosong');
+        }
+
+        if (!$order_id = request()->get('order_id')) {
+            return $this->respondWithResult(false, 'field order_id kosong');
+        }
+
+        try {
+            $iconcash = Auth::user()->iconcash;
+
+            if (!isset($iconcash->token)) {
+                return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
+            }
+
+            $response = IconcashManager::withdrawal($iconcash->token, $pin, $order_id);
+
+            return $this->respondWithData([
+                'order_id'              => $response->orderId,
+                'invoice_id'            => $response->invoiceId,
+                'source_account_id'     => $response->sourceAccountId,
+                'source_account_name'   => $response->sourceAccountName,
+                'nominal'               => $response->nominal,
+                'fee'                   => $response->fee,
+                'total'                 => $response->total,
+                'bank_id'               => $response->bankId,
+                'bank_code'             => $response->bankCode,
+                'bank_name'             => $response->bankName,
+                'bank_account_no'       => $response->bankAccountNo,
+                'bank_account_name'     => $response->bankAccountName
+            ], 'Withdrawal Berhasil!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

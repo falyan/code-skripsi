@@ -233,6 +233,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->get('auth/logout', 'IconcashController@logout');
             $router->get('query/balance/customer', 'IconcashController@getCustomerAllBalance');
             $router->post('command/withdrawal/inquiry', 'IconcashController@withdrawalInquiry');
+            $router->post('command/withdrawal', 'IconcashController@withdrawal');
             
             $router->group(['prefix' => 'topup'], static function () use ($router) {
                 $router->post('command/topup-inquiry', 'IconcashController@topupInquiry');
