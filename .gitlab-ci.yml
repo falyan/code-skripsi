@@ -90,6 +90,6 @@ Deploy Production:
     name: URL Production
     url: https://api-mkp.iconcash.id/v1/core/
   only:
-    - tags
+    - production
   tags:
     - docker
