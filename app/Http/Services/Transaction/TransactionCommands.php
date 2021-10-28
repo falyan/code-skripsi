@@ -47,7 +47,12 @@ class TransactionCommands extends Service
     {
         DB::beginTransaction();
         try {
-            $no_reference = Uuid::uuid4();
+            $no_reference = (integer) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
+
+            while (static::checkReferenceExist($no_reference) == false){
+                $no_reference = (integer) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
+            }
+
             $timestamp = Carbon::now('Asia/Jakarta')->toIso8601String();
             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDay())->timestamp);
@@ -263,5 +268,12 @@ class TransactionCommands extends Service
             return sprintf("%s%s", $prefix, str_pad($input, $pad_len, "0", STR_PAD_LEFT));
 
         return str_pad($input, $pad_len, "0", STR_PAD_LEFT);
+    }
+
+    static function checkReferenceExist($no_reference){
+        if (OrderPayment::where('no_reference', $no_reference)->count() > 0){
+            return false;
+        }
+        return true;
     }
 };
