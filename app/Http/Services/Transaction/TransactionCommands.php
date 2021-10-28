@@ -190,6 +190,9 @@ class TransactionCommands extends Service
             }
 
             $response->response_details[0]->amount = $total_price;
+            $response->response_details[0]->customer_id = (integer) $response->response_details[0]->customer_id;
+            $response->response_details[0]->partner_reference = (integer) $response->response_details[0]->partner_reference;
+
             return [
                 'success' => true,
                 'message' => 'Berhasil create order',
