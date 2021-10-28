@@ -80,6 +80,11 @@ class Customer extends Model
     /**
      * @var array Relations
      */
+    public function iconcash()
+    {
+        return $this->hasOne(IconcashCredential::class);
+    }
+
     public function merchant()
     {
         return $this->belongsTo(Merchant::class);

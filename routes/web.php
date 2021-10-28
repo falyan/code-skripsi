@@ -6,6 +6,7 @@ use App\Models\Coba;
 use App\Models\Customer;
 use App\Models\Order;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 /*
@@ -223,4 +224,15 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->get('/list', 'MerchantController@requestMerchantList');
     });
 
+    $router->group(['prefix' => 'iconcash'], static function () use ($router) {
+        $router->group(['middleware' => 'auth'], static function () use ($router) {
+            $router->post('command/register_customer', 'IconcashController@activation');
+            $router->get('command/otp', 'IconcashController@requestOTP');
+            $router->post('query/otp/validate', 'IconcashController@validateOTP');
+            $router->post('auth/login', 'IconcashController@login');
+            $router->get('auth/logout', 'IconcashController@logout');
+            $router->get('query/balance/customer', 'IconcashController@getCustomerAllBalance');
+            $router->post('command/withdrawal/inquiry', 'IconcashController@withdrawalInquiry');
+        });
+    });
 });
