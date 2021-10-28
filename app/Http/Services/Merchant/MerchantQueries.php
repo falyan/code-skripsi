@@ -54,8 +54,8 @@ class MerchantQueries extends Service
             $merged_data = array_merge($mc, ['city_name' => $cityname['name']]);
             $total_product = $merchant->products()->count();
 
-            $total_trx = static::getTotalTrx($merchant_id, 88)->count();
-
+            $total_trx = count(static::getTotalTrx($merchant_id, 88));
+            
             return [
                 'merchant' => $merged_data,
                 'meta_data' => [
