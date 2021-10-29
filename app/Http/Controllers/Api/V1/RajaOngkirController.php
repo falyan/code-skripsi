@@ -180,10 +180,9 @@ class RajaOngkirController extends Controller
 
     public function trackOrder()
     {
-        $user_id = Auth::id();
         try {
             $trx_no = request()->input('trx_no');
-            return response()->json(['data' => $this->rajaongkirManager->trackOrder($trx_no, $user_id)]);
+            return response()->json(['data' => $this->rajaongkirManager->trackOrder($trx_no)]);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
