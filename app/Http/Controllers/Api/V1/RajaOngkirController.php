@@ -10,6 +10,7 @@ use App\Models\District;
 use App\Models\MasterData;
 use App\Models\Province;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -179,9 +180,10 @@ class RajaOngkirController extends Controller
 
     public function trackOrder()
     {
+        $user_id = Auth::id();
         try {
             $trx_no = request()->input('trx_no');
-            return response()->json(['data' => $this->rajaongkirManager->trackOrder($trx_no)]);
+            return response()->json(['data' => $this->rajaongkirManager->trackOrder($trx_no, $user_id)]);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

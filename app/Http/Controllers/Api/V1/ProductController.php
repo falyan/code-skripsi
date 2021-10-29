@@ -93,7 +93,7 @@ class ProductController extends Controller
     }
 
     //Get Semua Produk
-    public function getAllProduct($request)
+    public function getAllProduct(Request $request)
     {
         try {
             $limit = $request->limit ?? 10;
@@ -169,7 +169,7 @@ class ProductController extends Controller
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
-            
+
             return $this->productQueries->searchProductByName($request->keyword, $limit, $filter, $sorting);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
