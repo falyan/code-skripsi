@@ -3,10 +3,12 @@
 namespace App\Http\Services\Product;
 
 use App\Http\Services\Service;
+use App\Models\MasterData;
 use App\Models\Merchant;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
 
 class ProductQueries extends Service
 {
@@ -159,17 +161,40 @@ class ProductQueries extends Service
 
     public function getProductByCategory($category_id, $filter = [], $sortby = null)
     {
-        $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->with(['product_stock', 'product_photo'])->where('category_id', $category_id);
+        $categories = MasterData::with(['child' => function($j) {
+            $j->with(['child']);
+        }])->where('type', 'product_category')->where('id', $category_id)->get();
 
-        $filtered_data = $this->filter($products, $filter);
+        $cat_child = [];
+        foreach ($categories as $category){
+            foreach ($category->child as $child){
+                if (!$child->child->isEmpty()){
+                    array_push($cat_child, $child->child);
+                }
+            }
+        }
+
+        $collection_product = [];
+
+        foreach ($cat_child as $cat){
+            foreach ($cat as $obj){
+                $product = new Product();
+                $products = $product->withCount(['order_details' => function ($details) {
+                    $details->whereHas('order', function ($order) {
+                        $order->whereHas('progress_done');
+                    });
+                }])->with(['product_stock', 'product_photo'])->where('category_id', $obj->id)->get();
+
+                array_push($collection_product, $products);
+            }
+        }
+
+        $collection = new Collection($collection_product);
+
+        $filtered_data = $this->filter($collection->collapse(), $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
-        $immutable_data = $sorted_data->get()->map(function ($product) {
+        $immutable_data = $sorted_data->map(function ($product) {
             $product->avg_rating =  null;
             $product->reviews = null;
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
