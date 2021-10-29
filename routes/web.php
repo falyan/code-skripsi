@@ -73,7 +73,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 });
 
                 $router->group(['prefix' => 'product'], static function () use ($router) {
-                    $router->get('all', 'ProductController@getAllProduct');
                     $router->get('merchant', 'ProductController@getProductByMerchantSeller');
                     $router->get('detail/{id}', 'ProductController@getProductById');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
@@ -120,6 +119,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'product'], static function () use ($router) {
+                $router->get('all', 'ProductController@getAllProduct');
                 $router->get('recommend', 'ProductController@getRecommendProduct');
                 $router->get('special', 'ProductController@getSpecialProduct');
                 $router->get('search', 'ProductController@searchProductByName');
@@ -234,7 +234,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->post('command/withdrawal/inquiry', 'IconcashController@withdrawalInquiry');
             $router->post('command/withdrawal', 'IconcashController@withdrawal');
             $router->get('hash-salt/generator/{pin}', 'IconcashController@hash_salt_sha256');
-            
+
             $router->group(['prefix' => 'topup'], static function () use ($router) {
                 $router->post('command/topup-inquiry', 'IconcashController@topupInquiry');
                 $router->post('command/topup-confirm', 'IconcashController@topupConfirm');
