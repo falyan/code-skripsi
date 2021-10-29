@@ -137,7 +137,7 @@ class TransactionCommands extends Service
                     $type = 2;
                     $title = 'Transaksi berhasil dibuat';
                     $message = 'Transaksimu berhasil dibuat, silahkan melanjutkan pembayaran.';
-                    $url_path = 'v1/buyer/query/transaction/1/detail/' . $order->id;
+                    $url_path = 'v1/buyer/query/transaction/'. $customer_id .'/detail/' . $order->id;
 
                     $notificationCommand = new NotificationCommands();
                     $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
