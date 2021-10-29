@@ -47,7 +47,7 @@ class RajaOngkirManager
       'body' => $param,
       'response' => $response
     ]);
-    
+
     $response  = json_decode($response->getBody());
 
     return data_get($response, 'rajaongkir.results');
@@ -121,7 +121,7 @@ class RajaOngkirManager
       'destination' => data_get($request, 'destination_district_id'),
       'destinationType' => 'subdistrict',
       'weight' => (int) data_get($request, 'weight'),
-      'courier' => strtolower(data_get($request, 'courier'))
+      'courier' => static::trimCourier(strtolower(data_get($request, 'courier')))
     ];
 
     $response = static::$curl->request('POST', $url, [
@@ -153,17 +153,17 @@ class RajaOngkirManager
     $param = static::setParamAPI([]);
 
     $url = sprintf('%s/%s', static::$apiendpoint, 'api/waybill');
-    
+
     $order = Order::with(['delivery'])->where('trx_no', $trx_no)->first();
     if (!$order) {
       throw new Exception("Nomor invoice tidak ditemukan", 404);
     }
-    
+
     $body = [
       'waybill' => $order->delivery->awb_number,
       'courier' => $order->delivery->delivery_method,
     ];
-    
+
     $response = static::$curl->request('POST', $url, [
       'headers' => static::$header,
       'http_errors' => false,
@@ -207,5 +207,13 @@ class RajaOngkirManager
     }
 
     return implode('', $param);
+  }
+
+  static function trimCourier($param_courier)
+  {
+    $courier = str_replace('merchant_courier', '', $param_courier);
+    $courier = trim($courier, ':');
+    
+    return $courier;
   }
 }
