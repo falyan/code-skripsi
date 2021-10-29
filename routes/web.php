@@ -242,3 +242,20 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         });
     });
 });
+
+$router->get('/test', function () {
+    $data = \App\Models\Faq::all();
+    $total = count($data);
+    $query = "INSERT INTO public.faq (id, question, answer, publish_for, created_at, updated_at, like_counter, dislike_counter) VALUES ";
+    for ($i=0; $i < $total; $i++) { 
+        if ($i == ($total-1)) {
+            $value = "(" . $data[$i]->id . ", '" . $data[$i]->question . "', '" . $data[$i]->answer . "', '" . $data[$i]->created_at . "', '" . $data[$i]->updated_at . "', '" . $data[$i]->like_counter . "', '" . $data[$i]->dislike_counter . "');" ;
+        }else{
+            $value = "(" . $data[$i]->id . ", '" . $data[$i]->question . "', '" . $data[$i]->answer . "', '" . $data[$i]->created_at . "', '" . $data[$i]->updated_at . "', '" . $data[$i]->like_counter . "', '" . $data[$i]->dislike_counter . "')," ;
+        }
+
+        $query = $query . $value;
+    }
+
+    return $query;
+});
