@@ -75,4 +75,10 @@ class TransactionQueries extends Service
             ->orderBy('created_at', 'desc')->paginate(10);
         return ($data);
     }
+
+    public function getStatusOrder($id)
+    {
+        $data = Order::with(['progress_active'])->find($id);
+        return $data->progress_active;
+    }
 }

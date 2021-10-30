@@ -219,7 +219,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
     $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
         $router->post('/{id}/request-cancel', 'TransactionController@requestCancelOrder');
-        $router->post('/{id}/confirm', 'TransactionController@confirmOrder');
+        $router->post('/{id}/finish', 'TransactionController@finishOrder');
+        $router->post('/{id}/cancel', 'TransactionController@cancelOrder');
     });
 
     $router->group(['prefix' => 'merchant'], static function () use ($router) {
@@ -244,21 +245,4 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
         });
     });
-});
-
-$router->get('/test', function () {
-    $data = \App\Models\Faq::all();
-    $total = count($data);
-    $query = "INSERT INTO public.faq (id, question, answer, publish_for, created_at, updated_at, like_counter, dislike_counter) VALUES ";
-    for ($i=0; $i < $total; $i++) { 
-        if ($i == ($total-1)) {
-            $value = "(" . $data[$i]->id . ", '" . $data[$i]->question . "', '" . $data[$i]->answer . "', '" . $data[$i]->created_at . "', '" . $data[$i]->updated_at . "', '" . $data[$i]->like_counter . "', '" . $data[$i]->dislike_counter . "');" ;
-        }else{
-            $value = "(" . $data[$i]->id . ", '" . $data[$i]->question . "', '" . $data[$i]->answer . "', '" . $data[$i]->created_at . "', '" . $data[$i]->updated_at . "', '" . $data[$i]->like_counter . "', '" . $data[$i]->dislike_counter . "')," ;
-        }
-
-        $query = $query . $value;
-    }
-
-    return $query;
 });
