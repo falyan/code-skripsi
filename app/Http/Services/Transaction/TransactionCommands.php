@@ -47,7 +47,12 @@ class TransactionCommands extends Service
     {
         DB::beginTransaction();
         try {
-            $no_reference = Uuid::uuid4();
+            $no_reference = (integer) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
+
+            while (static::checkReferenceExist($no_reference) == false){
+                $no_reference = (integer) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
+            }
+
             $timestamp = Carbon::now('Asia/Jakarta')->toIso8601String();
             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDay())->timestamp);
@@ -132,7 +137,7 @@ class TransactionCommands extends Service
                     $type = 2;
                     $title = 'Transaksi berhasil dibuat';
                     $message = 'Transaksimu berhasil dibuat, silahkan melanjutkan pembayaran.';
-                    $url_path = 'v1/buyer/query/transaction/1/detail/' . $order->id;
+                    $url_path = 'v1/buyer/query/transaction/'. $customer_id .'/detail/' . $order->id;
 
                     $notificationCommand = new NotificationCommands();
                     $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
@@ -185,6 +190,9 @@ class TransactionCommands extends Service
             }
 
             $response->response_details[0]->amount = $total_price;
+            $response->response_details[0]->customer_id = (integer) $response->response_details[0]->customer_id;
+            $response->response_details[0]->partner_reference = (integer) $response->response_details[0]->partner_reference;
+
             return [
                 'success' => true,
                 'message' => 'Berhasil create order',
@@ -263,5 +271,12 @@ class TransactionCommands extends Service
             return sprintf("%s%s", $prefix, str_pad($input, $pad_len, "0", STR_PAD_LEFT));
 
         return str_pad($input, $pad_len, "0", STR_PAD_LEFT);
+    }
+
+    static function checkReferenceExist($no_reference){
+        if (OrderPayment::where('no_reference', $no_reference)->count() > 0){
+            return false;
+        }
+        return true;
     }
 };

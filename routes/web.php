@@ -2,9 +2,11 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
+use App\Http\Services\Manager\RajaOngkirManager;
 use App\Models\Coba;
 use App\Models\Customer;
 use App\Models\Order;
+use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -73,7 +75,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 });
 
                 $router->group(['prefix' => 'product'], static function () use ($router) {
-                    $router->get('all', 'ProductController@getAllProduct');
                     $router->get('merchant', 'ProductController@getProductByMerchantSeller');
                     $router->get('detail/{id}', 'ProductController@getProductById');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
@@ -121,6 +122,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'product'], static function () use ($router) {
+                $router->get('all', 'ProductController@getAllProduct');
                 $router->get('recommend', 'ProductController@getRecommendProduct');
                 $router->get('special', 'ProductController@getSpecialProduct');
                 $router->get('search', 'ProductController@searchProductByName');
@@ -217,7 +219,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
     $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
         $router->post('/{id}/request-cancel', 'TransactionController@requestCancelOrder');
-        $router->post('/{id}/confirm', 'TransactionController@confirmOrder');
+        $router->post('/{id}/finish', 'TransactionController@finishOrder');
+        $router->post('/{id}/cancel', 'TransactionController@cancelOrder');
     });
 
     $router->group(['prefix' => 'merchant'], static function () use ($router) {
@@ -233,6 +236,13 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->get('auth/logout', 'IconcashController@logout');
             $router->get('query/balance/customer', 'IconcashController@getCustomerAllBalance');
             $router->post('command/withdrawal/inquiry', 'IconcashController@withdrawalInquiry');
+            $router->post('command/withdrawal', 'IconcashController@withdrawal');
+            $router->get('hash-salt/generator/{pin}', 'IconcashController@hash_salt_sha256');
+
+            $router->group(['prefix' => 'topup'], static function () use ($router) {
+                $router->post('command/topup-inquiry', 'IconcashController@topupInquiry');
+                $router->post('command/topup-confirm', 'IconcashController@topupConfirm');
+            });
         });
     });
 });

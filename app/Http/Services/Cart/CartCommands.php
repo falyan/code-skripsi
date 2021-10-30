@@ -88,7 +88,7 @@ class CartCommands extends Service
     public static function deleteProduct($cart_detail_id, $cart_id)
     {
         try {
-            $data = CartDetail::where([['id', $cart_detail_id], ['cart_id', $cart_id]])->firstOrFail();
+            $data = CartDetail::find($cart_detail_id);
 
             if ($data) {
                 $data->delete();

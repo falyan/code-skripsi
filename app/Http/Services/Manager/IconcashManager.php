@@ -15,13 +15,22 @@ class IconcashManager
   static $appkey;
   static $curl;
   static $header;
+  static $headerTopup;
   static $appId = 'PLNMOB';
+  static $topupClientId;
+  static $topupApiEndpoint;
+  static $topupSecretKey;
+  static $topupNote = 'Marketplace';
 
   static function init()
   {
-    self::$curl = new Client();
-    self::$apiendpoint = config('credentials.iconcash.endpoint');
-    self::$appkey = config('credentials.iconcash.api_key');
+    self::$curl         = new Client();
+    self::$apiendpoint  = config('credentials.iconcash.endpoint');
+    self::$appkey       = config('credentials.iconcash.api_key');
+    
+    self::$topupApiEndpoint = config('credentials.iconcash_topup.endpoint');
+    self::$topupClientId    = config('credentials.iconcash_topup.client_id');
+    self::$topupSecretKey   = config('credentials.iconcash_topup.secret_key');
 
     $timestamp = Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp;
 
@@ -30,6 +39,12 @@ class IconcashManager
       'appid'         => self::$appId,
       'timestamp'     => $timestamp,
       'token'         => hash_hmac('sha256', self::$appId . $timestamp, self::$appkey)
+    ];
+
+    self::$headerTopup = [
+      'clientId'  => self::$topupClientId,
+      'timestamp' => $timestamp,
+      'signature' => hash_hmac('sha256', self::$topupClientId . $timestamp, self::$topupSecretKey)
     ];
   }
 
@@ -207,6 +222,89 @@ class IconcashManager
 
       $response = json_decode($response->getBody());
 
+      throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+      if ($response->success != true) {
+          throw new Exception($response->message, $response->code);
+      }
+
+      return data_get($response, 'data');
+  }
+
+  public static function withdrawal($token, $pin, $orderId)
+  {
+    $param = self::setParamAPI([]);
+
+      $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal' . $param);
+
+      $response = self::$curl->request('POST', $url, [
+          'headers' => ['Authorization' => $token, 'Credentials' => $pin],
+          'http_errors' => false,
+          'json' => [
+            'orderId' => $orderId
+          ]
+      ]);
+
+      $response = json_decode($response->getBody());
+      
+      throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+      if ($response->success != true) {
+          throw new Exception($response->message, $response->code);
+      }
+
+      return data_get($response, 'data');
+  }
+
+  /* Topup Services */
+
+  public static function topupInquiry($phone, $account_type_id, $amount, $client_ref, $corporate_id = 10)
+  {
+    $param = self::setParamAPI([]);
+
+      $url = sprintf('%s/%s', self::$topupApiEndpoint, 'command/topup-inquiry' . $param);
+
+      $response = self::$curl->request('POST', $url, [
+          'headers' => self::$headerTopup,
+          'http_errors' => false,
+          'json' => [
+            'accountTypeId' => $account_type_id,
+            'amount'        => $amount,
+            'clientRef'     => $client_ref,
+            'corporateId'   => $corporate_id,
+            'phoneNumber'   => $phone
+          ]
+      ]);
+
+      $response = json_decode($response->getBody());
+      
+      throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+      if ($response->success != true) {
+          throw new Exception($response->message, $response->code);
+      }
+
+      return data_get($response, 'data');
+  }
+
+  public static function topupConfirm($order_id, $amount)
+  {
+    $param = self::setParamAPI([]);
+
+      $url = sprintf('%s/%s', self::$topupApiEndpoint, 'command/topup-confirm' . $param);
+
+      $response = self::$curl->request('POST', $url, [
+          'headers' => self::$headerTopup,
+          'http_errors' => false,
+          'json' => [
+            'amount'  => $amount,
+            'orderId' => $order_id,
+            'note'    => self::$topupNote
+          ]
+      ]);
+
+      $response = json_decode($response->getBody());
+      
       throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
       if ($response->success != true) {

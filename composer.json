@@ -7,11 +7,13 @@
     "require": {
         "php": "^7.3",
         "darkaonline/swagger-lume": "^8.0",
+        "doctrine/dbal": "^3.1",
         "firebase/php-jwt": "^5.4",
         "guzzlehttp/guzzle": "^7.3",
         "illuminate/mail": "^8.61",
         "laravel/lumen-framework": "^8.0",
         "laravelista/lumen-vendor-publish": "^8.0",
+        "league/commonmark": "1.6.6",
         "league/fractal": "^0.19.2",
         "netflie/monolog-stackdriver-handler": "^0.0.1",
         "phpseclib/phpseclib": "^3.0",

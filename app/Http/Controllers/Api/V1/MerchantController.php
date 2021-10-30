@@ -66,7 +66,7 @@ class MerchantController extends Controller
         $validator = Validator::make(request()->all(), [
             'list_expeditions' => 'required',
         ], [
-            'required' => ':attribute diperlukan.'
+            'required' => 'Minimal harus pilih 1 expedisi.'
         ]);
 
         if ($validator->fails()) {

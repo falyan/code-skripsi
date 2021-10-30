@@ -485,7 +485,7 @@ class TransactionController extends Controller
     {
         try {
             $notes = request()->input('notes');
-            return $this->transactionCommand->updateOrderStatus($order_id, '99', $notes);
+            return $this->transactionCommand->updateOrderStatus($order_id, '09', $notes);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -514,9 +514,59 @@ class TransactionController extends Controller
         try {
             $data = $this->transactionQueries->getDetailTransaction($id);
             if (!empty($data)) {
-                return $this->respondWithData($data, 'sukses get detail Invoice');;
+                return $this->respondWithData($data, 'sukses get detail Invoice');
             } else {
                 return $this->respondWithResult(false, 'ID transaksi salah', 400);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function finishOrder($id)
+    {
+        try {
+            $status_order = $this->transactionQueries->getStatusOrder($id);
+            if (in_array($status_order->status_code, ['03','08'])) {
+                $this->transactionCommand->updateOrderStatus($id, '88');
+
+                return $this->respondWithResult(true, 'Selamat! Pesanan anda telah selesai', 200);
+            }else {
+                return $this->respondWithResult(false, 'Pesanan anda belum dikirimkan oleh Penjual!', 400);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function cancelOrder($id, Request $request)
+    {
+        try {
+            $rules = [
+                'reason' => 'required',
+            ];
+
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => 'sertakan alasan pembatalan pesanan anda.',
+            ]);
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+            
+            $status_order = $this->transactionQueries->getStatusOrder($id);
+            if ($status_order->status_code == '00') {
+                $this->transactionCommand->updateOrderStatus($id, '99', $request->reason);
+
+                return $this->respondWithResult(true, 'Pesanan anda berhasil dibatalkan.', 200);
+            }else {
+                return $this->respondWithResult(false, 'Pesanan anda tidak dapat dibatalkan!', 400);
             }
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());

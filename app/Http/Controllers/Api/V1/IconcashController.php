@@ -209,11 +209,139 @@ class IconcashController extends Controller
             $response = IconcashInquiry::createWithdrawalInquiry($iconcash, $bank_account_name, $bank_account_no, $bank_id, $nominal, $source_account_id);
 
             return $this->respondWithData([
-                "data" => $response
+                'order_id'              => $response->orderId,
+                'invoice_id'            => $response->invoiceId,
+                'source_account_id'     => $response->sourceAccountId,
+                'source_account_name'   => $response->sourceAccountName,
+                'nominal'               => $response->nominal,
+                'fee'                   => $response->fee,
+                'total'                 => $response->total,
+                'bank_id'               => $response->bankId,
+                'bank_code'             => $response->bankCode,
+                'bank_name'             => $response->bankName,
+                'bank_account_no'       => $response->bankAccountNo,
+                'bank_account_name'     => $response->bankAccountName
             ], 'Proses Inquiry Berhasil!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
+    }
+
+    public function withdrawal()
+    {
+        if (!$pin = request()->get('pin')) {
+            return $this->respondWithResult(false, 'field PIN kosong');
+        }
+
+        if (!$order_id = request()->get('order_id')) {
+            return $this->respondWithResult(false, 'field order_id kosong');
+        }
+
+        try {
+            $iconcash = Auth::user()->iconcash;
+
+            if (!isset($iconcash->token)) {
+                return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
+            }
+
+            $response = IconcashManager::withdrawal($iconcash->token, $pin, $order_id);
+
+            return $this->respondWithData([
+                'order_id'              => $response->orderId,
+                'invoice_id'            => $response->invoiceId,
+                'source_account_id'     => $response->sourceAccountId,
+                'source_account_name'   => $response->sourceAccountName,
+                'nominal'               => $response->nominal,
+                'fee'                   => $response->fee,
+                'total'                 => $response->total,
+                'bank_id'               => $response->bankId,
+                'bank_code'             => $response->bankCode,
+                'bank_name'             => $response->bankName,
+                'bank_account_no'       => $response->bankAccountNo,
+                'bank_account_name'     => $response->bankAccountName
+            ], 'Withdrawal Berhasil!');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function topupInquiry()
+    {
+        if (!$account_type_id = request()->get('account_type_id')) {
+            return $this->respondWithResult(false, 'field account_type_id kosong', 400);
+        }
+
+        if (!$amount = request()->get('amount')) {
+            return $this->respondWithResult(false, 'field amount kosong', 400);
+        }
+
+        try {
+            $iconcash = Auth::user()->iconcash;
+
+            if (!isset($iconcash->token)) {
+                return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi iconcash / token expired'], 200);
+            }
+
+            $client_ref = $this->unique_code($iconcash->token);
+
+            $response = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $this->corporate_id);
+
+            return $this->respondWithData([
+                'order_id' => $response->orderId,
+                'account_id' => $response->accountId,
+                'phone_number' => $response->phoneNumber,
+                'account_name' => $response->accountName,
+                'corporate_name'    => $response->corporateName,
+                'amount'            => $response->amount,
+                'fee_topup'         => $response->feeTopup,
+                'fee_agent'         => $response->feeAgent,
+                'amount_fee'        => $response->amountFee,
+                'status'            => $response->status
+            ], 'Berhasil melakukan inquiry topup!');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function topupConfirm()
+    {
+        if (!$amount = request()->get('amount')) {
+            return $this->respondWithResult(false, 'field amount kosong', 400);
+        }
+
+        if (!$order_id = request()->get('order_id')) {
+            return $this->respondWithResult(false, 'field order_id kosong', 400);
+        }
+
+        try {
+            $iconcash = Auth::user()->iconcash;
+
+            if (!isset($iconcash->token)) {
+                return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi iconcash / token expired'], 200);
+            }
+
+            $response = IconcashManager::topupConfirm($order_id, $amount);
+
+            return $this->respondWithData([
+                'order_id' => $response->orderId,
+                'account_id' => $response->accountId,
+                'phone_number' => $response->phoneNumber,
+                'account_name' => $response->accountName,
+                'corporate_name'    => $response->corporateName,
+                'amount'            => $response->amount,
+                'fee_topup'         => $response->feeTopup,
+                'fee_agent'         => $response->feeAgent,
+                'amount_fee'        => $response->amountFee,
+                'status'            => $response->status
+            ], 'Berhasil Konfirmasi Topup!');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function unique_code($value)
+    {
+        return substr(base_convert(sha1(uniqid($value)), 16, 36), 0, 25);
     }
 
     public function hash_salt_sha256($pin = null, $return = "response")
