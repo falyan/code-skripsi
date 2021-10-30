@@ -7087,12 +7087,12 @@ INSERT INTO "public"."permission" VALUES (8, 'Role', 'delete-role', 'Delete Role
 -- End Insert Table Permission
 
 -- Begin Insert Table Role
-INSERT INTO "public"."role" (id, key_name, display_name, role_type, created_by, updated_by, created_at, updated_at, deleted_at) VALUES (1, 'globaladmin', 'Global Admin', 'internal', 'Manual Input', '', '2021-10-02 07:08:01', '2021-10-02 07:08:01', NULL),(2, 'admin-toko', 'Admin Toko', 'merchant', 'Manual Input', '', '2021-10-02 07:08:01', '2021-10-02 07:08:01', NULL);
+INSERT INTO "public"."role" (id, key_name, display_name, role_type, created_by, updated_by, created_at, updated_at, deleted_at) VALUES (1, 'globaladmin', 'Global Admin', 'internal', 'Manual Input', NULL, '2021-10-02 07:08:01', '2021-10-02 07:08:01', NULL),(2, 'admin-toko', 'Admin Toko', 'merchant', 'Manual Input', NULL, '2021-10-02 07:08:01', '2021-10-02 07:08:01', NULL);
 -- End Insert Table Role
 
 
 -- Begin Insert Table User BOT
-INSERT INTO "public"."user_bot" VALUES (1, 'Service Provider', 'serviceprovider', '$2y$10$Exjm/T5FQ/Jp8ABrxmTFxOEbDiH95F8K0Oii6SltMiL103vbhqBj.', 'serviceprovider@email.com', 1, NULL, 1, NULL, NULL, '2021-10-07 14:47:35', '2021-10-07 14:47:35', NULL, '');
+INSERT INTO "public"."user_bot" VALUES (1, 'Service Provider', 'serviceprovider', '$2y$10$Exjm/T5FQ/Jp8ABrxmTFxOEbDiH95F8K0Oii6SltMiL103vbhqBj.', 'serviceprovider@email.com', 1, NULL, 1, NULL, NULL, '2021-10-07 14:47:35', '2021-10-07 14:47:35', NULL, NULL);
 -- End Insert Table User BOT
 
 -- Begin Insert Table Service
