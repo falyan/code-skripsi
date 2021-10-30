@@ -18,7 +18,7 @@ class CreateProductsTable extends Migration
             $table->unsignedBigInteger('merchant_id');
             $table->string('name');
             $table->float('price');
-            $table->float('strike_price');
+            $table->float('strike_price')->nullable();
             $table->integer('minimum_purchase');
             $table->unsignedBigInteger('category_id')->nullable();
             $table->unsignedBigInteger('etalase_id')->nullable();
