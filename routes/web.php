@@ -2,9 +2,11 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
+use App\Http\Services\Manager\RajaOngkirManager;
 use App\Models\Coba;
 use App\Models\Customer;
 use App\Models\Order;
+use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -92,6 +94,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('/done', 'TransactionController@orderDone');
                     $router->get('/canceled', 'TransactionController@sellerTransactionCanceled');
                     $router->get('/search', 'TransactionController@sellerSearchTransaction');
+                    $router->get('/detail/{id}', 'TransactionController@detailTransaction');
                 });
 
                 $router->group(['prefix' => 'notification'], static function () use ($router) {

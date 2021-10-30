@@ -20,5 +20,8 @@ return [
     'endpoint'  => env('ICONCASH_TOPUP_CREDENTIAL_ENDPOINT'),
     'client_id' => env('ICONCASH_TOPUP_CREDENTIAL_CLIENT_ID'),
     'secret_key' => env('ICONCASH_TOPUP_CREDENTIAL_SECRET_KEY')
+  ],
+  'radagast' => [
+    'endpoint' => env('RADAGAST_NOTIFICATION_ENDPOINT')
   ]
 ];
