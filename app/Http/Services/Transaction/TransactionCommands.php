@@ -235,6 +235,7 @@ class TransactionCommands extends Service
         $new_order_progress->note = $note;
         $new_order_progress->status = 1;
         $new_order_progress->created_by = 'system';
+        $new_order_progress->updated_by = 'system';
 
         if (!$new_order_progress->save()) {
             $response['success'] = false;
