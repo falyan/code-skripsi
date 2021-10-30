@@ -246,20 +246,3 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         });
     });
 });
-
-$router->get('/test', function ($parent_id = 1) {
-    $data = \App\Models\MasterData::where('type', 'product_category')->orderBy('id', 'asc')->get();
-    $query = "INSERT INTO public.master_data (id,type,key,value_type,value,parent_id,reference_third_party_id,reference_third_party_token,photo_url,created_by,updated_by,created_at, updated_at, deleted_at) VALUES";
-    $total = count($data);
-    for ($i=0; $i < $total; $i++) { 
-        if ($i == ($total-1)) {
-            $value = "(" . $data[$i]->id . ", '" . $data[$i]->type . "', '" . $data[$i]->key . "', '" . $data[$i]->value_type . "', '" . $data[$i]->value . "', '" . $data[$i]->parent_id . "', '" . $data[$i]->reference_third_party_id . "', '" . $data[$i]->reference_third_party_token . "', '" . $data[$i]->photo_url . "', '" . $data[$i]->created_by . "', '" . $data[$i]->updated_by . "', '" . $data[$i]->created_at . "', '" . $data[$i]->updated_at . "', '" . $data[$i]->deleted_at . "');" ;
-        }else{
-            $value = "(" . $data[$i]->id . ", '" . $data[$i]->type . "', '" . $data[$i]->key . "', '" . $data[$i]->value_type . "', '" . $data[$i]->value . "', '" . $data[$i]->parent_id . "', '" . $data[$i]->reference_third_party_id . "', '" . $data[$i]->reference_third_party_token . "', '" . $data[$i]->photo_url . "', '" . $data[$i]->created_by . "', '" . $data[$i]->updated_by . "', '" . $data[$i]->created_at . "', '" . $data[$i]->updated_at . "', '" . $data[$i]->deleted_at . "')," ;
-        }
-
-        $query = $query . $value;
-    }
-
-    return $query;
-});
