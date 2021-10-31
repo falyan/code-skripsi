@@ -41,7 +41,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByMerchantIdSeller($merchant_id, $filter = [], $sortby = null)
+    public function getProductByMerchantIdSeller($merchant_id, $filter = [], $sortby = null, $current_page = 1, $limit)
     {
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
@@ -57,7 +57,7 @@ class ProductQueries extends Service
             return $product;
         });
 
-        $data = static::paginate($immutable_data->toArray());
+        $data = static::paginate($immutable_data->toArray(), $limit, $current_page);
 
         //        if ($data->isEmpty()){
         //            $response['success'] = false;
@@ -70,7 +70,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByEtalaseId($etalase_id, $filter = [], $sortby = null)
+    public function getProductByEtalaseId($etalase_id, $filter = [], $sortby = null, $current_page = 1, $limit = 10)
     {
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
@@ -86,7 +86,7 @@ class ProductQueries extends Service
             return $product;
         });
 
-        $data = static::paginate($immutable_data->toArray());
+        $data = static::paginate($immutable_data->toArray(), $limit, $current_page);
 
         //        if ($data->isEmpty()){
         //            $response['success'] = false;
@@ -99,7 +99,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function searchProductByName($keyword, $limit, $filter = [], $sortby = null)
+    public function searchProductByName($keyword, $limit, $filter = [], $sortby = null, $current_page = 1)
     {
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
@@ -118,14 +118,15 @@ class ProductQueries extends Service
             return $product;
         });
 
-        $data = static::paginate($immutable_data->toArray(), $limit);
+        $data = static::paginate($immutable_data->toArray(), $limit, $current_page);
 
         $response['success'] = true;
         $response['message'] = 'Produk berhasil didapatkan.';
         $response['data'] = $data;
         return $response;
     }
-    public function getProductByMerchantIdBuyer($merchant_id, $size, $filter = [], $sortby = null)
+
+    public function getProductByMerchantIdBuyer($merchant_id, $size, $filter = [], $sortby = null, $current_page)
     {
         $product = new Product();
 
@@ -151,7 +152,7 @@ class ProductQueries extends Service
             return $product;
         });
 
-        $data = static::paginate($immutable_data->toArray(), $size);
+        $data = static::paginate($immutable_data->toArray(), $size, $current_page);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
@@ -159,7 +160,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByCategory($category_id, $filter = [], $sortby = null)
+    public function getProductByCategory($category_id, $filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         $categories = MasterData::with(['child' => function($j) {
             $j->with(['child']);
@@ -201,7 +202,7 @@ class ProductQueries extends Service
             return $product;
         });
 
-        $data = static::paginate($immutable_data->toArray());
+        $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
 
         //        if ($data->isEmpty()){
         //            $response['success'] = false;
@@ -341,7 +342,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function searchProductBySeller($merchant_id, $keyword, $limit, $filter = [], $sortby = null)
+    public function searchProductBySeller($merchant_id, $keyword, $limit, $filter = [], $sortby = null, $page = 1)
     {
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
@@ -349,6 +350,9 @@ class ProductQueries extends Service
                 $order->whereHas('progress_done');
             });
         }])->with(['product_stock', 'product_photo'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']]);
+
+        $products = $this->filter($products, $filter);
+        $products = $this->sorting($products, $sortby);
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->avg_rating =  null;
@@ -358,7 +362,7 @@ class ProductQueries extends Service
             return $product;
         });
 
-        $data = static::paginate($immutable_data->toArray(), $limit);
+        $data = static::paginate($immutable_data->toArray(), $limit, $page);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
