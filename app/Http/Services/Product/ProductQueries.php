@@ -41,7 +41,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByMerchantIdSeller($merchant_id, $filter = [], $sortby = null)
+    public function getProductByMerchantIdSeller($merchant_id, $filter = [], $sortby = null, $limit)
     {
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
@@ -70,7 +70,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByEtalaseId($etalase_id, $filter = [], $sortby = null)
+    public function getProductByEtalaseId($etalase_id, $filter = [], $sortby = null, $limit)
     {
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
@@ -86,7 +86,7 @@ class ProductQueries extends Service
             return $product;
         });
 
-        $data = static::paginate($immutable_data->toArray());
+        $data = static::paginate($immutable_data->toArray(), $limit);
 
         //        if ($data->isEmpty()){
         //            $response['success'] = false;
