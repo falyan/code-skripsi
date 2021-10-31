@@ -91,20 +91,24 @@ class TransactionController extends Controller
     }
 
     #region Buyer
-    public function buyerIndex($related_id)
+    public function buyerIndex($related_id, Request $request)
     {
         try {
             if (empty($related_id)) {
                 return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
             }
 
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
             if (Auth::check()) {
-                $data = $this->transactionQueries->getTransaction('buyer_id', Auth::id());
+                $data = $this->transactionQueries->getTransaction('buyer_id', Auth::id(), $limit, $filter, $page);
             } else {
-                $data = $this->transactionQueries->getTransaction('related_pln_mobile_customer_id', $related_id);
+                $data = $this->transactionQueries->getTransaction('related_pln_mobile_customer_id', $related_id, $limit, $filter, $page);
             }
 
-            if ($data->total() > 0) {
+            if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'belum ada transaksi');
@@ -114,20 +118,24 @@ class TransactionController extends Controller
         }
     }
 
-    public function transactionToPay($related_id)
+    public function transactionToPay($related_id, Request $request)
     {
         try {
             if (empty($related_id)) {
                 return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
             }
 
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
             if (Auth::check()) {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['00']);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['00'], $limit, $filter, $page);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['00']);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['00'], $limit, $filter, $page);
             }
 
-            if ($data->total() > 0) {
+            if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'tidak ada transaksi yang belum dibayar');
@@ -137,20 +145,24 @@ class TransactionController extends Controller
         }
     }
 
-    public function transactionOnApprove($related_id)
+    public function transactionOnApprove($related_id, Request $request)
     {
         try {
             if (empty($related_id)) {
                 return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
             }
 
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
             if (Auth::check()) {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), [1]);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['01'], $limit, $filter, $page);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['01']);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['01'], $limit, $filter, $page);
             }
 
-            if ($data->total() > 0) {
+            if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'tidak ada transaksi yang menunggu persetujuan');
@@ -160,20 +172,24 @@ class TransactionController extends Controller
         }
     }
 
-    public function transactionOnDelivery($related_id)
+    public function transactionOnDelivery($related_id, Request $request)
     {
         try {
             if (empty($related_id)) {
                 return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
             }
 
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
             if (Auth::check()) {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['03', '08']);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['03', '08'], $limit, $filter, $page);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['03', '08']);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['03', '08'], $limit, $filter, $page);
             }
 
-            if ($data->total() > 0) {
+            if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'tidak ada transaksi yang sedang dikirim');
@@ -183,20 +199,24 @@ class TransactionController extends Controller
         }
     }
 
-    public function buyerTransactionDone($related_id)
+    public function buyerTransactionDone($related_id, Request $request)
     {
         try {
             if (empty($related_id)) {
                 return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
             }
 
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
             if (Auth::check()) {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['88']);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['88'], $limit, $filter, $page);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['88']);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['88'], $limit, $filter, $page);
             }
 
-            if ($data->total() > 0) {
+            if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'belum ada transaksi yang selesai');
@@ -206,20 +226,24 @@ class TransactionController extends Controller
         }
     }
 
-    public function buyerTransactionCanceled($related_id)
+    public function buyerTransactionCanceled($related_id, Request $request)
     {
         try {
             if (empty($related_id)) {
                 return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
             }
 
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
             if (Auth::check()) {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['99']);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['99'], $limit, $filter, $page);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['99']);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['99'], $limit, $filter, $page);
             }
 
-            if ($data->total() > 0) {
+            if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'tidak ada transaksi yang dibatalkan');
@@ -255,14 +279,16 @@ class TransactionController extends Controller
 
             $keyword = $request->keyword;
             $limit = $request->limit ?? 10;
-
+            $filter = $request->filter ?? [];
+            $page = $request->page ?? 1;
+            
             if (Auth::check()) {
-                $data = $this->transactionQueries->searchTransaction('buyer_id', Auth::id(), $keyword);
+                $data = $this->transactionQueries->searchTransaction('buyer_id', Auth::id(), $keyword, $limit, $filter, $page);
             } else {
                 $data = $this->transactionQueries->searchTransaction('related_pln_mobile_customer_id', $related_id, $keyword);
             }
 
-            if ($data->total() > 0) {
+            if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan');
@@ -274,12 +300,16 @@ class TransactionController extends Controller
     #End Region Buyer
 
     #Region Seller
-    public function sellerIndex()
+    public function sellerIndex(Request $request)
     {
         try {
-            $data = $this->transactionQueries->getTransaction('merchant_id', Auth::user()->merchant_id);
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
 
-            if ($data->total() > 0) {
+            $data = $this->transactionQueries->getTransaction('merchant_id', Auth::user()->merchant_id, $limit, $filter, $page);
+
+            if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'belum ada transaksi');
@@ -290,12 +320,16 @@ class TransactionController extends Controller
     }
 
 
-    public function newOrder()
+    public function newOrder(Request $request)
     {
         try {
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['01']);
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
 
-            if ($data->total() > 0) {
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['01'], $limit, $filter);
+
+            if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'belum ada pesanan baru');
@@ -305,12 +339,16 @@ class TransactionController extends Controller
         }
     }
 
-    public function orderToDeliver()
+    public function orderToDeliver(Request $request)
     {
         try {
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['02']);
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
 
-            if ($data->total() > 0) {
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['02'], $limit, $filter, $page);
+
+            if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
             } else {
                 return $this->respondWithResult(true, 'belum ada pesanan yang siap dikirim');
@@ -320,12 +358,16 @@ class TransactionController extends Controller
         }
     }
 
-    public function orderInDelivery()
+    public function orderInDelivery(Request $request)
     {
         try {
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['03', '08']);
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
 
-            if ($data->total() > 0) {
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['03', '08'], $limit, $filter, $page);
+
+            if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
             } else {
                 return $this->respondWithResult(true, 'tidak ada pesanan yang sedang dikirim');
@@ -335,12 +377,16 @@ class TransactionController extends Controller
         }
     }
 
-    public function orderDone()
+    public function orderDone(Request $request)
     {
         try {
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['88']);
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
 
-            if ($data->total() > 0) {
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['88'], $limit, $filter, $page);
+
+            if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
             } else {
                 return $this->respondWithResult(true, 'belum ada pesanan yang berhasil');
@@ -350,12 +396,16 @@ class TransactionController extends Controller
         }
     }
 
-    public function sellerTransactionCanceled()
+    public function sellerTransactionCanceled(Request $request)
     {
         try {
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['99']);
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
 
-            if ($data->total() > 0) {
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['99'], $limit, $filter, $page);
+
+            if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
             } else {
                 return $this->respondWithResult(true, 'belum ada pesanan yang dibatalkan');
@@ -391,10 +441,12 @@ class TransactionController extends Controller
 
             $keyword = $request->keyword;
             $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $page = $request->page ?? 1;
 
-            $data = $this->transactionQueries->searchTransaction('merchant_id', Auth::user()->merchant_id, $keyword);
+            $data = $this->transactionQueries->searchTransaction('merchant_id', Auth::user()->merchant_id, $keyword, $limit, $filter, $page);
 
-            if ($data->total() > 0) {
+            if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan');

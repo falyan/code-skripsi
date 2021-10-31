@@ -99,7 +99,7 @@ class ProductController extends Controller
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
-            return $this->productQueries->getAllProduct($limit, $filter, $sorting, request()->input('page'));
+            return $this->productQueries->getAllProduct($limit, $filter, $sorting, request()->input('page') ?? 1);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -113,7 +113,8 @@ class ProductController extends Controller
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
-            return $this->productQueries->getProductByMerchantIdSeller($merchant_id, $filter, $sorting, $limit);
+            $page = $request->page ?? 1;
+            return $this->productQueries->getProductByMerchantIdSeller($merchant_id, $filter, $sorting, $page, $limit);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -126,7 +127,8 @@ class ProductController extends Controller
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
-            return $this->productQueries->getProductByEtalaseId($etalase_id, $filter, $sorting, $limit);
+            $page = $request->page ?? 1;
+            return $this->productQueries->getProductByEtalaseId($etalase_id, $filter, $sorting, $limit, $page);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -169,8 +171,9 @@ class ProductController extends Controller
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
+            $page = $request->page ?? 1;
 
-            return $this->productQueries->searchProductByName($request->keyword, $limit, $filter, $sorting);
+            return $this->productQueries->searchProductByName($request->keyword, $limit, $filter, $sorting, $page);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -183,7 +186,8 @@ class ProductController extends Controller
             $size = request()->query('size', 10);
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
-            return $this->productQueries->getProductByMerchantIdBuyer($merchant_id, $size, $filter, $sorting);
+            $page = $request->page ?? 1;
+            return $this->productQueries->getProductByMerchantIdBuyer($merchant_id, $size, $filter, $sorting, $page);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -196,7 +200,8 @@ class ProductController extends Controller
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
-            return $this->productQueries->getProductByCategory($category_id, $filter, $sorting, $limit);
+            $page = $request->page ?? 1;
+            return $this->productQueries->getProductByCategory($category_id, $filter, $sorting, $limit, $page);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -266,7 +271,8 @@ class ProductController extends Controller
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
-            return $this->productQueries->searchProductBySeller($merchant_id, $keyword, $limit, $filter, $sorting);
+            $page = $request->page ?? 1;
+            return $this->productQueries->searchProductBySeller($merchant_id, $keyword, $limit, $filter, $sorting, $page);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
