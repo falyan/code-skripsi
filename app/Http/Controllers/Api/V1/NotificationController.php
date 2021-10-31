@@ -46,12 +46,12 @@ class NotificationController extends Controller
         try {
             $data = null;
             if (Auth::check()) {
-                $data = $this->notificationQueries->getAllNotification('customer_id', Auth::user()->id);
+                $data = $this->notificationQueries->getAllNotification('customer_id', Auth::user()->id, request()->input('limit') ?? 10);
             } else {
-                $data = $this->notificationQueries->getAllNotification('related_pln_mobile_customer_id', $rlc_id);
+                $data = $this->notificationQueries->getAllNotification('related_pln_mobile_customer_id', $rlc_id, request()->input('limit') ?? 10);
             }
 
-            if ($data->total() > 0) {
+            if (count($data['data']) > 0) {
                 return $this->respondWithData($data, 'sukses get data notifikasi');
             } else {
                 return $this->respondWithResult(true, 'belum ada notifikasi');
@@ -70,12 +70,12 @@ class NotificationController extends Controller
 
             $data = null;
             if (Auth::check()) {
-                $data = $this->notificationQueries->getAllNotificationByType('customer_id', Auth::user()->id, $type);
+                $data = $this->notificationQueries->getAllNotificationByType('customer_id', Auth::user()->id, $type, request()->input('limit') ?? 10);
             } else {
-                $data = $this->notificationQueries->getAllNotificationByType('related_pln_mobile_customer_id', $rlc_id, $type);
+                $data = $this->notificationQueries->getAllNotificationByType('related_pln_mobile_customer_id', $rlc_id, $type, request()->input('limit') ?? 10);
             }
 
-            if ($data->total() > 0) {
+            if (count($data['data']) > 0) {
                 return $this->respondWithData($data, 'sukses get data notifikasi ' . $this->notification_type[$type]);
             } else {
                 return $this->respondWithResult(true, 'belum ada notifikasi . ' . $this->notification_type[$type]);
@@ -132,9 +132,9 @@ class NotificationController extends Controller
     public function sellerNotificationList()
     {
         try {
-            $data = $this->notificationQueries->getAllNotification('merchant_id', Auth::user()->merchant_id);
+            $data = $this->notificationQueries->getAllNotification('merchant_id', Auth::user()->merchant_id, request()->input('limit') ?? 10);
             
-            if ($data->total() > 0) {
+            if (count($data['data']) > 0) {
                 return $this->respondWithData($data, 'sukses get data notifikasi');
             } else {
                 return $this->respondWithResult(true, 'belum ada notifikasi');
@@ -151,9 +151,9 @@ class NotificationController extends Controller
                 return $this->respondValidationError(['notification_type' => $type, 'error_message' => 'type yang diinput salah.']);
             }
 
-            $data = $this->notificationQueries->getAllNotificationByType('merchant_id', Auth::user()->merchant_id, $type);
+            $data = $this->notificationQueries->getAllNotificationByType('merchant_id', Auth::user()->merchant_id, $type, request()->input('limit') ?? 10);
 
-            if ($data->total() > 0) {
+            if (count($data['data']) > 0) {
                 return $this->respondWithData($data, 'sukses get data notifikasi ' . $this->notification_type[$type]);
             } else {
                 return $this->respondWithResult(true, 'belum ada notifikasi . ' . $this->notification_type[$type]);
