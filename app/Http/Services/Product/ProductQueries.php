@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
 
 class ProductQueries extends Service
 {
-    public function getAllProduct($limit, $filter = [], $sortby = null)
+    public function getAllProduct($limit, $filter = [], $sortby = null, $current_page = 1)
     {
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
@@ -28,7 +28,7 @@ class ProductQueries extends Service
             return $product;
         });
 
-        $data = static::paginate($immutable_data->toArray(), $limit);
+        $data = static::paginate($immutable_data->toArray(), $limit, $current_page);
 
         //        if ($data->isEmpty()){
         //            $response['success'] = false;
