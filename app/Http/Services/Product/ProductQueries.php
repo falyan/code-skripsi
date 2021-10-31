@@ -159,7 +159,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByCategory($category_id, $filter = [], $sortby = null)
+    public function getProductByCategory($category_id, $filter = [], $sortby = null, $limit)
     {
         $categories = MasterData::with(['child' => function($j) {
             $j->with(['child']);
@@ -201,7 +201,7 @@ class ProductQueries extends Service
             return $product;
         });
 
-        $data = static::paginate($immutable_data->toArray());
+        $data = static::paginate($immutable_data->toArray(), (int) $limit);
 
         //        if ($data->isEmpty()){
         //            $response['success'] = false;
