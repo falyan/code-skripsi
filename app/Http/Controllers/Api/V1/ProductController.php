@@ -99,7 +99,7 @@ class ProductController extends Controller
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
-            return $this->productQueries->getAllProduct($limit, $filter, $sorting);
+            return $this->productQueries->getAllProduct($limit, $filter, $sorting, request()->input('page'));
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

@@ -56,11 +56,32 @@ class Service
     '3' => 'Partner Fee',
   ];
 
-  static function paginate(array $items, $perPage = 10, $page = null, $options = [])
+  static function paginate(array $items, $perPage = 10, $page = 1, $options = [])
   {
     $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
     $items = $items instanceof Collection ? $items : Collection::make($items);
 
-    return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
+    
+    $paginated = new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
+    $modified = [];
+    foreach ($paginated->items() as $key) {
+      array_push($modified, $key);
+    }
+
+    return [
+      'current_page'    => $paginated->currentPage(),
+      'data'            => $modified,
+      'first_page_url'  => "/?page=1",
+      'from'            => $paginated->firstItem(),
+      'last_page'       => $paginated->lastPage(),
+      'last_page_url'   => "/?page=" . $paginated->lastPage(),
+      'links'           => $paginated->linkCollection(),
+      'next_page_url'   => $paginated->nextPageUrl(),
+      'path'            => $paginated->path(),
+      'per_page'        => $paginated->perPage(),
+      'prev_page_url'   => $paginated->previousPageUrl(),
+      'to'              => count($modified),
+      'total'           => $paginated->total()
+    ];
   }
 }
