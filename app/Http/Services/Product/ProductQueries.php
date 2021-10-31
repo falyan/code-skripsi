@@ -125,7 +125,7 @@ class ProductQueries extends Service
         $response['data'] = $data;
         return $response;
     }
-    
+
     public function getProductByMerchantIdBuyer($merchant_id, $size, $filter = [], $sortby = null, $current_page)
     {
         $product = new Product();
