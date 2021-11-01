@@ -8,6 +8,8 @@ use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
 use App\Models\Customer;
 use App\Models\Merchant;
+use App\Models\Order;
+use App\Models\OrderPayment;
 use App\Models\Product;
 use Exception, Input;
 use Illuminate\Http\Request;
@@ -281,7 +283,7 @@ class TransactionController extends Controller
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
             $page = $request->page ?? 1;
-            
+
             if (Auth::check()) {
                 $data = $this->transactionQueries->searchTransaction('buyer_id', Auth::id(), $keyword, $limit, $filter, $page);
             } else {
@@ -611,7 +613,7 @@ class TransactionController extends Controller
 
                 return $this->respondValidationError($errors, 'Validation Error!');
             }
-            
+
             $status_order = $this->transactionQueries->getStatusOrder($id);
             if ($status_order->status_code == '00') {
                 $this->transactionCommand->updateOrderStatus($id, '99', $request->reason);
@@ -621,6 +623,62 @@ class TransactionController extends Controller
                 return $this->respondWithResult(false, 'Pesanan anda tidak dapat dibatalkan!', 400);
             }
         } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function updatePaymentStatus(){
+        $validator = Validator::make(request()->all(), [
+            'transaction_id' => 'required',
+            'customer_payment_code' => 'required',
+            'payment_date' => 'required',
+            'payment_channel' => 'required',
+            'transaction_amount' => 'required|integer',
+            'fee_amount' => 'required|integer',
+            'item_details' => 'required|array',
+            'item_details.*.partner_reference' => 'required',
+            'item_details.*.customer_id' => 'required',
+            'item_details.*.no_reference' => 'required',
+            'item_details.*.amount' => 'required'
+        ], [
+            'required' => ':attribute diperlukan.'
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            $payment_method = request()->payment_channel;
+
+            $no_reference = null;
+            foreach (request()->item_details as $detail){
+                $no_reference = $detail['no_reference'];
+            }
+
+            $updated_payment = $this->transactionCommand->updatePaymentDetail($no_reference, $payment_method);
+            ;
+            if ($updated_payment == false){
+                return $this->respondWithResult(false, 'Gagal merubah detail pembayaran.', 400);
+            }
+
+            $orders = Order::where('no_reference', $no_reference)->get();
+            foreach ($orders as $order){
+                $response = $this->transactionCommand->updateOrderStatus($order->id, '01');
+                if ($response['success'] == false){
+                    return $response;
+                }
+            }
+
+            return $response;
+        }catch (Exception $e){
             return $this->respondErrorException($e, request());
         }
     }

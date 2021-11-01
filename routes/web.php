@@ -173,6 +173,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->group(['prefix' => 'command'], static function () use ($router) {
             $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('checkout', 'TransactionController@checkout');
+                $router->post('update-payment', 'TransactionController@updatePaymentStatus');
             });
 
             $router->group(['prefix' => 'cart', 'middleware' => 'auth'], static function () use ($router) {
