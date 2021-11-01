@@ -104,14 +104,14 @@ class MerchantQueries extends Service
         }
     }
 
-    public static function getListMerchant($request)
+    public static function getListMerchant($limit = 10, $page = 1)
     {
         $data = Merchant::with(['province:id,name', 'city:id,name', 'district:id,name'])->get(['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url'])->forget(['province_id', 'city_id', 'district_id']);
         foreach ($data as $merchant) {
             $merchant['url_deeplink'] = 'https://plnmarketplace.page.link/?link=https://plnmarketplace.page.link/profile-toko-seller?id=' . $merchant->id;
         }
 
-        $result = static::paginate($data->toArray());
+        $result = static::paginate($data->toArray(), $limit, $page);
         return $result;
     }
 }
