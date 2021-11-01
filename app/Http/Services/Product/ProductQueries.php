@@ -382,7 +382,7 @@ class ProductQueries extends Service
 
             $data = $model->when(!empty($keyword), function ($query) use ($keyword) {
                 $query->where('name', 'LIKE', "%{$keyword}%");
-            })->when(!empty($category_id), function ($query) use ($category) {
+            })->when(!empty($category), function ($query) use ($category) {
                 if (strpos($category, ',')) {
                     $query->whereIn('category_id', explode(',', $category));
                 } else {
