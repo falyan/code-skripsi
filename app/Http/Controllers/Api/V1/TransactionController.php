@@ -637,7 +637,7 @@ class TransactionController extends Controller
                     'status' => 11,
                     'success' => false,
                     'message' => 'Invalid client id',
-                    'data' => request()->header('client-id')
+                    'data' => "Must be " . config('credentials.iconpay.client_id')
                 ]);
             }
         }else{
@@ -645,7 +645,11 @@ class TransactionController extends Controller
                 'status' => 15,
                 'success' => false,
                 'message' => 'Bad request data',
-                'data' => request()->all()
+                'data' => [
+                    'client-id' => request()->header('client-id') ?? null,
+                    'timestamp' => request()->header('timestamp') ?? null,
+                    'signature' => request()->header('signature') ?? null
+                ]
             ]);
         }
 
@@ -660,7 +664,7 @@ class TransactionController extends Controller
                     'status' => 12,
                     'success' => false,
                     'message' => 'Invalid timestamp',
-                    'data' => request()->header('timestamp')
+                    'data' => "Must be between " . $timestamp_min . " and " . $timestamp_plus
                 ]);
             }
         }else{
@@ -668,19 +672,25 @@ class TransactionController extends Controller
                 'status' => 15,
                 'success' => false,
                 'message' => 'Bad request data',
-                'data' => request()->all()
+                'data' => [
+                    'client-id' => request()->header('client-id') ?? null,
+                    'timestamp' => request()->header('timestamp') ?? null,
+                    'signature' => request()->header('signature') ?? null
+                ]
             ]);
         }
 
         if (request()->hasHeader('signature')){
             $ba_signature = request()->header('signature');
-            $signature = hash_hmac('sha256', request()->get('body') . config('credentials.iconpay.client_id') . $ba_timestamp, sha1(config('credentials.iconpay.app_key')));
+            $encode_body = json_encode(request()->all(), JSON_UNESCAPED_SLASHES);
+
+            $signature = hash_hmac('sha256', $encode_body . config('credentials.iconpay.client_id') . $ba_timestamp, sha1(config('credentials.iconpay.app_key')));
             if (!hash_equals($signature, $ba_signature)){
                 return response()->json([
                     'status' => 13,
                     'success' => false,
                     'message' => 'Invalid signature',
-                    'data' => request()->header('signature')
+                    'data' => "Must be " . $signature
                 ]);
             }
         }else{
@@ -688,7 +698,11 @@ class TransactionController extends Controller
                 'status' => 15,
                 'success' => false,
                 'message' => 'Bad request data',
-                'data' => request()->all()
+                'data' => [
+                    'client-id' => request()->header('client-id') ?? null,
+                    'timestamp' => request()->header('timestamp') ?? null,
+                    'signature' => request()->header('signature') ?? null
+                ]
             ]);
         }
 
