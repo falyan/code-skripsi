@@ -18,16 +18,16 @@ class NotificationQueries extends Service
 
     public function getAllNotification($column_name, $column_value, $limit)
     {
-        $data = Notification::where($column_name, $column_value)->get();
+        $data = Notification::where($column_name, $column_value)->orderBy('created_at', 'DESC')->get();
         $data = static::paginate($data->toArray(), $limit);
         return $data;
     }
-    
+
     public function getAllNotificationByType($column_name, $column_value, $type, $limit)
     {
-        $data = Notification::where([[$column_name, $column_value], ['type', $type]])->get();
+        $data = Notification::where([[$column_name, $column_value], ['type', $type]])->orderBy('created_at', 'DESC')->get();
         $data = static::paginate($data->toArray(), $limit);
-        
+
         return $data;
     }
 }
