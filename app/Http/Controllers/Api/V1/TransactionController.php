@@ -13,6 +13,7 @@ use App\Models\OrderPayment;
 use App\Models\Product;
 use Exception, Input;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use stdClass;
@@ -628,6 +629,44 @@ class TransactionController extends Controller
     }
 
     public function updatePaymentStatus(){
+        if (request()->hasHeader('client-id')){
+            $client_id = request()->header('client-id');
+            if ($client_id != config('credentials.iconpay.client_id')){
+                return response()->json([
+                    'status' => 11,
+                    'success' => false,
+                    'message' => 'Invalid client id'
+                ]);
+            }
+        }
+
+        $ba_timestamp = null;
+        if (request()->hasHeader('timestamp')){
+            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(10)->toIso8601String();
+            $timestamp_min = Carbon::now('Asia/Jakarta')->subMinutes(10)->toIso8601String();
+            $ba_timestamp = request()->header('timestamp');
+
+            if (strtotime($ba_timestamp) < strtotime($timestamp_min) || strtotime($ba_timestamp) > strtotime($timestamp_plus)){
+                return response()->json([
+                    'status' => 12,
+                    'success' => false,
+                    'message' => 'Invalid timestamp'
+                ]);
+            }
+        }
+
+        if (request()->hasHeader('signature')){
+            $ba_signature = request()->header('signature');
+            $signature = hash_hmac('sha256', request()->get('body') . config('credentials.iconpay.client_id') . $ba_timestamp, sha1(config('credentials.iconpay.app_key')));
+            if (!hash_equals($signature, $ba_signature)){
+                return response()->json([
+                    'status' => 13,
+                    'success' => false,
+                    'message' => 'Invalid signature'
+                ]);
+            }
+        }
+
         $validator = Validator::make(request()->all(), [
             'transaction_id' => 'required',
             'customer_payment_code' => 'required',
@@ -664,7 +703,7 @@ class TransactionController extends Controller
             }
 
             $updated_payment = $this->transactionCommand->updatePaymentDetail($no_reference, $payment_method);
-            ;
+
             if ($updated_payment == false){
                 return $this->respondWithResult(false, 'Gagal merubah detail pembayaran.', 400);
             }
