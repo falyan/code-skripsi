@@ -155,7 +155,10 @@ class MerchantController extends Controller
                 return $this->respondValidationError(['key' => 'Your key is invalid'], 'Validation Error!');
             }
 
-            $data = MerchantQueries::getListMerchant($request);
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
+            $data = MerchantQueries::getListMerchant($limit, $page);
             return $this->respondWithData($data, 'Berhasi mendapatkan data ist merchant');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());

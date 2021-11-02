@@ -218,19 +218,29 @@ class ProductController extends Controller
     }
 
     //Get Produk Rekomendasi
-    public function getRecommendProduct()
+    public function getRecommendProduct(Request $request)
     {
         try {
-            return $this->productQueries->getRecommendProduct();
+            $filter = $request->filter ?? [];
+            $sortby = $request->sortby ?? null;
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
+            return $this->productQueries->getRecommendProduct($filter, $sortby, $limit, $page);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function getSpecialProduct()
+    public function getSpecialProduct(Request $request)
     {
         try {
-            return $this->productQueries->getSpecialProduct();
+            $filter = $request->filter ?? [];
+            $sortby = $request->sortby ?? null;
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
+            return $this->productQueries->getSpecialProduct($filter, $sortby, $limit, $page);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

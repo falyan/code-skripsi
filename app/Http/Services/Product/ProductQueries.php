@@ -260,14 +260,14 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getRecommendProduct($filter = [], $sortby = null)
+    public function getRecommendProduct($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo', 'merchant.city:id,name'])->orderBy('order_details_count', 'DESC')->limit(10);
+        }])->with(['product_stock', 'product_photo', 'merchant.city:id,name'])->orderBy('order_details_count', 'DESC');
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -279,6 +279,8 @@ class ProductQueries extends Service
             return $product;
         });
 
+        $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
+
         //        if ($product->isEmpty()){
         //            $response['success'] = false;
         //            $response['message'] = 'Gagal mendapatkan data produk!';
@@ -286,18 +288,18 @@ class ProductQueries extends Service
         //        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $immutable_data;
+        $response['data'] = $data;
         return $response;
     }
 
-    public function getSpecialProduct($filter = [], $sortby = null)
+    public function getSpecialProduct($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo', 'merchant.city:id,name'])->latest()->limit(10);
+        }])->with(['product_stock', 'product_photo', 'merchant.city:id,name'])->latest();
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -308,6 +310,7 @@ class ProductQueries extends Service
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
             return $product;
         });
+        $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
 
         //        if ($product->isEmpty()){
         //            $response['success'] = false;
@@ -316,7 +319,7 @@ class ProductQueries extends Service
         //        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $immutable_data;
+        $response['data'] = $data;
         return $response;
     }
 
@@ -382,7 +385,7 @@ class ProductQueries extends Service
 
             $data = $model->when(!empty($keyword), function ($query) use ($keyword) {
                 $query->where('name', 'LIKE', "%{$keyword}%");
-            })->when(!empty($category_id), function ($query) use ($category) {
+            })->when(!empty($category), function ($query) use ($category) {
                 if (strpos($category, ',')) {
                     $query->whereIn('category_id', explode(',', $category));
                 } else {
