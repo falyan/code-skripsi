@@ -15,6 +15,7 @@ use Exception, Input;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use stdClass;
 
@@ -635,14 +636,16 @@ class TransactionController extends Controller
                 return response()->json([
                     'status' => 11,
                     'success' => false,
-                    'message' => 'Invalid client id'
+                    'message' => 'Invalid client id',
+                    'data' => request()->header('client-id')
                 ]);
             }
         }else{
             return response()->json([
                 'status' => 15,
                 'success' => false,
-                'message' => 'Bad request data'
+                'message' => 'Bad request data',
+                'data' => request()->all()
             ]);
         }
 
@@ -656,14 +659,16 @@ class TransactionController extends Controller
                 return response()->json([
                     'status' => 12,
                     'success' => false,
-                    'message' => 'Invalid timestamp'
+                    'message' => 'Invalid timestamp',
+                    'data' => request()->header('timestamp')
                 ]);
             }
         }else{
             return response()->json([
                 'status' => 15,
                 'success' => false,
-                'message' => 'Bad request data'
+                'message' => 'Bad request data',
+                'data' => request()->all()
             ]);
         }
 
@@ -674,14 +679,16 @@ class TransactionController extends Controller
                 return response()->json([
                     'status' => 13,
                     'success' => false,
-                    'message' => 'Invalid signature'
+                    'message' => 'Invalid signature',
+                    'data' => request()->header('signature')
                 ]);
             }
         }else{
             return response()->json([
                 'status' => 15,
                 'success' => false,
-                'message' => 'Bad request data'
+                'message' => 'Bad request data',
+                'data' => request()->all()
             ]);
         }
 
