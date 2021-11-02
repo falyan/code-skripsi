@@ -753,6 +753,16 @@ class TransactionController extends Controller
                 if ($response['success'] == false){
                     return $response;
                 }
+
+                $column_name = 'customer_id';
+                $column_value = $order->buyer_id;
+                $type = 2;
+                $title = 'Pembayaran transaksi berhasil';
+                $message = 'Pembayaran berhasil, menunggu konfirmasi pesananmu dari penjual';
+                $url_path = 'v1/buyer/query/transaction/'. $order->buyer_id .'/detail/' . $order->id;
+
+                $notificationCommand = new NotificationCommands();
+                $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
             }
 
             return $response;
