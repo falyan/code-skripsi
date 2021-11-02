@@ -121,13 +121,14 @@ class TransactionCommands extends Service
 
                 $order_payment = new OrderPayment();
                 $order_payment->customer_id = $customer_id;
-                $order_payment->payment_amount = data_get($data, 'payment_amount');
+                $order_payment->payment_amount = data_get($data, 'total_payment');
                 $order_payment->date_created = $trx_date;
                 $order_payment->date_expired = $exp_date;
                 $order_payment->payment_method = null;
                 $order_payment->no_reference = $no_reference;
                 $order_payment->booking_code = null;
                 $order_payment->payment_note = data_get($data, 'payment_note') ?? null;
+                $order_payment->status = 0;
                 $order_payment->save();
 
                 $order->payment_id = $order_payment->id;
@@ -262,6 +263,19 @@ class TransactionCommands extends Service
         $response['success'] = true;
         $response['message'] = 'Berhasil menambahkan nomor resi';
         return $response;
+    }
+
+    public function updatePaymentDetail($no_reference, $payment_method){
+        $payments = OrderPayment::where('no_reference', $no_reference)->get();
+
+        foreach ($payments as $payment){
+            $payment['payment_method'] = $payment_method;
+            $payment['status'] = 1;
+            if (!$payment->save()){
+                return false;
+            }
+        }
+        return true;
     }
 
     static function invoice_num($input, $pad_len = 3, $prefix = null)
