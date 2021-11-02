@@ -106,7 +106,9 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo'])->where('name', 'ILIKE', '%' . $keyword . '%');
+        }])->with(['merchant' => function ($merchant){
+            $merchant->with(['city:id,name']);
+        }, 'product_stock', 'product_photo'])->where('name', 'ILIKE', '%' . $keyword . '%');
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -184,7 +186,9 @@ class ProductQueries extends Service
                     $details->whereHas('order', function ($order) {
                         $order->whereHas('progress_done');
                     });
-                }])->with(['product_stock', 'product_photo'])->where('category_id', $obj->id)->get();
+                }])->with(['merchant' => function ($merchant){
+                    $merchant->with('city:id,name');
+                }, 'product_stock', 'product_photo'])->where('category_id', $obj->id)->get();
 
                 array_push($collection_product, $products);
             }
