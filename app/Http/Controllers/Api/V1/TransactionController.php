@@ -638,6 +638,12 @@ class TransactionController extends Controller
                     'message' => 'Invalid client id'
                 ]);
             }
+        }else{
+            return response()->json([
+                'status' => 15,
+                'success' => false,
+                'message' => 'Bad request data'
+            ]);
         }
 
         $ba_timestamp = null;
@@ -653,6 +659,12 @@ class TransactionController extends Controller
                     'message' => 'Invalid timestamp'
                 ]);
             }
+        }else{
+            return response()->json([
+                'status' => 15,
+                'success' => false,
+                'message' => 'Bad request data'
+            ]);
         }
 
         if (request()->hasHeader('signature')){
@@ -665,6 +677,12 @@ class TransactionController extends Controller
                     'message' => 'Invalid signature'
                 ]);
             }
+        }else{
+            return response()->json([
+                'status' => 15,
+                'success' => false,
+                'message' => 'Bad request data'
+            ]);
         }
 
         $validator = Validator::make(request()->all(), [
