@@ -244,12 +244,12 @@ class ProductCommands extends Service
             $stock_new = ProductStock::create([
                 'merchant_id' => $merchant_id,
                 'product_id' => $product_id,
-                'amount' => $data->amount,
-                'uom' => $data->uom,
-                'description' => '{"from": "Product", "type": "changing", "title": "Ubah stok produk", "amount": "' . $data->amount . '"}',
+                'amount' => $data['amount'],
+                'uom' => $data['uom'],
+                'description' => '{"from": "Product", "type": "changing", "title": "Ubah stok produk", "amount": "' . $data['amount'] . '"}',
                 'status' => 1,
-                'created_by' => $data->full_name,
-                'updated_by' => $data->full_name,
+                'created_by' => $data['full_name'],
+                'updated_by' => $data['full_name'],
             ]);
 
             if (!$stock_new) {
