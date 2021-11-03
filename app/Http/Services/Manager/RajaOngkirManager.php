@@ -182,7 +182,7 @@ class RajaOngkirManager
     $response = json_decode($response->getBody());
 
     if ($response->rajaongkir->status->code != 200) {
-      return response()->json(['success'=> false, 'error_code' = $response->rajaongkir->status->code, 'description' => $response->rajaongkir->status->description]);
+      return response()->json(['success'=> false, 'error_code' => $response->rajaongkir->status->code, 'description' => $response->rajaongkir->status->description]);
     }
     
     throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
