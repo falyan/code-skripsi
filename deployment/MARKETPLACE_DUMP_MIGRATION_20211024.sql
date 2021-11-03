@@ -7123,7 +7123,7 @@ INSERT INTO "public"."service" VALUES (3, 'Bayar Ditempat', 'Pembeli dapat melak
 </ul>', NULL, 'Manual Input', NULL, NULL, NULL, NULL);
 -- End Insert Table Service
 
-ALTER SEQUENCE master_data_id_seq RESTART WITH 100;
+ALTER SEQUENCE master_data_id_seq RESTART WITH 150;
 ALTER SEQUENCE state_id_seq RESTART WITH 10;
 ALTER SEQUENCE province_id_seq RESTART WITH 50;
 ALTER SEQUENCE city_id_seq RESTART WITH 600;
