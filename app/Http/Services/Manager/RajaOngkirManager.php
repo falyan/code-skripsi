@@ -161,27 +161,30 @@ class RajaOngkirManager
     if (!$order) {
       throw new Exception("Nomor invoice tidak ditemukan", 404);
     }
-
     $body = [
       'waybill' => $order->delivery->awb_number,
       'courier' => $order->delivery->delivery_method,
     ];
-
+    
     $response = static::$curl->request('POST', $url, [
       'headers' => static::$header,
       'http_errors' => false,
       'json' => $body
     ]);
-
+    
     Log::info("E00002", [
       'path_url' => "rajaongkir.endpoint/api/waybill",
       'query' => [],
       'body' => $body,
       'response' => $response
     ]);
-
+    
     $response = json_decode($response->getBody());
 
+    if ($response->rajaongkir->status->code != 200) {
+      return response()->json(['success'=> false, 'error_code' == $response->rajaongkir->status->code, 'description' => $response->rajaongkir->status->description]);
+    }
+    
     throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
       if ($response->rajaongkir->result->delivered == true){
