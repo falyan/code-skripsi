@@ -239,6 +239,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->get('query/balance/customer', 'IconcashController@getCustomerAllBalance');
             $router->post('command/withdrawal/inquiry', 'IconcashController@withdrawalInquiry');
             $router->post('command/withdrawal', 'IconcashController@withdrawal');
+            $router->get('query/ref/bank', 'IconcashController@getRefBank');
             $router->post('command/customerbank', 'IconcashController@addCustomerBank');
             $router->get('query/customerbank/search', 'IconcashController@searchCustomerBank');
             $router->get('query/customerbank/{id}', 'IconcashController@getCustomerBankById');

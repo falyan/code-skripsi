@@ -314,6 +314,30 @@ class IconcashManager
     return data_get($response, 'data');
   }
 
+  public static function getRefBank($token)
+  {
+    $param = self::setParamAPI([
+      'size' => 9999
+    ]);
+
+    $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/ref/bank' . $param);
+
+    $response = self::$curl->request('GET', $url, [
+        'headers' => ['Authorization' => $token],
+        'http_errors' => false
+    ]);
+
+    $response = json_decode($response->getBody());
+    
+    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+    if ($response->success != true) {
+        throw new Exception($response->message, $response->code);
+    }
+
+    return data_get($response, 'data');
+  }
+
   public static function addCustomerBank($token, $account_name, $account_number, $bank_id)
   {
     $param = self::setParamAPI([]);
