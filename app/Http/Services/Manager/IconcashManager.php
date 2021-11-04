@@ -160,100 +160,100 @@ class IconcashManager
 
   public static function logout($token)
   {
-      $param = self::setParamAPI([]);
+    $param = self::setParamAPI([]);
 
-      $url = sprintf('%s/%s', self::$apiendpoint, 'api/auth/logout' . $param);
+    $url = sprintf('%s/%s', self::$apiendpoint, 'api/auth/logout' . $param);
 
-      $response = self::$curl->request('POST', $url, [
-          'headers' => ['Authorization' => $token],
-          'http_errors' => false,
-      ]);
+    $response = self::$curl->request('POST', $url, [
+        'headers' => ['Authorization' => $token],
+        'http_errors' => false,
+    ]);
 
-      $response = json_decode($response->getBody());
+    $response = json_decode($response->getBody());
 
-      throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-      if ($response->success != true) {
-          throw new Exception($response->message, $response->code);
-      }
+    if ($response->success != true) {
+        throw new Exception($response->message, $response->code);
+    }
 
-      return $response;
-  }
+    return $response;
+}
 
   public static function getCustomerAllBalance($token = "")
   {
     $param = self::setParamAPI([]);
 
-      $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/balance/customer' . $param);
+    $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/balance/customer' . $param);
 
-      $response = self::$curl->request('GET', $url, [
-          'headers' => ['Authorization' => $token],
-          'http_errors' => false,
-      ]);
+    $response = self::$curl->request('GET', $url, [
+        'headers' => ['Authorization' => $token],
+        'http_errors' => false,
+    ]);
 
-      $response = json_decode($response->getBody());
-      
-      throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+    $response = json_decode($response->getBody());
+    
+    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-      if ($response->success != true) {
-          throw new Exception($response->message, $response->code);
-      }
+    if ($response->success != true) {
+        throw new Exception($response->message, $response->code);
+    }
 
-      return data_get($response, 'data');
+    return data_get($response, 'data');
   }
 
   public static function withdrawalInquiry($token, $bankAccountName, $bankAccountNo, $bankId, $nominal, $sourceAccountId)
   {
     $param = self::setParamAPI([]);
 
-      $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal/inquiry' . $param);
+    $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal/inquiry' . $param);
 
-      $response = self::$curl->request('POST', $url, [
-          'headers' => ['Authorization' => $token],
-          'http_errors' => false,
-          'json' => [
-            'bankAccountName' => $bankAccountName,
-            'bankAccountNo' => $bankAccountNo,
-            'bankId' => $bankId,
-            'nominal' => $nominal,
-            'sourceAccountId' => $sourceAccountId
-          ]
-      ]);
+    $response = self::$curl->request('POST', $url, [
+        'headers' => ['Authorization' => $token],
+        'http_errors' => false,
+        'json' => [
+          'bankAccountName' => $bankAccountName,
+          'bankAccountNo' => $bankAccountNo,
+          'bankId' => $bankId,
+          'nominal' => $nominal,
+          'sourceAccountId' => $sourceAccountId
+        ]
+    ]);
 
-      $response = json_decode($response->getBody());
+    $response = json_decode($response->getBody());
 
-      throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-      if ($response->success != true) {
-          throw new Exception($response->message, $response->code);
-      }
+    if ($response->success != true) {
+        throw new Exception($response->message, $response->code);
+    }
 
-      return data_get($response, 'data');
+    return data_get($response, 'data');
   }
 
   public static function withdrawal($token, $pin, $orderId)
   {
     $param = self::setParamAPI([]);
 
-      $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal' . $param);
+    $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal' . $param);
 
-      $response = self::$curl->request('POST', $url, [
-          'headers' => ['Authorization' => $token, 'Credentials' => $pin],
-          'http_errors' => false,
-          'json' => [
-            'orderId' => $orderId
-          ]
-      ]);
+    $response = self::$curl->request('POST', $url, [
+        'headers' => ['Authorization' => $token, 'Credentials' => $pin],
+        'http_errors' => false,
+        'json' => [
+          'orderId' => $orderId
+        ]
+    ]);
 
-      $response = json_decode($response->getBody());
-      
-      throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+    $response = json_decode($response->getBody());
+    
+    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-      if ($response->success != true) {
-          throw new Exception($response->message, $response->code);
-      }
+    if ($response->success != true) {
+        throw new Exception($response->message, $response->code);
+    }
 
-      return data_get($response, 'data');
+    return data_get($response, 'data');
   }
 
   /* Topup Services */
@@ -262,56 +262,185 @@ class IconcashManager
   {
     $param = self::setParamAPI([]);
 
-      $url = sprintf('%s/%s', self::$topupApiEndpoint, 'command/topup-inquiry' . $param);
+    $url = sprintf('%s/%s', self::$topupApiEndpoint, 'command/topup-inquiry' . $param);
 
-      $response = self::$curl->request('POST', $url, [
-          'headers' => self::$headerTopup,
-          'http_errors' => false,
-          'json' => [
-            'accountTypeId' => $account_type_id,
-            'amount'        => $amount,
-            'clientRef'     => $client_ref,
-            'corporateId'   => $corporate_id,
-            'phoneNumber'   => $phone
-          ]
-      ]);
+    $response = self::$curl->request('POST', $url, [
+        'headers' => self::$headerTopup,
+        'http_errors' => false,
+        'json' => [
+          'accountTypeId' => $account_type_id,
+          'amount'        => $amount,
+          'clientRef'     => $client_ref,
+          'corporateId'   => $corporate_id,
+          'phoneNumber'   => $phone
+        ]
+    ]);
 
-      $response = json_decode($response->getBody());
-      
-      throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+    $response = json_decode($response->getBody());
+    
+    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-      if ($response->success != true) {
-          throw new Exception($response->message, $response->code);
-      }
+    if ($response->success != true) {
+        throw new Exception($response->message, $response->code);
+    }
 
-      return data_get($response, 'data');
+    return data_get($response, 'data');
   }
 
   public static function topupConfirm($order_id, $amount)
   {
     $param = self::setParamAPI([]);
 
-      $url = sprintf('%s/%s', self::$topupApiEndpoint, 'command/topup-confirm' . $param);
+    $url = sprintf('%s/%s', self::$topupApiEndpoint, 'command/topup-confirm' . $param);
 
-      $response = self::$curl->request('POST', $url, [
-          'headers' => self::$headerTopup,
-          'http_errors' => false,
-          'json' => [
-            'amount'  => $amount,
-            'orderId' => $order_id,
-            'note'    => self::$topupNote
-          ]
-      ]);
+    $response = self::$curl->request('POST', $url, [
+        'headers' => self::$headerTopup,
+        'http_errors' => false,
+        'json' => [
+          'amount'  => $amount,
+          'orderId' => $order_id,
+          'note'    => self::$topupNote
+        ]
+    ]);
 
-      $response = json_decode($response->getBody());
-      
-      throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+    $response = json_decode($response->getBody());
+    
+    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-      if ($response->success != true) {
-          throw new Exception($response->message, $response->code);
-      }
+    if ($response->success != true) {
+        throw new Exception($response->message, $response->code);
+    }
 
-      return data_get($response, 'data');
+    return data_get($response, 'data');
+  }
+
+  public static function addCustomerBank($token, $account_name, $account_number, $bank_id)
+  {
+    $param = self::setParamAPI([]);
+
+    $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/customerbank' . $param);
+
+    $response = self::$curl->request('POST', $url, [
+        'headers' => ['Authorization' => $token],
+        'http_errors' => false,
+        'json' => [
+          'accountName' => $account_name,
+          'accountNumber' => $account_number,
+          'bankId' => $bank_id,
+          'id' => 0
+        ]
+    ]);
+
+    $response = json_decode($response->getBody());
+    
+    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+    if ($response->success != true) {
+        throw new Exception($response->message, $response->code);
+    }
+
+    return data_get($response, 'data');
+  }
+
+  public static function searchCustomerBank($token, $keyword)
+  {
+    $param = self::setParamAPI([
+      'keyword' => $keyword,
+      'size' => 9999
+    ]);
+
+    $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/customerbank/search' . $param);
+
+    $response = self::$curl->request('GET', $url, [
+        'headers' => ['Authorization' => $token],
+        'http_errors' => false
+    ]);
+
+    $response = json_decode($response->getBody());
+    
+    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+    if ($response->success != true) {
+        throw new Exception($response->message, $response->code);
+    }
+
+    return data_get($response, 'data');
+  }
+
+  public static function getCustomerBankById($token, $id)
+  {
+    $param = self::setParamAPI([
+      'id' => $id
+    ]);
+
+    $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/customerbank/byid' . $param);
+
+    $response = self::$curl->request('GET', $url, [
+        'headers' => ['Authorization' => $token],
+        'http_errors' => false
+    ]);
+
+    $response = json_decode($response->getBody());
+    
+    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+    if ($response->success != true) {
+        throw new Exception($response->message, $response->code);
+    }
+
+    return data_get($response, 'data');
+  }
+
+  public static function deleteCustomerBank($token, $id)
+  {
+    $param = self::setParamAPI([
+      'id' => $id
+    ]);
+
+    $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/customerbank' . $param);
+
+    $response = self::$curl->request('DELETE', $url, [
+        'headers' => ['Authorization' => $token],
+        'http_errors' => false
+    ]);
+
+    $response = json_decode($response->getBody());
+    
+    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+    if ($response->success != true) {
+        throw new Exception($response->message, $response->code);
+    }
+
+    return $response;
+  }
+
+  public static function updateCustomerBank($token, $customer_bank_id, $account_name, $account_number, $bank_id)
+  {
+    $param = self::setParamAPI([]);
+
+    $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/customerbank' . $param);
+
+    $response = self::$curl->request('PUT', $url, [
+        'headers' => ['Authorization' => $token],
+        'http_errors' => false,
+        'json' => [
+          'id' => $customer_bank_id,
+          'accountName' => $account_name,
+          'accountNumber' => $account_number,
+          'bankId' => $bank_id,
+        ]
+    ]);
+
+    $response = json_decode($response->getBody());
+    
+    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+    if ($response->success != true) {
+        throw new Exception($response->message, $response->code);
+    }
+
+    return data_get($response, 'data');
   }
 
   static function setParamAPI($data = [])
