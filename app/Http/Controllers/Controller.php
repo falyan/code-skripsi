@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use SimpleXMLElement;
 
 class Controller extends BaseController
@@ -178,6 +179,15 @@ class Controller extends BaseController
         $response->header('Content-Type', $mimeType);
 
         return $response;
+    }
+
+    protected function respondWithItem($item, $callback, $key = null)
+    {
+        $resource = new Item($item, $callback, $key);
+
+        $rootScope = $this->fractal->createData($resource);
+
+        return $this->respondWithArray($rootScope->toArray());
     }
 
     /**
