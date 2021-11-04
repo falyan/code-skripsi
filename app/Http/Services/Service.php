@@ -60,14 +60,14 @@ class Service
   {
     $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
     $items = $items instanceof Collection ? $items : Collection::make($items);
-
+    
     
     $paginated = new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
     $modified = [];
     foreach ($paginated->items() as $key) {
       array_push($modified, $key);
     }
-
+    
     return [
       'current_page'    => $paginated->currentPage(),
       'data'            => $modified,

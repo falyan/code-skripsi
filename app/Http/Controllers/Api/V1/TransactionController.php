@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Services\Notification\NotificationCommands;
+use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
 use App\Models\Customer;
@@ -11,6 +12,7 @@ use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Models\Product;
+use App\Models\ProductStock;
 use Exception, Input;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -88,7 +90,25 @@ class TransactionController extends Controller
                     }
                 }, data_get($merchant, 'products'));
             }, request()->get('merchants'));
-            return $this->transactionCommand->createOrder(request()->all(), $customer_id);
+            $response = $this->transactionCommand->createOrder(request()->all(), $customer_id);
+
+            if ($response['success'] == true){
+                array_map(function ($merchant) {
+                    array_map(function ($item) use ($merchant) {
+                        $stock = ProductStock::where('product_id', data_get($item, 'product_id'))
+                            ->where('merchant_id', data_get($merchant, 'merchant_id'))->where('status', 1)->first();
+
+                        $data['amount'] = $stock->amount - data_get($item, 'quantity');
+                        $data['uom'] = $stock->uom;
+                        $data['full_name'] = Auth::user()->full_name;
+
+                        $productCommand = new ProductCommands();
+                        $productCommand->updateStockProduct(data_get($item, 'product_id'), data_get($merchant, 'merchant_id'), $data);
+                    }, data_get($merchant, 'products'));
+                }, request()->get('merchants'));
+            }
+
+            return $response;
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
