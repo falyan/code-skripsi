@@ -246,6 +246,12 @@ class IconcashController extends Controller
 
             $response = IconcashManager::withdrawal($iconcash->token, $pin, $order_id);
 
+            if (isset($response->code)) {
+                if ($response->code == 5001 || $response->code == 5002) {
+                    return response()->json(["success" => $response->success, "code" => $response->code, "message" => $response->message], 200);
+                }
+            }
+
             return $this->respondWithData([
                 'order_id'              => $response->orderId,
                 'invoice_id'            => $response->invoiceId,

@@ -246,7 +246,11 @@ class IconcashManager
     ]);
 
     $response = json_decode($response->getBody());
-    
+
+    if ($response->code == 5001 || $response->code == 5002) {
+      return $response;
+    }
+
     throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
     if ($response->success != true) {
