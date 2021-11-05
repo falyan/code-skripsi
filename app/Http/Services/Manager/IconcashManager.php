@@ -281,7 +281,16 @@ class IconcashManager
     ]);
 
     $response = json_decode($response->getBody());
-    
+    dump(self::$headerTopup);
+    dump($url);
+    dump([
+      'accountTypeId' => $account_type_id,
+      'amount'        => $amount,
+      'clientRef'     => $client_ref,
+      'corporateId'   => $corporate_id,
+      'phoneNumber'   => $phone
+    ]);
+    dump($response);die;
     throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
     if ($response->success != true) {
