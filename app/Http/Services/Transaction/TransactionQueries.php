@@ -39,10 +39,13 @@ class TransactionQueries extends Service
             $j->whereIn('status_code', $status_code);
         })->orderBy('created_at', 'desc');
 
+        
         $data = $this->filter($data, $filter);
         $data = $data->get();
-
+        
         $data = static::paginate($data->toArray(), $limit, $page);
+
+        return $data;
     }
 
     public function getDetailTransaction($id)
