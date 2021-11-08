@@ -605,9 +605,23 @@ class TransactionController extends Controller
     public function finishOrder($id)
     {
         try {
-            $status_order = $this->transactionQueries->getStatusOrder($id);
-            if (in_array($status_order->status_code, ['03','08'])) {
+            $data = $this->transactionQueries->getStatusOrder($id);
+            if (in_array($data->progress_active->status_code, ['08'])) {
                 $this->transactionCommand->updateOrderStatus($id, '88');
+
+
+                $column_name = 'merchant_id';
+                $column_value = $data->merchant_id;
+                $type = 2;
+                $title = 'Transaksi selesai';
+                $message = 'Transaksi sudah selesai, silahkan memeriksa saldo ICONCASH anda.';
+                $url_path = 'v1/seller/query/transaction/detail/' . $id;
+
+                $notificationCommand = new NotificationCommands();
+                $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
+
+                $customer = Customer::where('merchant_id', $data->merchant_id)->first();
+                $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
 
                 return $this->respondWithResult(true, 'Selamat! Pesanan anda telah selesai', 200);
             }else {
