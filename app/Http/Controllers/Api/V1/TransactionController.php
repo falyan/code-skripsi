@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use stdClass;
+use App\Http\Services\Manager\MailSenderManager;
+use App\Models\User;
 
 class TransactionController extends Controller
 {
@@ -28,12 +30,13 @@ class TransactionController extends Controller
      *
      * @return void
      */
-    protected $transactionQueries, $transactionCommand;
+    protected $transactionQueries, $transactionCommand, $mailSenderManager;
     public function __construct()
     {
         $this->transactionQueries = new TransactionQueries();
         $this->transactionCommand = new TransactionCommands();
         $this->notificationCommand = new NotificationCommands();
+        $this->mailSenderManager = new MailSenderManager();
     }
 
     // Checkout
@@ -783,6 +786,9 @@ class TransactionController extends Controller
 
                 $notificationCommand = new NotificationCommands();
                 $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
+
+                $customer = User::find($order->buyer_id);
+                $this->mailSenderManager->mailPaymentSuccess($customer, $order->id);
             }
 
             return $response;
