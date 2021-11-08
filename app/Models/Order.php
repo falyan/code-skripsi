@@ -49,4 +49,9 @@ class Order extends Model
     {
         return $this->belongsTo(Customer::class, 'buyer_id');
     }
+
+    public function payment()
+    {
+        return $this->belongsTo(OrderPayment::class);
+    }
 }

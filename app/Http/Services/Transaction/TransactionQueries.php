@@ -39,10 +39,10 @@ class TransactionQueries extends Service
             $j->whereIn('status_code', $status_code);
         })->orderBy('created_at', 'desc');
 
-        
+
         $data = $this->filter($data, $filter);
         $data = $data->get();
-        
+
         $data = static::paginate($data->toArray(), $limit, $page);
 
         return $data;
@@ -59,7 +59,7 @@ class TransactionQueries extends Service
                 $merchant->with(['province', 'city', 'district']);
             }, 'delivery' => function ($region) {
                 $region->with(['city', 'district']);
-            }, 'buyer'
+            }, 'buyer', 'payment'
         ])->find($id);
 
         $data->iconpay_product_id = static::$productid;
@@ -96,7 +96,7 @@ class TransactionQueries extends Service
     public function getStatusOrder($id)
     {
         $data = Order::with(['progress_active'])->find($id);
-        return $data->progress_active;
+        return $data;
     }
 
     public function filter($model, $filter)
