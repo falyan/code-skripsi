@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Services\Manager\IconcashManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
 use App\Models\Customer;
+use App\Models\IconcashInquiry;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\OrderPayment;
@@ -617,7 +619,6 @@ class TransactionController extends Controller
             if (in_array($data->progress_active->status_code, ['08'])) {
                 $this->transactionCommand->updateOrderStatus($id, '88');
 
-
                 $column_name = 'merchant_id';
                 $column_value = $data->merchant_id;
                 $type = 2;
@@ -630,6 +631,26 @@ class TransactionController extends Controller
 
                 $customer = Customer::where('merchant_id', $data->merchant_id)->first();
                 $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
+
+                $order = Order::find($id);
+                $iconcash = Customer::where('merchant_id', $order->merchant_id)->first()->iconcash;
+                $account_type_id = null;
+
+                if (env('APP_ENV') == 'staging'){
+                    $account_type_id = 13;
+                } elseif (env('APP_ENV') == 'production'){
+                    $account_type_id = 20;
+                } else {
+                    $account_type_id = 13;
+                }
+
+                $amount = $order->total_amount;
+                $client_ref = $this->unique_code($iconcash->token);
+                $corporate_id = 10;
+
+                $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id);
+
+                IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
                 return $this->respondWithResult(true, 'Selamat! Pesanan anda telah selesai', 200);
             } else {
@@ -818,5 +839,10 @@ class TransactionController extends Controller
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
+    }
+
+    public function unique_code($value)
+    {
+        return substr(base_convert(sha1(uniqid($value)), 16, 36), 0, 25);
     }
 }

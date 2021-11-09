@@ -151,7 +151,6 @@ class TransactionCommands extends Service
                     $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
                 }
             }, data_get($datas, 'merchants'));
-            DB::commit();
 
             $customer = Customer::findOrFail($customer_id);
             $mailSender = new MailSenderManager();
