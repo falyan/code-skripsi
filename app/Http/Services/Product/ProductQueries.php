@@ -70,7 +70,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByEtalaseId($etalase_id, $filter = [], $sortby = null, $current_page = 1, $limit = 10)
+    public function getProductByEtalaseId($etalase_id, $filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {

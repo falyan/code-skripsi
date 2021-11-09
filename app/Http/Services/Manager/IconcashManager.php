@@ -27,14 +27,15 @@ class IconcashManager
     self::$curl         = new Client();
     self::$apiendpoint  = config('credentials.iconcash.endpoint');
     self::$appkey       = config('credentials.iconcash.api_key');
-    
+
     self::$topupApiEndpoint = config('credentials.iconcash_topup.endpoint');
     self::$topupClientId    = config('credentials.iconcash_topup.client_id');
     self::$topupSecretKey   = config('credentials.iconcash_topup.secret_key');
 
-    $timestamp = Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp;
+      $timestamp = Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp;
+      $timestamp_topup = Carbon::now('Asia/Jakarta')->timestamp;
 
-    self::$header = [
+      self::$header = [
       'Content-Type'  => 'application/json',
       'appid'         => self::$appId,
       'timestamp'     => $timestamp,
@@ -43,8 +44,8 @@ class IconcashManager
 
     self::$headerTopup = [
       'clientId'  => self::$topupClientId,
-      'timestamp' => $timestamp,
-      'signature' => hash_hmac('sha256', self::$topupClientId . $timestamp, self::$topupSecretKey)
+      'timestamp' => $timestamp_topup,
+      'signature' => hash_hmac('sha256', self::$topupClientId . $timestamp_topup, self::$topupSecretKey)
     ];
   }
 
@@ -53,7 +54,7 @@ class IconcashManager
     $param = static::setParamAPI([]);
 
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/register_customer' . $param);
-    
+
     $response = self::$curl->request('POST', $url, [
       'http_errors' => false,
       'json' => [
@@ -82,7 +83,7 @@ class IconcashManager
     $param = static::setParamAPI([]);
 
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/otp' . $param);
-    
+
     $response = self::$curl->request('POST', $url, [
       'http_errors' => false,
       'json' => [
@@ -111,7 +112,7 @@ class IconcashManager
     $param = static::setParamAPI([]);
 
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/otp/validate' . $param);
-    
+
     $response = self::$curl->request('POST', $url, [
       'http_errors' => false,
       'json' => [
@@ -137,7 +138,7 @@ class IconcashManager
     $param = static::setParamAPI([]);
 
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/auth/login' . $param);
-    
+
     $response = self::$curl->request('POST', $url, [
       'http_errors' => false,
       'json' => [
@@ -192,7 +193,7 @@ class IconcashManager
     ]);
 
     $response = json_decode($response->getBody());
-    
+
     throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
     if ($response->success != true) {
@@ -308,7 +309,7 @@ class IconcashManager
     ]);
 
     $response = json_decode($response->getBody());
-    
+
     throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
     if ($response->success != true) {
@@ -332,7 +333,7 @@ class IconcashManager
     ]);
 
     $response = json_decode($response->getBody());
-    
+
     throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
     if ($response->success != true) {
@@ -360,7 +361,7 @@ class IconcashManager
     ]);
 
     $response = json_decode($response->getBody());
-    
+
     throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
     if ($response->success != true) {
@@ -385,7 +386,7 @@ class IconcashManager
     ]);
 
     $response = json_decode($response->getBody());
-    
+
     throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
     if ($response->success != true) {
@@ -409,7 +410,7 @@ class IconcashManager
     ]);
 
     $response = json_decode($response->getBody());
-    
+
     throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
     if ($response->success != true) {
@@ -433,7 +434,7 @@ class IconcashManager
     ]);
 
     $response = json_decode($response->getBody());
-    
+
     throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
     if ($response->success != true) {
@@ -461,7 +462,7 @@ class IconcashManager
     ]);
 
     $response = json_decode($response->getBody());
-    
+
     throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
     if ($response->success != true) {

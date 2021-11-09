@@ -83,7 +83,7 @@ class IconcashController extends Controller
                     return response()->json(["success" => $response->success, "code" => $response->code, "message" => $response->message], 404);
                 }
             }
-            
+
             if (!$user->iconcash) {
                 IconcashCommands::register($user);
             }
@@ -123,7 +123,7 @@ class IconcashController extends Controller
 
         try {
             $user = Auth::user();
-            
+
             $response = IconcashManager::login($this->corporate_id, $user->phone, $pin);
             IconcashCommands::login($user, $response);
 
@@ -142,7 +142,7 @@ class IconcashController extends Controller
     {
         try {
             $iconcash = Auth::user()->iconcash;
-            
+
             if (!isset($iconcash->token)) {
                 return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi iconcash / token expired'], 200);
             }
@@ -201,7 +201,7 @@ class IconcashController extends Controller
 
         try {
             $iconcash = Auth::user()->iconcash;
-            
+
             if (!isset($iconcash->token)) {
                 return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi iconcash / token expired'], 200);
             }
@@ -471,7 +471,7 @@ class IconcashController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
-    
+
     public function updateCustomerBank($id) {
         try {
             $iconcash = Auth::user()->iconcash;

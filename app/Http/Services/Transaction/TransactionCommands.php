@@ -20,6 +20,8 @@ use App\Models\OrderPayment;
 use Illuminate\Support\Facades\Log;
 use Monolog\Handler\IFTTTHandler;
 use Ramsey\Uuid\Uuid;
+use App\Http\Services\Manager\MailSenderManager;
+use App\Models\User;
 
 class TransactionCommands extends Service
 {
@@ -30,6 +32,7 @@ class TransactionCommands extends Service
     static $productid;
     static $appsource;
     static $header;
+    protected $order_id = null;
 
     static function init()
     {
@@ -49,10 +52,10 @@ class TransactionCommands extends Service
     {
         DB::beginTransaction();
         try {
-            $no_reference = (integer) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
+            $no_reference = (int) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
 
-            while (static::checkReferenceExist($no_reference) == false){
-                $no_reference = (integer) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
+            while (static::checkReferenceExist($no_reference) == false) {
+                $no_reference = (int) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
             }
 
             $timestamp = Carbon::now('Asia/Jakarta')->toIso8601String();
@@ -73,6 +76,8 @@ class TransactionCommands extends Service
                 $order->created_by = 'user';
                 $order->updated_by = 'user';
                 $order->save();
+
+                $this->order_id = $order->id;
 
                 $total_price += data_get($data, 'total_payment');
 
@@ -134,21 +139,22 @@ class TransactionCommands extends Service
                 $order_payment->save();
 
                 $order->payment_id = $order_payment->id;
-                if($order->save()){
+                if ($order->save()) {
                     $column_name = 'customer_id';
                     $column_value = $customer_id;
                     $type = 2;
                     $title = 'Transaksi berhasil dibuat';
                     $message = 'Transaksimu berhasil dibuat, silahkan melanjutkan pembayaran.';
-                    $url_path = 'v1/buyer/query/transaction/'. $customer_id .'/detail/' . $order->id;
+                    $url_path = 'v1/buyer/query/transaction/' . $customer_id . '/detail/' . $order->id;
 
                     $notificationCommand = new NotificationCommands();
                     $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
                 }
             }, data_get($datas, 'merchants'));
-            DB::commit();
 
             $customer = Customer::findOrFail($customer_id);
+            $mailSender = new MailSenderManager();
+            $mailSender->mailCheckout($customer, $this->order_id);
 
             $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
             $body = [
@@ -193,8 +199,8 @@ class TransactionCommands extends Service
             }
 
             $response->response_details[0]->amount = $total_price;
-            $response->response_details[0]->customer_id = (integer) $response->response_details[0]->customer_id;
-            $response->response_details[0]->partner_reference = (integer) $response->response_details[0]->partner_reference;
+            $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
+            $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
 
             return [
                 'success' => true,
@@ -245,6 +251,7 @@ class TransactionCommands extends Service
             $response['message'] = 'Gagal merubah status pesanan';
             return $response;
         }
+
         $response['success'] = true;
         $response['message'] = 'Berhasil merubah status pesanan';
         $response['status_code'] = $status_code;
@@ -267,13 +274,14 @@ class TransactionCommands extends Service
         return $response;
     }
 
-    public function updatePaymentDetail($no_reference, $payment_method){
+    public function updatePaymentDetail($no_reference, $payment_method)
+    {
         $payments = OrderPayment::where('no_reference', $no_reference)->get();
 
-        foreach ($payments as $payment){
+        foreach ($payments as $payment) {
             $payment['payment_method'] = $payment_method;
             $payment['status'] = 1;
-            if (!$payment->save()){
+            if (!$payment->save()) {
                 return false;
             }
         }
@@ -291,8 +299,9 @@ class TransactionCommands extends Service
         return str_pad($input, $pad_len, "0", STR_PAD_LEFT);
     }
 
-    static function checkReferenceExist($no_reference){
-        if (OrderPayment::where('no_reference', $no_reference)->count() > 0){
+    static function checkReferenceExist($no_reference)
+    {
+        if (OrderPayment::where('no_reference', $no_reference)->count() > 0) {
             return false;
         }
         return true;
