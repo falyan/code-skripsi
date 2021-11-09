@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <h3>Hai, {{ $merchant->name }}</h3>
+    <h3>Hai, {{ $destination_name }}</h3>
     <p>
         <strong>Transaksimu dengan {{$customer->full_name}} sudah selesai.</strong><br>
     </p>
