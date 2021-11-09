@@ -219,10 +219,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('track', 'RajaOngkirController@trackOrder');
     });
 
-    $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
-        $router->post('/{id}/request-cancel', 'TransactionController@requestCancelOrder');
-        $router->post('/{id}/finish', 'TransactionController@finishOrder');
+    $router->group(['prefix' => 'order'], static function () use ($router) {
+        $router->group(['middleware' => 'auth'], static function () use ($router){
+            $router->post('/{id}/request-cancel', 'TransactionController@requestCancelOrder');
+        });
         $router->post('/{id}/cancel', 'TransactionController@cancelOrder');
+        $router->post('/{id}/finish', 'TransactionController@finishOrder');
     });
 
     $router->group(['prefix' => 'merchant'], static function () use ($router) {
@@ -247,9 +249,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->put('command/customerbank/{id}', 'IconcashController@updateCustomerBank');
             $router->get('hash-salt/generator/{pin}', 'IconcashController@hash_salt_sha256');
 
-            $router->group(['prefix' => 'topup'], static function () use ($router) {
-                $router->post('command/topup-inquiry', 'IconcashController@topupInquiry');
+            $router->group(['prefix' => 'topup', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('command/topup-confirm', 'IconcashController@topupConfirm');
+                $router->post('command/topup-inquiry', 'IconcashController@topupInquiry');
             });
         });
     });

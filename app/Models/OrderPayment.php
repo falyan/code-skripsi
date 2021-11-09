@@ -15,11 +15,6 @@ class OrderPayment extends Model
         return $date->format('Y-m-d H:i:s');
     }
 
-    public function order()
-    {
-        return $this->belongsTo(Order::class);
-    }
-
     public function product()
     {
         return $this->belongsTo(Product::class);

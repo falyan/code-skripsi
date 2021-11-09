@@ -4,9 +4,16 @@ namespace App\Http\Services\Notification;
 
 use App\Http\Services\Service;
 use App\Models\Notification;
+use GuzzleHttp\Client;
 
 class NotificationCommands extends Service
 {
+    static function init()
+    {
+        self::$curl = new Client();
+        self::$apiendpoint = config('credentials.radagast.endpoint');
+    }
+
     public function create($column_name, $column_value, $type, $title, $message, $url_path, $related_pln_mobile_customer_id = null, $created_by = null)
     {
         $new_notification = new Notification();
@@ -49,5 +56,46 @@ class NotificationCommands extends Service
         }else {
             return false;
         }
+    }
+
+    public function sendPushNotification($id, $title, $body, $status){
+        $param = static::setParamAPI([
+            'status' => $status
+        ]);
+
+        $json_body = [
+            'customer_id' => $id,
+            'title' => $title,
+            'body' => $body
+        ];
+
+        $url = sprintf('%s/%s', static::$apiendpoint, 'api/notify/' . $id . $param);
+        $response = static::$curl->request('POST', $url, [
+            'http_errors' => false,
+            'json' => $json_body
+        ]);
+
+        return json_decode($response->getBody());
+    }
+
+    static function setParamAPI($data = [])
+    {
+        $param = [];
+        $index = 0;
+        $len = count($data);
+
+        foreach ($data as $key => $value) {
+            $value = preg_replace('/\s+/', '+', $value);
+
+            if ($index == 0) {
+                $param[] = sprintf('?%s=%s', $key, $value);
+            } else {
+                $param[] = sprintf('&%s=%s', $key, $value);
+            }
+
+            $index++;
+        }
+
+        return implode('', $param);
     }
 }
