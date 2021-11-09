@@ -202,6 +202,7 @@ class TransactionCommands extends Service
             $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
             $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
 
+            DB::commit();
             return [
                 'success' => true,
                 'message' => 'Berhasil create order',
