@@ -222,8 +222,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     $router->group(['prefix' => 'order'], static function () use ($router) {
         $router->group(['middleware' => 'auth'], static function () use ($router){
             $router->post('/{id}/request-cancel', 'TransactionController@requestCancelOrder');
-            $router->post('/{id}/cancel', 'TransactionController@cancelOrder');
         });
+        $router->post('/{id}/cancel', 'TransactionController@cancelOrder');
         $router->post('/{id}/finish', 'TransactionController@finishOrder');
     });
 
