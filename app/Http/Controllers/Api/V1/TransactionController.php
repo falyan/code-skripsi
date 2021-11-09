@@ -553,7 +553,7 @@ class TransactionController extends Controller
                 $response = $this->transactionCommand->updateOrderStatus($order_id, '02');
                 if ($response['success'] == false) {
                     return $response;
-                }               
+                }
             }
 
             return $response;
@@ -661,14 +661,14 @@ class TransactionController extends Controller
         }
     }
 
-    public function cancelOrder($id, Request $request)
+    public function cancelOrder($id)
     {
         try {
             $rules = [
                 'reason' => 'required',
             ];
 
-            $validator = Validator::make($request->all(), $rules, [
+            $validator = Validator::make(request()->all(), $rules, [
                 'required' => 'sertakan alasan pembatalan pesanan anda.',
             ]);
             if ($validator->fails()) {
@@ -683,8 +683,23 @@ class TransactionController extends Controller
             }
 
             $status_order = $this->transactionQueries->getStatusOrder($id);
-            if ($status_order->status_code == '00') {
-                $this->transactionCommand->updateOrderStatus($id, '99', $request->reason);
+
+            if ($status_order->progress_active->status_code == '00') {
+                $this->transactionCommand->updateOrderStatus($id, '99', request()->get('reason'));
+
+                $order = Order::with('detail')->find($id);
+
+                foreach ($order->detail as $detail){
+                    $stock = ProductStock::where('product_id', $detail->product_id)
+                        ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
+
+                    $data['amount'] = $stock->amount + $detail->quantity;
+                    $data['uom'] = $stock->uom;
+                    $data['full_name'] = 'system';
+
+                    $productCommand = new ProductCommands();
+                    $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
+                }
 
                 return $this->respondWithResult(true, 'Pesanan anda berhasil dibatalkan.', 200);
             } else {
