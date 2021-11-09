@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Services\Manager\IconcashManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
 use App\Models\Customer;
+use App\Models\IconcashInquiry;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\OrderPayment;
@@ -95,7 +97,7 @@ class TransactionController extends Controller
             }, request()->get('merchants'));
             $response = $this->transactionCommand->createOrder(request()->all(), $customer_id);
 
-            if ($response['success'] == true){
+            if ($response['success'] == true) {
                 array_map(function ($merchant) {
                     array_map(function ($item) use ($merchant) {
                         $stock = ProductStock::where('product_id', data_get($item, 'product_id'))
@@ -551,7 +553,7 @@ class TransactionController extends Controller
                 $response = $this->transactionCommand->updateOrderStatus($order_id, '02');
                 if ($response['success'] == false) {
                     return $response;
-                }
+                }               
             }
 
             return $response;
@@ -564,7 +566,15 @@ class TransactionController extends Controller
     {
         try {
             $notes = request()->input('notes');
-            return $this->transactionCommand->updateOrderStatus($order_id, '09', $notes);
+            $response = $this->transactionCommand->updateOrderStatus($order_id, '09', $notes);
+            if ($response['success'] == true) {
+                $order = Order::find($order_id);
+                $customer = User::find($order->buyer_id);
+                $mailSender = new MailSenderManager();
+                $mailSender->mailorderRejected($customer, $order_id);
+            }
+
+            return $response;
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -609,7 +619,6 @@ class TransactionController extends Controller
             if (in_array($data->progress_active->status_code, ['08'])) {
                 $this->transactionCommand->updateOrderStatus($id, '88');
 
-
                 $column_name = 'merchant_id';
                 $column_value = $data->merchant_id;
                 $type = 2;
@@ -623,8 +632,28 @@ class TransactionController extends Controller
                 $customer = Customer::where('merchant_id', $data->merchant_id)->first();
                 $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
 
+                $order = Order::find($id);
+                $iconcash = Customer::where('merchant_id', $order->merchant_id)->first()->iconcash;
+                $account_type_id = null;
+
+                if (env('APP_ENV') == 'staging'){
+                    $account_type_id = 13;
+                } elseif (env('APP_ENV') == 'production'){
+                    $account_type_id = 20;
+                } else {
+                    $account_type_id = 13;
+                }
+
+                $amount = $order->total_amount;
+                $client_ref = $this->unique_code($iconcash->token);
+                $corporate_id = 10;
+
+                $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id);
+
+                IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+
                 return $this->respondWithResult(true, 'Selamat! Pesanan anda telah selesai', 200);
-            }else {
+            } else {
                 return $this->respondWithResult(false, 'Pesanan anda belum dikirimkan oleh Penjual!', 400);
             }
         } catch (Exception $e) {
@@ -658,7 +687,7 @@ class TransactionController extends Controller
                 $this->transactionCommand->updateOrderStatus($id, '99', $request->reason);
 
                 return $this->respondWithResult(true, 'Pesanan anda berhasil dibatalkan.', 200);
-            }else {
+            } else {
                 return $this->respondWithResult(false, 'Pesanan anda tidak dapat dibatalkan!', 400);
             }
         } catch (Exception $e) {
@@ -666,10 +695,11 @@ class TransactionController extends Controller
         }
     }
 
-    public function updatePaymentStatus(){
-        if (request()->hasHeader('client-id')){
+    public function updatePaymentStatus()
+    {
+        if (request()->hasHeader('client-id')) {
             $client_id = request()->header('client-id');
-            if ($client_id != config('credentials.iconpay.client_id')){
+            if ($client_id != config('credentials.iconpay.client_id')) {
                 return response()->json([
                     'status' => 11,
                     'success' => false,
@@ -677,7 +707,7 @@ class TransactionController extends Controller
                     'data' => "Must be " . config('credentials.iconpay.client_id')
                 ]);
             }
-        }else{
+        } else {
             return response()->json([
                 'status' => 15,
                 'success' => false,
@@ -691,12 +721,12 @@ class TransactionController extends Controller
         }
 
         $ba_timestamp = null;
-        if (request()->hasHeader('timestamp')){
+        if (request()->hasHeader('timestamp')) {
             $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(10)->toIso8601String();
             $timestamp_min = Carbon::now('Asia/Jakarta')->subMinutes(10)->toIso8601String();
             $ba_timestamp = request()->header('timestamp');
 
-            if (strtotime($ba_timestamp) < strtotime($timestamp_min) || strtotime($ba_timestamp) > strtotime($timestamp_plus)){
+            if (strtotime($ba_timestamp) < strtotime($timestamp_min) || strtotime($ba_timestamp) > strtotime($timestamp_plus)) {
                 return response()->json([
                     'status' => 12,
                     'success' => false,
@@ -704,7 +734,7 @@ class TransactionController extends Controller
                     'data' => "Must be between " . $timestamp_min . " and " . $timestamp_plus
                 ]);
             }
-        }else{
+        } else {
             return response()->json([
                 'status' => 15,
                 'success' => false,
@@ -717,12 +747,12 @@ class TransactionController extends Controller
             ]);
         }
 
-        if (request()->hasHeader('signature')){
+        if (request()->hasHeader('signature')) {
             $ba_signature = request()->header('signature');
             $encode_body = json_encode(request()->all(), JSON_UNESCAPED_SLASHES);
 
             $signature = hash_hmac('sha256', $encode_body . config('credentials.iconpay.client_id') . $ba_timestamp, sha1(config('credentials.iconpay.app_key')));
-            if (!hash_equals($signature, $ba_signature)){
+            if (!hash_equals($signature, $ba_signature)) {
                 return response()->json([
                     'status' => 13,
                     'success' => false,
@@ -730,7 +760,7 @@ class TransactionController extends Controller
                     'data' => "Must be " . $signature
                 ]);
             }
-        }else{
+        } else {
             return response()->json([
                 'status' => 15,
                 'success' => false,
@@ -774,20 +804,20 @@ class TransactionController extends Controller
             $payment_method = request()->payment_channel;
 
             $no_reference = null;
-            foreach (request()->item_details as $detail){
+            foreach (request()->item_details as $detail) {
                 $no_reference = $detail['no_reference'];
             }
 
             $updated_payment = $this->transactionCommand->updatePaymentDetail($no_reference, $payment_method);
 
-            if ($updated_payment == false){
+            if ($updated_payment == false) {
                 return $this->respondWithResult(false, 'Gagal merubah detail pembayaran.', 400);
             }
 
             $orders = Order::where('no_reference', $no_reference)->get();
-            foreach ($orders as $order){
+            foreach ($orders as $order) {
                 $response = $this->transactionCommand->updateOrderStatus($order->id, '01');
-                if ($response['success'] == false){
+                if ($response['success'] == false) {
                     return $response;
                 }
 
@@ -796,7 +826,7 @@ class TransactionController extends Controller
                 $type = 2;
                 $title = 'Pembayaran transaksi berhasil';
                 $message = 'Pembayaran berhasil, menunggu konfirmasi pesananmu dari penjual';
-                $url_path = 'v1/buyer/query/transaction/'. $order->buyer_id .'/detail/' . $order->id;
+                $url_path = 'v1/buyer/query/transaction/' . $order->buyer_id . '/detail/' . $order->id;
 
                 $notificationCommand = new NotificationCommands();
                 $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
@@ -806,8 +836,13 @@ class TransactionController extends Controller
             }
 
             return $response;
-        }catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
+    }
+
+    public function unique_code($value)
+    {
+        return substr(base_convert(sha1(uniqid($value)), 16, 36), 0, 25);
     }
 }

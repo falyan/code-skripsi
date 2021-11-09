@@ -68,9 +68,9 @@ class IconcashInquiry extends Model
     {
         try {
             $model = new self;
-    
+
             $response = IconcashManager::withdrawalInquiry($iconcash->token, $bank_account_name, $bank_account_no, $bank_id, $nominal, $source_account_id);
-    
+
             $model->create([
                 'customer_id' => $iconcash->customer_id,
                 'iconcash_id' => $iconcash->id,

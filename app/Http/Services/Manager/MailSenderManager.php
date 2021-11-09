@@ -13,7 +13,7 @@ class MailSenderManager
         $transactionQueries = new TransactionQueries();
         $order = $transactionQueries->getDetailTransaction($order_id);
         $data = [
-            'customer' => $customer,
+            'destination_name' => $customer->full_name ?? 'Pengguna Setia',
             'order' => $order,
             'order_detail' => $order->detail,
             'payment' => $order->payment
@@ -37,7 +37,7 @@ class MailSenderManager
         $transactionQueries = new TransactionQueries();
         $order = $transactionQueries->getDetailTransaction($order_id);
         $data = [
-            'customer' => $customer,
+            'destination_name' => $customer->full_name ?? 'Pengguna Setia',
             'order' => $order,
             'order_detail' => $order->detail,
             'payment' => $order->payment
@@ -61,13 +61,13 @@ class MailSenderManager
         $transactionQueries = new TransactionQueries();
         $order = $transactionQueries->getDetailTransaction($order_id);
         $data = [
-            'customer' => $customer,
+            'destination_name' => $customer->full_name ?? 'Pengguna Setia',
             'order' => $order,
             'order_detail' => $order->detail,
             'payment' => $order->payment
         ];
 
-        Mail::send('email.paymentSuccess', $data, function ($mail) use ($customer) {
+        Mail::send('email.orderDone', $data, function ($mail) use ($customer) {
             $mail->to($customer->email, 'no-reply')
                 ->subject("Pesanan Selesai");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
@@ -85,14 +85,14 @@ class MailSenderManager
         $transactionQueries = new TransactionQueries();
         $order = $transactionQueries->getDetailTransaction($order_id);
         $data = [
-            'merchant' => $order->merchant,
+            'destination_name' => $order->merchant->name ?? 'Toko Favorit',
             'customer' => $customer,
             'order' => $order,
             'order_detail' => $order->detail,
             'payment' => $order->payment
         ];
 
-        Mail::send('email.paymentSuccess', $data, function ($mail) use ($customer) {
+        Mail::send('email.confirmFinishOrder', $data, function ($mail) use ($customer) {
             $mail->to($customer->email, 'no-reply')
                 ->subject("Pesanan Selesai");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
@@ -112,7 +112,7 @@ class MailSenderManager
             'reason' => $reason,
         ];
 
-        Mail::send('email.paymentSuccess', $data, function ($mail) use ($customer) {
+        Mail::send('email.orderRejected', $data, function ($mail) use ($customer) {
             $mail->to($customer->email, 'no-reply')
                 ->subject("Pesanan Ditolak");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
@@ -131,7 +131,7 @@ class MailSenderManager
             'user' => $customer->full_name,
         ];
 
-        Mail::send('email.paymentSuccess', $data, function ($mail) use ($customer) {
+        Mail::send('email.orderCanceled', $data, function ($mail) use ($customer) {
             $mail->to($customer->email, 'no-reply')
                 ->subject("Pesanan Ditolak");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');

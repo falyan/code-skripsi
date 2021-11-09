@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <h3>Hai, {{ $customer->full_name }}</h3>
+    <h3>Hai, {{ $destination_name }}</h3>
     <p>
         <strong>Yeay barangmu sudah sampai!.</strong><br>
         <strong>Terimakasih sudah berbelanja dan mendukung para penjual di PLN TJSL Marketplace.</strong>

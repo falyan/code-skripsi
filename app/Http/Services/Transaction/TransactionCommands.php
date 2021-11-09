@@ -151,7 +151,6 @@ class TransactionCommands extends Service
                     $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
                 }
             }, data_get($datas, 'merchants'));
-            DB::commit();
 
             $customer = Customer::findOrFail($customer_id);
             $mailSender = new MailSenderManager();
@@ -252,10 +251,6 @@ class TransactionCommands extends Service
             $response['message'] = 'Gagal merubah status pesanan';
             return $response;
         }
-        $order = Order::find($order_id);
-        $customer = User::find($order->buyer_id);
-        $mailSender = new MailSenderManager();
-        $mailSender->mailorderRejected($customer, $order_id);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil merubah status pesanan';
