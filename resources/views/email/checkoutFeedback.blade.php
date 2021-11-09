@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <h3>Hai, {{ $customer->full_name }}</h3>
+    <h3>Hai, {{ $destination_name }}</h3>
     <p>
         <strong>Tinggal sedikit lagi nih. Yuk segera selesaikan pembayaranmu sebesar Rp{{number_format($payment->payment_amount, 2, ',', '.')}} melalui PLN Mobile sebelum {{$payment->date_expired}} WIB.</strong><br>
     </p>

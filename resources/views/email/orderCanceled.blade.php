@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <h3>Hai, {{ $user }}</h3>
+    <h3>Hai, {{ $destination_name }}</h3>
     <p>
         Sayang sekali pesananmu telah dibatalkan.</strong>.<br>
     </p>
