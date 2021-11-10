@@ -492,7 +492,7 @@ class TransactionController extends Controller
             $data = $this->transactionQueries->getDetailTransaction($id);
 
             if (!empty($data)) {
-                return $this->respondWithData($data, 'sukses get detail transaksi');;
+                return $this->respondWithData($data, 'sukses get detail transaksi');
             } else {
                 return $this->respondWithResult(false, 'No reference salah', 400);
             }
@@ -863,6 +863,20 @@ class TransactionController extends Controller
             }
 
             return $response;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getDeliveryDiscount(){
+        try {
+            $data = $this->transactionQueries->getDeliveryDiscount();
+
+            if (!empty($data)) {
+                return $this->respondWithData($data, 'berhail get delivery discount');
+            } else {
+                return $this->respondWithResult(false, 'data delivery discount yang aktif tidak ditemukan', 400);
+            }
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

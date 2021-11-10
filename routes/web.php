@@ -164,6 +164,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/{related_id}/canceled', 'TransactionController@buyerTransactionCanceled');
                 $router->get('/{related_id}/search', 'TransactionController@buyerSearchTransaction');
                 $router->get('/{related_id}/detail/{id}/invoice', 'TransactionController@getDetailInvoice');
+                $router->get('/delivery-discount', 'TransactionController@getDeliveryDiscount');
             });
 
             $router->group(['prefix' => 'notification', 'middleware' => 'auth'], static function () use ($router) {

@@ -3,6 +3,7 @@
 namespace App\Http\Services\Transaction;
 
 use App\Http\Services\Service;
+use App\Models\DeliveryDiscount;
 use App\Models\Order;
 
 class TransactionQueries extends Service
@@ -96,6 +97,11 @@ class TransactionQueries extends Service
     public function getStatusOrder($id)
     {
         $data = Order::with(['progress_active'])->find($id);
+        return $data;
+    }
+
+    public function getDeliveryDiscount(){
+        $data = DeliveryDiscount::where('is_active', true)->get();
         return $data;
     }
 
