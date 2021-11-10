@@ -60,7 +60,7 @@ class TransactionCommands extends Service
 
             $timestamp = Carbon::now('Asia/Jakarta')->toIso8601String();
             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
-            $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDay())->timestamp);
+            $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(7))->timestamp);
             $total_price = 0;
 
             array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, &$total_price) {
