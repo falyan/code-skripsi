@@ -32,6 +32,7 @@ class RajaongkirResources extends JsonResource
                 'province_id' => $this->rajaongkir->destination_details->province_id,
                 'province_name' => $this->rajaongkir->destination_details->province,
             ],
+            'delivery_discount' => $this->delivery_discount,
             'couriers' => array_map(function ($courier) {
                 return [
                     'courier_code' => data_get($courier, 'code'),
