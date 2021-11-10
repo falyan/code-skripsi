@@ -101,7 +101,13 @@ class TransactionQueries extends Service
     }
 
     public function getDeliveryDiscount(){
-        $data = DeliveryDiscount::where('discount_code', 'TJSMKPONGKIR')->first();
+        $data = DeliveryDiscount::where('id', '1')->where('is_active', true)->first();
+
+        if (empty($data)) {
+            $data = new DeliveryDiscount();
+            $data->discount_amount = 0;
+        }
+
         return $data;
     }
 
