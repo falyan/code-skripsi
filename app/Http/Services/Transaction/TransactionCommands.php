@@ -124,6 +124,7 @@ class TransactionCommands extends Service
                 $order_delivery->awb_number = null;
                 $order_delivery->delivery_method = data_get($data, 'delivery_method');
                 $order_delivery->delivery_fee = data_get($data, 'delivery_fee');
+                $order_delivery->delivery_discount = data_get($data, 'delivery_discount');
                 $order_delivery->save();
 
                 $order_payment = new OrderPayment();
