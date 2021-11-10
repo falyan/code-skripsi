@@ -20,6 +20,7 @@ class CreateDeliveryDiscountTable extends Migration
             $table->float('minimum_transaction_amount')->nullable()->default(0);
             $table->text('expedition_list')->nullable();
             $table->string('photo_url')->nullable();
+            $table->boolean('is_active')->nullable()->default(false);
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();
