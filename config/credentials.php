@@ -23,5 +23,8 @@ return [
   ],
   'radagast' => [
     'endpoint' => env('RADAGAST_NOTIFICATION_ENDPOINT')
+  ],
+  'banner' => [
+    'url_flash_popup' => env('BANNER_FLASH_POPUP_URL')
   ]
 ];
