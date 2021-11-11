@@ -492,7 +492,7 @@ class TransactionController extends Controller
             $data = $this->transactionQueries->getDetailTransaction($id);
 
             if (!empty($data)) {
-                return $this->respondWithData($data, 'sukses get detail transaksi');;
+                return $this->respondWithData($data, 'sukses get detail transaksi');
             } else {
                 return $this->respondWithResult(false, 'No reference salah', 400);
             }
@@ -553,7 +553,7 @@ class TransactionController extends Controller
                 $response = $this->transactionCommand->updateOrderStatus($order_id, '02');
                 if ($response['success'] == false) {
                     return $response;
-                }               
+                }
             }
 
             return $response;
@@ -661,14 +661,14 @@ class TransactionController extends Controller
         }
     }
 
-    public function cancelOrder($id, Request $request)
+    public function cancelOrder($id)
     {
         try {
             $rules = [
                 'reason' => 'required',
             ];
 
-            $validator = Validator::make($request->all(), $rules, [
+            $validator = Validator::make(request()->all(), $rules, [
                 'required' => 'sertakan alasan pembatalan pesanan anda.',
             ]);
             if ($validator->fails()) {
@@ -683,8 +683,23 @@ class TransactionController extends Controller
             }
 
             $status_order = $this->transactionQueries->getStatusOrder($id);
-            if ($status_order->status_code == '00') {
-                $this->transactionCommand->updateOrderStatus($id, '99', $request->reason);
+
+            if ($status_order->progress_active->status_code == '00') {
+                $this->transactionCommand->updateOrderStatus($id, '99', request()->get('reason'));
+
+                $order = Order::with('detail')->find($id);
+
+                foreach ($order->detail as $detail){
+                    $stock = ProductStock::where('product_id', $detail->product_id)
+                        ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
+
+                    $data['amount'] = $stock->amount + $detail->quantity;
+                    $data['uom'] = $stock->uom;
+                    $data['full_name'] = 'system';
+
+                    $productCommand = new ProductCommands();
+                    $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
+                }
 
                 return $this->respondWithResult(true, 'Pesanan anda berhasil dibatalkan.', 200);
             } else {
@@ -831,11 +846,37 @@ class TransactionController extends Controller
                 $notificationCommand = new NotificationCommands();
                 $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
 
+                $column_name_merchant = 'merchant_id';
+                $column_value_merchant = $order->merchant_id;
+                $title_merchant = 'Pesanan masuk';
+                $message_merchant = 'Ada pesanan masuk, silahkan konfirmasi pesanan.';
+                $url_path_merchant = 'v1/seller/query/transaction/detail/' . $order->id;
+
+                $notificationCommand = new NotificationCommands();
+                $notificationCommand->create($column_name_merchant, $column_value_merchant, $type, $title_merchant, $message_merchant, $url_path_merchant);
+
+                $customer = Customer::where('merchant_id', $order->merchant_id)->first();
+                $notificationCommand->sendPushNotification($customer->id, $title_merchant, $message_merchant, 'active');
+
                 $customer = User::find($order->buyer_id);
                 $this->mailSenderManager->mailPaymentSuccess($customer, $order->id);
             }
 
             return $response;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getDeliveryDiscount(){
+        try {
+            $data = $this->transactionQueries->getDeliveryDiscount();
+
+            if (!empty($data)) {
+                return $this->respondWithData($data, 'berhail get delivery discount');
+            } else {
+                return $this->respondWithResult(false, 'data delivery discount yang aktif tidak ditemukan', 400);
+            }
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
