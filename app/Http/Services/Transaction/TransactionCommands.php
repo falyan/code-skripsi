@@ -122,6 +122,12 @@ class TransactionCommands extends Service
                 $order_delivery->longitude = data_get($datas, 'destination_info.longitude');
                 $order_delivery->shipping_type = data_get($data, 'delivery_service');
                 $order_delivery->awb_number = null;
+
+                //J&T Courier Validation
+                if (data_get($data, 'delivery_method') == 'J&T'){
+                    data_set($data, 'delivery_method', 'jnt');
+                }
+
                 $order_delivery->delivery_method = data_get($data, 'delivery_method');
                 $order_delivery->delivery_fee = data_get($data, 'delivery_fee');
                 $order_delivery->delivery_discount = data_get($data, 'delivery_discount');
