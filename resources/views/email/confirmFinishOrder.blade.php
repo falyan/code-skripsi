@@ -18,9 +18,12 @@
     <div>No. Invoice : {{$order->trx_no}}</div>
     <div>Tanggal Pesanan : {{$order->order_date}} WIB</div>
     <br>
+    <div>Kurir : {{$order->delivery->courier . ' - ' . $order->delivery->shipping_type}}</div>
+    <br>
     <div>Tujuan Pengiriman :</div>
     <div><strong>{{$order->delivery->receiver_name}} ({{$$order->delivery->receiver_phone}})</strong></div>
-    <div>{{$order->delivery->address, $order->delivery->postal_code}}</div>
+    <div>{{$order->delivery->address,}}</div>
+    <div>{{$order->delivery->district->name, $order->delivery->city->name, $order->delivery->postal_code}}</div>
     <br>
     
     @foreach ($order_detail as $item)
@@ -29,11 +32,12 @@
         <br><br>
     @endforeach
     <div style="margin-top: 10px">Ongkir <br> Rp{{number_format($order->delivery->delivery_fee, 2, ',', '.')}}</div>
+    <div style="margin-top: 10px">Diskon Ongkir <br> <span style="color: red;">R{{$order->delivery->delivery_discount ? 'Rp'. number_format($order->delivery->delivery_discount, 2, ',', '.') : 0}} </span></div>
     <div style="margin-top: 10px">Diskon</div>
     <div style="color: red;">Rp{{$order->total_discount ? number_format($order->total_discount, 2, ',', '.') : 0}}</div>
     <br>
     <hr style="float: left; width: 30%"><br>
-    <div>Total Payment</div>
+    <div>Total Pembayaran</div>
     <div><strong>Rp{{number_format($payment->payment_amount, 2, ',', '.')}}</strong></div>
     <br>
     <span>Email ini dibuat otomatis, mohon untuk tidak membalas.</span>

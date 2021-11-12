@@ -8,10 +8,11 @@ use Illuminate\Support\Facades\Mail;
 
 class MailSenderManager
 {
-    public function mailCheckout($customer, $order_id)
+    public function mailCheckout($order_id)
     {
         $transactionQueries = new TransactionQueries();
         $order = $transactionQueries->getDetailTransaction($order_id);
+        $customer = $order->buyer;
         $data = [
             'destination_name' => $customer->full_name ?? 'Pengguna Setia',
             'order' => $order,
@@ -32,10 +33,11 @@ class MailSenderManager
         Log::info('Berhasil mengirim email checkout untuk ID order ' . $order_id . ' ke email: ' . $customer->email,);
     }
 
-    public function mailPaymentSuccess($customer, $order_id)
+    public function mailPaymentSuccess($order_id)
     {
         $transactionQueries = new TransactionQueries();
         $order = $transactionQueries->getDetailTransaction($order_id);
+        $customer = $order->buyer;
         $data = [
             'destination_name' => $customer->full_name ?? 'Pengguna Setia',
             'order' => $order,
@@ -56,10 +58,73 @@ class MailSenderManager
         Log::info('Berhasil mengirim email pembayaran berhasil untuk ID order ' . $order_id . ' ke email: ' . $customer->email,);
     }
 
-    public function mailOrderDone($customer, $order_id)
+    public function mailNewOrder($order_id)
     {
         $transactionQueries = new TransactionQueries();
         $order = $transactionQueries->getDetailTransaction($order_id);
+        $customer = $order->buyer;
+        $data = [
+            'destination_name' => $order->merchant->name ?? 'Toko Favorit',
+            'customer' => $customer,
+            'order' => $order,
+            'order_detail' => $order->detail,
+            'payment' => $order->payment
+        ];
+
+        Mail::send('email.newOrder', $data, function ($mail) use ($customer, $order) {
+            $mail->to($customer->email, 'no-reply')
+                ->subject($order->merchant->name ?? 'Toko Favorit' . ", Ada Pesanan Baru nih tanggal {{$order->order_date}} WIB ");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        if (Mail::failures()) {
+            Log::error('Gagal mengirim email pesanan selesai untuk ke email: ' . $customer->email,);
+        }
+
+        Log::info('Berhasil mengirim email pesanan selesai untuk ke email: ' . $customer->email,);
+    }
+
+    public function mailOrderArrived($order_id)
+    {
+        $transactionQueries = new TransactionQueries();
+        $order = $transactionQueries->getDetailTransaction($order_id);
+        $customer = $order->buyer;
+        $merchant = $order->merchant;
+        $data = [
+            'destination_name' => $customer->full_name ?? 'Pengguna Setia',
+            'order' => $order,
+            'order_detail' => $order->detail,
+            'payment' => $order->payment
+        ];
+
+        Mail::send('email.orderDeliveredBuyer', $data, function ($mail) use ($customer) {
+            $mail->to($customer->email, 'no-reply')
+                ->subject("Pesanan Telah Dikirim");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        if (Mail::failures()) {
+            Log::error('Gagal mengirim email pesanan selesai untuk ke email: ' . $customer->email,);
+        }
+
+        Mail::send('email.orderDeliveredSeller', $data, function ($mail) use ($customer, $merchant) {
+            $mail->to($merchant->email, 'no-reply')
+                ->subject("Produk Anda Telah Sampai ke Alamat {{$customer->full_name}}");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        if (Mail::failures()) {
+            Log::error('Gagal mengirim email pesanan selesai untuk ke email: ' . $merchant->email,);
+        }
+
+        Log::info('Berhasil mengirim email pesanan selesai untuk ke email: ' . $merchant->email,);
+    }
+
+    public function mailOrderDone($order_id)
+    {
+        $transactionQueries = new TransactionQueries();
+        $order = $transactionQueries->getDetailTransaction($order_id);
+        $customer = $order->buyer;
         $data = [
             'destination_name' => $customer->full_name ?? 'Pengguna Setia',
             'order' => $order,
@@ -80,10 +145,11 @@ class MailSenderManager
         Log::info('Berhasil mengirim email pesanan selesai untuk ke email: ' . $customer->email,);
     }
 
-    public function mailConfirmFinish($customer, $order_id)
+    public function mailConfirmFinish($order_id)
     {
         $transactionQueries = new TransactionQueries();
         $order = $transactionQueries->getDetailTransaction($order_id);
+        $customer = $order->buyer;
         $data = [
             'destination_name' => $order->merchant->name ?? 'Toko Favorit',
             'customer' => $customer,

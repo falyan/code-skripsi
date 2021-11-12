@@ -161,7 +161,7 @@ class TransactionCommands extends Service
 
             $customer = Customer::findOrFail($customer_id);
             $mailSender = new MailSenderManager();
-            $mailSender->mailCheckout($customer, $this->order_id);
+            $mailSender->mailCheckout($this->order_id);
 
             $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
             $body = [

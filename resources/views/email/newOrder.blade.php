@@ -5,18 +5,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Pesanan Selesai</title>
+    <title>{{ $destination_name }}, Ada Pesanan Baru nih tanggal {{$order->order_date}} WIB </title>
 </head>
 
 <body>
     <h3>Hai, {{ $destination_name }}</h3>
     <p>
-        <strong>Yeay barangmu sudah sampai!.</strong><br>
-        <strong>Terimakasih sudah berbelanja dan mendukung para penjual di PLN TJSL Marketplace.</strong>
+        <strong>Ada pesanan baru dari {{$customer->full_name}}.</strong><br>
     </p>
-    <span>Berikut detail pesananmu:</span>
+    <span>Segera konfirmasi pesananmu sebelum tanggal {{date('Y-m-d', strtotime($order->order_date. ' + 3 days'))}}.</span>
+    <br>
     <div>No. Invoice : {{$order->trx_no}}</div>
-    <div>Toko : {{$order->merchant->name}}</div>
+    <div>Tanggal Pesanan : {{$order->order_date}} WIB</div>
+    <br>
+    <div>Kurir : {{strtoupper($order->delivery->courier) . ' - ' . $order->delivery->shipping_type}}</div>
+    <br>
+    <div>Tujuan Pengiriman :</div>
+    <div><strong>{{$order->delivery->receiver_name}} ({{$$order->delivery->receiver_phone}})</strong></div>
+    <div>{{$order->delivery->address,}}</div>
+    <div>{{$order->delivery->district->name, $order->delivery->city->name, $order->delivery->postal_code}}</div>
+    <br>
     
     @foreach ($order_detail as $item)
     <div style="margin-top: 10px">{{$item->product->name}}</div>
