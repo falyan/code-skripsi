@@ -2,6 +2,7 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
+use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Manager\RajaOngkirManager;
 use App\Models\Coba;
 use App\Models\Customer;
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\Hash;
 */
 
 $router->get('/', function () use ($router) {
+    $mailSender = new MailSenderManager();
+            $mailSender->mailOrderOnDelivery(600);
     return $router->app->version();
 });
 

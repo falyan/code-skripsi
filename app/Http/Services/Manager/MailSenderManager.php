@@ -135,6 +135,14 @@ class MailSenderManager
             Log::info('Berhasil mengirim email pesanan sampai ke email: ' . $customer->email);
         }
 
+        $data = [
+            'destination_name' => $merchant->name ?? 'Toko Favorit',
+            'order' => $order,
+            'order_detail' => $order->detail,
+            'payment' => $order->payment,
+            'date_arrived' => $date_arrived
+        ];
+
         Mail::send('email.orderDeliveredSeller', $data, function ($mail) use ($customer, $merchant) {
             $mail->to($merchant->email, 'no-reply')
                 ->subject("Produk Anda Telah Sampai ke Alamat {$customer->full_name}");
@@ -156,9 +164,7 @@ class MailSenderManager
         $merchant = $order->merchant;
         $data = [
             'destination_name' => $customer->full_name ?? 'Pengguna Setia',
-            'order' => $order,
-            'order_detail' => $order->detail,
-            'payment' => $order->payment
+            'order' => $order
         ];
 
         Mail::send('email.orderDone', $data, function ($mail) use ($customer) {
@@ -172,6 +178,11 @@ class MailSenderManager
         } else {
             Log::info('Berhasil mengirim email checkout ke email: ' . $customer->email);
         }
+
+        $data = [
+            'destination_name' => $merchant->name ?? 'Toko Favorit',
+            'order' => $order
+        ];
         
         Mail::send('email.confirmFinishOrder', $data, function ($mail) use ($merchant) {
             $mail->to($merchant->email, 'no-reply')
