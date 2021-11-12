@@ -13,8 +13,8 @@
     <p>
         <strong>Produkmu telah tiba di tujuan.</strong><br>
     </p>
-    <span>Dana akan diteruskan ke Saldo Pendapatan Iconcash kamu maksimal 3x24 jam jika pembeli tidak melakukan konfirmasi penerimaan barang..</span>
-    <br>
+    <span>Dana akan diteruskan ke Saldo Pendapatan Iconcash kamu maksimal 3x24 jam jika pembeli tidak melakukan konfirmasi penerimaan barang.</span>
+    <br><br>
     <div>No. Invoice : {{$order->trx_no}}</div>
     <div>Tanggal Pesanan : {{$order->order_date}} WIB</div>
     <br>
