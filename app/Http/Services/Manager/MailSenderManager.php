@@ -227,7 +227,7 @@ class MailSenderManager
         $order = $transactionQueries->getDetailTransaction($order_id);
         $customer = $order->buyer;
         $data = [
-            'user' => $customer->full_name,
+            'destination_name' => $customer->full_name
         ];
 
         Mail::send('email.orderCanceled', $data, function ($mail) use ($customer) {
