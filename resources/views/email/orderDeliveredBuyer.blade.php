@@ -5,41 +5,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Pesanan Selesai</title>
+    <title>Pesanan Telah Dikirim</title>
 </head>
 
 <body>
     <h3>Hai, {{ $destination_name }}</h3>
     <p>
-        <strong>Transaksimu dengan {{$customer->full_name}} sudah selesai.</strong><br>
+        <strong>Pesananmu dengan No. Invoice : {{$order->trx_no}} telah dikirim pada tanggal {{$date_arrived}} WIB. </strong><br>
+        Mohon menerima dan mengkonfirmasi pesanan di aplikasi PLN TJSL Marketplace dalam waktu 3 Hari. Setalah dikonfirmasi, pembayaran akan diteruskan
+        ke Toko {{$order->merchant->name}}. Jika tidak dikonfirmasi dalam waktu yang telah ditentukan, pembayaran akan ditransfer secara otomatis.
     </p>
-    <span>Selanjutnya dana akan diteruskan secara otomatis ke saldo pendapatan Iconcash kamu.</span>
-    <br>
-    <div>No. Invoice : {{$order->trx_no}}</div>
-    <div>Tanggal Pesanan : {{$order->order_date}} WIB</div>
-    <br>
-    <div>Kurir : {{$order->delivery->courier . ' - ' . $order->delivery->shipping_type}}</div>
-    <br>
-    <div>Tujuan Pengiriman :</div>
-    <div><strong>{{$order->delivery->receiver_name}} ({{$order->delivery->receiver_phone}})</strong></div>
-    <div>{{$order->delivery->address,}}</div>
-    <div>{{$order->delivery->district->name}}, {{$order->delivery->city->name}}, {{$order->delivery->postal_code}}</div>
-    <br>
-    
+    <span>Berikut detail pesananmu:</span>
     @foreach ($order_detail as $item)
-    <div style="margin-top: 10px">{{$item->product->name}}</div>
-    <span>{{$item->quantity}} x Rp{{number_format($item->product->price, 2, ',', '.')}}</span>
+        <div style="margin-top: 10px">{{$item->product->name}}</div>
+        <span>{{$item->quantity}} x Rp{{number_format($item->product->price, 2, ',', '.')}}</span>
         <br><br>
     @endforeach
     <div style="margin-top: 10px">Ongkir <br> Rp{{number_format($order->delivery->delivery_fee, 2, ',', '.')}}</div>
     <div style="margin-top: 10px">Diskon Ongkir <br> <span style="color: red;">R{{$order->delivery->delivery_discount ? 'Rp'. number_format($order->delivery->delivery_discount, 2, ',', '.') : 0}} </span></div>
-    <div style="margin-top: 10px">Diskon</div>
+    <div style="margin-top: 10px">Diskon Barang</div>
     <div style="color: red;">Rp{{$order->total_discount ? number_format($order->total_discount, 2, ',', '.') : 0}}</div>
-    <br>
     <hr style="float: left; width: 30%"><br>
-    <div>Total Pembayaran</div>
+    <div>Total Payment</div>
     <div><strong>Rp{{number_format($payment->payment_amount, 2, ',', '.')}}</strong></div>
     <br>
+
     <span>Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
 </body>
 

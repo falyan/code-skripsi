@@ -18,7 +18,7 @@ class LogMiddleware
 
         $response = $next($request);
 
-        $log_response = $response->original;
+        $log_response = $response->original ??null;
         if (data_get($log_response, 'token')) {
             $log_response['token'] = "hiddentoken";
         }

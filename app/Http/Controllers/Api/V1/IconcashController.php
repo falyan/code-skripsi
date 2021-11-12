@@ -54,7 +54,7 @@ class IconcashController extends Controller
                 $name = preg_replace('/[^A-Za-z0-9\- ]/', '', $name);
             }
 
-            if (!preg_match("/^[0-9]{9,15}\z/", $user->phone)) {
+            if (!preg_match("/^[0-9]{8,15}\z/", $user->phone)) {
                 throw new Exception('nomor telepon user tidak valid!', 400);
             }
 

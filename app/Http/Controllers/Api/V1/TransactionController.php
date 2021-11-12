@@ -568,10 +568,8 @@ class TransactionController extends Controller
             $notes = request()->input('notes');
             $response = $this->transactionCommand->updateOrderStatus($order_id, '09', $notes);
             if ($response['success'] == true) {
-                $order = Order::find($order_id);
-                $customer = User::find($order->buyer_id);
                 $mailSender = new MailSenderManager();
-                $mailSender->mailorderRejected($customer, $order_id);
+                $mailSender->mailorderRejected($order_id, $notes);
             }
 
             return $response;
@@ -591,6 +589,9 @@ class TransactionController extends Controller
             if ($status['success'] == false) {
                 return $status;
             }
+
+            $mailSender = new MailSenderManager();
+            $mailSender->mailNewOrder($order_id);
 
             return $response;
         } catch (Exception $e) {
@@ -652,6 +653,10 @@ class TransactionController extends Controller
 
                 IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
+                $mailSender = new MailSenderManager();
+                $mailSender->mailOrderDone($id);
+                $mailSender->mailConfirmFinish($id);
+
                 return $this->respondWithResult(true, 'Selamat! Pesanan anda telah selesai', 200);
             } else {
                 return $this->respondWithResult(false, 'Pesanan anda belum dikirimkan oleh Penjual!', 400);
@@ -700,6 +705,9 @@ class TransactionController extends Controller
                     $productCommand = new ProductCommands();
                     $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
                 }
+
+                $mailSender = new MailSenderManager();
+                $mailSender->mailorderCanceled($id);
 
                 return $this->respondWithResult(true, 'Pesanan anda berhasil dibatalkan.', 200);
             } else {
@@ -829,6 +837,7 @@ class TransactionController extends Controller
                 return $this->respondWithResult(false, 'Gagal merubah detail pembayaran.', 400);
             }
 
+            $customer = null;
             $orders = Order::where('no_reference', $no_reference)->get();
             foreach ($orders as $order) {
                 $response = $this->transactionCommand->updateOrderStatus($order->id, '01');
@@ -858,10 +867,11 @@ class TransactionController extends Controller
                 $customer = Customer::where('merchant_id', $order->merchant_id)->first();
                 $notificationCommand->sendPushNotification($customer->id, $title_merchant, $message_merchant, 'active');
 
-                $customer = User::find($order->buyer_id);
-                $this->mailSenderManager->mailPaymentSuccess($customer, $order->id);
+                $customer = Customer::find($order->buyer_id);
+                $this->mailSenderManager->mailNewOrder($customer, $order->id);
             }
-
+            
+            $this->mailSenderManager->mailPaymentSuccess($customer, $order->id);
             return $response;
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());

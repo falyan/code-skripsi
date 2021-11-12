@@ -5,20 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Pesanan Selesai</title>
+    <title>{{ $destination_name }}, Ada Pesanan Baru nih tanggal {{$order->order_date}} WIB </title>
 </head>
 
 <body>
     <h3>Hai, {{ $destination_name }}</h3>
     <p>
-        <strong>Transaksimu dengan {{$customer->full_name}} sudah selesai.</strong><br>
+        <strong>Ada pesanan baru dari {{$order->buyer->full_name}}.</strong><br>
     </p>
-    <span>Selanjutnya dana akan diteruskan secara otomatis ke saldo pendapatan Iconcash kamu.</span>
+    <span>Segera konfirmasi pesananmu sebelum tanggal {{date('Y-m-d', strtotime($order->order_date. ' + 3 days'))}}.</span>
     <br>
     <div>No. Invoice : {{$order->trx_no}}</div>
     <div>Tanggal Pesanan : {{$order->order_date}} WIB</div>
     <br>
-    <div>Kurir : {{$order->delivery->courier . ' - ' . $order->delivery->shipping_type}}</div>
+    <div>Kurir : {{strtoupper($order->delivery->courier) . ' - ' . $order->delivery->shipping_type}}</div>
     <br>
     <div>Tujuan Pengiriman :</div>
     <div><strong>{{$order->delivery->receiver_name}} ({{$order->delivery->receiver_phone}})</strong></div>
@@ -26,7 +26,7 @@
     <div>{{$order->delivery->district->name}}, {{$order->delivery->city->name}}, {{$order->delivery->postal_code}}</div>
     <br>
     
-    @foreach ($order_detail as $item)
+    @foreach ($order->detail as $item)
     <div style="margin-top: 10px">{{$item->product->name}}</div>
     <span>{{$item->quantity}} x Rp{{number_format($item->product->price, 2, ',', '.')}}</span>
         <br><br>
@@ -38,7 +38,7 @@
     <br>
     <hr style="float: left; width: 30%"><br>
     <div>Total Pembayaran</div>
-    <div><strong>Rp{{number_format($payment->payment_amount, 2, ',', '.')}}</strong></div>
+    <div><strong>Rp{{number_format($order->payment->payment_amount, 2, ',', '.')}}</strong></div>
     <br>
     <span>Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
 </body>
