@@ -24,8 +24,6 @@ use Illuminate\Support\Facades\Hash;
 */
 
 $router->get('/', function () use ($router) {
-    $mailSender = new MailSenderManager();
-            $mailSender->mailOrderOnDelivery(600);
     return $router->app->version();
 });
 
