@@ -591,7 +591,7 @@ class TransactionController extends Controller
             }
 
             $mailSender = new MailSenderManager();
-            $mailSender->mailNewOrder($order_id);
+            $mailSender->mailOrderOnDelivery($order_id);
 
             return $response;
         } catch (Exception $e) {
@@ -655,7 +655,6 @@ class TransactionController extends Controller
 
                 $mailSender = new MailSenderManager();
                 $mailSender->mailOrderDone($id);
-                $mailSender->mailConfirmFinish($id);
 
                 return $this->respondWithResult(true, 'Selamat! Pesanan anda telah selesai', 200);
             } else {

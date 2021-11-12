@@ -54,7 +54,7 @@ class MailSenderManager
         if (Mail::failures()) {
             Log::error('Gagal mengirim email pembayaran berhasil ke email: ' . $customer->email);
         } else {
-            Log::info('Berhasil mengirim email checkout ke email: ' . $customer->email);
+            Log::info('Berhasil mengirim email pembayaran berhasil ke email: ' . $customer->email);
         }
     }
 
@@ -62,7 +62,6 @@ class MailSenderManager
     {
         $transactionQueries = new TransactionQueries();
         $order = $transactionQueries->getDetailTransaction($order_id);
-        $customer = $order->buyer;
         $merchant = $order->merchant;
         $data = [
             'destination_name' => $order->merchant->name ?? 'Toko Favorit',
@@ -76,11 +75,36 @@ class MailSenderManager
         });
 
         if (Mail::failures()) {
-            Log::error('Gagal mengirim email pesanan selesai untuk ke email: ' . $customer->email);
+            Log::error('Gagal mengirim email pesanan baru untuk ke email: ' . $merchant->email);
         } else {
-            Log::info('Berhasil mengirim email pesanan selesai untuk ke email: ' . $customer->email);
+            Log::info('Berhasil mengirim email pesanan baru untuk ke email: ' . $merchant->email);
         }
 
+
+        return;
+    }
+
+    public function mailOrderOnDelivery($order_id)
+    {
+        $transactionQueries = new TransactionQueries();
+        $order = $transactionQueries->getDetailTransaction($order_id);
+        $customer = $order->buyer;
+        $data = [
+            'destination_name' => $order->merchant->name ?? 'Toko Favorit',
+            'order' => $order
+        ];
+
+        Mail::send('email.orderOnDelivery', $data, function ($mail) use ($customer) {
+            $mail->to($customer->email, 'no-reply')
+                ->subject("Pesanan Sedang Dikirim");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        if (Mail::failures()) {
+            Log::error('Gagal mengirim email pesanan baru untuk ke email: ' . $customer->email);
+        } else {
+            Log::info('Berhasil mengirim email pesanan baru untuk ke email: ' . $customer->email);
+        }
 
         return;
     }
@@ -106,10 +130,18 @@ class MailSenderManager
         });
 
         if (Mail::failures()) {
-            Log::error('Gagal mengirim email pesanan selesai untuk ke email: ' . $customer->email,);
+            Log::error('Gagal mengirim email pesanan sampai untuk ke email: ' . $customer->email,);
         } else {
-            Log::info('Berhasil mengirim email checkout ke email: ' . $customer->email);
+            Log::info('Berhasil mengirim email pesanan sampai ke email: ' . $customer->email);
         }
+
+        $data = [
+            'destination_name' => $merchant->name ?? 'Toko Favorit',
+            'order' => $order,
+            'order_detail' => $order->detail,
+            'payment' => $order->payment,
+            'date_arrived' => $date_arrived
+        ];
 
         Mail::send('email.orderDeliveredSeller', $data, function ($mail) use ($customer, $merchant) {
             $mail->to($merchant->email, 'no-reply')
@@ -118,9 +150,9 @@ class MailSenderManager
         });
 
         if (Mail::failures()) {
-            Log::error('Gagal mengirim email pesanan selesai untuk ke email: ' . $merchant->email);
+            Log::error('Gagal mengirim email pesanan sampai untuk ke email: ' . $merchant->email);
         } else {
-            Log::info('Berhasil mengirim email pesanan selesai untuk ke email: ' . $merchant->email);
+            Log::info('Berhasil mengirim email pesanan sampai untuk ke email: ' . $merchant->email);
         }
     }
 
@@ -129,11 +161,10 @@ class MailSenderManager
         $transactionQueries = new TransactionQueries();
         $order = $transactionQueries->getDetailTransaction($order_id);
         $customer = $order->buyer;
+        $merchant = $order->merchant;
         $data = [
             'destination_name' => $customer->full_name ?? 'Pengguna Setia',
-            'order' => $order,
-            'order_detail' => $order->detail,
-            'payment' => $order->payment
+            'order' => $order
         ];
 
         Mail::send('email.orderDone', $data, function ($mail) use ($customer) {
@@ -147,31 +178,22 @@ class MailSenderManager
         } else {
             Log::info('Berhasil mengirim email checkout ke email: ' . $customer->email);
         }
-    }
 
-    public function mailConfirmFinish($order_id)
-    {
-        $transactionQueries = new TransactionQueries();
-        $order = $transactionQueries->getDetailTransaction($order_id);
-        $customer = $order->buyer;
         $data = [
-            'destination_name' => $order->merchant->name ?? 'Toko Favorit',
-            'customer' => $customer,
-            'order' => $order,
-            'order_detail' => $order->detail,
-            'payment' => $order->payment
+            'destination_name' => $merchant->name ?? 'Toko Favorit',
+            'order' => $order
         ];
-
-        Mail::send('email.confirmFinishOrder', $data, function ($mail) use ($customer) {
-            $mail->to($customer->email, 'no-reply')
+        
+        Mail::send('email.confirmFinishOrder', $data, function ($mail) use ($merchant) {
+            $mail->to($merchant->email, 'no-reply')
                 ->subject("Pesanan Selesai");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
         });
 
         if (Mail::failures()) {
-            Log::error('Gagal mengirim email pesanan selesai untuk ke email: ' . $customer->email);
+            Log::error('Gagal mengirim email pesanan selesai untuk ke email: ' . $merchant->email);
         } else {
-            Log::info('Berhasil mengirim email checkout ke email: ' . $customer->email);
+            Log::info('Berhasil mengirim email checkout ke email: ' . $merchant->email);
         }
     }
 

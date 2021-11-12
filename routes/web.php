@@ -2,6 +2,7 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
+use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Manager\RajaOngkirManager;
 use App\Models\Coba;
 use App\Models\Customer;
