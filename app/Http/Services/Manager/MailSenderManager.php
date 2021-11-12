@@ -71,7 +71,7 @@ class MailSenderManager
 
         Mail::send('email.newOrder', $data, function ($mail) use ($merchant) {
             $mail->to($merchant->email, 'no-reply')
-                ->subject("{{$merchant->name}}, Ada Pesanan Baru nih");
+                ->subject("{$merchant->name}, Ada Pesanan Baru nih");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
         });
 
