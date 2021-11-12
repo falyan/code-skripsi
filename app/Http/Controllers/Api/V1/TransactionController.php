@@ -868,10 +868,10 @@ class TransactionController extends Controller
                 $notificationCommand->sendPushNotification($customer->id, $title_merchant, $message_merchant, 'active');
 
                 $customer = Customer::find($order->buyer_id);
-                $this->mailSenderManager->mailNewOrder($customer, $order->id);
+                $this->mailSenderManager->mailNewOrder($order->id);
             }
             
-            $this->mailSenderManager->mailPaymentSuccess($customer, $order->id);
+            $this->mailSenderManager->mailPaymentSuccess($order->id);
             return $response;
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
