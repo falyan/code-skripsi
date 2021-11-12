@@ -568,10 +568,8 @@ class TransactionController extends Controller
             $notes = request()->input('notes');
             $response = $this->transactionCommand->updateOrderStatus($order_id, '09', $notes);
             if ($response['success'] == true) {
-                $order = Order::find($order_id);
-                $customer = User::find($order->buyer_id);
                 $mailSender = new MailSenderManager();
-                $mailSender->mailorderRejected($customer, $order_id);
+                $mailSender->mailorderRejected($order_id, $notes);
             }
 
             return $response;
@@ -708,9 +706,8 @@ class TransactionController extends Controller
                     $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
                 }
 
-                $customer = Customer::find($order->buyer->id);
                 $mailSender = new MailSenderManager();
-                $mailSender->mailorderCanceled($customer);
+                $mailSender->mailorderCanceled($id);
 
                 return $this->respondWithResult(true, 'Pesanan anda berhasil dibatalkan.', 200);
             } else {

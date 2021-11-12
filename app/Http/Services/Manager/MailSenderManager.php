@@ -171,8 +171,12 @@ class MailSenderManager
         Log::info('Berhasil mengirim email pesanan selesai untuk ke email: ' . $customer->email,);
     }
 
-    public function mailorderRejected($customer, $reason)
+    public function mailorderRejected($order_id, $reason)
     {
+        $transactionQueries = new TransactionQueries();
+        $order = $transactionQueries->getDetailTransaction($order_id);
+        $customer = $order->buyer;
+
         $data = [
             'user' => $customer->full_name,
             'reason' => $reason,
@@ -191,8 +195,11 @@ class MailSenderManager
         Log::info('Berhasil mengirim email pesanan ditolak untuk email: ' . $customer->email,);
     }
 
-    public function mailorderCanceled($customer)
+    public function mailorderCanceled($order_id)
     {
+        $transactionQueries = new TransactionQueries();
+        $order = $transactionQueries->getDetailTransaction($order_id);
+        $customer = $order->buyer;
         $data = [
             'user' => $customer->full_name,
         ];
