@@ -11,7 +11,7 @@
 <body>
     <h3>Hai, {{ $destination_name }}</h3>
     <p>
-        <strong>Ada pesanan baru dari {{$customer->full_name}}.</strong><br>
+        <strong>Ada pesanan baru dari {{$order->buyer->full_name}}.</strong><br>
     </p>
     <span>Segera konfirmasi pesananmu sebelum tanggal {{date('Y-m-d', strtotime($order->order_date. ' + 3 days'))}}.</span>
     <br>
@@ -21,12 +21,12 @@
     <div>Kurir : {{strtoupper($order->delivery->courier) . ' - ' . $order->delivery->shipping_type}}</div>
     <br>
     <div>Tujuan Pengiriman :</div>
-    <div><strong>{{$order->delivery->receiver_name}} ({{$$order->delivery->receiver_phone}})</strong></div>
+    <div><strong>{{$order->delivery->receiver_name}} ({{$order->delivery->receiver_phone}})</strong></div>
     <div>{{$order->delivery->address,}}</div>
-    <div>{{$order->delivery->district->name, $order->delivery->city->name, $order->delivery->postal_code}}</div>
+    <div>{{$order->delivery->district->name}}, {{$order->delivery->city->name}}, {{$order->delivery->postal_code}}</div>
     <br>
     
-    @foreach ($order_detail as $item)
+    @foreach ($order->detail as $item)
     <div style="margin-top: 10px">{{$item->product->name}}</div>
     <span>{{$item->quantity}} x Rp{{number_format($item->product->price, 2, ',', '.')}}</span>
         <br><br>
@@ -38,7 +38,7 @@
     <br>
     <hr style="float: left; width: 30%"><br>
     <div>Total Pembayaran</div>
-    <div><strong>Rp{{number_format($payment->payment_amount, 2, ',', '.')}}</strong></div>
+    <div><strong>Rp{{number_format($order->payment->payment_amount, 2, ',', '.')}}</strong></div>
     <br>
     <span>Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
 </body>

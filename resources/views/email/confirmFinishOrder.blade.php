@@ -21,9 +21,9 @@
     <div>Kurir : {{$order->delivery->courier . ' - ' . $order->delivery->shipping_type}}</div>
     <br>
     <div>Tujuan Pengiriman :</div>
-    <div><strong>{{$order->delivery->receiver_name}} ({{$$order->delivery->receiver_phone}})</strong></div>
+    <div><strong>{{$order->delivery->receiver_name}} ({{$order->delivery->receiver_phone}})</strong></div>
     <div>{{$order->delivery->address,}}</div>
-    <div>{{$order->delivery->district->name, $order->delivery->city->name, $order->delivery->postal_code}}</div>
+    <div>{{$order->delivery->district->name}}, {{$order->delivery->city->name}}, {{$order->delivery->postal_code}}</div>
     <br>
     
     @foreach ($order_detail as $item)

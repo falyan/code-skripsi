@@ -20,9 +20,9 @@
     <div style="margin-top: 10px">Resi Pengiriman : {{$order->delivery->awb_number}}</div>
     <br>
     <div>Tujuan Pengiriman :</div>
-    <div><strong>{{$order->delivery->receiver_name}} ({{$$order->delivery->receiver_phone}})</strong></div>
+    <div><strong>{{$order->delivery->receiver_name}} ({{$order->delivery->receiver_phone}})</strong></div>
     <div>{{$order->delivery->address,}}</div>
-    <div>{{$order->delivery->district->name, $order->delivery->city->name, $order->delivery->postal_code}}</div>
+    <div>{{$order->delivery->district->name}}, {{$order->delivery->city->name}}, {{$order->delivery->postal_code}}</div>
     <br><br>
     <span>Biaya kirim telah LUNAS. Anda tidak perlu lagi membayar biaya kirim.</span>
     <br><br>
