@@ -8,6 +8,7 @@ use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
 use App\Models\Order;
 use App\Models\OrderProgress;
+use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
@@ -206,6 +207,9 @@ class RajaOngkirManager
               $message = 'Pesanan anda telah sampai, silahkan cek kelengkapan pesanan anda sebelum menyelesaikan pesanan.';
               $url_path = 'v1/buyer/query/transaction/'. $order['buyer_id'] .'/detail/' . $order['id'];
               $notif_command->create('customer_id', $order['buyer_id'], '2', $title, $message, $url_path);
+
+              $mailSender = new MailSenderManager();
+              $mailSender->mailOrderArrived($order['id'], Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s'));
           }
       }
 
