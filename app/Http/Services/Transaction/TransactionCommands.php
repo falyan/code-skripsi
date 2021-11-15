@@ -64,7 +64,18 @@ class TransactionCommands extends Service
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(7))->timestamp);
             $total_price = 0;
 
-            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, &$total_price) {
+            //Customer discount
+            $customer = Customer::findOrFail($customer_id);
+            $transactionQueries = new TransactionQueries();
+            $discount = $transactionQueries->getCustomerDiscount($customer_id, $customer['email']);
+            $total_discount = 0;
+            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, &$total_price, &$discount, &$total_discount) {
+                $count_discount = $discount;
+                if (data_get($data, 'total_payment') <= $discount){
+                    $count_discount = data_get($data, 'total_payment');
+                }
+                data_set($data, 'total_payment', data_get($data, 'total_payment') - $count_discount);
+
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
                 $order->buyer_id = $customer_id;
@@ -74,12 +85,15 @@ class TransactionCommands extends Service
                 $order->total_weight = data_get($data, 'total_weight');
                 $order->related_pln_mobile_customer_id = null;
                 $order->no_reference = $no_reference;
+                $order->discount = $count_discount;
                 $order->created_by = 'user';
                 $order->updated_by = 'user';
                 $order->save();
 
                 $this->order_id = $order->id;
 
+                $discount = $discount - $count_discount;
+                $total_discount += $count_discount;
                 $total_price += data_get($data, 'total_payment');
 
                 array_map(function ($product) use ($order) {
@@ -160,25 +174,15 @@ class TransactionCommands extends Service
                 }
             }, data_get($datas, 'merchants'));
 
-            $customer = Customer::findOrFail($customer_id);
             $mailSender = new MailSenderManager();
             $mailSender->mailCheckout($this->order_id);
 
-            //Customer discount
-            $transactionQueries = new TransactionQueries();
-            $discount = $transactionQueries->getCustomerDiscount($customer_id, $customer['email']);
-
-            if ($discount > 0){
-                if ($total_price <= $discount){
-                    $discount = $total_price;
-                }
-
+            if ($total_discount > 0){
                 $update_discount = $this->updateCustomerDiscount($customer_id, $customer['email'], $discount, $no_reference);
                 if ($update_discount == false){
                     throw new Exception('Gagal mengupdate customer discount');
                 }
             }
-            $total_price = $total_price - $discount;
 
             $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
             $body = [
