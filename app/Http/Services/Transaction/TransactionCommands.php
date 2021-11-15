@@ -167,15 +167,18 @@ class TransactionCommands extends Service
             //Customer discount
             $transactionQueries = new TransactionQueries();
             $discount = $transactionQueries->getCustomerDiscount($customer_id, $customer['email']);
-            if ($total_price <= $discount){
-                $discount = $total_price;
+
+            if ($discount > 0){
+                if ($total_price <= $discount){
+                    $discount = $total_price;
+                }
+
+                $update_discount = $this->updateCustomerDiscount($customer_id, $customer['email'], $discount, $no_reference);
+                if ($update_discount == false){
+                    throw new Exception('Gagal mengupdate customer discount');
+                }
             }
             $total_price = $total_price - $discount;
-
-            $update_discount = $this->updateCustomerDiscount($customer_id, $customer['email'], $discount, $no_reference);
-            if ($update_discount == false){
-                throw new Exception('Gagal mengupdate customer discount');
-            }
 
             $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
             $body = [
