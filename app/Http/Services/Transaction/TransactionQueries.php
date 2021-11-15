@@ -3,8 +3,10 @@
 namespace App\Http\Services\Transaction;
 
 use App\Http\Services\Service;
+use App\Models\CustomerDiscount;
 use App\Models\DeliveryDiscount;
 use App\Models\Order;
+use Carbon\Carbon;
 
 class TransactionQueries extends Service
 {
@@ -117,6 +119,19 @@ class TransactionQueries extends Service
         }
 
         return $data;
+    }
+
+    public function getCustomerDiscount($user_id, $email){
+        $discount = 0;
+        $now = Carbon::now('Asia/Jakarta');
+        $data = CustomerDiscount::where('customer_reference_id', $user_id)->orWhere('customer_reference_id', $email)
+            ->where('is_used', false)->where('expired_date', '>=', $now)->first();
+
+        if (!empty($data)){
+            $discount = (int) $data->amount;
+        }
+
+        return $discount;
     }
 
     public function filter($model, $filter)
