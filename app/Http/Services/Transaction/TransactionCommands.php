@@ -4,6 +4,7 @@ namespace App\Http\Services\Transaction;
 
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Product\ProductCommands;
+use App\Models\CustomerDiscount;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderProgress;
@@ -163,6 +164,19 @@ class TransactionCommands extends Service
             $mailSender = new MailSenderManager();
             $mailSender->mailCheckout($this->order_id);
 
+            //Customer discount
+            $transactionQueries = new TransactionQueries();
+            $discount = $transactionQueries->getCustomerDiscount($customer_id, $customer['email']);
+            if ($total_price <= $discount){
+                $discount = $total_price;
+            }
+            $total_price = $total_price - $discount;
+
+            $update_discount = $this->updateCustomerDiscount($customer_id, $customer['email'], $discount, $no_reference);
+            if ($update_discount == false){
+                throw new Exception('Gagal mengupdate customer discount');
+            }
+
             $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
             $body = [
                 'no_reference' => $no_reference,
@@ -294,6 +308,22 @@ class TransactionCommands extends Service
             }
         }
         return true;
+    }
+
+    public function updateCustomerDiscount($user_id, $email, $discount, $no_reference){
+        $now = Carbon::now('Asia/Jakarta');
+        $data = CustomerDiscount::where('customer_reference_id', $user_id)->orWhere('customer_reference_id', $email)
+            ->where('is_used', false)->where('expired_date', '>=', $now)->first();
+
+        $data->is_used = true;
+        $data->status = 1;
+        $data->used_amount = $discount;
+        $data->no_reference = $no_reference;
+
+        if ($data->save()){
+            return true;
+        }
+        return false;
     }
 
     static function invoice_num($input, $pad_len = 3, $prefix = null)
