@@ -894,6 +894,15 @@ class TransactionController extends Controller
         }
     }
 
+    public function getCustomerDiscount(){
+        try {
+            $discount = $this->transactionQueries->getCustomerDiscount(Auth::user()->id, Auth::user()->email);
+            return $this->respondWithData($discount, 'Data diskon customer berhasil didapatkan');
+        }catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function unique_code($value)
     {
         return substr(base_convert(sha1(uniqid($value)), 16, 36), 0, 25);

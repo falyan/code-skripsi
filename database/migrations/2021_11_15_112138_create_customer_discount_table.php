@@ -20,7 +20,7 @@ class CreateCustomerDiscountTable extends Migration
             $table->float('amount')->default(0);
             $table->float('used_amount')->default(0);
             $table->date('expired_date')->nullable();
-            $table->boolean('id_used')->nullable();
+            $table->boolean('is_used')->nullable();
             $table->string('no_reference')->nullable();
             $table->smallInteger('status')->default(1);
             $table->timestamps();
