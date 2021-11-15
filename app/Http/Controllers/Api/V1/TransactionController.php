@@ -640,7 +640,7 @@ class TransactionController extends Controller
                 if (env('APP_ENV') == 'staging'){
                     $account_type_id = 13;
                 } elseif (env('APP_ENV') == 'production'){
-                    $account_type_id = 20;
+                    $account_type_id = 50;
                 } else {
                     $account_type_id = 13;
                 }
@@ -862,14 +862,17 @@ class TransactionController extends Controller
 
                 $notificationCommand = new NotificationCommands();
                 $notificationCommand->create($column_name_merchant, $column_value_merchant, $type, $title_merchant, $message_merchant, $url_path_merchant);
+            }
 
+            foreach ($orders as $order){
+                $notificationCommand = new NotificationCommands();
                 $customer = Customer::where('merchant_id', $order->merchant_id)->first();
                 $notificationCommand->sendPushNotification($customer->id, $title_merchant, $message_merchant, 'active');
 
                 $customer = Customer::find($order->buyer_id);
                 $this->mailSenderManager->mailNewOrder($order->id);
             }
-            
+
             $this->mailSenderManager->mailPaymentSuccess($order->id);
             return $response;
         } catch (Exception $e) {
