@@ -18,7 +18,11 @@ class TransactionQueries extends Service
                     $j->with(['product_photo']);
                 }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer'
-        ])->where($column_name, $column_value)->orderBy('created_at', 'desc');
+        ])->where($column_name, $column_value)->when($column_name == 'merchant_id', function($query){
+            $query->whereHas('progress_active', function($q){
+                $q->whereNotIn('status_code', [99]);
+            });
+        })->orderBy('created_at', 'desc');
 
         $data = $this->filter($data, $filter);
         $data = $data->get();
@@ -40,6 +44,10 @@ class TransactionQueries extends Service
             [$column_name, $column_value],
         ])->whereHas('progress_active', function ($j) use ($status_code) {
             $j->whereIn('status_code', $status_code);
+        })->when($column_name == 'merchant_id', function($query){
+            $query->whereHas('progress_active', function($q){
+                $q->whereNotIn('status_code', [99]);
+            });
         })->orderBy('created_at', 'desc');
 
 

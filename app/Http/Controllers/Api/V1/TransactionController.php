@@ -267,7 +267,7 @@ class TransactionController extends Controller
             $page = $request->page ?? 1;
 
             if (Auth::check()) {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['99'], $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['99', '09'], $limit, $filter, $page);
             } else {
                 $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['99'], $limit, $filter, $page);
             }
@@ -432,7 +432,7 @@ class TransactionController extends Controller
             $limit = $request->limit ?? 10;
             $page = $request->page ?? 1;
 
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['99'], $limit, $filter, $page);
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['09'], $limit, $filter, $page);
 
             if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
