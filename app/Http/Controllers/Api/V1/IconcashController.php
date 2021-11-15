@@ -125,6 +125,13 @@ class IconcashController extends Controller
             $user = Auth::user();
 
             $response = IconcashManager::login($this->corporate_id, $user->phone, $pin);
+
+            if (isset($response->code)) {
+                if ($response->code == 5001 || $response->code == 5002) {
+                    return response()->json(["success" => $response->success, "code" => $response->code, "message" => $response->message], 200);
+                }
+            }
+
             IconcashCommands::login($user, $response);
 
             return $this->respondWithData([
