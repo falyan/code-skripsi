@@ -24,15 +24,6 @@ use Illuminate\Support\Facades\Hash;
 */
 
 $router->get('/', function () use ($router) {
-    $a = new \App\Http\Services\Manager\MailSenderManager();
-    $a->mailCheckout(600);
-    $a->mailPaymentSuccess(600);
-    $a->mailNewOrder(600);
-    $a->mailOrderOnDelivery(600);
-    $a->mailOrderArrived(600, '2021-11-11 11:11:11');
-    $a->mailOrderDone(600);
-    $a->mailorderRejected(600,'alasan');
-    $a->mailorderCanceled(600);
     return $router->app->version();
 });
 
