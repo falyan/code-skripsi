@@ -174,11 +174,15 @@ class TransactionCommands extends Service
                 }
             }, data_get($datas, 'merchants'));
 
+            if ($total_price == 0){
+                throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
+            }
+
             $mailSender = new MailSenderManager();
             $mailSender->mailCheckout($this->order_id);
 
             if ($total_discount > 0){
-                $update_discount = $this->updateCustomerDiscount($customer_id, $customer['email'], $discount, $no_reference);
+                $update_discount = $this->updateCustomerDiscount($customer_id, $customer['email'], $total_discount, $no_reference);
                 if ($update_discount == false){
                     throw new Exception('Gagal mengupdate customer discount');
                 }
