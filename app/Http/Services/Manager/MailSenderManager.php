@@ -16,8 +16,6 @@ class MailSenderManager
         $data = [
             'destination_name' => $customer->full_name ?? 'Pengguna Setia',
             'order' => $order,
-            'order_detail' => $order->detail,
-            'payment' => $order->payment
         ];
 
         Mail::send('email.checkoutFeedback', $data, function ($mail) use ($customer) {
@@ -41,8 +39,6 @@ class MailSenderManager
         $data = [
             'destination_name' => $customer->full_name ?? 'Pengguna Setia',
             'order' => $order,
-            'order_detail' => $order->detail,
-            'payment' => $order->payment
         ];
 
         Mail::send('email.paymentSuccess', $data, function ($mail) use ($customer) {
@@ -118,8 +114,6 @@ class MailSenderManager
         $data = [
             'destination_name' => $customer->full_name ?? 'Pengguna Setia',
             'order' => $order,
-            'order_detail' => $order->detail,
-            'payment' => $order->payment,
             'date_arrived' => $date_arrived
         ];
 
@@ -138,8 +132,6 @@ class MailSenderManager
         $data = [
             'destination_name' => $merchant->name ?? 'Toko Favorit',
             'order' => $order,
-            'order_detail' => $order->detail,
-            'payment' => $order->payment,
             'date_arrived' => $date_arrived
         ];
 
@@ -176,7 +168,7 @@ class MailSenderManager
         if (Mail::failures()) {
             Log::error('Gagal mengirim email pesanan selesai untuk ke email: ' . $customer->email);
         } else {
-            Log::info('Berhasil mengirim email checkout ke email: ' . $customer->email);
+            Log::info('Berhasil mengirim email pesanan selesai ke email: ' . $customer->email);
         }
 
         $data = [
@@ -193,7 +185,7 @@ class MailSenderManager
         if (Mail::failures()) {
             Log::error('Gagal mengirim email pesanan selesai untuk ke email: ' . $merchant->email);
         } else {
-            Log::info('Berhasil mengirim email checkout ke email: ' . $merchant->email);
+            Log::info('Berhasil mengirim email pesanan selesai ke email: ' . $merchant->email);
         }
     }
 
@@ -204,7 +196,7 @@ class MailSenderManager
         $customer = $order->buyer;
 
         $data = [
-            'user' => $customer->full_name,
+            'destination_name' => $customer->full_name,
             'reason' => $reason,
         ];
 
@@ -217,7 +209,7 @@ class MailSenderManager
         if (Mail::failures()) {
             Log::error('Gagal mengirim email pesanan ditolak untuk email: ' . $customer->email);
         } else {
-            Log::info('Berhasil mengirim email checkout ke email: ' . $customer->email);
+            Log::info('Berhasil mengirim email pesanan ditolak ke email: ' . $customer->email);
         }
     }
 
@@ -232,14 +224,14 @@ class MailSenderManager
 
         Mail::send('email.orderCanceled', $data, function ($mail) use ($customer) {
             $mail->to($customer->email, 'no-reply')
-                ->subject("Pesanan Ditolak");
+                ->subject("Pesanan Dibatalkan");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
         });
 
         if (Mail::failures()) {
-            Log::error('Gagal mengirim email pesanan ditolak untuk email: ' . $customer->email);
+            Log::error('Gagal mengirim email pesanan dibatalkan untuk email: ' . $customer->email);
         } else {
-            Log::info('Berhasil mengirim email checkout ke email: ' . $customer->email);
+            Log::info('Berhasil mengirim email pesanan dibatalkan ke email: ' . $customer->email);
         }
     }
 }

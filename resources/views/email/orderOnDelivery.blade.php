@@ -15,19 +15,20 @@
     </p>
     <span>Berikut detail pengirimannya:</span>
     <div></div>
-    <div style="margin-top: 10px">Pengirim : {{$order->merchant->name}}</div>
-    <div style="margin-top: 10px">Kurir : {{$order->delivery->courier . ' - ' . $order->delivery->shipping_type}}</div>
-    <div style="margin-top: 10px">Resi Pengiriman : {{$order->delivery->awb_number}}</div>
-    <br>
-    <div>Tujuan Pengiriman :</div>
+    <div style="margin-top: 10px"><strong>Pengirim</strong> : {{$order->merchant->name}}</div>
+    
+    <div style="margin-top: 5px"><strong>Kurir</strong> : {{$order->delivery->courier . ' - ' . $order->delivery->shipping_type}}</div>
+
+    <div style="margin-top: 5px"><strong>Resi Pengiriman</strong> : {{$order->delivery->awb_number}}</div>
+    <div style="margin-top: 5px"><strong>Tujuan Pengiriman</strong></div>
     <div><strong>{{$order->delivery->receiver_name}} ({{$order->delivery->receiver_phone}})</strong></div>
     <div>{{$order->delivery->address,}}</div>
     <div>{{$order->delivery->district->name}}, {{$order->delivery->city->name}}, {{$order->delivery->postal_code}}</div>
-    <br><br>
+    <br>
     <span>Biaya kirim telah LUNAS. Anda tidak perlu lagi membayar biaya kirim.</span>
     <br><br>
 
-    <span>Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
+    <span style="color: grey;">Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
 </body>
 
 </html>

@@ -16,7 +16,7 @@
     <p>Tapi jangan khawatir, kamu bisa menemukan produk yang kamu inginkan di Toko favorit lainnya.</p>
 
     <br><br>
-    <span>Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
+    <span style="color: grey;">Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
     
 </body>
 

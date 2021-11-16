@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Pesanan Ditolak</title>
+    <title>Pesanan Dibatalkan</title>
 </head>
 
 <body>
@@ -16,7 +16,7 @@
     <p>Silahkan berbelanja kembali Toko favoritmu.</p>
 
     <br><br>
-    <span>Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
+    <span style="color: grey;">Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
     
 </body>
 
