@@ -4,6 +4,7 @@ namespace App\Http\Services\Transaction;
 
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Product\ProductCommands;
+use App\Models\CustomerDiscount;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderProgress;
@@ -63,7 +64,18 @@ class TransactionCommands extends Service
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(7))->timestamp);
             $total_price = 0;
 
-            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, &$total_price) {
+            //Customer discount
+            $customer = Customer::findOrFail($customer_id);
+            $transactionQueries = new TransactionQueries();
+            $discount = $transactionQueries->getCustomerDiscount($customer_id, $customer['email']);
+            $total_discount = 0;
+            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, &$total_price, &$discount, &$total_discount) {
+                $count_discount = $discount;
+                if (data_get($data, 'total_payment') <= $discount){
+                    $count_discount = data_get($data, 'total_payment');
+                }
+                data_set($data, 'total_payment', data_get($data, 'total_payment') - $count_discount);
+
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
                 $order->buyer_id = $customer_id;
@@ -73,12 +85,15 @@ class TransactionCommands extends Service
                 $order->total_weight = data_get($data, 'total_weight');
                 $order->related_pln_mobile_customer_id = null;
                 $order->no_reference = $no_reference;
+                $order->discount = $count_discount;
                 $order->created_by = 'user';
                 $order->updated_by = 'user';
                 $order->save();
 
                 $this->order_id = $order->id;
 
+                $discount = $discount - $count_discount;
+                $total_discount += $count_discount;
                 $total_price += data_get($data, 'total_payment');
 
                 array_map(function ($product) use ($order) {
@@ -159,9 +174,19 @@ class TransactionCommands extends Service
                 }
             }, data_get($datas, 'merchants'));
 
-            $customer = Customer::findOrFail($customer_id);
+            if ($total_price == 0){
+                throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
+            }
+
             $mailSender = new MailSenderManager();
             $mailSender->mailCheckout($this->order_id);
+
+            if ($total_discount > 0){
+                $update_discount = $this->updateCustomerDiscount($customer_id, $customer['email'], $total_discount, $no_reference);
+                if ($update_discount == false){
+                    throw new Exception('Gagal mengupdate customer discount');
+                }
+            }
 
             $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
             $body = [
@@ -294,6 +319,22 @@ class TransactionCommands extends Service
             }
         }
         return true;
+    }
+
+    public function updateCustomerDiscount($user_id, $email, $discount, $no_reference){
+        $now = Carbon::now('Asia/Jakarta');
+        $data = CustomerDiscount::where('customer_reference_id', $user_id)->orWhere('customer_reference_id', $email)
+            ->where('is_used', false)->where('expired_date', '>=', $now)->first();
+
+        $data->is_used = true;
+        $data->status = 1;
+        $data->used_amount = $discount;
+        $data->no_reference = $no_reference;
+
+        if ($data->save()){
+            return true;
+        }
+        return false;
     }
 
     static function invoice_num($input, $pad_len = 3, $prefix = null)

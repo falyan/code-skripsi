@@ -267,7 +267,7 @@ class TransactionController extends Controller
             $page = $request->page ?? 1;
 
             if (Auth::check()) {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['99'], $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['99', '09'], $limit, $filter, $page);
             } else {
                 $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['99'], $limit, $filter, $page);
             }
@@ -432,7 +432,7 @@ class TransactionController extends Controller
             $limit = $request->limit ?? 10;
             $page = $request->page ?? 1;
 
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['99'], $limit, $filter, $page);
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['09'], $limit, $filter, $page);
 
             if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
@@ -627,12 +627,6 @@ class TransactionController extends Controller
                 $message = 'Transaksi sudah selesai, silahkan memeriksa saldo ICONCASH anda.';
                 $url_path = 'v1/seller/query/transaction/detail/' . $id;
 
-                $notificationCommand = new NotificationCommands();
-                $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
-
-                $customer = Customer::where('merchant_id', $data->merchant_id)->first();
-                $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
-
                 $order = Order::find($id);
                 $iconcash = Customer::where('merchant_id', $order->merchant_id)->first()->iconcash;
                 $account_type_id = null;
@@ -652,6 +646,12 @@ class TransactionController extends Controller
                 $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id);
 
                 IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+
+                $notificationCommand = new NotificationCommands();
+                $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
+
+                $customer = Customer::where('merchant_id', $data->merchant_id)->first();
+                $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
 
                 $mailSender = new MailSenderManager();
                 $mailSender->mailOrderDone($id);
@@ -890,6 +890,15 @@ class TransactionController extends Controller
                 return $this->respondWithResult(false, 'data delivery discount yang aktif tidak ditemukan', 400);
             }
         } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getCustomerDiscount(){
+        try {
+            $discount = $this->transactionQueries->getCustomerDiscount(Auth::user()->id, Auth::user()->email);
+            return $this->respondWithData($discount, 'Data diskon customer berhasil didapatkan');
+        }catch (Exception $e){
             return $this->respondErrorException($e, request());
         }
     }

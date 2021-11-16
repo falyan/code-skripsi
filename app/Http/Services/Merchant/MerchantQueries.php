@@ -22,8 +22,8 @@ class MerchantQueries extends Service
             $merchant = Merchant::with(['operationals', 'district', 'city', 'province', 'expedition'])->find($merchant_id);
             $orders = [];
 
-            $orders['success'] = static::getTotalTrx($merchant_id, 88);
-            $orders['canceled'] = static::getTotalTrx($merchant_id, 99);
+            $orders['success'] = static::getTotalTrx($merchant_id, '88');
+            $orders['canceled'] = static::getTotalTrx($merchant_id, '09');
 
             return [
                 'data' => [

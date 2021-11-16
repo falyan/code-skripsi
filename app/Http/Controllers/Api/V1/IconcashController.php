@@ -58,7 +58,13 @@ class IconcashController extends Controller
                 throw new Exception('nomor telepon user tidak valid!', 400);
             }
 
-            $response = IconcashManager::register($name, $user->phone, $pin, $this->corporate_id, $user->email); //TODO temporarily using self function for hashing pin, till api public to fe
+            $response = IconcashManager::register($name, $user->phone, $pin, $this->corporate_id, $user->email);
+
+            if (isset($response->code)) {
+                if ($response->code == 5006) {
+                    return response()->json(["success" => $response->success, "code" => $response->code, "message" => $response->message], 404);
+                }
+            }
 
             IconcashCommands::register($user);
 
@@ -79,7 +85,7 @@ class IconcashController extends Controller
             $response = IconcashManager::requestOTP($this->corporate_id, $user->phone);
 
             if (isset($response->code)) {
-                if ($response->code == 5000) {
+                if ($response->code == 5000 || $response->code == 5006) {
                     return response()->json(["success" => $response->success, "code" => $response->code, "message" => $response->message], 404);
                 }
             }
@@ -125,6 +131,13 @@ class IconcashController extends Controller
             $user = Auth::user();
 
             $response = IconcashManager::login($this->corporate_id, $user->phone, $pin);
+
+            if (isset($response->code)) {
+                if ($response->code == 5001 || $response->code == 5002 || $response->code == 5003 || $response->code == 5004 || $response->code == 5006) {
+                    return response()->json(["success" => $response->success, "code" => $response->code, "message" => $response->message], 200);
+                }
+            }
+
             IconcashCommands::login($user, $response);
 
             return $this->respondWithData([
@@ -247,7 +260,7 @@ class IconcashController extends Controller
             $response = IconcashManager::withdrawal($iconcash->token, $pin, $order_id);
 
             if (isset($response->code)) {
-                if ($response->code == 5001 || $response->code == 5002) {
+                if ($response->code == 5001 || $response->code == 5002 || $response->code == 5003 || $response->code == 5004 || $response->code == 5006) {
                     return response()->json(["success" => $response->success, "code" => $response->code, "message" => $response->message], 200);
                 }
             }
