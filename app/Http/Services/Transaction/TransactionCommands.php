@@ -174,6 +174,10 @@ class TransactionCommands extends Service
                 }
             }, data_get($datas, 'merchants'));
 
+            if ($total_price == 0){
+                throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
+            }
+
             $mailSender = new MailSenderManager();
             $mailSender->mailCheckout($this->order_id);
 
