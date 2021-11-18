@@ -61,6 +61,7 @@ Package Production:
       cp .env.production .env &&
       docker build --no-cache -t $DOCKER_IMAGE_APP -f Dockerfile-App . &&
       docker push $DOCKER_IMAGE_APP
+    - >
       cp .env.production-evds .env &&
       docker build --no-cache -t $DOCKER_IMAGE_EVDS -f Dockerfile-App . &&
       docker push $DOCKER_IMAGE_EVDS
