@@ -197,7 +197,7 @@ class RajaOngkirManager
           $order = Order::where('trx_no', $trx_no)->first();
 
           $order_progress = OrderProgress::where('order_id', $order['id'])->where('status', 1)->first();
-          if ($order_progress['status_code'] != '08'){
+          if ($order_progress['status_code'] == '03'){
               $trx_command = new TransactionCommands();
               $trx_command->updateOrderStatus($order['id'], '08');
 
