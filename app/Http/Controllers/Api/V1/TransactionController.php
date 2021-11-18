@@ -554,6 +554,11 @@ class TransactionController extends Controller
                 if ($response['success'] == false) {
                     return $response;
                 }
+
+                $title = 'Pesanan Dikonfirmasi';
+                $message = 'Pesanan anda sedang diproses oleh penjual.';
+                $order = Order::with(['buyer'])->find($order_id);
+                $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
             }
 
             return $response;
@@ -589,6 +594,11 @@ class TransactionController extends Controller
             if ($status['success'] == false) {
                 return $status;
             }
+
+            $title = 'Pesanan Dikirim';
+            $message = 'Pesanan anda sedang dalam pengiriman.';
+            $order = Order::with(['buyer'])->find($order_id);
+            $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
 
             $mailSender = new MailSenderManager();
             $mailSender->mailOrderOnDelivery($order_id);

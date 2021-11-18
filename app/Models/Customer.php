@@ -75,7 +75,7 @@ class Customer extends Model
     protected function serializeDate($date){
         return $date->format('Y-m-d H:i:s');
     }
-    
+
 
     /**
      * @var array Relations
@@ -103,6 +103,11 @@ class Customer extends Model
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function customerAddress()
+    {
+        return $this->hasMany(CustomerAddress::class);
     }
 
     /**
