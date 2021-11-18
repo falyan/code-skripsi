@@ -6,6 +6,7 @@ use App\Http\Resources\Rajaongkir\RajaongkirResources;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderProgress;
 use Carbon\Carbon;
@@ -30,6 +31,11 @@ class RajaOngkirManager
       'key' => static::$appkey
     ];
   }
+
+    public function __construct()
+    {
+        $this->notificationCommand = new NotificationCommands();
+    }
 
   public static function getProvinces($province_id = null)
   {
@@ -201,12 +207,21 @@ class RajaOngkirManager
               $trx_command = new TransactionCommands();
               $trx_command->updateOrderStatus($order['id'], '08');
 
-              //Notification log
+              //Notification buyer
               $notif_command = new NotificationCommands();
               $title = 'Pesanan anda telah sampai';
               $message = 'Pesanan anda telah sampai, silahkan cek kelengkapan pesanan anda sebelum menyelesaikan pesanan.';
               $url_path = 'v1/buyer/query/transaction/'. $order['buyer_id'] .'/detail/' . $order['id'];
               $notif_command->create('customer_id', $order['buyer_id'], '2', $title, $message, $url_path);
+              $notif_command->sendPushNotification($order['buyer_id'], $title, $message, 'active');
+
+              //Notification seller
+              $title_seller = 'Pesanan Sampai';
+              $message_seller = 'Pesanan telah sampai, menunggu pembeli menyelesaikan pesanan.';
+              $url_path_seller = 'v1/seller/query/transaction/detail/' . $order['id'];
+              $seller = Customer::where('merchant_id', $order['merchant_id'])->first();
+              $notif_command->create('merchant_id', $order['merchant_id'], '2', $title_seller, $message_seller, $url_path_seller);
+              $notif_command->sendPushNotification($seller['id'], $title_seller, $message_seller, 'active');
 
               $mailSender = new MailSenderManager();
               $mailSender->mailOrderArrived($order['id'], Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s'));
