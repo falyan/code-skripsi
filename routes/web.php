@@ -188,6 +188,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->group(['middleware' => 'auth'], static function () use ($router){
                     $router->post('add', 'CustomerController@createCustomerAddress');
                     $router->post('update/{id}', 'CustomerController@updateCustomerAddress');
+                    $router->post('default/{id}', 'CustomerController@setDefaultCustomerAddress');
                 });
             });
 

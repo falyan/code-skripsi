@@ -75,6 +75,28 @@ class CustomerCommands{
         return $response;
     }
 
+    public function setDefaultCustomerAddress($id, $customer_id){
+        $customer_address = CustomerAddress::findOrFail($id);
+
+        $change_isdefault = $this->changeIsDefaultToFalse($customer_id);
+        if ($change_isdefault == false){
+            $response['success'] = false;
+            $response['message'] = 'Gagal merubah alamat utama';
+            return $response;
+        }
+
+        $customer_address->is_default = true;
+
+        if (!$customer_address->save()){
+            $response['success'] = false;
+            $response['message'] = 'Gagal menyimpan alamat utama';
+            return $response;
+        }
+        $response['success'] = true;
+        $response['message'] = 'Berhasil menyimpan alamat utama';
+        return $response;
+    }
+
     private function changeIsDefaultToFalse($customer_id){
         $data = $this->customerQueries->getDefaultCustomerAddress($customer_id);
         if ($data == null){

@@ -107,4 +107,13 @@ class CustomerController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function setDefaultCustomerAddress($id){
+        try {
+            $customer_id = Auth::id();
+            return $this->customerCommands->setDefaultCustomerAddress($id ,$customer_id);
+        }catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
 }
