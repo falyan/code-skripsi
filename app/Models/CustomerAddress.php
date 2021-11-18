@@ -29,6 +29,7 @@ class CustomerAddress extends Model
     protected $fillable = [
         'customer_id',
         'address',
+        'district_id',
         'city_id',
         'province_id',
         'postal_code',
@@ -36,6 +37,8 @@ class CustomerAddress extends Model
         'latitude',
         'receiver_name',
         'receiver_phone',
+        'title',
+        'is_default'
     ];
 
     /**
@@ -78,8 +81,31 @@ class CustomerAddress extends Model
     public $morphMany = [];
     public $attachOne = [];
     public $attachMany = [];
+
+    /**
+     * @var void Relations
+     */
     protected function serializeDate($date){
         return $date->format('Y-m-d H:i:s');
     }
-    
+
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }
+
+    public function district()
+    {
+        return $this->belongsTo(District::class);
+    }
+
+    public function province()
+    {
+        return $this->belongsTo(Province::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }

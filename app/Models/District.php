@@ -86,4 +86,9 @@ class District extends Model
     public function delivery(){
         return $this->hasMany(OrderDelivery::class);
     }
+
+    public function customerAddress()
+    {
+        return $this->hasMany(CustomerAddress::class);
+    }
 }
