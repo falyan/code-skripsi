@@ -116,4 +116,16 @@ class CustomerController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function deleteCustomerAddress($id)
+    {
+        try {
+            $customer_id = Auth::id();
+            $response = $this->customerCommands->deleteCustomerAddress($id, $customer_id);
+            
+            return $this->respondWithResult($response['success'], $response);
+        } catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
 }

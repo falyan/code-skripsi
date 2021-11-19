@@ -108,4 +108,15 @@ class CustomerCommands{
         }
         return true;
     }
+
+    public function deleteCustomerAddress($id, $customer_id){        
+        if (!CustomerAddress::destroy($id)){
+            $response['success'] = false;
+            $response['message'] = 'Gagal hapus alamat';
+            return $response;
+        }
+        $response['success'] = true;
+        $response['message'] = 'Berhasil hapus alamat';
+        return $response;
+    }
 }
