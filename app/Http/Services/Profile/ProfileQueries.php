@@ -12,7 +12,7 @@ class ProfileQueries extends Service
     public function getUser()
     {
         if (Auth::check()) {
-            $data = Customer::find(Auth::id());
+            $data = Customer::find(Auth::user());
         } else {
             $data = null;
         }
