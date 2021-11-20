@@ -115,6 +115,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
     $router->group(['prefix' => 'buyer'], static function () use ($router) {
         $router->group(['prefix' => 'query'], static function () use ($router) {
+            $router->group(['prefix' => 'address'], static function () use ($router) {
+                $router->group(['middleware' => 'auth'], static function () use ($router){
+                    $router->get('list', 'CustomerController@getListCustomerAddress');
+                    $router->get('default', 'CustomerController@getDefaultCustomerAddress');
+                });
+            });
 
             $router->group(['prefix' => 'merchant'], static function () use ($router) {
                 $router->get('{merchant_id}', 'MerchantController@publicProfile');
@@ -176,6 +182,15 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
+            $router->group(['prefix' => 'address'], static function () use ($router) {
+                $router->group(['middleware' => 'auth'], static function () use ($router){
+                    $router->post('add', 'CustomerController@createCustomerAddress');
+                    $router->post('update/{id}', 'CustomerController@updateCustomerAddress');
+                    $router->post('default/{id}', 'CustomerController@setDefaultCustomerAddress');
+                    $router->delete('delete/{id}', 'CustomerController@deleteCustomerAddress');
+                });
+            });
+
             $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('checkout', 'TransactionController@checkout');
             });

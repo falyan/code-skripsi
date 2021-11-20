@@ -226,19 +226,12 @@ class Controller extends BaseController
     {
         $data = [];
         $message = $e->getMessage();
-        $error = ("{$message}\r\nFile {$e->getFile()}:{$e->getLine()} with message {$e->getMessage()}");
-
-        $uid = Str::random(12);
-        Log::error($uid, [
-            'path_url' => $request->path(),
-            'query' =>  $request->query(),
-            'body' => $request->except(['password', 'c_password', 'bearer', 'bearer_token', 'related_id', 'related_customer_id', 'rlc_id']),
-            'error' => $error
-        ]);
+        $trace = $e->getTraceAsString();
+        Log::error($message, [$trace]);
 
         $data = [
             'success' => false, 
-            'status_code' => in_array($e->getCode(), $this->error_codes) ? $e->getCode() : 404,
+            'status_code' => $e->getCode(),
             'message' => $message
         ];
 
