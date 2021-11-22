@@ -344,6 +344,9 @@ class TransactionCommands extends Service
         $data = CustomerDiscount::where('customer_reference_id', $user_id)->orWhere('customer_reference_id', $email)
             ->where('is_used', false)->where('expired_date', '>=', $now)->first();
 
+        if ($data == null){
+            return true;
+        }
         $data->is_used = true;
         $data->status = 1;
         $data->used_amount = $discount;
