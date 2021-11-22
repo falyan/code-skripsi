@@ -69,6 +69,24 @@ class TransactionCommands extends Service
             $transactionQueries = new TransactionQueries();
             $discount = $transactionQueries->getCustomerDiscount($customer_id, $customer['email']);
             $total_discount = 0;
+            $percent_discount = 50;
+            $max_percent_discount = 500000;
+            $is_percent_discount = true;
+
+            if ($discount == 0 && $is_percent_discount == true){
+                $total_item_price = 0;
+                array_map(function ($merchant) use (&$total_item_price) {
+                    array_map(function ($product) use (&$total_item_price) {
+                        $total_item_price += $product['total_price'];
+                    }, data_get($merchant, 'products'));
+                }, data_get($datas, 'merchants'));
+
+                $discount = ($percent_discount/100)*$total_item_price;
+                if ($discount > $max_percent_discount){
+                    $discount = $max_percent_discount;
+                }
+            }
+
             array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, &$total_price, &$discount, &$total_discount) {
                 $count_discount = $discount;
                 if (data_get($data, 'total_payment') <= $discount){
