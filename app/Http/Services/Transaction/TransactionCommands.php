@@ -69,6 +69,24 @@ class TransactionCommands extends Service
             $transactionQueries = new TransactionQueries();
             $discount = $transactionQueries->getCustomerDiscount($customer_id, $customer['email']);
             $total_discount = 0;
+            $percent_discount = 50;
+            $max_percent_discount = 500000;
+            $is_percent_discount = true;
+
+            if ($discount == 0 && $is_percent_discount == true){
+                $total_item_price = 0;
+                array_map(function ($merchant) use (&$total_item_price) {
+                    array_map(function ($product) use (&$total_item_price) {
+                        $total_item_price += $product['total_price'];
+                    }, data_get($merchant, 'products'));
+                }, data_get($datas, 'merchants'));
+
+                $discount = ($percent_discount/100)*$total_item_price;
+                if ($discount > $max_percent_discount){
+                    $discount = $max_percent_discount;
+                }
+            }
+
             array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, &$total_price, &$discount, &$total_discount) {
                 $count_discount = $discount;
                 if (data_get($data, 'total_payment') <= $discount){
@@ -326,6 +344,9 @@ class TransactionCommands extends Service
         $data = CustomerDiscount::where('customer_reference_id', $user_id)->orWhere('customer_reference_id', $email)
             ->where('is_used', false)->where('expired_date', '>=', $now)->first();
 
+        if ($data == null){
+            return true;
+        }
         $data->is_used = true;
         $data->status = 1;
         $data->used_amount = $discount;

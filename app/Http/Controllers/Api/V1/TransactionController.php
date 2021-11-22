@@ -103,8 +103,8 @@ class TransactionController extends Controller
                         $stock = ProductStock::where('product_id', data_get($item, 'product_id'))
                             ->where('merchant_id', data_get($merchant, 'merchant_id'))->where('status', 1)->first();
 
-                        $data['amount'] = $stock->amount - data_get($item, 'quantity');
-                        $data['uom'] = $stock->uom;
+                        $data['amount'] = $stock['amount'] - data_get($item, 'quantity');
+                        $data['uom'] = $stock['uom'];
                         $data['full_name'] = Auth::user()->full_name;
 
                         $productCommand = new ProductCommands();
