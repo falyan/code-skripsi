@@ -71,7 +71,7 @@ class TransactionCommands extends Service
             $total_discount = 0;
             $percent_discount = 50;
             $max_percent_discount = 500000;
-            $is_percent_discount = false;
+            $is_percent_discount = true;
 
             if ($discount == 0 && $is_percent_discount == true){
                 $total_item_price = 0;
