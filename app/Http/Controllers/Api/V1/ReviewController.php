@@ -76,4 +76,12 @@ class ReviewController extends Controller
             return $this->respondWithData($e, 'Error', 400);
         }
     }
+
+    public function getDetailReview($review_id){
+        try {
+            return $this->reviewQueries->getDetailReview($review_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
 }
