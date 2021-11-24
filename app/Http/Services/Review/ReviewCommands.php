@@ -59,4 +59,28 @@ class ReviewCommands{
             throw new Exception($e->getMessage(), $e->getCode());
         }
     }
+
+    public function replyReview($review_id, $data){
+        try {
+            DB::beginTransaction();
+            $review = Review::findOrFail($review_id);
+            $review->reply_message = $data['reply_message'];
+
+            if (!$review->save()){
+                $response['success'] = false;
+                $response['message'] = 'Gagal memberikan tanggapan review';
+                return $response;
+            }
+
+            DB::commit();
+            $response['success'] = true;
+            $response['message'] = 'Berhasil memberikan tanggapan review';
+            $response['data'] = $review;
+            return $response;
+
+        }catch (Exception $e){
+            DB::rollBack();
+            throw new Exception($e->getMessage(), $e->getCode());
+        }
+    }
 }

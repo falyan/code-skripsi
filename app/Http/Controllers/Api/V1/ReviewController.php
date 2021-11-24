@@ -84,4 +84,31 @@ class ReviewController extends Controller
             return $this->respondWithData($e, 'Error', 400);
         }
     }
+
+    public function replyReview($review_id, Request $request){
+        try {
+            $rules = [
+                'reply_message' => 'required',
+            ];
+
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => ':attribute diperlukan.'
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            return $this->reviewCommands->replyReview($review_id, $request);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
 }
