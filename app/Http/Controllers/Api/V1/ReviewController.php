@@ -27,11 +27,15 @@ class ReviewController extends Controller
     //Add Review Produk
     public function addReview(Request $request)
     {
+        $request['customer_id'] = Auth::id();
+        $request['full_name'] = Auth::user()->full_name;
         try {
             $rules = [
                 'merchant_id' => 'required',
                 'product_id' => 'required',
-                'rate' => 'required|numeric'
+                'rate' => 'required|numeric',
+                'order_id' => 'required',
+                'url.*' => 'required',
             ];
 
             $validator = Validator::make($request->all(), $rules, [
@@ -55,4 +59,29 @@ class ReviewController extends Controller
         }
     }
 
+    public function getListReviewByMerchant(){
+        try {
+            $merchant_id = Auth::user()->merchant_id;
+            return $this->reviewQueries->getListReview('seller' ,$merchant_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function getListReviewByBuyer(){
+        try {
+            $buyer_id = Auth::id();
+            return $this->reviewQueries->getListReview('buyer' ,$buyer_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function getDetailReview($review_id){
+        try {
+            return $this->reviewQueries->getDetailReview($review_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
 }
