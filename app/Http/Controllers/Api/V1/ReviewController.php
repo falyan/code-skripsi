@@ -59,4 +59,12 @@ class ReviewController extends Controller
         }
     }
 
+    public function getListReviewByMerchant(){
+        try {
+            $merchant_id = Auth::user()->merchant_id;
+            return $this->reviewQueries->getListReviewByMerchant($merchant_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
 }
