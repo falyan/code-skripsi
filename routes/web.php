@@ -109,6 +109,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->group(['prefix' => 'region'], static function () use ($router) {
                     $router->get('search', 'RegionController@searchDistrict');
                 });
+
+                $router->group(['prefix' => 'review', 'middleware' => 'auth'], static function () use ($router) {
+                    $router->get('list', 'ReviewController@getListReviewByMerchant');
+                    $router->get('detail/{review_id}', 'ReviewController@getDetailReview');
+                });
             });
         });
     });
@@ -179,6 +184,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/{rlc_id}', 'NotificationController@buyerIndex');
                 $router->get('/list/{rlc_id}', 'NotificationController@buyerNotificationList');
                 $router->get('/list/{type}/{rlc_id}', 'NotificationController@buyerNotificationByType');
+            });
+
+            $router->group(['prefix' => 'review', 'middleware' => 'auth'], static function () use ($router) {
+                $router->get('list', 'ReviewController@getListReviewByBuyer');
+                $router->get('detail/{review_id}', 'ReviewController@getDetailReview');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {

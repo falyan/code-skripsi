@@ -30,6 +30,10 @@ class Review extends Model
         return $this->hasMany(ReviewPhoto::class);
     }
 
+    public function merchant(){
+        return $this->belongsTo(Merchant::class);
+    }
+
     protected function serializeDate($date)
     {
         return $date->format('Y-m-d H:i:s');

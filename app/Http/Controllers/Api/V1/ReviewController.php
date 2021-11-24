@@ -59,4 +59,29 @@ class ReviewController extends Controller
         }
     }
 
+    public function getListReviewByMerchant(){
+        try {
+            $merchant_id = Auth::user()->merchant_id;
+            return $this->reviewQueries->getListReview('seller' ,$merchant_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function getListReviewByBuyer(){
+        try {
+            $buyer_id = Auth::id();
+            return $this->reviewQueries->getListReview('buyer' ,$buyer_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function getDetailReview($review_id){
+        try {
+            return $this->reviewQueries->getDetailReview($review_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
 }
