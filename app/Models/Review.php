@@ -20,6 +20,16 @@ class Review extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function review_photo()
+    {
+        return $this->hasMany(ReviewPhoto::class);
+    }
+
     protected function serializeDate($date)
     {
         return $date->format('Y-m-d H:i:s');

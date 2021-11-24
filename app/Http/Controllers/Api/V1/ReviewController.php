@@ -27,11 +27,15 @@ class ReviewController extends Controller
     //Add Review Produk
     public function addReview(Request $request)
     {
+        $request['customer_id'] = Auth::id();
+        $request['full_name'] = Auth::user()->full_name;
         try {
             $rules = [
                 'merchant_id' => 'required',
                 'product_id' => 'required',
-                'rate' => 'required|numeric'
+                'rate' => 'required|numeric',
+                'order_id' => 'required',
+                'url.*' => 'required',
             ];
 
             $validator = Validator::make($request->all(), $rules, [
