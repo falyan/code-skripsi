@@ -10,6 +10,15 @@ use Illuminate\Support\Facades\DB;
 class ReviewCommands{
     public function addReview($data){
         try {
+            $check_review = Review::where('order_id', $data['order_id'])->where('customer_id', $data['customer_id'])
+                ->where('merchant_id', $data['merchant_id'])->where('product_id', $data['product_id'])->first();
+
+            if ($check_review != null){
+                $response['success'] = false;
+                $response['message'] = 'Sudah melakukan review sebelumnya!';
+                return $response;
+            }
+
             DB::beginTransaction();
             $review = new Review();
             $review->merchant_id = $data['merchant_id'];
@@ -64,6 +73,12 @@ class ReviewCommands{
         try {
             DB::beginTransaction();
             $review = Review::findOrFail($review_id);
+            if ($review->reply_message != null){
+                $response['success'] = false;
+                $response['message'] = 'Sudah melakukan reply review!';
+                return $response;
+            }
+
             $review->reply_message = $data['reply_message'];
 
             if (!$review->save()){
