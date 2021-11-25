@@ -70,8 +70,9 @@ class TransactionQueries extends Service
                 $merchant->with(['province', 'city', 'district']);
             }, 'delivery' => function ($region) {
                 $region->with(['city', 'district']);
-            }, 'buyer', 'payment'
-        ])->find($id);
+            }, 'buyer', 'payment', 'review' => function ($review){
+                $review->with(['review_photo']);
+            }])->find($id);
 
         $data->iconpay_product_id = static::$productid;
 
