@@ -249,6 +249,8 @@ class ProductQueries extends Service
             $order_details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
+        }, 'reviews' => function ($reviews){
+            $reviews->with(['customer', 'review_photo']);
         }])->where('id', $id)->first();
 
         if (!$data) {
