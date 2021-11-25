@@ -34,22 +34,41 @@ class TransactionQueries extends Service
 
     public function getTransactionWithStatusCode($column_name, $column_value, $status_code, $limit = 10, $filter = [], $page = 1)
     {
-        $data = Order::with([
-            'detail' => function ($product) {
-                $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
-                }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer'
-        ])->where([
-            [$column_name, $column_value],
-        ])->whereHas('progress_active', function ($j) use ($status_code) {
-            $j->whereIn('status_code', $status_code);
-        })->when($column_name == 'merchant_id', function($query){
-            $query->whereHas('progress_active', function($q){
-                $q->whereNotIn('status_code', [99]);
-            });
-        })->orderBy('created_at', 'desc');
-
+        if ($status_code['0'] == '88'){
+            $data = Order::with([
+                'detail' => function ($product) {
+                    $product->with(['product' => function ($j) {
+                        $j->with(['product_photo', 'reviews' => function ($reviews){
+                            $reviews->with(['review_photo']);
+                        }]);
+                    }]);
+                }, 'progress_active', 'merchant', 'delivery', 'buyer'
+            ])->where([
+                [$column_name, $column_value],
+            ])->whereHas('progress_active', function ($j) use ($status_code) {
+                $j->whereIn('status_code', $status_code);
+            })->when($column_name == 'merchant_id', function($query){
+                $query->whereHas('progress_active', function($q){
+                    $q->whereNotIn('status_code', [99]);
+                });
+            })->orderBy('created_at', 'desc');
+        }else{
+            $data = Order::with([
+                'detail' => function ($product) {
+                    $product->with(['product' => function ($j) {
+                        $j->with(['product_photo']);
+                    }]);
+                }, 'progress_active', 'merchant', 'delivery', 'buyer'
+            ])->where([
+                [$column_name, $column_value],
+            ])->whereHas('progress_active', function ($j) use ($status_code) {
+                $j->whereIn('status_code', $status_code);
+            })->when($column_name == 'merchant_id', function($query){
+                $query->whereHas('progress_active', function($q){
+                    $q->whereNotIn('status_code', [99]);
+                });
+            })->orderBy('created_at', 'desc');
+        }
 
         $data = $this->filter($data, $filter);
         $data = $data->get();
