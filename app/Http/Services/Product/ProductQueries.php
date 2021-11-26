@@ -250,7 +250,7 @@ class ProductQueries extends Service
                 $order->whereHas('progress_done');
             });
         }, 'reviews' => function ($reviews){
-            $reviews->limit(3)->with(['customer', 'review_photo']);
+            $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo']);
         }])->where('id', $id)->first();
 
         if (!$data) {
