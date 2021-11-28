@@ -7,7 +7,6 @@ use App\Http\Resources\Etalase\EtalaseCollection;
 use App\Http\Resources\Etalase\EtalaseResource;
 use App\Http\Services\Etalase\EtalaseCommands;
 use App\Http\Services\Etalase\EtalaseQueries;
-use App\Http\Services\Example\ExampleCommands;
 use App\Http\Services\Manager\RajaOngkirManager;
 use App\Models\Etalase;
 use App\Models\Merchant;

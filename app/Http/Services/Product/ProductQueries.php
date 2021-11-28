@@ -107,8 +107,12 @@ class ProductQueries extends Service
                 $order->whereHas('progress_done');
             });
         }])->with(['merchant' => function ($merchant){
-            $merchant->with(['city:id,name']);
-        }, 'product_stock', 'product_photo'])->where('name', 'ILIKE', '%' . $keyword . '%');
+            $merchant->with(['city:id,name'])->select('id', 'name','address', 'postal_code', 'city_id', 'photo_url');
+        }, 'product_stock:id,product_id,amount,uom', 'product_photo:id,product_id,url'])
+        ->where('product.name', 'ILIKE', '%' . $keyword . '%')
+        ->orWhereHas('merchant', function($query) use($keyword){
+            $query->where('name', 'ILIKE', '%' . $keyword . '%');
+        });
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -245,6 +249,8 @@ class ProductQueries extends Service
             $order_details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
+        }, 'reviews' => function ($reviews){
+            $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo']);
         }])->where('id', $id)->first();
 
         if (!$data) {

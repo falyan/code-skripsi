@@ -27,11 +27,15 @@ class ReviewController extends Controller
     //Add Review Produk
     public function addReview(Request $request)
     {
+        $request['customer_id'] = Auth::id();
+        $request['full_name'] = Auth::user()->full_name;
         try {
             $rules = [
                 'merchant_id' => 'required',
                 'product_id' => 'required',
-                'rate' => 'required|numeric'
+                'rate' => 'required|numeric',
+                'order_id' => 'required',
+                'url.*' => 'required',
             ];
 
             $validator = Validator::make($request->all(), $rules, [
@@ -55,4 +59,56 @@ class ReviewController extends Controller
         }
     }
 
+    public function getListReviewByMerchant(){
+        try {
+            $merchant_id = Auth::user()->merchant_id;
+            return $this->reviewQueries->getListReview('merchant_id' ,$merchant_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function getListReviewByBuyer(){
+        try {
+            $buyer_id = Auth::id();
+            return $this->reviewQueries->getListReview('buyer_id' ,$buyer_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function getDetailReview($review_id){
+        try {
+            return $this->reviewQueries->getDetailReview($review_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function replyReview($review_id, Request $request){
+        try {
+            $rules = [
+                'reply_message' => 'required',
+            ];
+
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => ':attribute diperlukan.'
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            return $this->reviewCommands->replyReview($review_id, $request);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
 }

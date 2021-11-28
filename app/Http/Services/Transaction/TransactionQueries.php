@@ -3,8 +3,10 @@
 namespace App\Http\Services\Transaction;
 
 use App\Http\Services\Service;
+use App\Models\CustomerDiscount;
 use App\Models\DeliveryDiscount;
 use App\Models\Order;
+use Carbon\Carbon;
 
 class TransactionQueries extends Service
 {
@@ -16,7 +18,11 @@ class TransactionQueries extends Service
                     $j->with(['product_photo']);
                 }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer'
-        ])->where($column_name, $column_value)->orderBy('created_at', 'desc');
+        ])->where($column_name, $column_value)->when($column_name == 'merchant_id', function($query){
+            $query->whereHas('progress_active', function($q){
+                $q->whereNotIn('status_code', [99]);
+            });
+        })->orderBy('created_at', 'desc');
 
         $data = $this->filter($data, $filter);
         $data = $data->get();
@@ -38,8 +44,11 @@ class TransactionQueries extends Service
             [$column_name, $column_value],
         ])->whereHas('progress_active', function ($j) use ($status_code) {
             $j->whereIn('status_code', $status_code);
+        })->when($column_name == 'merchant_id', function($query){
+            $query->whereHas('progress_active', function($q){
+                $q->whereNotIn('status_code', [99]);
+            });
         })->orderBy('created_at', 'desc');
-
 
         $data = $this->filter($data, $filter);
         $data = $data->get();
@@ -60,8 +69,9 @@ class TransactionQueries extends Service
                 $merchant->with(['province', 'city', 'district']);
             }, 'delivery' => function ($region) {
                 $region->with(['city', 'district']);
-            }, 'buyer', 'payment'
-        ])->find($id);
+            }, 'buyer', 'payment', 'review' => function ($review){
+                $review->with(['review_photo']);
+            }])->find($id);
 
         $data->iconpay_product_id = static::$productid;
 
@@ -109,6 +119,19 @@ class TransactionQueries extends Service
         }
 
         return $data;
+    }
+
+    public function getCustomerDiscount($user_id, $email){
+        $discount = 0;
+        $now = Carbon::now('Asia/Jakarta');
+        $data = CustomerDiscount::where('customer_reference_id', $user_id)->orWhere('customer_reference_id', $email)
+            ->where('is_used', false)->where('expired_date', '>=', $now)->first();
+
+        if (!empty($data)){
+            $discount = (int) $data->amount;
+        }
+
+        return $discount;
     }
 
     public function filter($model, $filter)

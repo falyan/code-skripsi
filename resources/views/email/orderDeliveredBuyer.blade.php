@@ -5,14 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Pesanan Selesai</title>
+    <title>Pesanan Telah Dikirim</title>
 </head>
 
 <body>
     <h3>Hai, {{ $destination_name }}</h3>
     <p>
-        <strong>Yeay barangmu sudah sampai!.</strong><br>
-        <strong>Terimakasih sudah berbelanja dan mendukung para penjual di PLN TJSL Marketplace.</strong>
+        <strong>Pesananmu dengan No. Invoice : {{$order->trx_no}} telah dikirim pada tanggal {{$date_arrived}} WIB. </strong><br>
+        Mohon menerima dan mengkonfirmasi pesanan di aplikasi PLN TJSL Marketplace dalam waktu 3 Hari. Setalah dikonfirmasi, pembayaran akan diteruskan
+        ke Toko {{$order->merchant->name}}. Jika tidak dikonfirmasi dalam waktu yang telah ditentukan, pembayaran akan ditransfer secara otomatis.
     </p>
     <span>Berikut detail pesananmu:</span>
     <div style="margin-top: 10px"><strong>No. Invoice</strong></div> 
@@ -46,6 +47,7 @@
     <div>Total Pembayaran</div>
     <div><strong>Rp{{number_format($order->payment->payment_amount, 2, ',', '.')}}</strong></div>
     <br>
+
     <span style="color: grey;">Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
 </body>
 

@@ -5,27 +5,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Pesanan Selesai</title>
+    <title>{{ $destination_name }}, Ada Pesanan Baru nih tanggal {{$order->order_date}} WIB </title>
 </head>
 
 <body>
     <h3>Hai, {{ $destination_name }}</h3>
     <p>
-        <strong>Yeay barangmu sudah sampai!.</strong><br>
-        <strong>Terimakasih sudah berbelanja dan mendukung para penjual di PLN TJSL Marketplace.</strong>
+        <strong>Ada pesanan baru dari {{$order->buyer->full_name}}.</strong><br>
     </p>
-    <span>Berikut detail pesananmu:</span>
+    <span>Segera konfirmasi pesananmu sebelum tanggal <strong>{{date('Y-m-d', strtotime($order->order_date. ' + 7 days'))}}</strong>.</span>
+    <br>
     <div style="margin-top: 10px"><strong>No. Invoice</strong></div> 
     <div>{{$order->trx_no}}</div>
 
     <div style="margin-top: 10px"><strong>Tanggal Pesanan</strong> </div>
     <div> {{$order->order_date}} WIB</div>
+    
+    <div style="margin-top: 10px"> <strong>Kurir</strong></div> 
+    <div>{{strtoupper($order->delivery->courier) . ' - ' . $order->delivery->shipping_type}}</div>
+    
+    <div style="margin-top: 10px"><strong>Tujuan Pengiriman</strong></div>
+    <div><strong>{{$order->delivery->receiver_name}} ({{$order->delivery->receiver_phone}})</strong></div>
+    <div>{{$order->delivery->address,}}</div>
+    <div>{{$order->delivery->district->name}}, {{$order->delivery->city->name}}, {{$order->delivery->postal_code}}</div>
+
     @php
         $total_discount_item = 0;
     @endphp
     <div style="margin-top: 10px"><strong>Produk</strong></div>
     @foreach ($order->detail as $item)
-        <?php $total_discount_item += $item->total_discount?>
+    <?php $total_discount_item += $item->total_discount?>
         <div >{{$item->product->name}}</div>
         <span>{{$item->quantity}} x Rp {{number_format($item->price, 2, ',', '.')}}</span>
         <br>
@@ -34,18 +43,14 @@
     <div style="margin-top: 10px"><strong>Ongkir</strong></div>
     <div>{{$order->delivery->delivery_fee ? 'Rp ' . number_format($order->delivery->delivery_fee, 2, ',', '.') : 'Rp 0'}}</div>
 
-    <div style="margin-top: 10px"><strong>Diskon Ongkir</strong></div>
-    <div> <span style="color: red;">{{$order->delivery->delivery_discount ? 'Rp '. number_format($order->delivery->delivery_discount, 2, ',', '.') :'Rp 0'}} </span></div>
-
     <div style="margin-top: 10px"><strong>Diskon</strong></div>
-    <div>Voucher Diskon : <span style="color: red;">Rp {{$order->discount ?? 0 }}</span></div>
-    <div>Total Diskon Produk : <span style="color: red;">Rp {{$total_discount_item}}</span></div>
+    <div><span style="color: red;">Rp {{$total_discount_item}}</span></div>
 
     <br>
     <hr style="float: left; width: 50%"><br>
     <div>Total Pembayaran</div>
-    <div><strong>Rp{{number_format($order->payment->payment_amount, 2, ',', '.')}}</strong></div>
-    <br>
+    <div><strong>Rp{{number_format($order->total_amount, 2, ',', '.')}}</strong></div>
+    <br><br>
     <span style="color: grey;">Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
 </body>
 

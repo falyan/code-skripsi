@@ -103,8 +103,8 @@ class TransactionController extends Controller
                         $stock = ProductStock::where('product_id', data_get($item, 'product_id'))
                             ->where('merchant_id', data_get($merchant, 'merchant_id'))->where('status', 1)->first();
 
-                        $data['amount'] = $stock->amount - data_get($item, 'quantity');
-                        $data['uom'] = $stock->uom;
+                        $data['amount'] = $stock['amount'] - data_get($item, 'quantity');
+                        $data['uom'] = $stock['uom'];
                         $data['full_name'] = Auth::user()->full_name;
 
                         $productCommand = new ProductCommands();
@@ -267,7 +267,7 @@ class TransactionController extends Controller
             $page = $request->page ?? 1;
 
             if (Auth::check()) {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['99'], $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['99', '09'], $limit, $filter, $page);
             } else {
                 $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['99'], $limit, $filter, $page);
             }
@@ -432,7 +432,7 @@ class TransactionController extends Controller
             $limit = $request->limit ?? 10;
             $page = $request->page ?? 1;
 
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['99'], $limit, $filter, $page);
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['09'], $limit, $filter, $page);
 
             if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');;
@@ -554,6 +554,11 @@ class TransactionController extends Controller
                 if ($response['success'] == false) {
                     return $response;
                 }
+
+                $title = 'Pesanan Dikonfirmasi';
+                $message = 'Pesanan anda sedang diproses oleh penjual.';
+                $order = Order::with(['buyer'])->find($order_id);
+                $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
             }
 
             return $response;
@@ -568,10 +573,8 @@ class TransactionController extends Controller
             $notes = request()->input('notes');
             $response = $this->transactionCommand->updateOrderStatus($order_id, '09', $notes);
             if ($response['success'] == true) {
-                $order = Order::find($order_id);
-                $customer = User::find($order->buyer_id);
                 $mailSender = new MailSenderManager();
-                $mailSender->mailorderRejected($customer, $order_id);
+                $mailSender->mailorderRejected($order_id, $notes);
             }
 
             return $response;
@@ -591,6 +594,14 @@ class TransactionController extends Controller
             if ($status['success'] == false) {
                 return $status;
             }
+
+            $title = 'Pesanan Dikirim';
+            $message = 'Pesanan anda sedang dalam pengiriman.';
+            $order = Order::with(['buyer'])->find($order_id);
+            $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+
+            $mailSender = new MailSenderManager();
+            $mailSender->mailOrderOnDelivery($order_id);
 
             return $response;
         } catch (Exception $e) {
@@ -626,12 +637,6 @@ class TransactionController extends Controller
                 $message = 'Transaksi sudah selesai, silahkan memeriksa saldo ICONCASH anda.';
                 $url_path = 'v1/seller/query/transaction/detail/' . $id;
 
-                $notificationCommand = new NotificationCommands();
-                $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
-
-                $customer = Customer::where('merchant_id', $data->merchant_id)->first();
-                $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
-
                 $order = Order::find($id);
                 $iconcash = Customer::where('merchant_id', $order->merchant_id)->first()->iconcash;
                 $account_type_id = null;
@@ -639,7 +644,7 @@ class TransactionController extends Controller
                 if (env('APP_ENV') == 'staging'){
                     $account_type_id = 13;
                 } elseif (env('APP_ENV') == 'production'){
-                    $account_type_id = 20;
+                    $account_type_id = 50;
                 } else {
                     $account_type_id = 13;
                 }
@@ -651,6 +656,15 @@ class TransactionController extends Controller
                 $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id);
 
                 IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+
+                $notificationCommand = new NotificationCommands();
+                $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
+
+                $customer = Customer::where('merchant_id', $data->merchant_id)->first();
+                $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
+
+                $mailSender = new MailSenderManager();
+                $mailSender->mailOrderDone($id);
 
                 return $this->respondWithResult(true, 'Selamat! Pesanan anda telah selesai', 200);
             } else {
@@ -700,6 +714,9 @@ class TransactionController extends Controller
                     $productCommand = new ProductCommands();
                     $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
                 }
+
+                $mailSender = new MailSenderManager();
+                $mailSender->mailorderCanceled($id);
 
                 return $this->respondWithResult(true, 'Pesanan anda berhasil dibatalkan.', 200);
             } else {
@@ -829,6 +846,7 @@ class TransactionController extends Controller
                 return $this->respondWithResult(false, 'Gagal merubah detail pembayaran.', 400);
             }
 
+            $customer = null;
             $orders = Order::where('no_reference', $no_reference)->get();
             foreach ($orders as $order) {
                 $response = $this->transactionCommand->updateOrderStatus($order->id, '01');
@@ -854,14 +872,18 @@ class TransactionController extends Controller
 
                 $notificationCommand = new NotificationCommands();
                 $notificationCommand->create($column_name_merchant, $column_value_merchant, $type, $title_merchant, $message_merchant, $url_path_merchant);
+            }
 
+            foreach ($orders as $order){
+                $notificationCommand = new NotificationCommands();
                 $customer = Customer::where('merchant_id', $order->merchant_id)->first();
                 $notificationCommand->sendPushNotification($customer->id, $title_merchant, $message_merchant, 'active');
 
-                $customer = User::find($order->buyer_id);
-                $this->mailSenderManager->mailPaymentSuccess($customer, $order->id);
+                $customer = Customer::find($order->buyer_id);
+                $this->mailSenderManager->mailNewOrder($order->id);
             }
 
+            $this->mailSenderManager->mailPaymentSuccess($order->id);
             return $response;
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -878,6 +900,15 @@ class TransactionController extends Controller
                 return $this->respondWithResult(false, 'data delivery discount yang aktif tidak ditemukan', 400);
             }
         } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getCustomerDiscount(){
+        try {
+            $discount = $this->transactionQueries->getCustomerDiscount(Auth::user()->id, Auth::user()->email);
+            return $this->respondWithData($discount, 'Data diskon customer berhasil didapatkan');
+        }catch (Exception $e){
             return $this->respondErrorException($e, request());
         }
     }

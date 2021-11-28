@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTmpFileRekonTable extends Migration
+class CreateRekonFileTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,8 @@ class CreateTmpFileRekonTable extends Migration
      */
     public function up()
     {
-        Schema::create('tmp_file_rekon', function (Blueprint $table) {
+        Schema::create('rekon_file', function (Blueprint $table) {
             $table->id();
-            $table->string('batch_no')->index()->nullable();
             $table->date('tanggal')->nullable();
             $table->string('nama_file')->nullable();
             $table->dateTime('upload_date')->nullable();
@@ -36,6 +35,6 @@ class CreateTmpFileRekonTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('tmp_file_rekon');
+        Schema::dropIfExists('rekon_file');
     }
 }

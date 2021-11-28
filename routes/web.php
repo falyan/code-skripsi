@@ -2,6 +2,7 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
+use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Manager\RajaOngkirManager;
 use App\Models\Coba;
 use App\Models\Customer;
@@ -64,6 +65,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('/read/{id}', 'NotificationController@sellerReadNotification');
                     $router->delete('/delete/{id}', 'NotificationController@sellerDeleteNotification');
                 });
+
+                $router->group(['prefix' => 'review', 'middleware' => 'auth'], static function () use ($router) {
+                    $router->post('reply/{review_id}', 'ReviewController@replyReview');
+                });
             });
 
             $router->group(['prefix' => 'query'], static function () use ($router) {
@@ -108,12 +113,23 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->group(['prefix' => 'region'], static function () use ($router) {
                     $router->get('search', 'RegionController@searchDistrict');
                 });
+
+                $router->group(['prefix' => 'review', 'middleware' => 'auth'], static function () use ($router) {
+                    $router->get('list', 'ReviewController@getListReviewByMerchant');
+                    $router->get('detail/{review_id}', 'ReviewController@getDetailReview');
+                });
             });
         });
     });
 
     $router->group(['prefix' => 'buyer'], static function () use ($router) {
         $router->group(['prefix' => 'query'], static function () use ($router) {
+            $router->group(['prefix' => 'address'], static function () use ($router) {
+                $router->group(['middleware' => 'auth'], static function () use ($router){
+                    $router->get('list', 'CustomerController@getListCustomerAddress');
+                    $router->get('default', 'CustomerController@getDefaultCustomerAddress');
+                });
+            });
 
             $router->group(['prefix' => 'merchant'], static function () use ($router) {
                 $router->get('{merchant_id}', 'MerchantController@publicProfile');
@@ -156,6 +172,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'transaction', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('/delivery-discount', 'TransactionController@getDeliveryDiscount');
+                $router->get('/customer-discount', 'TransactionController@getCustomerDiscount');
                 $router->get('/{related_id}', 'TransactionController@buyerIndex');
                 $router->get('/{related_id}/detail/{id}', 'TransactionController@detailTransaction');
                 $router->get('/{related_id}/on-payment', 'TransactionController@transactionToPay');
@@ -172,8 +189,22 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/list/{rlc_id}', 'NotificationController@buyerNotificationList');
                 $router->get('/list/{type}/{rlc_id}', 'NotificationController@buyerNotificationByType');
             });
+
+            $router->group(['prefix' => 'review', 'middleware' => 'auth'], static function () use ($router) {
+                $router->get('list', 'ReviewController@getListReviewByBuyer');
+                $router->get('detail/{review_id}', 'ReviewController@getDetailReview');
+            });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
+            $router->group(['prefix' => 'address'], static function () use ($router) {
+                $router->group(['middleware' => 'auth'], static function () use ($router){
+                    $router->post('add', 'CustomerController@createCustomerAddress');
+                    $router->post('update/{id}', 'CustomerController@updateCustomerAddress');
+                    $router->post('default/{id}', 'CustomerController@setDefaultCustomerAddress');
+                    $router->delete('delete/{id}', 'CustomerController@deleteCustomerAddress');
+                });
+            });
+
             $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('checkout', 'TransactionController@checkout');
             });

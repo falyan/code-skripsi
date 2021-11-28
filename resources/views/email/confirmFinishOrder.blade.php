@@ -11,32 +11,48 @@
 <body>
     <h3>Hai, {{ $destination_name }}</h3>
     <p>
-        <strong>Transaksimu dengan {{$customer->full_name}} sudah selesai.</strong><br>
+        <strong>Transaksimu dengan {{$order->buyer->full_name}} sudah selesai.</strong><br>
     </p>
     <span>Selanjutnya dana akan diteruskan secara otomatis ke saldo pendapatan Iconcash kamu.</span>
     <br>
-    <div>No. Invoice : {{$order->trx_no}}</div>
-    <div>Tanggal Pesanan : {{$order->order_date}} WIB</div>
-    <br>
-    <div>Tujuan Pengiriman :</div>
-    <div><strong>{{$order->delivery->receiver_name}} ({{$$order->delivery->receiver_phone}})</strong></div>
-    <div>{{$order->delivery->address, $order->delivery->postal_code}}</div>
-    <br>
+    <div style="margin-top: 10px"><strong>No. Invoice</strong></div> 
+    <div>{{$order->trx_no}}</div>
+
+    <div style="margin-top: 10px"><strong>Tanggal Pesanan</strong> </div>
+    <div> {{$order->order_date}} WIB</div>
     
-    @foreach ($order_detail as $item)
-    <div style="margin-top: 10px">{{$item->product->name}}</div>
-    <span>{{$item->quantity}} x Rp{{number_format($item->product->price, 2, ',', '.')}}</span>
-        <br><br>
+    <div style="margin-top: 10px"> <strong>Kurir</strong></div> 
+    <div>{{strtoupper($order->delivery->courier) . ' - ' . $order->delivery->shipping_type}}</div>
+    
+    <div style="margin-top: 10px"><strong>Tujuan Pengiriman</strong></div>
+    <div><strong>{{$order->delivery->receiver_name}} ({{$order->delivery->receiver_phone}})</strong></div>
+    <div>{{$order->delivery->address,}}</div>
+    <div>{{$order->delivery->district->name}}, {{$order->delivery->city->name}}, {{$order->delivery->postal_code}}</div>
+
+    @php
+        $total_discount_item = 0;
+    @endphp
+    <div style="margin-top: 10px"><strong>Produk</strong></div>
+    @foreach ($order->detail as $item)
+    <?php $total_discount_item += $item->total_discount?>
+        <div >{{$item->product->name}}</div>
+        <span>{{$item->quantity}} x Rp {{number_format($item->price, 2, ',', '.')}}</span>
+        <br>
+        <div style="margin-bottom: 5px">Diskon : <span style="color: red;">Rp {{$item->discount ? number_format($item->total_discount, 2, ',', '.') : 0}}</span></div>
     @endforeach
-    <div style="margin-top: 10px">Ongkir <br> Rp{{number_format($order->delivery->delivery_fee, 2, ',', '.')}}</div>
-    <div style="margin-top: 10px">Diskon</div>
-    <div style="color: red;">Rp{{$order->total_discount ? number_format($order->total_discount, 2, ',', '.') : 0}}</div>
+
+    <div style="margin-top: 10px"><strong>Ongkir</strong></div>
+    <div>{{$order->delivery->delivery_fee ? 'Rp ' . number_format($order->delivery->delivery_fee, 2, ',', '.') : 'Rp 0'}}</div>
+
+    <div style="margin-top: 10px"><strong>Diskon</strong></div>
+    <div><span style="color: red;">Rp {{$total_discount_item}}</span></div>
+
     <br>
-    <hr style="float: left; width: 30%"><br>
-    <div>Total Payment</div>
-    <div><strong>Rp{{number_format($payment->payment_amount, 2, ',', '.')}}</strong></div>
+    <hr style="float: left; width: 50%"><br>
+    <div>Total Pembayaran</div>
+    <div><strong>Rp{{number_format($order->total_amount, 2, ',', '.')}}</strong></div>
     <br>
-    <span>Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
+    <span style="color: grey;">Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
 </body>
 
 </html>

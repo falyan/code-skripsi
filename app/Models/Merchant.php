@@ -123,4 +123,9 @@ class Merchant extends Model
     public function district(){
         return $this->belongsTo(District::class);
     }
+
+    public function review()
+    {
+        return $this->hasMany(ReviewPhoto::class);
+    }
 }

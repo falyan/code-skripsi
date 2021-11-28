@@ -14,21 +14,35 @@
         <strong>Selamat. Pembayaranmu telah berhasil.</strong><br>
     </p>
     <span>Berikut detail pesananmu:</span>
-    @foreach ($order_detail as $item)
-        <div style="margin-top: 10px">{{$item->product->name}}</div>
-        <span>{{$item->quantity}} x Rp{{number_format($item->product->price, 2, ',', '.')}}</span>
-        <br><br>
+    @php
+        $total_discount_item = 0;
+    @endphp
+    <div style="margin-top: 10px"><strong>Produk</strong></div>
+    @foreach ($order->detail as $item)
+        <?php $total_discount_item += $item->total_discount?>
+        <div >{{$item->product->name}}</div>
+        <span>{{$item->quantity}} x Rp {{number_format($item->price, 2, ',', '.')}}</span>
+        <br>
+        <div style="margin-bottom: 5px">Diskon : <span style="color: red;">Rp {{$item->discount ? number_format($item->total_discount, 2, ',', '.') : 0}}</span></div>
     @endforeach
-    <div style="margin-top: 10px">Ongkir <br> Rp{{number_format($order->delivery->delivery_fee, 2, ',', '.')}}</div>
-    <div style="margin-top: 10px">Diskon</div>
-    <div style="color: red;">Rp{{$order->total_discount ? number_format($order->total_discount, 2, ',', '.') : 0}}</div>
-    <hr style="float: left; width: 30%"><br>
-    <div>Total Payment</div>
-    <div><strong>Rp{{number_format($payment->payment_amount, 2, ',', '.')}}</strong></div>
+    <div style="margin-top: 10px"><strong>Ongkir</strong></div>
+    <div>{{$order->delivery->delivery_fee ? 'Rp ' . number_format($order->delivery->delivery_fee, 2, ',', '.') : 'Rp 0'}}</div>
+
+    <div style="margin-top: 10px"><strong>Diskon Ongkir</strong></div>
+    <div> <span style="color: red;">{{$order->delivery->delivery_discount ? 'Rp '. number_format($order->delivery->delivery_discount, 2, ',', '.') :'Rp 0'}} </span></div>
+
+    <div style="margin-top: 10px"><strong>Diskon</strong></div>
+    <div>Voucher Diskon : <span style="color: red;">Rp {{$order->discount ?? 0 }}</span></div>
+    <div>Total Diskon Produk : <span style="color: red;">Rp {{$total_discount_item}}</span></div>
+
+    <br>
+    <hr style="float: left; width: 50%"><br>
+    <div>Total Pembayaran</div>
+    <div><strong>Rp{{number_format($order->payment->payment_amount, 2, ',', '.')}}</strong></div>
     <br>
 
     <div>Selanjutnya pesananmu akan diproses oleh seller.</div><br><br>
-    <span>Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
+    <span style="color: grey;">Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
 </body>
 
 </html>
