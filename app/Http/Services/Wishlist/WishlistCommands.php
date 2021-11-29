@@ -25,6 +25,7 @@ class WishlistCommands{
         $wishlist->customer_id = $data['customer_id'];
         $wishlist->merchant_id = $data['merchant_id'];
         $wishlist->product_id = $data['product_id'];
+        $wishlist->is_valid = true;
 
         if (!$wishlist->save()){
             $response['success'] = false;
