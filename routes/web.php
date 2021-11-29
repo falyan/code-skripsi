@@ -224,6 +224,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'review', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('add', 'ReviewController@addReview');
             });
+
+            $router->group(['prefix' => 'wishlist', 'middleware' => 'auth'], static function () use ($router) {
+                $router->post('add/remove', 'WishlistController@addOrRemoveWishlist');
+            });
         });
     });
 
