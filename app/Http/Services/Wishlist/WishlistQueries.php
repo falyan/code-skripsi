@@ -30,4 +30,26 @@ class WishlistQueries{
         $response['data'] = $wishlist;
         return $response;
     }
+
+    public function searchListWishlistByName($data){
+        $keyword = $data['keyword'];
+        $wishlist = Wishlist::with(['customer', 'merchant' => function ($merchant) {
+            $merchant->with(['province', 'city', 'district', 'expedition']);
+        }, 'product' => function ($product) use ($keyword) {
+            $product->withCount(['order_details' => function ($details) {
+                $details->whereHas('order', function ($order) {
+                    $order->whereHas('progress_done');
+                });
+            }])->with(['product_stock', 'product_photo']);
+        }])->whereHas('product', function ($query) use ($keyword){
+            $query->where('name', 'ILIKE', '%' . $keyword . '%')->orWhereHas('merchant', function($query) use ($keyword) {
+                $query->where('name', 'ILIKE', '%' . $keyword . '%');
+            });
+        })->where('customer_id', $data['customer_id'])->where('is_valid', true)->paginate(10);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data wishlist!';
+        $response['data'] = $wishlist;
+        return $response;
+    }
 }
