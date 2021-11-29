@@ -52,4 +52,12 @@ class WishlistController extends Controller
             return $this->respondErrorException($e, $request);
         }
     }
+
+    public function getListWishlistByCustomer(){
+        try {
+            return $this->wishlistQueries->getListWishlistByCustomer(Auth::id());
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
 }
