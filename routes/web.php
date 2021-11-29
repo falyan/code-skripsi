@@ -197,6 +197,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'wishlist', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('list', 'WishlistController@getListWishlistByCustomer');
+                $router->get('search', 'WishlistController@searchListWishlistByName');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {

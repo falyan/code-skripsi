@@ -60,4 +60,33 @@ class WishlistController extends Controller
             return $this->respondWithData($e, 'Error', 400);
         }
     }
+
+    public function searchListWishlistByName(Request $request){
+        $request['customer_id'] = Auth::id();
+        try {
+            $rules = [
+                'keyword' => 'required|min:3'
+            ];
+
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => ':attribute diperlukan.',
+                'min' => 'panjang :attribute minimum :min karakter.',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            return $this->wishlistQueries->searchListWishlistByName($request);
+        }catch (Exception $e){
+            return $this->respondErrorException($e, $request);
+        }
+    }
 }
