@@ -126,6 +126,11 @@ class Merchant extends Model
 
     public function review()
     {
-        return $this->hasMany(ReviewPhoto::class);
+        return $this->hasMany(Review::class);
+    }
+
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
     }
 }

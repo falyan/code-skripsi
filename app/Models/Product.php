@@ -118,6 +118,11 @@ class Product extends Model
         return $this->hasMany(Review::class);
     }
 
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
     public function order_details()
     {
         return $this->hasMany(OrderDetail::class, 'product_id');
