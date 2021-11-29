@@ -34,7 +34,7 @@ class WishlistCommands{
             return $response;
         }
 
-        $response['success'] = false;
+        $response['success'] = true;
         $response['message'] = 'Berhasil menyimpan produk ke wishlist!';
         $response['data'] = $wishlist;
         return $response;
