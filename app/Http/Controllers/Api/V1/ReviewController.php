@@ -130,6 +130,15 @@ class ReviewController extends Controller
         }
     }
 
+    public function getListReviewUndoneByBuyer(){
+        try {
+            $buyer_id = Auth::id();
+            return $this->reviewQueries->getListReviewUndone('buyer_id' ,$buyer_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
     public function getListReviewDoneReplyByMerchant(){
         try {
             $merchant_id = Auth::user()->merchant_id;

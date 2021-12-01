@@ -86,6 +86,37 @@ class ReviewQueries{
         return $response;
     }
 
+    public function getListReviewUndone($column_name, $related_id){
+        $order = Order::with([
+            'detail' => function ($product) {
+                $product->with(['product' => function ($j) {
+                    $j->with(['product_photo']);
+                }]);
+            }, 'progress_active', 'merchant', 'delivery', 'buyer'
+        ])->where([
+            [$column_name, $related_id],
+        ])->whereHas('progress_active', function ($j) {
+            $j->whereIn('status_code', [88]);
+        })->whereDoesntHave('review')->orderBy('created_at', 'desc')->paginate(10);
+
+        $detail_array = [];
+        foreach ($order as $o){
+            foreach ($o->detail as $detail){
+                $review = Review::with(['review_photo'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
+                    ->where('merchant_id', $o->merchant_id)->where('product_id', $detail->product_id)->first();
+                $detail->merchant = $o->merchant;
+                $detail->review = $review;
+                array_push($detail_array, $detail);
+            }
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Data review berhasil didapatkan!';
+        $response['data'] = static::paginate($detail_array, 10, 1);
+
+        return $response;
+    }
+
     public function getListReviewDoneReply($column_name, $related_id){
         $order = Order::with([
             'detail' => function ($product) {
