@@ -196,6 +196,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'review', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('list', 'ReviewController@getListReviewByBuyer');
                 $router->get('list/done', 'ReviewController@getListReviewDoneByBuyer');
+                $router->get('list/undone', 'ReviewController@getListReviewUndoneByBuyer');
                 $router->get('detail/{review_id}', 'ReviewController@getDetailReview');
             });
         });
