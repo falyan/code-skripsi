@@ -26,7 +26,7 @@ class ReviewQueries{
         $detail_array = [];
         foreach ($order as $o){
             foreach ($o->detail as $detail){
-                $review = Review::with(['review_photo'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
+                $review = Review::with(['review_photo', 'customer'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
                     ->where('merchant_id', $o->merchant_id)->where('product_id', $detail->product_id)->first();
                 $detail->merchant = $o->merchant;
                 $detail->review = $review;
@@ -71,7 +71,7 @@ class ReviewQueries{
         $detail_array = [];
         foreach ($order as $o){
             foreach ($o->detail as $detail){
-                $review = Review::with(['review_photo'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
+                $review = Review::with(['review_photo', 'customer'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
                     ->where('merchant_id', $o->merchant_id)->where('product_id', $detail->product_id)->first();
                 if ($review != null){
                     $detail->merchant = $o->merchant;
@@ -104,7 +104,7 @@ class ReviewQueries{
         $detail_array = [];
         foreach ($order as $o){
             foreach ($o->detail as $detail){
-                $review = Review::with(['review_photo'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
+                $review = Review::with(['review_photo', 'customer'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
                     ->where('merchant_id', $o->merchant_id)->where('product_id', $detail->product_id)->first();
                 if ($review == null){
                     $detail->merchant = $o->merchant;
@@ -139,7 +139,7 @@ class ReviewQueries{
         $detail_array = [];
         foreach ($order as $o){
             foreach ($o->detail as $detail){
-                $review = Review::with(['review_photo'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
+                $review = Review::with(['review_photo', 'customer'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
                     ->where('merchant_id', $o->merchant_id)->where('product_id', $detail->product_id)->first();
                 if ($review['reply_message'] != null){
                     $detail->merchant = $o->merchant;
@@ -174,7 +174,7 @@ class ReviewQueries{
         $detail_array = [];
         foreach ($order as $o){
             foreach ($o->detail as $detail){
-                $review = Review::with(['review_photo'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
+                $review = Review::with(['review_photo', 'customer'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
                     ->where('merchant_id', $o->merchant_id)->where('product_id', $detail->product_id)->first();
                 if ($review != null && $review['reply_message'] == null){
                     $detail->merchant = $o->merchant;
