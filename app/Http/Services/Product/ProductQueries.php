@@ -283,9 +283,9 @@ class ProductQueries extends Service
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
         $immutable_data = $sorted_data->get()->map(function ($product) {
-            $product->avg_rating =  null;
             $product->reviews = null;
-            // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : null;
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 2) : 0.00;
+//            $product->avg_rating =  null;
             return $product;
         });
 
