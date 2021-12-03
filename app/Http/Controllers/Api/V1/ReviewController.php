@@ -35,7 +35,6 @@ class ReviewController extends Controller
                 'product_id' => 'required',
                 'rate' => 'required|numeric',
                 'order_id' => 'required',
-                'url.*' => 'required',
             ];
 
             $validator = Validator::make($request->all(), $rules, [

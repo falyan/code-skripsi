@@ -38,22 +38,24 @@ class ReviewCommands{
 
             $review_photo = '';
             $photos = [];
-            foreach ($data['url'] as $url_photo) {
-                $review_photo = new ReviewPhoto();
-                $review_photo->order_id = $data['order_id'] ?? null;
-                $review_photo->review_id = $review->id;
-                $review_photo->url = $url_photo;
-                $review_photo->created_by = $data['full_name'];
-                $review_photo->updated_by = $data['full_name'];
-                $review_photo->save();
+            if ($data['url'] != []){
+                foreach ($data['url'] as $url_photo) {
+                    $review_photo = new ReviewPhoto();
+                    $review_photo->order_id = $data['order_id'] ?? null;
+                    $review_photo->review_id = $review->id;
+                    $review_photo->url = $url_photo;
+                    $review_photo->created_by = $data['full_name'];
+                    $review_photo->updated_by = $data['full_name'];
+                    $review_photo->save();
 
-                array_push($photos, $review_photo);
-            }
+                    array_push($photos, $review_photo);
+                }
 
-            if ($photos == []) {
-                $response['success'] = false;
-                $response['message'] = 'Gagal menambahkan foto review!';
-                return $response;
+                if ($photos == []) {
+                    $response['success'] = false;
+                    $response['message'] = 'Gagal menambahkan foto review!';
+                    return $response;
+                }
             }
 
             DB::commit();
