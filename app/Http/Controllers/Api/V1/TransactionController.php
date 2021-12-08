@@ -913,6 +913,40 @@ class TransactionController extends Controller
         }
     }
 
+    public function countCheckoutPrice(){
+        $validator = Validator::make(request()->all(), [
+            'merchants' => 'required|array',
+            'merchants.*.merchant_id' => 'required',
+            'merchants.*.delivery_method' => 'required',
+            'merchants.*.delivery_fee' => 'required',
+            'merchants.*.delivery_discount' => 'required',
+            'merchants.*.products' => 'required|array',
+            'merchants.*.products.*.product_id' => 'required',
+            'merchants.*.products.*.quantity' => 'required',
+            'merchants.*.products.*.payment_note' => 'sometimes',
+        ], [
+            'required' => ':attribute diperlukan.'
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            $customer = Auth::user();
+            return $this->transactionQueries->countCheckoutPrice($customer, request()->all());
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function unique_code($value)
     {
         return substr(base_convert(sha1(uniqid($value)), 16, 36), 0, 25);

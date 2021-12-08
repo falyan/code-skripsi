@@ -5,8 +5,11 @@ namespace App\Http\Services\Transaction;
 use App\Http\Services\Service;
 use App\Models\CustomerDiscount;
 use App\Models\DeliveryDiscount;
+use App\Models\Merchant;
 use App\Models\Order;
+use App\Models\Product;
 use Carbon\Carbon;
+use Exception;
 
 class TransactionQueries extends Service
 {
@@ -132,6 +135,86 @@ class TransactionQueries extends Service
         }
 
         return $discount;
+    }
+
+    public function countCheckoutPrice($customer, $datas){
+        $total_price = $total_payment = $total_delivery_discount = 0;
+
+        $new_merchant = array_map(function ($merchant) use (&$total_price, &$total_payment, &$total_delivery_discount){
+            $total_weight = 0;
+            $merchant_total_price = 0;
+            $data_merchant = Merchant::findOrFail($merchant['merchant_id']);
+
+            $new_product = array_map(function ($product) use (&$total_weight, &$merchant_total_price){
+                $data_product = Product::findOrFail($product['product_id']);
+                $product['total_price'] = $product['total_amount'] = $total_item_price = $data_product['price'] * $product['quantity'];
+                $product['total_weight'] = $product_total_weight = $data_product['weight'] * $product['quantity'];
+                $product['insurance_cost'] = $product['discount'] = $product['total_discount'] = $product['total_insurance_cost'] = 0;
+                $total_weight += $product_total_weight;
+                $merchant_total_price += $total_item_price;
+
+                return array_merge($product, $data_product->toArray());
+            }, data_get($merchant, 'products'));
+
+            $merchant['products'] = $new_product;
+            $merchant['total_weight'] = $total_weight;
+            if ($merchant['delivery_discount'] > $merchant['delivery_fee']){
+                $merchant['delivery_discount'] = $merchant['delivery_fee'];
+            }
+            $merchant['total_amount'] = $merchant_total_price_with_delivery = $merchant_total_price + $merchant['delivery_fee'];
+            $merchant['total_payment'] = $merchant_total_payment = $merchant_total_price_with_delivery - $merchant['delivery_discount'];
+
+            $total_price += $merchant_total_price_with_delivery;
+            $total_payment += $merchant_total_payment;
+            $total_delivery_discount += $merchant['delivery_discount'];
+
+            return array_merge($merchant, $data_merchant->toArray());
+        }, data_get($datas, 'merchants'));
+
+        $datas['merchants'] = $new_merchant;
+        $datas['total_amount'] = $total_price;
+        $datas['total_delivery_discount'] = $total_delivery_discount;
+        $datas['total_payment'] = $total_payment;
+
+        $total_discount = $total_price_discount = 0;
+        $percent_discount = 50;
+        $max_percent_discount = 500000;
+        $is_percent_discount = true;
+        $discount = $this->getCustomerDiscount($customer->id, $customer->email);
+
+        if ($discount == 0 && $is_percent_discount == true){
+            $total_item_price = 0;
+            array_map(function ($merchant) use (&$total_item_price) {
+                array_map(function ($product) use (&$total_item_price) {
+                    $total_item_price += $product['total_price'];
+                }, data_get($merchant, 'products'));
+            }, data_get($datas, 'merchants'));
+
+            $discount = ($percent_discount/100)*$total_item_price;
+            if ($discount > $max_percent_discount){
+                $discount = $max_percent_discount;
+            }
+        }
+
+        $new_merchant = array_map(function ($merchant) use (&$discount, &$total_discount, &$total_price_discount) {
+            $count_discount = $discount;
+
+            if (data_get($merchant, 'total_payment') != null && data_get($merchant, 'total_payment') <= $discount){
+                $count_discount = data_get($merchant, 'total_payment');
+            }
+
+            data_set($merchant, 'total_payment', data_get($merchant, 'total_payment') - $count_discount);
+            $discount = $discount - $count_discount;
+            $total_discount += $count_discount;
+            $total_price_discount += data_get($merchant, 'total_payment');
+
+            return $merchant;
+        }, data_get($datas, 'merchants'));
+        $datas['merchants'] = $new_merchant;
+        $datas['total_discount'] = $total_discount;
+        $datas['total_payment'] -= $total_discount;
+
+        return $datas;
     }
 
     public function filter($model, $filter)
