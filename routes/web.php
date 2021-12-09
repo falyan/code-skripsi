@@ -173,6 +173,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('search', 'RegionController@searchDistrict');
             });
 
+            $router->group(['prefix' => 'checkout', 'middleware' => 'auth'], static function () use ($router) {
+                $router->post('/count', 'TransactionController@countCheckoutPrice');
+            });
+
             $router->group(['prefix' => 'transaction', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('/delivery-discount', 'TransactionController@getDeliveryDiscount');
                 $router->get('/customer-discount', 'TransactionController@getCustomerDiscount');
