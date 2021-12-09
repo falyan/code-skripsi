@@ -219,6 +219,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 });
             });
 
+            $router->group(['prefix' => 'profile'], static function () use ($router) {
+                $router->group(['middleware' => 'auth'], static function () use ($router){
+                    $router->post('update', 'CustomerController@updateCustomerProfile');
+                });
+            });
+
             $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('checkout', 'TransactionController@checkout');
             });
