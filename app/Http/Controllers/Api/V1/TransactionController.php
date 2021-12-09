@@ -81,7 +81,7 @@ class TransactionController extends Controller
         }
 
         try {
-            $customer_id = Auth::id();
+            $customer = Auth::user();
             array_map(function ($merchant) {
                 array_map(function ($item) {
                     if (!$product = Product::find(data_get($item, 'product_id'))) {
@@ -95,7 +95,7 @@ class TransactionController extends Controller
                     }
                 }, data_get($merchant, 'products'));
             }, request()->get('merchants'));
-            $response = $this->transactionCommand->createOrder(request()->all(), $customer_id);
+            $response = $this->transactionCommand->createOrder(request()->all(), $customer);
 
             if ($response['success'] == true) {
                 array_map(function ($merchant) {
@@ -909,6 +909,40 @@ class TransactionController extends Controller
             $discount = $this->transactionQueries->getCustomerDiscount(Auth::user()->id, Auth::user()->email);
             return $this->respondWithData($discount, 'Data diskon customer berhasil didapatkan');
         }catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function countCheckoutPrice(){
+        $validator = Validator::make(request()->all(), [
+            'merchants' => 'required|array',
+            'merchants.*.merchant_id' => 'required',
+            'merchants.*.delivery_method' => 'required',
+            'merchants.*.delivery_fee' => 'required',
+            'merchants.*.delivery_discount' => 'required',
+            'merchants.*.products' => 'required|array',
+            'merchants.*.products.*.product_id' => 'required',
+            'merchants.*.products.*.quantity' => 'required',
+            'merchants.*.products.*.payment_note' => 'sometimes',
+        ], [
+            'required' => ':attribute diperlukan.'
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            $customer = Auth::user();
+            return $this->transactionQueries->countCheckoutPrice($customer, request()->all());
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
