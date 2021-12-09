@@ -146,7 +146,9 @@ class TransactionQueries extends Service
             $data_merchant = Merchant::findOrFail($merchant['merchant_id']);
 
             $new_product = array_map(function ($product) use (&$total_weight, &$merchant_total_price){
-                $data_product = Product::findOrFail($product['product_id']);
+                if (!$data_product = Product::find($product['product_id'])) {
+                    throw new Exception('Produk dengan id ' . $product['product_id'] . ' tidak ditemukan', 404);
+                }
                 $product['total_price'] = $product['total_amount'] = $total_item_price = $data_product['price'] * $product['quantity'];
                 $product['total_weight'] = $product_total_weight = $data_product['weight'] * $product['quantity'];
                 $product['insurance_cost'] = $product['discount'] = $product['total_discount'] = $product['total_insurance_cost'] = 0;
@@ -179,7 +181,7 @@ class TransactionQueries extends Service
         $total_discount = $total_price_discount = 0;
         $percent_discount = 50;
         $max_percent_discount = 500000;
-        $is_percent_discount = true;
+        $is_percent_discount = false;
         $discount = $this->getCustomerDiscount($customer->id, $customer->email);
 
         if ($discount == 0 && $is_percent_discount == true){
@@ -207,6 +209,7 @@ class TransactionQueries extends Service
             $discount = $discount - $count_discount;
             $total_discount += $count_discount;
             $total_price_discount += data_get($merchant, 'total_payment');
+            $merchant['product_discount'] = $count_discount;
 
             return $merchant;
         }, data_get($datas, 'merchants'));

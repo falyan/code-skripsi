@@ -49,10 +49,11 @@ class TransactionCommands extends Service
         ];
     }
 
-    public function createOrder($datas, $customer_id)
+    public function createOrder($datas, $customer)
     {
         DB::beginTransaction();
         try {
+            $customer_id = $customer->id;
             $no_reference = (int) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
 
             while (static::checkReferenceExist($no_reference) == false) {
@@ -62,38 +63,8 @@ class TransactionCommands extends Service
             $timestamp = Carbon::now('Asia/Jakarta')->toIso8601String();
             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(7))->timestamp);
-            $total_price = 0;
 
-            //Customer discount
-            $customer = Customer::findOrFail($customer_id);
-            $transactionQueries = new TransactionQueries();
-            $discount = $transactionQueries->getCustomerDiscount($customer_id, $customer['email']);
-            $total_discount = 0;
-            $percent_discount = 50;
-            $max_percent_discount = 500000;
-            $is_percent_discount = false;
-
-            if ($discount == 0 && $is_percent_discount == true){
-                $total_item_price = 0;
-                array_map(function ($merchant) use (&$total_item_price) {
-                    array_map(function ($product) use (&$total_item_price) {
-                        $total_item_price += $product['total_price'];
-                    }, data_get($merchant, 'products'));
-                }, data_get($datas, 'merchants'));
-
-                $discount = ($percent_discount/100)*$total_item_price;
-                if ($discount > $max_percent_discount){
-                    $discount = $max_percent_discount;
-                }
-            }
-
-            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, &$total_price, &$discount, &$total_discount) {
-                $count_discount = $discount;
-                if (data_get($data, 'total_payment') <= $discount){
-                    $count_discount = data_get($data, 'total_payment');
-                }
-                data_set($data, 'total_payment', data_get($data, 'total_payment') - $count_discount);
-
+            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
                 $order->buyer_id = $customer_id;
@@ -103,16 +74,12 @@ class TransactionCommands extends Service
                 $order->total_weight = data_get($data, 'total_weight');
                 $order->related_pln_mobile_customer_id = null;
                 $order->no_reference = $no_reference;
-                $order->discount = $count_discount;
+                $order->discount = data_get($data, 'product_discount');
                 $order->created_by = 'user';
                 $order->updated_by = 'user';
                 $order->save();
 
                 $this->order_id = $order->id;
-
-                $discount = $discount - $count_discount;
-                $total_discount += $count_discount;
-                $total_price += data_get($data, 'total_payment');
 
                 array_map(function ($product) use ($order) {
                     $order_detail = new OrderDetail();
@@ -129,7 +96,7 @@ class TransactionCommands extends Service
                     $order_detail->total_discount = data_get($product, 'total_discount');
                     $order_detail->total_insurance_cost = data_get($product, 'total_insurance_cost');
                     $order_detail->total_amount = data_get($product, 'total_amount');
-                    $order_detail->notes = data_get($product, 'notes');
+                    $order_detail->notes = data_get($product, 'note');
                     $order_detail->save();
                 }, data_get($data, 'products'));
 
@@ -192,15 +159,15 @@ class TransactionCommands extends Service
                 }
             }, data_get($datas, 'merchants'));
 
-            if ($total_price == 0){
+            if ($datas['total_payment'] < 1){
                 throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
             }
 
             $mailSender = new MailSenderManager();
             $mailSender->mailCheckout($this->order_id);
 
-            if ($total_discount > 0){
-                $update_discount = $this->updateCustomerDiscount($customer_id, $customer['email'], $total_discount, $no_reference);
+            if ($datas['total_discount'] > 0){
+                $update_discount = $this->updateCustomerDiscount($customer_id, $customer->email, $datas['total_discount'], $no_reference);
                 if ($update_discount == false){
                     throw new Exception('Gagal mengupdate customer discount');
                 }
@@ -213,11 +180,11 @@ class TransactionCommands extends Service
                 'transaction_code' => '00',
                 'partner_reference' => $no_reference,
                 'product_id' => static::$productid,
-                'amount' => $total_price,
+                'amount' => $datas['total_payment'],
                 'customer_id' => $no_reference,
-                'customer_name' => $customer['full_name'],
-                'email' => $customer['email'],
-                'phone_number' => $customer['phone'],
+                'customer_name' => $customer->full_name,
+                'email' => $customer->email,
+                'phone_number' => $customer->phone,
                 'expired_invoice' => $exp_date,
             ];
 
@@ -248,7 +215,7 @@ class TransactionCommands extends Service
                 throw new Exception($response->response_details[0]->response_message);
             }
 
-            $response->response_details[0]->amount = $total_price;
+            $response->response_details[0]->amount = $datas['total_payment'];
             $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
             $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
 

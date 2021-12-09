@@ -81,7 +81,7 @@ class TransactionController extends Controller
         }
 
         try {
-            $customer_id = Auth::id();
+            $customer = Auth::user();
             array_map(function ($merchant) {
                 array_map(function ($item) {
                     if (!$product = Product::find(data_get($item, 'product_id'))) {
@@ -95,7 +95,7 @@ class TransactionController extends Controller
                     }
                 }, data_get($merchant, 'products'));
             }, request()->get('merchants'));
-            $response = $this->transactionCommand->createOrder(request()->all(), $customer_id);
+            $response = $this->transactionCommand->createOrder(request()->all(), $customer);
 
             if ($response['success'] == true) {
                 array_map(function ($merchant) {
