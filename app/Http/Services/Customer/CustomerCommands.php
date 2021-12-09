@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\Customer;
 
+use App\Models\Customer;
 use App\Models\CustomerAddress;
 
 class CustomerCommands{
@@ -109,7 +110,7 @@ class CustomerCommands{
         return true;
     }
 
-    public function deleteCustomerAddress($id, $customer_id){        
+    public function deleteCustomerAddress($id, $customer_id){
         if (!CustomerAddress::destroy($id)){
             $response['success'] = false;
             $response['message'] = 'Gagal hapus alamat';
@@ -117,6 +118,25 @@ class CustomerCommands{
         }
         $response['success'] = true;
         $response['message'] = 'Berhasil hapus alamat';
+        return $response;
+    }
+
+    public function updateCustomerProfile($customer_id, $data){
+        $customer = Customer::findOrFail($customer_id);
+        $customer->image_url = ($data->image_url == null) ? ($customer->image_url) : ($data->image_url);
+        $customer->full_name = ($data->full_name == null) ? ($customer->full_name) : ($data->full_name);
+
+        if (!$customer->save()){
+            $response['success'] = false;
+            $response['message'] = 'Gagal mengubah profil customer';
+            $response['data'] = $customer;
+
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mengubah profil customer';
+        $response['data'] = $customer;
         return $response;
     }
 }

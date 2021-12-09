@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Services\Customer\CustomerCommands;
 use App\Http\Services\Customer\CustomerQueries;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -122,9 +123,19 @@ class CustomerController extends Controller
         try {
             $customer_id = Auth::id();
             $response = $this->customerCommands->deleteCustomerAddress($id, $customer_id);
-            
+
             return $this->respondWithResult($response['success'], $response);
         } catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function updateCustomerProfile(Request $request){
+        try {
+            if (Auth::check()){
+                return $this->customerCommands->updateCustomerProfile(Auth::id(), $request);
+            }
+        }catch (Exception $e){
             return $this->respondErrorException($e, request());
         }
     }

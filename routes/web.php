@@ -50,6 +50,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('atur-toko', 'MerchantController@aturToko');
                     $router->post('set-expedition', 'MerchantController@setExpedition');
                     $router->post('atur-lokasi', 'MerchantController@aturLokasi');
+                    $router->post('update', 'MerchantController@updateMerchantProfile');
                 });
 
                 $router->group(['prefix' => 'order'], static function () use ($router) {
@@ -216,6 +217,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('update/{id}', 'CustomerController@updateCustomerAddress');
                     $router->post('default/{id}', 'CustomerController@setDefaultCustomerAddress');
                     $router->delete('delete/{id}', 'CustomerController@deleteCustomerAddress');
+                });
+            });
+
+            $router->group(['prefix' => 'profile'], static function () use ($router) {
+                $router->group(['middleware' => 'auth'], static function () use ($router){
+                    $router->post('update', 'CustomerController@updateCustomerProfile');
                 });
             });
 

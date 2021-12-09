@@ -164,4 +164,15 @@ class MerchantController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function updateMerchantProfile(Request $request){
+        try {
+            if (Auth::check()){
+                $merchantCommand = new MerchantCommands();
+                return $merchantCommand->updateMerchantProfile(Auth::user()->merchant_id, $request);
+            }
+        }catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
 }
