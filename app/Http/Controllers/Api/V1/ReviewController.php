@@ -35,7 +35,6 @@ class ReviewController extends Controller
                 'product_id' => 'required',
                 'rate' => 'required|numeric',
                 'order_id' => 'required',
-                'url.*' => 'required',
             ];
 
             $validator = Validator::make($request->all(), $rules, [
@@ -107,6 +106,51 @@ class ReviewController extends Controller
             }
 
             return $this->reviewCommands->replyReview($review_id, $request);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function getListReviewDoneByBuyer(){
+        try {
+            $buyer_id = Auth::id();
+            return $this->reviewQueries->getListReviewDone('buyer_id' ,$buyer_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function getListReviewDoneByMerchant(){
+        try {
+            $merchant_id = Auth::user()->merchant_id;
+            return $this->reviewQueries->getListReviewDone('merchant_id' ,$merchant_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function getListReviewUndoneByBuyer(){
+        try {
+            $buyer_id = Auth::id();
+            return $this->reviewQueries->getListReviewUndone('buyer_id' ,$buyer_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function getListReviewDoneReplyByMerchant(){
+        try {
+            $merchant_id = Auth::user()->merchant_id;
+            return $this->reviewQueries->getListReviewDoneReply('merchant_id' ,$merchant_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function getListReviewDoneUnreplyByMerchant(){
+        try {
+            $merchant_id = Auth::user()->merchant_id;
+            return $this->reviewQueries->getListReviewDoneUnreply('merchant_id' ,$merchant_id);
         }catch (Exception $e){
             return $this->respondWithData($e, 'Error', 400);
         }
