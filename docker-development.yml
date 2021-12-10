@@ -22,7 +22,7 @@ services:
       options:
         loki-url: "$DATASOURCE_LOKI"
     deploy:
-    labels:
+      labels:
         - "traefik.enable=true"
         - "traefik.http.services.pln-marketplace-saruman-development.loadbalancer.server.port=80"
         - "traefik.http.middlewares.compress-pln-marketplace-saruman-development.compress=true"
