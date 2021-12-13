@@ -295,6 +295,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->post('query/otp/validate', 'IconcashController@validateOTP');
             $router->post('auth/login', 'IconcashController@login');
             $router->get('auth/logout', 'IconcashController@logout');
+            $router->get('auth/changepin', 'IconcashController@changePin');
             $router->get('query/balance/customer', 'IconcashController@getCustomerAllBalance');
             $router->post('command/withdrawal/inquiry', 'IconcashController@withdrawalInquiry');
             $router->post('command/withdrawal', 'IconcashController@withdrawal');
