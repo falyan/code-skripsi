@@ -513,6 +513,44 @@ class IconcashController extends Controller
         }
     }
 
+    public function changePin()
+    {
+        if (!$old_pin = request()->get('old_pin')) {
+            return $this->respondWithResult(false, 'field old_pin kosong', 400);
+        }
+
+        if (!$new_pin = request()->get('new_pin')) {
+            return $this->respondWithResult(false, 'field new_pin kosong', 400);
+        }
+
+        if (!$confirm_new_pin = request()->get('confirm_new_pin')) {
+            return $this->respondWithResult(false, 'field confirm_new_pin kosong', 400);
+        }
+
+        if ($confirm_new_pin != $new_pin) {
+            return $this->respondWithResult(false, 'field confirmation_pin tidak sesuai', 400);
+        }
+
+        try {
+            $iconcash = Auth::user()->iconcash;
+
+            if (!isset($iconcash->token)) {
+                return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
+            }
+
+            $response = IconcashManager::changePin($iconcash->token, $old_pin, $new_pin, $confirm_new_pin);
+
+            return $this->respondWithItem($response, function ($item) {
+                return [
+                    'success' => $item->success,
+                    'message' => $item->message
+                ];
+            });
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function unique_code($value)
     {
         return substr(base_convert(sha1(uniqid($value)), 16, 36), 0, 25);

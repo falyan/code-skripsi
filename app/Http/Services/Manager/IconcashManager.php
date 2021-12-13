@@ -480,6 +480,33 @@ class IconcashManager
     return data_get($response, 'data');
   }
 
+    public function changePin($token, $old_pin, $new_pin, $confirm_new_pin)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/auth/change-pin' . $param);
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => ['Authorization' => $token],
+            'http_errors' => false,
+            'json' => [
+                'confirmPin' => $confirm_new_pin,
+                'newPin' => $new_pin,
+                'oldPin' => $old_pin
+            ]
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return $response;
+    }
+
   static function setParamAPI($data = [])
   {
     $param = [];

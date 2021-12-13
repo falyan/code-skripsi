@@ -2,12 +2,13 @@
 
 namespace App\Http\Services\Wishlist;
 
+use App\Http\Services\Service;
 use App\Models\Wishlist;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 
-class WishlistQueries{
+class WishlistQueries extends Service {
     public function findWishlistExist($customer_id, $merchant_id, $product_id){
         $wishlist = Wishlist::where('customer_id', $customer_id)->where('product_id', $product_id)->where('merchant_id', $merchant_id)->first();
         return $wishlist;
@@ -23,11 +24,18 @@ class WishlistQueries{
                     $order->whereHas('progress_done');
                 });
             }])->with(['product_stock', 'product_photo']);
-        }])->where('customer_id', $customer_id)->where('is_valid', true)->paginate(10);
+        }])->where('customer_id', $customer_id)->where('is_valid', true);
+
+        $wishlists = $wishlist->get()->map(function ($wl){
+            $wl->avg_rating = ($wl->product->reviews()->count() > 0) ? round($wl->product->reviews()->avg('rate'), 1) : 0.0;
+            return $wl;
+        });
+
+        $data = static::paginate($wishlists->toArray());
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data wishlist!';
-        $response['data'] = $wishlist;
+        $response['data'] = $data;
         return $response;
     }
 
@@ -45,11 +53,18 @@ class WishlistQueries{
             $query->where('name', 'ILIKE', '%' . $keyword . '%')->orWhereHas('merchant', function($query) use ($keyword) {
                 $query->where('name', 'ILIKE', '%' . $keyword . '%');
             });
-        })->where('customer_id', $data['customer_id'])->where('is_valid', true)->paginate(10);
+        })->where('customer_id', $data['customer_id'])->where('is_valid', true);
+
+        $wishlists = $wishlist->get()->map(function ($wl){
+            $wl->avg_rating = ($wl->product->reviews()->count() > 0) ? round($wl->product->reviews()->avg('rate'), 1) : 0.0;
+            return $wl;
+        });
+
+        $data = static::paginate($wishlists->toArray());
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data wishlist!';
-        $response['data'] = $wishlist;
+        $response['data'] = $data;
         return $response;
     }
 }
