@@ -480,7 +480,7 @@ class IconcashManager
     return data_get($response, 'data');
   }
 
-    public function changePin($token, $old_pin, $new_pin, $confirm_new_pin)
+    public static function changePin($token, $old_pin, $new_pin, $confirm_new_pin)
     {
         $param = self::setParamAPI([]);
 
