@@ -917,7 +917,7 @@ class TransactionController extends Controller
         $validator = Validator::make(request()->all(), [
             'merchants' => 'required|array',
             'merchants.*.merchant_id' => 'required',
-            'merchants.*.delivery_method' => 'required',
+//            'merchants.*.delivery_method' => 'required',
             'merchants.*.delivery_fee' => 'required',
             'merchants.*.delivery_discount' => 'required',
             'merchants.*.products' => 'required|array',

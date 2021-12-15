@@ -146,7 +146,7 @@ class TransactionQueries extends Service
             $data_merchant = Merchant::findOrFail($merchant['merchant_id']);
 
             $new_product = array_map(function ($product) use (&$total_weight, &$merchant_total_price){
-                if (!$data_product = Product::find($product['product_id'])) {
+                if (!$data_product = Product::with(['product_photo', 'stock_active'])->find($product['product_id'])) {
                     throw new Exception('Produk dengan id ' . $product['product_id'] . ' tidak ditemukan', 404);
                 }
                 $product['total_price'] = $product['total_amount'] = $total_item_price = $data_product['price'] * $product['quantity'];
