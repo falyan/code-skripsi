@@ -138,9 +138,9 @@ class TransactionQueries extends Service
     }
 
     public function countCheckoutPrice($customer, $datas){
-        $total_price = $total_payment = $total_delivery_discount = 0;
+        $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = 0;
 
-        $new_merchant = array_map(function ($merchant) use (&$total_price, &$total_payment, &$total_delivery_discount){
+        $new_merchant = array_map(function ($merchant) use (&$total_price, &$total_payment, &$total_delivery_discount, &$total_delivery_fee){
             $total_weight = 0;
             $merchant_total_price = 0;
             $data_merchant = Merchant::findOrFail($merchant['merchant_id']);
@@ -168,6 +168,7 @@ class TransactionQueries extends Service
 
             $total_price += $merchant_total_price_with_delivery;
             $total_payment += $merchant_total_payment;
+            $total_delivery_fee += $merchant['delivery_fee'];
             $total_delivery_discount += $merchant['delivery_discount'];
 
             return array_merge($merchant, $data_merchant->toArray());
@@ -175,6 +176,7 @@ class TransactionQueries extends Service
 
         $datas['merchants'] = $new_merchant;
         $datas['total_amount'] = $total_price;
+        $datas['total_delivery_fee'] = $total_delivery_fee;
         $datas['total_delivery_discount'] = $total_delivery_discount;
         $datas['total_payment'] = $total_payment;
 
