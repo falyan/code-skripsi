@@ -176,6 +176,7 @@ class TransactionQueries extends Service
 
         $datas['merchants'] = $new_merchant;
         $datas['total_amount'] = $total_price;
+        $datas['total_amount_without_delivery'] = $total_price - $total_delivery_fee;
         $datas['total_delivery_fee'] = $total_delivery_fee;
         $datas['total_delivery_discount'] = $total_delivery_discount;
         $datas['total_payment'] = $total_payment;
