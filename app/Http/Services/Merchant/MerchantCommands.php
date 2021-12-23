@@ -120,4 +120,34 @@ class MerchantCommands extends Service
         $response['data'] = $merchant;
         return $response;
     }
+
+    public function setCustomLogistic($merchant_id){
+        $merchant = Merchant::find($merchant_id);
+        if ($merchant == null){
+            $response['success'] = false;
+            $response['message'] = 'Gagal mendapatkan data merchant';
+            $response['data'] = $merchant;
+            return $response;
+        }
+
+        if ($merchant->has_custom_logistic == false || $merchant->has_custom_logistic == null){
+            $merchant->has_custom_logistic = true;
+            if ($merchant->save()){
+                $response['success'] = true;
+                $response['message'] = 'Berhasil mengaktifkan custom logistic';
+                $response['data'] = $merchant;
+                return $response;
+            }
+        }
+
+        if ($merchant->has_custom_logistic == true){
+            $merchant->has_custom_logistic = false;
+            if ($merchant->save()){
+                $response['success'] = true;
+                $response['message'] = 'Berhasil menonaktifkan custom logistic';
+                $response['data'] = $merchant;
+                return $response;
+            }
+        }
+    }
 }
