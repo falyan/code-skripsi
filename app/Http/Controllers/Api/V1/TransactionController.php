@@ -83,6 +83,11 @@ class TransactionController extends Controller
         try {
             $customer = Auth::user();
             array_map(function ($merchant) {
+                if (data_get($merchant, 'delivery_method') == 'custom'){
+                    if (data_get($merchant, 'has_custom_logistic') == false || null){
+                        throw new Exception('Merchant ' . data_get($merchant, 'name') . ' tidak mendukung custom logistic', 404);
+                    }
+                }
                 array_map(function ($item) {
                     if (!$product = Product::find(data_get($item, 'product_id'))) {
                         throw new Exception('Produk dengan id ' . data_get($item, 'product_id') . ' tidak ditemukan', 404);
