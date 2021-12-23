@@ -51,6 +51,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('set-expedition', 'MerchantController@setExpedition');
                     $router->post('atur-lokasi', 'MerchantController@aturLokasi');
                     $router->post('update', 'MerchantController@updateMerchantProfile');
+                    $router->post('set-customlogistic', 'MerchantController@setCustomLogistic');
                 });
 
                 $router->group(['prefix' => 'order'], static function () use ($router) {
