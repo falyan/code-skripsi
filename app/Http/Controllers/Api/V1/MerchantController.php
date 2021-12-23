@@ -175,4 +175,15 @@ class MerchantController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function setCustomLogistic(){
+        try {
+            if (Auth::check()){
+                $merchantCommand = new MerchantCommands();
+                return $merchantCommand->setCustomLogistic(Auth::user()->merchant_id);
+            }
+        }catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
 }
