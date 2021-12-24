@@ -82,11 +82,13 @@ class TransactionController extends Controller
 
         try {
             $customer = Auth::user();
-            array_map(function ($merchant) {
+            $request = request()->all();
+            $request['merchants'] = array_map(function ($merchant) {
                 if (data_get($merchant, 'delivery_method') == 'custom'){
                     if (data_get($merchant, 'has_custom_logistic') == false || null){
-                        throw new Exception('Merchant ' . data_get($merchant, 'name') . ' tidak mendukung custom logistic', 404);
+                        throw new Exception('Merchant ' . data_get($merchant, 'name') . ' tidak mendukung pengiriman oleh seller', 404);
                     }
+                    data_set($merchant, 'delivery_method', 'Pengiriman oleh Seller');
                 }
                 array_map(function ($item) {
                     if (!$product = Product::find(data_get($item, 'product_id'))) {
@@ -99,8 +101,9 @@ class TransactionController extends Controller
                         throw new Exception('Pembelian minimum untuk produk ' . $product->name . ' adalah ' . $product->minimum_purchase, 400);
                     }
                 }, data_get($merchant, 'products'));
+                return $merchant;
             }, request()->get('merchants'));
-            $response = $this->transactionCommand->createOrder(request()->all(), $customer);
+            $response = $this->transactionCommand->createOrder($request, $customer);
 
             if ($response['success'] == true) {
                 array_map(function ($merchant) {
@@ -115,7 +118,7 @@ class TransactionController extends Controller
                         $productCommand = new ProductCommands();
                         $productCommand->updateStockProduct(data_get($item, 'product_id'), data_get($merchant, 'merchant_id'), $data);
                     }, data_get($merchant, 'products'));
-                }, request()->get('merchants'));
+                }, $request['merchants']);
             }
 
             return $response;
