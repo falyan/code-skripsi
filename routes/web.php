@@ -61,6 +61,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('accept', 'TransactionController@acceptOrder');
                     $router->post('reject/{order_id}', 'TransactionController@rejectOrder');
                     $router->post('awb-number/{order_id}/{awb}', 'TransactionController@addAwbNumberOrder');
+                    $router->post('generate-resi/{order_id}', 'TransactionController@addAwbNumberAutoOrder');
                 });
 
                 $router->group(['prefix' => 'notification'], static function () use ($router) {
