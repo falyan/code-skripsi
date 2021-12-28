@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Validator;
 use stdClass;
 use App\Http\Services\Manager\MailSenderManager;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
@@ -764,6 +765,22 @@ class TransactionController extends Controller
                 return $this->respondWithResult(true, 'Pesanan anda berhasil dibatalkan.', 200);
             } else {
                 return $this->respondWithResult(false, 'Pesanan anda tidak dapat dibatalkan!', 400);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function orderConfirmHasArrived($order_id)
+    {
+        try {
+            $order = $this->transactionQueries->getStatusOrder($order_id);
+            if (in_array($order->progress_active->status_code, ['03'])) {
+                return DB::transaction(function () use ($order) {
+                    return $this->transactionCommand->orderConfirmHasArrived($order->trx_no);
+                });
+            } else {
+                return $this->respondWithResult(false, 'Pesanan belum dikirim!', 400);
             }
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
