@@ -780,7 +780,7 @@ class TransactionController extends Controller
                     return $this->transactionCommand->orderConfirmHasArrived($order->trx_no);
                 });
             } else {
-                return $this->respondWithResult(false, 'Pesanan belum dikirim!', 400);
+                return $this->respondWithResult(false, 'Pesanan selain status Sedang Dikirim tidak bisa dikonfirmasi lagi!', 400);
             }
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
