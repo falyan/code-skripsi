@@ -80,6 +80,8 @@ class TransactionCommands extends Service
                 $order->save();
 
                 $this->order_id = $order->id;
+                $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
+                $order->save();
 
                 array_map(function ($product) use ($order) {
                     $order_detail = new OrderDetail();
