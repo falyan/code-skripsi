@@ -94,20 +94,31 @@
                         <p style="color: #666;font-size: 15px;">Transaksi Anda telah ditolak oleh seller karena {{ $reason }}.</p>
 
                         <div style="margin-bottom: 10px;border-radius: 20px;background-color: #E6F6F8;">
-                            <div style="padding: 2px 5px;display: grid;grid-template-columns: 200px 230px;grid-gap: 10px;padding: 10px;">
-                                <div style="padding:10px;">
-                                    <p style="color:#00A2B9;font-weight:bold;">Kode Transaksi</p>
-                                    <p style="color: #666;margin-top: 0;font-weight: bold;">{{ $order->trx_no }}</p>
-                                </div>
-                                <div style="padding:10px;">
-                                    <p style="color:#00A2B9;font-weight:bold;">Status Transaksi</p>
-
-                                    <div style="vertical-align: middle;">
-                                        <img src="https://dev-stroom.air.id/plnmp/sauron-staging/api/firebase/file/load/Marketplace~merchants~1640238761dde367ed-00b0-4dc4-ac0a-01167e12cb72.png" alt=""
-                                            style="display: inline-block;max-width: 22px;vertical-align: middle;">
-                                        <span style="color: #FF5E5E;margin-top: 0;font-weight: bold;display:inline-block; vertical-align: middle;">Dibatalkan</span>
-                                    </div>
-                                </div>
+                            <div style="padding: 30px;">
+                                <table style="width: 100%">
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <span style="color:#00A2B9;font-weight:bold;">Kode Transaksi</span>
+                                            </td>
+                                            <td>
+                                                <span style="color:#00A2B9;font-weight:bold;">Status Transaksi</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <span style="color: #666;margin-top: 0;font-weight: bold;vertical-align: middle;">{{ $order->trx_no }}</span>
+                                            </td>
+                                            <td>
+                                                <div style="vertical-align: middle;">
+                                                    <img src="https://dev-stroom.air.id/plnmp/sauron-staging/api/firebase/file/load/Marketplace~merchants~1640238761dde367ed-00b0-4dc4-ac0a-01167e12cb72.png" alt=""
+                                                        style="display: inline-block;max-width: 22px;vertical-align: middle;">
+                                                    <span style="color: #FF5E5E;margin-top: 0;font-weight: bold;display:inline-block; vertical-align: middle;">Dibatalkan</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
