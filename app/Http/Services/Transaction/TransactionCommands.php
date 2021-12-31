@@ -80,6 +80,8 @@ class TransactionCommands extends Service
                 $order->save();
 
                 $this->order_id = $order->id;
+                $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
+                $order->save();
 
                 array_map(function ($product) use ($order) {
                     $order_detail = new OrderDetail();
@@ -345,6 +347,45 @@ class TransactionCommands extends Service
             return true;
         }
         return false;
+    }
+
+    public function orderConfirmHasArrived($trx_no)
+    {
+        $order = Order::with(['delivery'])->where('trx_no', $trx_no)->first();
+        if (!$order) {
+            throw new Exception("Nomor invoice tidak ditemukan", 404);
+        }
+
+        //Update status order
+        $order_progress = OrderProgress::where('order_id', $order['id'])->where('status', 1)->first();
+
+        if ($order_progress['status_code'] == '03'){
+            $trx_command = new TransactionCommands();
+            $trx_command->updateOrderStatus($order['id'], '08');
+
+            //Notification buyer
+            $notif_command = new NotificationCommands();
+            $title = 'Pesanan anda telah sampai';
+            $message = 'Pesanan anda telah sampai, silahkan cek kelengkapan pesanan anda sebelum menyelesaikan pesanan.';
+            $url_path = 'v1/buyer/query/transaction/'. $order['buyer_id'] .'/detail/' . $order['id'];
+            $notif_command->create('customer_id', $order['buyer_id'], '2', $title, $message, $url_path);
+            $notif_command->sendPushNotification($order['buyer_id'], $title, $message, 'active');
+
+            //Notification seller
+            $title_seller = 'Pesanan Sampai';
+            $message_seller = 'Pesanan telah sampai, menunggu pembeli menyelesaikan pesanan.';
+            $url_path_seller = 'v1/seller/query/transaction/detail/' . $order['id'];
+            $seller = Customer::where('merchant_id', $order['merchant_id'])->first();
+            $notif_command->create('merchant_id', $order['merchant_id'], '2', $title_seller, $message_seller, $url_path_seller);
+            $notif_command->sendPushNotification($seller['id'], $title_seller, $message_seller, 'active');
+
+            $mailSender = new MailSenderManager();
+            $mailSender->mailOrderArrived($order['id'], Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s'));
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Pesanan telah sampai, menunggu pembeli menyelesaikan pesanan.';
+        return $response;
     }
 
     static function invoice_num($input, $pad_len = 3, $prefix = null)
