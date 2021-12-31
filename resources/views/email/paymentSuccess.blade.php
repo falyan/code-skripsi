@@ -222,11 +222,11 @@
                                                 <p style="margin: 0px 0px 5px 0px;">{{ $item->product->name }}</p>
                                                 <p style="font-size: 10px;color: #666;margin:0px 0px 5px 0px;">Berat:
                                                     @if ($item->weight > 907185)
-                                                        ({{Str::limit($item->weight/1000000, 3, '')}} ton)
+                                                        ({{Illuminate\Support\Str::limit($item->weight/1000000, 3, '')}} ton)
                                                     @elseif ($item->weight < 1000)
                                                         ({{$item->weight . ' g'}})
                                                     @elseif ($item->weight > 1000 || $item->weight < 907185 )
-                                                        ({{Str::limit($item->weight/1000, 3, '')}} kg)
+                                                        ({{Illuminate\Support\Str::limit($item->weight/1000, 3, '')}} kg)
                                                     @endif
                                                 </p>
                                                 <p style="font-weight: bold;margin:0px 0px 5px 0px;">
