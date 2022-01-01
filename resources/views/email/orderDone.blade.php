@@ -174,41 +174,44 @@
                         </div>
 
                         <div style="margin-bottom: 10px;border-radius: 20px;background-color: #E6F6F8;">
-                            <div style="padding: 2px 5px;display: grid;grid-template-columns: 200px 230px;grid-gap: 10px;padding: 10px;">
-                                <div style="padding:10px;">
-                                    <p style="color:#00A2B9;font-weight:bold;">Detail Pengiriman</p>
+                            <div style="padding: 30px;">
+                                <table style="width: 100%">
+                                    <tbody>
+                                        <tr>
+                                            <td style="width: 50%;">
+                                                <span style="color:#00A2B9;font-weight:bold;">Detail Pengiriman</span>
+                                            </td>
+                                            <td style="width: 50%;">
+                                                <span style="color:#00A2B9;font-weight:bold;">Alamat Pengiriman</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="width: 50%;">
+                                                <div>
+                                                    <span style="font-size: 14px;color:#666;">Jasa Pengiriman</span>
+                                                    <p style="color: #666;margin-top: 0;font-weight: bold;">{{ $order->delivery->delivery_method }}</p>
+                                                </div>
 
-                                    <div>
-                                        <span style="font-size: 14px;color:#666;">Jasa Pengiriman</span>
-                                        <p style="color: #666;margin-top: 0;font-weight: bold;">
-                                            {{ $order->delivery->delivery_method }}
-                                        </p>
-                                    </div>
+                                                <div>
+                                                    <span style="font-size: 14px;color:#666;">Nomor Resi</span>
+                                                    <p style="color: #666;margin-top: 0;font-weight: bold;">{{$order->delivery->awb_number}}</p>
+                                                </div>
 
-                                    <div>
-                                        <span style="font-size: 14px;color:#666;">Nomor Resi</span>
-                                        <p style="color: #666;margin-top: 0;font-weight: bold;">
-                                            {{$order->delivery->awb_number}}
-                                        </p>
-                                    </div>
+                                                <div>
+                                                    <span style="font-size: 14px;color:#666;">Tanggal Pemesanan</span>
+                                                    <p style="color: #666;margin-top: 0;font-weight: bold;">{{ \Carbon\Carbon::parse($order->order_date)->isoFormat('D MMMM Y, H:m')}} WIB</p>
+                                                </div>
+                                            </td>
+                                            <td style="width: 50%;">
+                                                <p style="color: #666;margin-top: 0;font-weight: bold;">{{ $destination_name }}</p>
 
-                                    <div>
-                                        <span style="font-size: 14px;color:#666;">Tanggal Pemesanan</span>
-                                        <p style="color: #666;margin-top: 0;font-weight: bold;">
-                                            {{ \Carbon\Carbon::parse($order->order_date)->isoFormat('D MMMM Y, H:m')}} WIB
-                                        </p>
-                                    </div>
+                                                <p style="color: #666;">{{ $order->delivery->address ?? '-' }}, {{$order->delivery->district->name}}, {{$order->delivery->city->name}}, {{ $order->delivery->postal_code }}</p>
 
-                                </div>
-                                <div style="padding:10px;">
-                                    <p style="color:#00A2B9;font-weight:bold;">Alamat Pengiriman</p>
-
-                                    <p style="color: #666;margin-top: 0;font-weight: bold;">{{ $destination_name }}</p>
-
-                                    <p style="color: #666;">{{ $order->delivery->address ?? '-' }}, {{$order->delivery->district->name}}, {{$order->delivery->city->name}}, {{ $order->delivery->postal_code }}</p>
-
-                                    <p style="color: #666;">+{{ $order->delivery->receiver_phone }}</p>
-                                </div>
+                                                <p style="color: #666;">+{{ $order->delivery->receiver_phone }}</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
