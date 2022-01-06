@@ -106,4 +106,9 @@ class MasterData extends Model
     public function product(){
         return $this->hasMany(Product::class);
     }
+
+    public function variants()
+    {
+        return $this->hasMany(Variant::class, 'category_id');
+    }
 }
