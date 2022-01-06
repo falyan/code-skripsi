@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class RemoveUniqueEmailInPicKantorRegionalTable extends Migration
+class AddMaxVariantToMasterDataTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class RemoveUniqueEmailInPicKantorRegionalTable extends Migration
      */
     public function up()
     {
-        Schema::table('pic_kantor_regional', function (Blueprint $table) {
-            $table->dropUnique('pic_kantor_regional_email_unique');
+        Schema::table('master_data', function (Blueprint $table) {
+            $table->integer('max_variant')->nullable();
         });
     }
 
@@ -25,8 +25,8 @@ class RemoveUniqueEmailInPicKantorRegionalTable extends Migration
      */
     public function down()
     {
-        Schema::table('pic_kantor_regional', function (Blueprint $table) {
-            $table->unique('email');
+        Schema::table('master_data', function (Blueprint $table) {
+            $table->dropColumn('max_variant');
         });
     }
 }
