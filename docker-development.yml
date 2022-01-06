@@ -22,13 +22,33 @@ services:
       options:
         loki-url: "$DATASOURCE_LOKI"
     deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.services.pln-marketplace-saruman-development.loadbalancer.server.port=80"
+        - "traefik.http.middlewares.compress-pln-marketplace-saruman-development.compress=true"
+        - "traefik.http.middlewares.redirectscheme-pln-marketplace-saruman-development.redirectscheme.scheme=https"
+        - "traefik.http.middlewares.ratelimit-pln-marketplace-saruman-development.ratelimit.period=1m"
+        - "traefik.http.middlewares.ratelimit-pln-marketplace-saruman-development.ratelimit.average=100"
+        - "traefik.http.middlewares.ratelimit-pln-marketplace-saruman-development.ratelimit.burst=50"
+        - "traefik.http.middlewares.stripprefix-local-pln-marketplace-saruman-development.stripprefix.prefixes=/api/plnmp/saruman-development"
+        - "traefik.http.middlewares.stripprefix-public-pln-marketplace-saruman-development.stripprefix.prefixes=/plnmp/saruman-development"
+        - "traefik.http.routers.local-pln-marketplace-saruman-development-web.rule=Host(`10.14.204.76`) && PathPrefix(`/api/plnmp/saruman-development`)"
+        - "traefik.http.routers.local-pln-marketplace-saruman-development-web.middlewares=stripprefix-local-pln-marketplace-saruman-development,compress-pln-marketplace-saruman-development"
+        - "traefik.http.routers.local-pln-marketplace-saruman-development-web.entrypoints=web"
+        - "traefik.http.routers.public-pln-marketplace-saruman-development-web.rule=Host(`dev-stroom.air.id`) && PathPrefix(`/plnmp/saruman-development`)"
+        - "traefik.http.routers.public-pln-marketplace-saruman-development-web.middlewares=redirectscheme-pln-marketplace-saruman-development"
+        - "traefik.http.routers.public-pln-marketplace-saruman-development-web.entrypoints=web"
+        - "traefik.http.routers.public-pln-marketplace-saruman-development-websecure.rule=Host(`dev-stroom.air.id`) && PathPrefix(`/plnmp/saruman-development`)"
+        - "traefik.http.routers.public-pln-marketplace-saruman-development-websecure.middlewares=stripprefix-public-pln-marketplace-saruman-development,compress-pln-marketplace-saruman-development,ratelimit-pln-marketplace-saruman-development"
+        - "traefik.http.routers.public-pln-marketplace-saruman-development-websecure.tls=true"
+        - "traefik.http.routers.public-pln-marketplace-saruman-development-websecure.entrypoints=websecure"
       mode: replicated
       replicas: 1
       endpoint_mode: dnsrr
       placement:
         max_replicas_per_node: 1
         constraints:
-          - node.labels.ip == 10.14.204.125
+          - node.labels.ip == 10.14.204.124
         preferences:
           - spread: node.labels.ip
       resources:

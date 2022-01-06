@@ -21,9 +21,9 @@ class MerchantCommands extends Service
                 'slogan' => data_get($request, 'slogan'),
                 'description' => data_get($request, 'description')
             ]);
-            
+
             $merchant->operationals()->delete();
-            
+
             foreach (data_get($request, 'operational') as $key) {
                 if (array_key_exists('day_id', $key)) {
                     $key['master_data_id'] = $key['day_id'];
@@ -83,11 +83,11 @@ class MerchantCommands extends Service
     {
         try {
             DB::beginTransaction();
-            
+
             if (!$merchant = Auth::user()->merchant) {
                 throw new Exception('User tidak memiliki merchant.');
             }
-            
+
             MerchantExpedition::updateOrCreate(
                 ['merchant_id' => $merchant->id],
                 ['merchant_id' => $merchant->id, 'list_expeditions' => $list_expeditions]
@@ -99,6 +99,55 @@ class MerchantCommands extends Service
                 throw new Exception($th->getMessage(), $th->getCode());
             }
             throw new Exception($th->getMessage(), 500);
+        }
+    }
+
+    public function updateMerchantProfile($merchant_id, $data){
+        $merchant = Merchant::findOrFail($merchant_id);
+        $merchant->photo_url = ($data->photo_url == null) ? ($merchant->photo_url) : ($data->photo_url);
+        $merchant->name = ($data->name == null) ? ($merchant->name) : ($data->name);
+
+        if (!$merchant->save()){
+            $response['success'] = false;
+            $response['message'] = 'Gagal mengubah profil merchant';
+            $response['data'] = $merchant;
+
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mengubah profil merchant';
+        $response['data'] = $merchant;
+        return $response;
+    }
+
+    public function setCustomLogistic($merchant_id){
+        $merchant = Merchant::find($merchant_id);
+        if ($merchant == null){
+            $response['success'] = false;
+            $response['message'] = 'Gagal mendapatkan data merchant';
+            $response['data'] = $merchant;
+            return $response;
+        }
+
+        if ($merchant->has_custom_logistic == false || $merchant->has_custom_logistic == null){
+            $merchant->has_custom_logistic = true;
+            if ($merchant->save()){
+                $response['success'] = true;
+                $response['message'] = 'Berhasil mengaktifkan custom logistic';
+                $response['data'] = $merchant;
+                return $response;
+            }
+        }
+
+        if ($merchant->has_custom_logistic == true){
+            $merchant->has_custom_logistic = false;
+            if ($merchant->save()){
+                $response['success'] = true;
+                $response['message'] = 'Berhasil menonaktifkan custom logistic';
+                $response['data'] = $merchant;
+                return $response;
+            }
         }
     }
 }

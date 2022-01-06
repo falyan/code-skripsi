@@ -49,10 +49,11 @@ class TransactionCommands extends Service
         ];
     }
 
-    public function createOrder($datas, $customer_id)
+    public function createOrder($datas, $customer)
     {
         DB::beginTransaction();
         try {
+            $customer_id = $customer->id;
             $no_reference = (int) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
 
             while (static::checkReferenceExist($no_reference) == false) {
@@ -62,38 +63,8 @@ class TransactionCommands extends Service
             $timestamp = Carbon::now('Asia/Jakarta')->toIso8601String();
             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(7))->timestamp);
-            $total_price = 0;
 
-            //Customer discount
-            $customer = Customer::findOrFail($customer_id);
-            $transactionQueries = new TransactionQueries();
-            $discount = $transactionQueries->getCustomerDiscount($customer_id, $customer['email']);
-            $total_discount = 0;
-            $percent_discount = 50;
-            $max_percent_discount = 500000;
-            $is_percent_discount = false;
-
-            if ($discount == 0 && $is_percent_discount == true){
-                $total_item_price = 0;
-                array_map(function ($merchant) use (&$total_item_price) {
-                    array_map(function ($product) use (&$total_item_price) {
-                        $total_item_price += $product['total_price'];
-                    }, data_get($merchant, 'products'));
-                }, data_get($datas, 'merchants'));
-
-                $discount = ($percent_discount/100)*$total_item_price;
-                if ($discount > $max_percent_discount){
-                    $discount = $max_percent_discount;
-                }
-            }
-
-            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, &$total_price, &$discount, &$total_discount) {
-                $count_discount = $discount;
-                if (data_get($data, 'total_payment') <= $discount){
-                    $count_discount = data_get($data, 'total_payment');
-                }
-                data_set($data, 'total_payment', data_get($data, 'total_payment') - $count_discount);
-
+            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
                 $order->buyer_id = $customer_id;
@@ -103,16 +74,14 @@ class TransactionCommands extends Service
                 $order->total_weight = data_get($data, 'total_weight');
                 $order->related_pln_mobile_customer_id = null;
                 $order->no_reference = $no_reference;
-                $order->discount = $count_discount;
+                $order->discount = data_get($data, 'product_discount');
                 $order->created_by = 'user';
                 $order->updated_by = 'user';
                 $order->save();
 
                 $this->order_id = $order->id;
-
-                $discount = $discount - $count_discount;
-                $total_discount += $count_discount;
-                $total_price += data_get($data, 'total_payment');
+                $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
+                $order->save();
 
                 array_map(function ($product) use ($order) {
                     $order_detail = new OrderDetail();
@@ -129,7 +98,7 @@ class TransactionCommands extends Service
                     $order_detail->total_discount = data_get($product, 'total_discount');
                     $order_detail->total_insurance_cost = data_get($product, 'total_insurance_cost');
                     $order_detail->total_amount = data_get($product, 'total_amount');
-                    $order_detail->notes = data_get($product, 'notes');
+                    $order_detail->notes = data_get($product, 'note');
                     $order_detail->save();
                 }, data_get($data, 'products'));
 
@@ -192,15 +161,15 @@ class TransactionCommands extends Service
                 }
             }, data_get($datas, 'merchants'));
 
-            if ($total_price == 0){
+            if ($datas['total_payment'] < 1){
                 throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
             }
 
             $mailSender = new MailSenderManager();
             $mailSender->mailCheckout($this->order_id);
 
-            if ($total_discount > 0){
-                $update_discount = $this->updateCustomerDiscount($customer_id, $customer['email'], $total_discount, $no_reference);
+            if ($datas['total_discount'] > 0){
+                $update_discount = $this->updateCustomerDiscount($customer_id, $customer->email, $datas['total_discount'], $no_reference);
                 if ($update_discount == false){
                     throw new Exception('Gagal mengupdate customer discount');
                 }
@@ -213,11 +182,11 @@ class TransactionCommands extends Service
                 'transaction_code' => '00',
                 'partner_reference' => $no_reference,
                 'product_id' => static::$productid,
-                'amount' => $total_price,
+                'amount' => $datas['total_payment'],
                 'customer_id' => $no_reference,
-                'customer_name' => $customer['full_name'],
-                'email' => $customer['email'],
-                'phone_number' => $customer['phone'],
+                'customer_name' => $customer->full_name,
+                'email' => $customer->email,
+                'phone_number' => $customer->phone,
                 'expired_invoice' => $exp_date,
             ];
 
@@ -248,7 +217,7 @@ class TransactionCommands extends Service
                 throw new Exception($response->response_details[0]->response_message);
             }
 
-            $response->response_details[0]->amount = $total_price;
+            $response->response_details[0]->amount = $datas['total_payment'];
             $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
             $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
 
@@ -325,6 +294,28 @@ class TransactionCommands extends Service
         return $response;
     }
 
+    public function addAwbNumberAuto($order_id)
+    {
+        $delivery = OrderDelivery::where('order_id', $order_id)->first();
+
+        Carbon::setLocale('id');
+        $date = Carbon::now('Asia/Jakarta')->isoFormat('YMMDD');
+        $id = str_pad($order_id, 4, '0', STR_PAD_LEFT);
+        $resi = "CLG/{$date}/{$id}";
+
+        $delivery->awb_number = $resi;
+
+        if (!$delivery->save()) {
+            $response['success'] = false;
+            $response['message'] = 'Gagal menambahkan nomor resi';
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil menambahkan nomor resi';
+        return $response;
+    }
+
     public function updatePaymentDetail($no_reference, $payment_method)
     {
         $payments = OrderPayment::where('no_reference', $no_reference)->get();
@@ -356,6 +347,45 @@ class TransactionCommands extends Service
             return true;
         }
         return false;
+    }
+
+    public function orderConfirmHasArrived($trx_no)
+    {
+        $order = Order::with(['delivery'])->where('trx_no', $trx_no)->first();
+        if (!$order) {
+            throw new Exception("Nomor invoice tidak ditemukan", 404);
+        }
+
+        //Update status order
+        $order_progress = OrderProgress::where('order_id', $order['id'])->where('status', 1)->first();
+
+        if ($order_progress['status_code'] == '03'){
+            $trx_command = new TransactionCommands();
+            $trx_command->updateOrderStatus($order['id'], '08');
+
+            //Notification buyer
+            $notif_command = new NotificationCommands();
+            $title = 'Pesanan anda telah sampai';
+            $message = 'Pesanan anda telah sampai, silahkan cek kelengkapan pesanan anda sebelum menyelesaikan pesanan.';
+            $url_path = 'v1/buyer/query/transaction/'. $order['buyer_id'] .'/detail/' . $order['id'];
+            $notif_command->create('customer_id', $order['buyer_id'], '2', $title, $message, $url_path);
+            $notif_command->sendPushNotification($order['buyer_id'], $title, $message, 'active');
+
+            //Notification seller
+            $title_seller = 'Pesanan Sampai';
+            $message_seller = 'Pesanan telah sampai, menunggu pembeli menyelesaikan pesanan.';
+            $url_path_seller = 'v1/seller/query/transaction/detail/' . $order['id'];
+            $seller = Customer::where('merchant_id', $order['merchant_id'])->first();
+            $notif_command->create('merchant_id', $order['merchant_id'], '2', $title_seller, $message_seller, $url_path_seller);
+            $notif_command->sendPushNotification($seller['id'], $title_seller, $message_seller, 'active');
+
+            $mailSender = new MailSenderManager();
+            $mailSender->mailOrderArrived($order['id'], Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s'));
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Pesanan telah sampai, menunggu pembeli menyelesaikan pesanan.';
+        return $response;
     }
 
     static function invoice_num($input, $pad_len = 3, $prefix = null)

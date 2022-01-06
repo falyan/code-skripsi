@@ -50,6 +50,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('atur-toko', 'MerchantController@aturToko');
                     $router->post('set-expedition', 'MerchantController@setExpedition');
                     $router->post('atur-lokasi', 'MerchantController@aturLokasi');
+                    $router->post('update', 'MerchantController@updateMerchantProfile');
+                    $router->post('set-customlogistic', 'MerchantController@setCustomLogistic');
                 });
 
                 $router->group(['prefix' => 'order'], static function () use ($router) {
@@ -59,6 +61,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('accept', 'TransactionController@acceptOrder');
                     $router->post('reject/{order_id}', 'TransactionController@rejectOrder');
                     $router->post('awb-number/{order_id}/{awb}', 'TransactionController@addAwbNumberOrder');
+                    $router->post('generate-resi/{order_id}', 'TransactionController@addAwbNumberAutoOrder');
+                    $router->post('pesanan-sampai/{order_id}', 'TransactionController@orderConfirmHasArrived');
                 });
 
                 $router->group(['prefix' => 'notification'], static function () use ($router) {
@@ -155,6 +159,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'category'], static function () use ($router) {
                 $router->get('/random', 'CategoryController@getThreeRandomCategory');
+                $router->get('/all', 'CategoryController@getAllCategory');
             });
 
             $router->group(['prefix' => 'setting'], static function () use ($router) {
@@ -171,6 +176,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'region'], static function () use ($router) {
                 $router->get('search', 'RegionController@searchDistrict');
+            });
+
+            $router->group(['prefix' => 'checkout', 'middleware' => 'auth'], static function () use ($router) {
+                $router->post('/count', 'TransactionController@countCheckoutPrice');
             });
 
             $router->group(['prefix' => 'transaction', 'middleware' => 'auth'], static function () use ($router) {
@@ -212,6 +221,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('update/{id}', 'CustomerController@updateCustomerAddress');
                     $router->post('default/{id}', 'CustomerController@setDefaultCustomerAddress');
                     $router->delete('delete/{id}', 'CustomerController@deleteCustomerAddress');
+                });
+            });
+
+            $router->group(['prefix' => 'profile'], static function () use ($router) {
+                $router->group(['middleware' => 'auth'], static function () use ($router){
+                    $router->post('update', 'CustomerController@updateCustomerProfile');
                 });
             });
 
@@ -284,6 +299,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->post('query/otp/validate', 'IconcashController@validateOTP');
             $router->post('auth/login', 'IconcashController@login');
             $router->get('auth/logout', 'IconcashController@logout');
+            $router->post('auth/changepin', 'IconcashController@changePin');
+            $router->post('auth/forgotpin', 'IconcashController@forgotPin');
             $router->get('query/balance/customer', 'IconcashController@getCustomerAllBalance');
             $router->post('command/withdrawal/inquiry', 'IconcashController@withdrawalInquiry');
             $router->post('command/withdrawal', 'IconcashController@withdrawal');
@@ -304,5 +321,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
     $router->group(['prefix' => 'banner'], static function () use ($router) {
         $router->get('/flash-popup', 'BannerController@getFlashPopup');
+    });
+
+    $router->group(['prefix' => 'version'], static function () use ($router) {
+        $router->post('status', 'VersionController@getVersionStatus');
     });
 });
