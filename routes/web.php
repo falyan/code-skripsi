@@ -97,6 +97,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('all', 'CategoryController@getAllCategory');
                 });
 
+                $router->group(['prefix' => 'variant'], static function () use ($router) {
+                    $router->get('category/{category_id}', 'VariantController@getVariantByCategory');
+                });
+
                 $router->group(['prefix' => 'transaction'], static function () use ($router) {
                     $router->get('/', 'TransactionController@sellerIndex');
                     $router->get('/new-order', 'TransactionController@newOrder');
