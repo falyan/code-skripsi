@@ -18,9 +18,9 @@ class Variant extends Model
         return $this->belongsTo(MasterData::class);
     }
 
-    public function variant_suggestions()
+    public function master_variant()
     {
-        return $this->hasMany(VariantSuggestion::class, 'variant_id');
+        return $this->belongsTo(MasterVariant::class, 'master_variant_id');
     }
 
     public function variant_values()

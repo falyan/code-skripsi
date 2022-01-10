@@ -15,9 +15,9 @@ class CreateVariantValueTable extends Migration
     {
         Schema::create('variant_value', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('variant_id')->nullable();
-            $table->unsignedBigInteger('product_id')->nullable();
-            $table->string('nama')->nullable();
+            $table->unsignedBigInteger('variant_id');
+            $table->unsignedBigInteger('product_id');
+            $table->string('nama_opsi')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

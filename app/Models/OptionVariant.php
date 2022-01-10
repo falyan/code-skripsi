@@ -6,15 +6,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class VariantSuggestion extends Model
+class OptionVariant extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'variant_suggestion';
+    protected $table = 'option_variant';
     protected $guarded = [];
 
-    public function variant()
+    public function master_variant()
     {
-        return $this->belongsTo(Variant::class, 'variant_id');
+        return $this->belongsTo(MasterVariant::class, 'master_variant_id');
     }
 }
