@@ -15,12 +15,13 @@ class CreateVariantTable extends Migration
     {
         Schema::create('variant', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('category_id')->nullable();
-            $table->string('nama')->nullable();
+            $table->unsignedBigInteger('category_id');
+            $table->unsignedBigInteger('master_variant_id');
             $table->timestamps();
             $table->softDeletes();
 
             $table->foreign('category_id')->references('id')->on('master_data')->onDelete('cascade');
+            $table->foreign('master_variant_id')->references('id')->on('master_variant')->onDelete('cascade');
         });
     }
 
