@@ -54,7 +54,8 @@ class CartController extends Controller
                     'product_id' => 'required|exists:product,id',
                     'buyer_id' => 'nullable|exists:customer,id',
                     'related_merchant_id' => 'required|exists:merchant,id',
-                    'related_pln_mobile_customer_id' => 'required'
+                    'related_pln_mobile_customer_id' => 'required',
+                    'variant_value_product_id' => 'nullable|exists:variant_value_product,id'
                 ],
                 [
                     'exists' => 'ID :attribute tidak ditemukan.',
