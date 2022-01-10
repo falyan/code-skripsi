@@ -16,8 +16,9 @@ class CreateOptionVariantTable extends Migration
         Schema::create('option_variant', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('master_variant_id');
-            $table->string('nama')->nullable();
+            $table->string('name')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('master_variant_id')->references('id')->on('master_variant')->onDelete('cascade');
         });
