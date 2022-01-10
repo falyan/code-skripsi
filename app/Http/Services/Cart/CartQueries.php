@@ -61,7 +61,7 @@ class CartQueries extends Service
             }, 'cart_detail' => function($cart_detail) {
                 $cart_detail->with(['product' => function($product) {
                     $product->with(['product_stock', 'product_photo']);
-                }]);
+                }, 'variant_value_product']);
             }])->where('related_pln_mobile_customer_id', $related_id)->get();
 
             $response['success'] = true;
