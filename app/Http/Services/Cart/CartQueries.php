@@ -41,7 +41,7 @@ class CartQueries extends Service
             }, 'cart_detail' => function($cart_detail) {
                 $cart_detail->with(['product' => function($product) {
                     $product->with(['product_stock', 'product_photo']);
-                }]);
+                }, 'variant_value_product']);
             }])->where('buyer_id', $buyer_id)->get();
 
 //            if ($cart->isEmpty()){
