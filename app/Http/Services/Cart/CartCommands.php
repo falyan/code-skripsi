@@ -23,6 +23,7 @@ class CartCommands extends Service
         $getProductId = request('product_id');
         $buyerID = Auth::id() ?? null;
         $related_merchant_id = request('related_merchant_id') ? request('related_merchant_id') : null;
+        $variant_id = request('variant_value_product_id') ? request('variant_value_product_id') : null;
         // $getUser = Customer::findByrelatedCustomerId($related_customer_id);
 
         DB::beginTransaction();
@@ -58,7 +59,8 @@ class CartCommands extends Service
                         'cart_id' => $cart->id,
                         'product_id' => $getProductId,
                         'quantity' => $minimum_purchase,
-                        'related_merchant_id' => $related_merchant_id
+                        'related_merchant_id' => $related_merchant_id,
+                        'variant_value_product_id' => $variant_id
                     ]);
                 }
             } else {
@@ -72,7 +74,8 @@ class CartCommands extends Service
                     'cart_id' => $cartCreate->id,
                     'product_id' => request('product_id'),
                     'quantity' => $minimum_purchase,
-                    'related_merchant_id' => $related_merchant_id
+                    'related_merchant_id' => $related_merchant_id,
+                    'variant_value_product_id' => $variant_id
                 ]);
             }
 
