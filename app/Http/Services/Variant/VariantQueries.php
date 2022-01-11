@@ -11,7 +11,7 @@ class VariantQueries
     {
         $variant = Variant::with(['category'])->find($id);
 
-        if (empty($variant)){
+        if (empty($variant)) {
             $response = [
                 'success' => false,
                 'message' => 'Varian tidak ditemukan',
@@ -31,12 +31,12 @@ class VariantQueries
 
     public function getByCategory($category_id)
     {
-        $variants = Variant::where('category_id', $category_id)->with(['variant_suggestions'])->get();
+        $variants = Variant::where('category_id', $category_id)->with(['master_variant', 'master_variant.option_variants'])->get();
 
-        if ($variants->isEmpty()){
+        if ($variants->isEmpty()) {
             $response = [
                 'success' => false,
-                'message' => 'Tidak ada varian dengan kategori ini!',
+                'message' => 'Gagal mendapatkan data varian!',
             ];
 
             return $response;
