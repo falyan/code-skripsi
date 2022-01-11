@@ -153,10 +153,11 @@ class TransactionQueries extends Service
 
                 $variant_data = null;
                 if (isset($product['variant_value_product_id']) && $product['variant_value_product_id'] != null){
-                    if (!$variant_data = VariantValueProduct::with('variant_stock')->where('id', $product['variant_value_product_id'])->first()){
+                    if (!$variant_data = VariantValueProduct::with('variant_stock')->where('id', $product['variant_value_product_id'])
+                        ->where('product_id', $product['product_id'])->first()){
                         throw new Exception('Variant produk dengan id ' . $product['variant_value_product_id'] . ' tidak ditemukan', 404);
                     }
-                    $product['total_price'] = $product['total_amount'] = $total_item_price = $variant_data['amount'] * $product['quantity'];
+                    $product['total_price'] = $product['total_amount'] = $total_item_price = $variant_data['price'] * $product['quantity'];
                 }else{
                     $product['total_price'] = $product['total_amount'] = $total_item_price = $data_product['price'] * $product['quantity'];
                 }
