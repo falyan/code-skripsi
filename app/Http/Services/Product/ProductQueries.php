@@ -251,7 +251,11 @@ class ProductQueries extends Service
             });
         }, 'reviews' => function ($reviews) {
             $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo']);
-        }, 'variant_value_products'])->where('id', $id)->first();
+        }, 'category' => function ($variant) {
+            $variant->with(['variants' => function ($variant_value) {
+                $variant_value->with(['master_variant', 'variant_values']);
+            }]);
+        }])->where('id', $id)->first();
 
         if (!$data) {
             $response['success'] = false;
