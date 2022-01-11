@@ -13,7 +13,7 @@ class VariantCommands
     public function createVariantValue($product_id, $data)
     {
         try {
-            if (!isset($data['variant_id']) || !isset($data['nama'])) {
+            if (!isset($data['variant_id']) || !isset($data['name'])) {
                 return [];
             }
 
@@ -22,7 +22,7 @@ class VariantCommands
             $variant_value = VariantValue::create([
                 'variant_id' => $data['variant_id'],
                 'product_id' => $product_id,
-                'nama' => $data['nama'],
+                'name' => $data['name'],
             ]);
 
             DB::commit();
