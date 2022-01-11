@@ -15,7 +15,7 @@ class CreateVariantStockTable extends Migration
     {
         Schema::create('variant_stock', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('variant_value_product_id')->nullable();
+            $table->unsignedBigInteger('variant_value_product_id');
             $table->integer('amount')->nullable();
             $table->json('description')->nullable();
             $table->smallInteger('status')->nullable();
