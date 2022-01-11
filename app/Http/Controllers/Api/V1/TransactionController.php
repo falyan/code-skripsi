@@ -15,6 +15,7 @@ use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Models\VariantStock;
 use Exception, Input;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -109,6 +110,18 @@ class TransactionController extends Controller
             if ($response['success'] == true) {
                 array_map(function ($merchant) {
                     array_map(function ($item) use ($merchant) {
+                        $productCommand = new ProductCommands();
+
+                        if (data_get($item, 'variant_value_product_id') != null){
+                            $variant_stock = VariantStock::where('variant_value_product_id', data_get($item, 'variant_value_product_id'))
+                                ->where('product_id', data_get($item, 'product_id'))->where('status', 1)->first();
+
+                            $data['amount'] = $variant_stock['amount'] - data_get($item, 'quantity');
+                            $data['full_name'] = Auth::user()->full_name;
+
+                            $productCommand->updateStockVariantProduct(data_get($item, 'variant_value_product_id'), $data);
+                        }
+
                         $stock = ProductStock::where('product_id', data_get($item, 'product_id'))
                             ->where('merchant_id', data_get($merchant, 'merchant_id'))->where('status', 1)->first();
 
@@ -116,7 +129,6 @@ class TransactionController extends Controller
                         $data['uom'] = $stock['uom'];
                         $data['full_name'] = Auth::user()->full_name;
 
-                        $productCommand = new ProductCommands();
                         $productCommand->updateStockProduct(data_get($item, 'product_id'), data_get($merchant, 'merchant_id'), $data);
                     }, data_get($merchant, 'products'));
                 }, $request['merchants']);

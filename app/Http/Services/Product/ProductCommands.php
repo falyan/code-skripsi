@@ -6,6 +6,7 @@ use App\Http\Services\Service;
 use App\Models\Product;
 use App\Models\ProductPhoto;
 use App\Models\ProductStock;
+use App\Models\VariantStock;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -259,6 +260,42 @@ class ProductCommands extends Service
             }
             $response['success'] = true;
             $response['message'] = 'Berhasil mengubah stok produk!';
+            $response['data'] = $stock_new;
+
+            DB::commit();
+            return $response;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage(), $e->getCode());
+        }
+    }
+
+    public function updateStockVariantProduct($variant_value_product_id, $data)
+    {
+        try {
+            DB::beginTransaction();
+            $stock_old = VariantStock::where('variant_value_product_id', $variant_value_product_id)
+                ->where('status', 1)->latest()->first();
+
+            $stock_old->status = 0;
+            $stock_old->save();
+
+            $stock_new = VariantStock::create([
+                'variant_value_product_id' => $variant_value_product_id,
+                'amount' => $data['amount'],
+                'description' => '{"from": "Variant Product", "type": "changing", "title": "Ubah stok variant produk", "amount": "' . $data['amount'] . '"}',
+                'status' => 1,
+                'created_by' => $data['full_name'],
+                'updated_by' => $data['full_name'],
+            ]);
+
+            if (!$stock_new) {
+                $response['success'] = false;
+                $response['message'] = 'Gagal merubah stok variant produk!';
+                return $response;
+            }
+            $response['success'] = true;
+            $response['message'] = 'Berhasil merubah stok variant produk!';
             $response['data'] = $stock_new;
 
             DB::commit();
