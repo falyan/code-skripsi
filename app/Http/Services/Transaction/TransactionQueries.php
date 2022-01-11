@@ -8,6 +8,7 @@ use App\Models\DeliveryDiscount;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\VariantValueProduct;
 use Carbon\Carbon;
 use Exception;
 
@@ -149,9 +150,21 @@ class TransactionQueries extends Service
                 if (!$data_product = Product::with(['product_photo', 'stock_active'])->find($product['product_id'])) {
                     throw new Exception('Produk dengan id ' . $product['product_id'] . ' tidak ditemukan', 404);
                 }
-                $product['total_price'] = $product['total_amount'] = $total_item_price = $data_product['price'] * $product['quantity'];
+
+                $variant_data = null;
+                if (isset($product['variant_value_product_id']) && $product['variant_value_product_id'] != null){
+                    if (!$variant_data = VariantValueProduct::with('variant_stock')->where('id', $product['variant_value_product_id'])->first()){
+                        throw new Exception('Variant produk dengan id ' . $product['variant_value_product_id'] . ' tidak ditemukan', 404);
+                    }
+                    $product['total_price'] = $product['total_amount'] = $total_item_price = $variant_data['amount'] * $product['quantity'];
+                }else{
+                    $product['total_price'] = $product['total_amount'] = $total_item_price = $data_product['price'] * $product['quantity'];
+                }
+
                 $product['total_weight'] = $product_total_weight = $data_product['weight'] * $product['quantity'];
                 $product['insurance_cost'] = $product['discount'] = $product['total_discount'] = $product['total_insurance_cost'] = 0;
+                $product['variant_data'] = $variant_data;
+
                 $total_weight += $product_total_weight;
                 $merchant_total_price += $total_item_price;
 
