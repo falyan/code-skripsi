@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Services\Category\CategoryQueries;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Product\ProductQueries;
 use Exception;
@@ -18,10 +19,12 @@ class ProductController extends Controller
      * @return void
      */
     protected $productCommands, $productQueries;
+    protected $categoryQueries;
     public function __construct()
     {
         $this->productCommands = new ProductCommands();
         $this->productQueries = new ProductQueries();
+        $this->categoryQueries = new CategoryQueries();
     }
 
     //Create Produk
@@ -41,8 +44,23 @@ class ProductController extends Controller
                 'url.*' => 'required',
                 'is_featured_product' => 'nullable',
                 'amount' => 'required',
-                'uom' => 'required'
+                'uom' => 'required',
+                // 'variant' => 'array',
+                // 'variant.*' => 'required',
+                // 'variant.*.variant_id' => 'required',
+                // 'variant.*.option_name' => 'required',
+                // 'variant.*.price' => 'required',
+                // 'variant.*.amount' => 'required',
             ];
+
+            // $category = $this->categoryQueries->findById($request['category_id']);
+            // if ($category['success']) {
+            //     if ($category['data']->max_variant) {
+            //         $rules = array_merge($rules, [
+            //             'variant' => 'array|max:' . $category['data']->max_variant,
+            //         ]);
+            //     }
+            // }
 
             $validator = Validator::make($request->all(), $rules, [
                 'exists' => 'ID :attribute tidak ditemukan.',
