@@ -33,4 +33,54 @@ class CategoryQueries extends Service
         $response['data'] = $category;
         return $response;
     }
+
+    public function getParentCategory()
+    {
+        $category = MasterData::where('type', 'product_category')->where('parent_id', null)
+            ->whereHas('child')->with('child')
+            ->orderBy('value')->get()->pluck('child');
+
+        $parents = [];
+        foreach ($category as $c) {
+            foreach ($c as $child) {
+                $parents[] = $child;
+            }
+        }
+
+        if (empty($parents)){
+            $response['success'] = false;
+            $response['message'] = 'Gagal mendapatkan data parent kategori!';
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data parent kategori!';
+        $response['data'] = collect($parents);
+        return $response;
+    }
+
+    public function getChildCategory()
+    {
+        $category = MasterData::where('type', 'product_category')->where('parent_id', '!=', null)
+            ->whereHas('child')->with(['child'])
+            ->orderBy('value')->get()->pluck('child');
+
+        $childs = [];
+        foreach ($category as $c) {
+            foreach ($c as $child) {
+                $childs[] = $child;
+            }
+        }
+
+        if (empty($childs)){
+            $response['success'] = false;
+            $response['message'] = 'Gagal mendapatkan data parent kategori!';
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data parent kategori!';
+        $response['data'] = collect($childs);
+        return $response;
+    }
 }

@@ -23,7 +23,7 @@ class ProductQueries extends Service
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-//            $product->avg_rating =  null;
+            //            $product->avg_rating =  null;
             $product->reviews = null;
             return $product;
         });
@@ -53,7 +53,7 @@ class ProductQueries extends Service
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-//            $product->avg_rating =  null;
+            //            $product->avg_rating =  null;
             return $product;
         });
 
@@ -82,7 +82,7 @@ class ProductQueries extends Service
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-//            $product->avg_rating =  null;
+            //            $product->avg_rating =  null;
             return $product;
         });
 
@@ -106,13 +106,13 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['merchant' => function ($merchant){
-            $merchant->with(['city:id,name'])->select('id', 'name','address', 'postal_code', 'city_id', 'photo_url');
+        }])->with(['merchant' => function ($merchant) {
+            $merchant->with(['city:id,name'])->select('id', 'name', 'address', 'postal_code', 'city_id', 'photo_url');
         }, 'product_stock:id,product_id,amount,uom', 'product_photo:id,product_id,url', 'is_wishlist'])
-        ->where('product.name', 'ILIKE', '%' . $keyword . '%')
-        ->orWhereHas('merchant', function($query) use($keyword){
-            $query->where('name', 'ILIKE', '%' . $keyword . '%');
-        });
+            ->where('product.name', 'ILIKE', '%' . $keyword . '%')
+            ->orWhereHas('merchant', function ($query) use ($keyword) {
+                $query->where('name', 'ILIKE', '%' . $keyword . '%');
+            });
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -120,7 +120,7 @@ class ProductQueries extends Service
         $immutable_data = $sorted_data->get()->map(function ($product) {
             $product->reviews = null;
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-//            $product->avg_rating =  null;
+            //            $product->avg_rating =  null;
             return $product;
         });
 
@@ -154,7 +154,7 @@ class ProductQueries extends Service
         $immutable_data = $sorted_data->get()->map(function ($product) {
             $product->reviews = null;
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-//            $product->avg_rating =  null;
+            //            $product->avg_rating =  null;
             return $product;
         });
 
@@ -168,14 +168,14 @@ class ProductQueries extends Service
 
     public function getProductByCategory($category_id, $filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
-        $categories = MasterData::with(['child' => function($j) {
+        $categories = MasterData::with(['child' => function ($j) {
             $j->with(['child']);
         }])->where('type', 'product_category')->where('id', $category_id)->get();
 
         $cat_child = [];
-        foreach ($categories as $category){
-            foreach ($category->child as $child){
-                if (!$child->child->isEmpty()){
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
                     array_push($cat_child, $child->child);
                 }
             }
@@ -183,14 +183,14 @@ class ProductQueries extends Service
 
         $collection_product = [];
 
-        foreach ($cat_child as $cat){
-            foreach ($cat as $obj){
+        foreach ($cat_child as $cat) {
+            foreach ($cat as $obj) {
                 $product = new Product();
                 $products = $product->withCount(['order_details' => function ($details) {
                     $details->whereHas('order', function ($order) {
                         $order->whereHas('progress_done');
                     });
-                }])->with(['merchant' => function ($merchant){
+                }])->with(['merchant' => function ($merchant) {
                     $merchant->with('city:id,name');
                 }, 'product_stock', 'product_photo', 'is_wishlist'])->where('category_id', $obj->id)->get();
 
@@ -206,7 +206,7 @@ class ProductQueries extends Service
         $immutable_data = $sorted_data->map(function ($product) {
             $product->reviews = null;
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-//            $product->avg_rating =  null;
+            //            $product->avg_rating =  null;
             return $product;
         });
 
@@ -249,8 +249,12 @@ class ProductQueries extends Service
             $order_details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }, 'reviews' => function ($reviews){
+        }, 'reviews' => function ($reviews) {
             $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo']);
+        }, 'category' => function ($variant) {
+            $variant->with(['variants' => function ($variant_value) {
+                $variant_value->with(['master_variant', 'variant_values']);
+            }]);
         }])->where('id', $id)->first();
 
         if (!$data) {
@@ -285,7 +289,7 @@ class ProductQueries extends Service
         $immutable_data = $sorted_data->get()->map(function ($product) {
             $product->reviews = null;
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-//            $product->avg_rating =  null;
+            //            $product->avg_rating =  null;
             return $product;
         });
 
@@ -317,7 +321,7 @@ class ProductQueries extends Service
         $immutable_data = $sorted_data->get()->map(function ($product) {
             $product->reviews = null;
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-//            $product->avg_rating =  null;
+            //            $product->avg_rating =  null;
             return $product;
         });
         $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
@@ -370,7 +374,7 @@ class ProductQueries extends Service
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-//            $product->avg_rating =  null;
+            //            $product->avg_rating =  null;
             return $product;
         });
 
