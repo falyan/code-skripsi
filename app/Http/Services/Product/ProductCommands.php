@@ -93,17 +93,27 @@ class ProductCommands extends Service
                 return $response;
             }
 
-            $variant_values = $this->variantCommands->createVariantValue($product->id, $data);
+            if (!empty($data['variant']) && !empty($data['variant_value_product'])) {
+                $variant_values = $this->variantCommands->createVariantValue($product->id, $data);
 
-            if (!$variant_values['success']) {
-                $response['success'] = false;
-                $response['message'] = $variant_values['message'];
-                DB::rollBack();
+                if (!$variant_values['success']) {
+                    $response['success'] = false;
+                    $response['message'] = $variant_values['message'];
+                    DB::rollBack();
 
+                    return $response;
+                }
+
+                $product_data = [$product, $product_stock, $product_photo, $variant_values['data']];
+                $response['success'] = true;
+                $response['message'] = 'Produk berhasil ditambahkan!';
+                $response['data'] = $product_data;
+
+                DB::commit();
                 return $response;
             }
 
-            $product_data = [$product, $product_stock, $product_photo, $variant_values['data']];
+            $product_data = [$product, $product_stock, $product_photo];
             $response['success'] = true;
             $response['message'] = 'Produk berhasil ditambahkan!';
             $response['data'] = $product_data;
