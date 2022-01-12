@@ -95,7 +95,15 @@ class ProductCommands extends Service
 
             $variant_values = $this->variantCommands->createVariantValue($product->id, $data);
 
-            $product_data = [$product, $product_stock, $product_photo, $variant_values];
+            if (!$variant_values['success']) {
+                $response['success'] = false;
+                $response['message'] = $variant_values['message'];
+                DB::rollBack();
+
+                return $response;
+            }
+
+            $product_data = [$product, $product_stock, $product_photo, $variant_values['data']];
             $response['success'] = true;
             $response['message'] = 'Produk berhasil ditambahkan!';
             $response['data'] = $product_data;

@@ -45,22 +45,26 @@ class ProductController extends Controller
                 'is_featured_product' => 'nullable',
                 'amount' => 'required',
                 'uom' => 'required',
-                // 'variant' => 'array',
-                // 'variant.*' => 'required',
-                // 'variant.*.variant_id' => 'required',
-                // 'variant.*.option_name' => 'required',
-                // 'variant.*.price' => 'required',
-                // 'variant.*.amount' => 'required',
+                'variant' => 'array',
+                'variant.*' => 'required',
+                'variant.*.variant_value' => 'required|array',
+                'variant.*.variant_value.*.variant_id' => 'required',
+                'variant.*.variant_value.*.option_name' => 'required',
+                'variant_value_product' => 'required|array',
+                'variant_value_product.*' => 'required',
+                'variant_value_product.*.desc' => 'required',
+                'variant_value_product.*.price' => 'required',
+                'variant_value_product.*.amount' => 'required',
             ];
 
-            // $category = $this->categoryQueries->findById($request['category_id']);
-            // if ($category['success']) {
-            //     if ($category['data']->max_variant) {
-            //         $rules = array_merge($rules, [
-            //             'variant' => 'array|max:' . $category['data']->max_variant,
-            //         ]);
-            //     }
-            // }
+            $category = $this->categoryQueries->findById($request['category_id']);
+            if ($category['success']) {
+                if ($category['data']->max_variant) {
+                    $rules = array_merge($rules, [
+                        'variant' => 'array|max:' . $category['data']->max_variant,
+                    ]);
+                }
+            }
 
             $validator = Validator::make($request->all(), $rules, [
                 'exists' => 'ID :attribute tidak ditemukan.',
