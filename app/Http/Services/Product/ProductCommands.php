@@ -3,6 +3,7 @@
 namespace App\Http\Services\Product;
 
 use App\Http\Services\Service;
+use App\Http\Services\Variant\VariantCommands;
 use App\Models\Product;
 use App\Models\ProductPhoto;
 use App\Models\ProductStock;
@@ -14,6 +15,12 @@ use Illuminate\Support\Facades\Validator;
 
 class ProductCommands extends Service
 {
+    protected $variantCommands;
+
+    public function __construct()
+    {
+        $this->variantCommands = new VariantCommands();
+    }
     public function createProduct($data)
     {
         try {
@@ -85,6 +92,27 @@ class ProductCommands extends Service
                 $response['message'] = 'Gagal menambahkan foto produk!';
                 return $response;
             }
+
+            if (!empty($data['variant']) && !empty($data['variant_value_product'])) {
+                $variant_values = $this->variantCommands->createVariantValue($product->id, $data);
+
+                if (!$variant_values['success']) {
+                    $response['success'] = false;
+                    $response['message'] = $variant_values['message'];
+                    DB::rollBack();
+
+                    return $response;
+                }
+
+                $product_data = [$product, $product_stock, $product_photo, $variant_values['data']];
+                $response['success'] = true;
+                $response['message'] = 'Produk berhasil ditambahkan!';
+                $response['data'] = $product_data;
+
+                DB::commit();
+                return $response;
+            }
+
             $product_data = [$product, $product_stock, $product_photo];
             $response['success'] = true;
             $response['message'] = 'Produk berhasil ditambahkan!';
