@@ -15,14 +15,15 @@ class CreateVariantValueProductTable extends Migration
     {
         Schema::create('variant_value_product', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('variant_value_id');
+            $table->string('variant_value_id');
             $table->unsignedBigInteger('product_id');
             $table->string('description')->nullable();
             $table->float('price')->nullable();
+            $table->string('created_by')->nullable();
+            $table->string('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('variant_value_id')->references('id')->on('variant_value')->onDelete('cascade');
             $table->foreign('product_id')->references('id')->on('product')->onDelete('cascade');
         });
     }

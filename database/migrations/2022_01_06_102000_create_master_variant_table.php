@@ -17,6 +17,8 @@ class CreateMasterVariantTable extends Migration
             $table->id();
             $table->string('name')->nullable();
             $table->integer('total_option')->nullable();
+            $table->string('created_by')->nullable();
+            $table->string('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
