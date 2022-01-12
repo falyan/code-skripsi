@@ -50,7 +50,7 @@ class ProductController extends Controller
                 'variant.*.variant_value' => 'required|array',
                 'variant.*.variant_value.*.variant_id' => 'required',
                 'variant.*.variant_value.*.option_name' => 'required',
-                'variant_value_product' => 'required|array',
+                'variant_value_product' => 'array',
                 'variant_value_product.*' => 'required',
                 'variant_value_product.*.desc' => 'required',
                 'variant_value_product.*.price' => 'required',
@@ -64,6 +64,14 @@ class ProductController extends Controller
                         'variant' => 'array|max:' . $category['data']->max_variant,
                     ]);
                 }
+            }
+
+            if (empty($request['variant']) && empty($request['variant_value_product'])) {
+                $rules['variant'] = $rules['variant'];
+                $rules['variant_value_product'] = $rules['variant_value_product'];
+            } else {
+                $rules['variant'] = 'required|' . $rules['variant'];
+                $rules['variant_value_product'] = 'required|' . $rules['variant_value_product'];
             }
 
             $validator = Validator::make($request->all(), $rules, [
