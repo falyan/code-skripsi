@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
@@ -32,11 +33,12 @@ class ProductController extends Controller
     {
         try {
             $rules = [
-                'merchant_id' => 'required',
+                'merchant_id' => ['required', Rule::exists('merchant', 'id')->where('deleted_at', null)],
                 'name' => 'required',
                 'price' => 'required|numeric',
                 'strike_price' => 'nullable|numeric|gt:price',
                 'minimum_purchase' => 'required',
+                'category_id' => [Rule::exists('master_data', 'id')->where('type', 'product_category')->where('deleted_at', null)],
                 'condition' => 'required',
                 'weight' => 'required',
                 'is_shipping_insurance' => 'required',
