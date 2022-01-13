@@ -48,6 +48,13 @@ class VariantCommands
                 $value_id = [];
                 foreach ($options as $option) {
                     $variant_value = VariantValue::where('product_id', $product_id)->where('option_name', $option)->first();
+                    if (empty($variant_value)) {
+                        DB::rollBack();
+                        return [
+                            'success' => false,
+                            'message' => 'Nama varian tidak sesuai dengan yg diisi!',
+                        ];
+                    }
                     $value_id[] = $variant_value->id;
                 }
                 $value_id = trim(implode(',', $value_id));
