@@ -19,6 +19,7 @@ class CreateVariantValueProductTable extends Migration
             $table->unsignedBigInteger('product_id');
             $table->string('description')->nullable();
             $table->float('price')->nullable();
+            $table->float('strike_price')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();
