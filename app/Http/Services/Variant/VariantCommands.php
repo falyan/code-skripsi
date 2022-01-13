@@ -64,6 +64,7 @@ class VariantCommands
                     'product_id' => $product_id,
                     'description' => $vvp['desc'],
                     'price' => $vvp['price'],
+                    'strike_price' => $vvp['strike_price'] ?? null,
                     'created_by' => $data['full_name'],
                 ]);
 
