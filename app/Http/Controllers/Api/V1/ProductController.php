@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Services\Category\CategoryQueries;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Product\ProductQueries;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
@@ -18,10 +20,12 @@ class ProductController extends Controller
      * @return void
      */
     protected $productCommands, $productQueries;
+    protected $categoryQueries;
     public function __construct()
     {
         $this->productCommands = new ProductCommands();
         $this->productQueries = new ProductQueries();
+        $this->categoryQueries = new CategoryQueries();
     }
 
     //Create Produk
@@ -29,11 +33,12 @@ class ProductController extends Controller
     {
         try {
             $rules = [
-                'merchant_id' => 'required',
+                'merchant_id' => ['required', Rule::exists('merchant', 'id')->where('deleted_at', null)],
                 'name' => 'required',
                 'price' => 'required|numeric',
                 'strike_price' => 'nullable|numeric|gt:price',
                 'minimum_purchase' => 'required',
+                'category_id' => [Rule::exists('master_data', 'id')->where('type', 'product_category')->where('deleted_at', null)],
                 'condition' => 'required',
                 'weight' => 'required',
                 'is_shipping_insurance' => 'required',
@@ -41,8 +46,35 @@ class ProductController extends Controller
                 'url.*' => 'required',
                 'is_featured_product' => 'nullable',
                 'amount' => 'required',
-                'uom' => 'required'
+                'uom' => 'required',
+                'variant' => 'array',
+                'variant.*' => 'required',
+                'variant.*.variant_value' => 'required|array',
+                'variant.*.variant_value.*.variant_id' => 'required',
+                'variant.*.variant_value.*.option_name' => 'required',
+                'variant_value_product' => 'array',
+                'variant_value_product.*' => 'required',
+                'variant_value_product.*.desc' => 'required',
+                'variant_value_product.*.price' => 'required',
+                'variant_value_product.*.amount' => 'required',
             ];
+
+            $category = $this->categoryQueries->findById($request['category_id']);
+            if ($category['success']) {
+                if ($category['data']->max_variant) {
+                    $rules = array_merge($rules, [
+                        'variant' => 'array|max:' . $category['data']->max_variant,
+                    ]);
+                }
+            }
+
+            if (empty($request['variant']) && empty($request['variant_value_product'])) {
+                $rules['variant'] = $rules['variant'];
+                $rules['variant_value_product'] = $rules['variant_value_product'];
+            } else {
+                $rules['variant'] = 'required|' . $rules['variant'];
+                $rules['variant_value_product'] = 'required|' . $rules['variant_value_product'];
+            }
 
             $validator = Validator::make($request->all(), $rules, [
                 'exists' => 'ID :attribute tidak ditemukan.',
