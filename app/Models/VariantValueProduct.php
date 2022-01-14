@@ -22,4 +22,8 @@ class VariantValueProduct extends Model
     {
         return $this->belongsTo(Product::class, 'product_id');
     }
+
+    public function variant_stock(){
+        return $this->hasOne(VariantStock::class)->where('status',1);
+    }
 }
