@@ -4,6 +4,7 @@ namespace App\Http\Services\Variant;
 
 use App\Models\Product;
 use App\Models\Variant;
+use App\Models\VariantValueProduct;
 
 class VariantQueries
 {
@@ -47,6 +48,26 @@ class VariantQueries
             'message' => 'Berhasil mendapatkan data varian!',
             'data' => $variants,
         ];
+
+        return $response;
+    }
+
+    public static function detailVariantByProduct($variant_value_id)
+    {
+        $variant = VariantValueProduct::with(['variant_value', 'product', 'variant_stock'])
+            ->where('variant_value_id', $variant_value_id)->first();
+
+        if(!$variant)
+            $response = [
+                'success' => false,
+                'message' => 'Gagal mendapatkan data varian!'
+            ];
+        else
+            $response = [
+                'success' => true,
+                'message' => 'Berhasil mendapatkan data detail variant produk!',
+                'data' => $variant
+            ];
 
         return $response;
     }
