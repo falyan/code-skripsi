@@ -140,4 +140,9 @@ class Product extends Model
     public function category(){
         return $this->belongsTo(MasterData::class);
     }
+
+    public function variant_values()
+    {
+        return $this->hasMany(VariantValue::class, 'product_id');
+    }
 }
