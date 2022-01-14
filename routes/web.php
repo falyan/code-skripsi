@@ -73,6 +73,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->group(['prefix' => 'review', 'middleware' => 'auth'], static function () use ($router) {
                     $router->post('reply/{review_id}', 'ReviewController@replyReview');
                 });
+
+                $router->group(['prefix' => 'testdrive', 'middleware' => 'auth'], static function () use ($router) {
+                    $router->post('create', 'TestDriveController@create');
+                });
             });
 
             $router->group(['prefix' => 'query'], static function () use ($router) {
@@ -128,6 +132,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('list/done/reply', 'ReviewController@getListReviewDoneReplyByMerchant');
                     $router->get('list/done/unreply', 'ReviewController@getListReviewDoneUnreplyByMerchant');
                     $router->get('detail/{review_id}', 'ReviewController@getDetailReview');
+                });
+
+                $router->group(['prefix' => 'testdrive', 'middleware' => 'auth'], static function () use ($router) {
+                    $router->get('list-ev', 'TestDriveController@getEVProducts');
+                    $router->get('detail/{id}', 'TestDriveController@getDetail');
+                    $router->get('history', 'TestDriveController@getHistoryBySeller');
                 });
             });
         });
