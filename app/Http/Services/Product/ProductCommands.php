@@ -217,6 +217,18 @@ class ProductCommands extends Service
                 return $response;
             }
 
+            if (!empty($data['variant']) && !empty($data['variant_value_product'])) {
+                $variant_values = $this->variantCommands->updateVariantValue($product->id, $data);
+
+                if (!$variant_values['success']) {
+                    $response['success'] = false;
+                    $response['message'] = $variant_values['message'];
+                    DB::rollBack();
+
+                    return $response;
+                }
+            }
+
             $product_data = [$product, $product_stock_new, $product_photo];
             $response['success'] = true;
             $response['message'] = 'Produk berhasil diubah!';
