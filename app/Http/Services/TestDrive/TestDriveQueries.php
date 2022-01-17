@@ -74,20 +74,20 @@ class TestDriveQueries extends Service
         if ($booked_date > 0) {
             $data['status'] = false;
             $data['message'] = "Anda telah memiliki jadwal kunjungan pada tanggal {$param_date}";
-
+            
             return $data;
         }
-
+        
         $total_visitor = TestDriveBooking::where('test_drive_id', $test_drive_id)->where('visit_date', $param_date)->count();
         if ($event->start_date > $param_date || $event->end_date < $param_date || in_array($event->status, [2,9])) {
             return $data = ['status' => false, 'message' => 'Tanggal yang dipilih tidak sesuai.'];
         }
-
+        
         if (($event->max_daily_quota - $total_visitor) <= 0) {
             return $data = ['status' => false, 'message' => 'Batas pengunjung harian telah tercapai. Silakan pilih tanggal lainnya'];
         }
         
-        return $data = ['stasus' => true];
+        return $data = ['status' => true];
     }
 
     public function filter($model, $filter = [])
