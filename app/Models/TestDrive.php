@@ -33,7 +33,7 @@ class TestDrive extends Model
         return $this->belongsToMany(Product::class, 'test_drive_product', 'test_drive_id', 'product_id');
     }
 
-    public function booking()
+    public function visitor_booking()
     {
         return $this->hasMany(TestDriveBooking::class);
     }

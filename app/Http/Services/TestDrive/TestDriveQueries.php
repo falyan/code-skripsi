@@ -12,11 +12,15 @@ use Illuminate\Support\Facades\DB;
 
 class TestDriveQueries extends Service
 {
-    public function getAllEvent($merchant_id = null, $filter = [], $sortby = null, $current_page = 1)
+    public function getAllEvent($merchant_id = null, $filter = [], $sortby = null, $current_page = 1, $only_active = false)
     {
         $raw_data = TestDrive::with(['merchant:id,name,photo_url', 'city:id,name', 'product' => function($product){
             $product->with(['product_photo:id,product_id,url'])->select(['product.id', 'product.merchant_id', 'product.name']);
         }])
+        ->when($only_active == true, function($query){
+            $now = Carbon::now()->timezone('Asia/Jakarta')->format('Y-m-d');
+            $query->where('end_date', '>=', $now)->where('status',1);
+        })
         ->when(!empty($merchant_id), function ($query) use ($merchant_id) {
             $query->where('merchant_id', $merchant_id);
         })->select(['id', 'merchant_id', 'title', 'area_name', 'address', 'city_id', 'latitude', 'longitude', 'start_date', 'end_date', 'start_time', 'end_time', 'status']);
@@ -45,24 +49,45 @@ class TestDriveQueries extends Service
 
     public function getDetailEvent($id)
     {
-        $detail_event = TestDrive::with(['merchant:id,name,photo_url', 'product' => function($product){
+        $data = TestDrive::with(['merchant:id,name,photo_url', 'product' => function($product){
             $product->with(['product_photo:id,product_id,url'])->select(['product.id', 'product.merchant_id', 'product.name']);
         }])->find($id);
-        $visitor_by_date = $this->getVisitorByDate($id);
 
-        $data['detail'] = $detail_event;
-        $data['visitor_by_date'] = $visitor_by_date;
         return $data;
     }
 
-    public function getVisitorByDate($test_drive_id)
+    public function getVisitorBookingDate($test_drive_id)
     {
         $data = DB::table('test_drive_booking')
         ->select('visit_date', DB::raw('count(id) as total_visitor'))
         ->groupBy(['visit_date'])
+        ->whereIn('status', [0,1])
         ->where('test_drive_id', $test_drive_id)
         ->get();
         return $data;
+    }
+
+    public function validateBooking($test_drive_id, $param_date)
+    {
+        $event = TestDrive::find($test_drive_id);
+        $booked_date = TestDriveBooking::where('test_drive_id', $test_drive_id)->where('visit_date', $param_date)->where('customer_id', Auth::user()->id)->count();
+        if ($booked_date > 0) {
+            $data['status'] = false;
+            $data['message'] = "Anda telah memiliki jadwal kunjungan pada tanggal {$param_date}";
+
+            return $data;
+        }
+
+        $total_visitor = TestDriveBooking::where('test_drive_id', $test_drive_id)->where('visit_date', $param_date)->count();
+        if ($event->start_date > $param_date || $event->end_date < $param_date || in_array($event->status, [2,9])) {
+            return $data = ['status' => false, 'message' => 'Tanggal yang dipilih tidak sesuai.'];
+        }
+
+        if (($event->max_daily_quota - $total_visitor) <= 0) {
+            return $data = ['status' => false, 'message' => 'Batas pengunjung harian telah tercapai. Silakan pilih tanggal lainnya'];
+        }
+        
+        return $data = ['stasus' => true];
     }
 
     public function filter($model, $filter = [])
@@ -110,5 +135,16 @@ class TestDriveQueries extends Service
         } else {
             return $model;
         }
+    }
+
+    public function getBookingList($test_drive_id, $status = null)
+    {
+        $data = TestDrive::with(['visitor_booking' => function($booking) use($status){
+            $booking->when(!empty($status), function($query) use($status){
+                $query->where('status', $status);
+            })->select(['id', 'test_drive_id', 'pic_name', 'pic_phone', 'pic_email', 'visit_date', 'total_passanger', 'status']);
+        }])->find($test_drive_id, ['id', 'merchant_id', 'title', 'start_date', 'end_date', 'start_time', 'end_time']);
+
+        return $data;
     }
 }

@@ -4,9 +4,12 @@ namespace App\Http\Services\TestDrive;
 
 use App\Http\Services\Service;
 use App\Models\TestDrive;
+use App\Models\TestDriveBooking;
 use App\Models\TestDriveProduct;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class TestDriveCommands extends Service{
     public function generatePhone($param_phone)
@@ -71,5 +74,38 @@ class TestDriveCommands extends Service{
         return;
     }
 
-    
+    public function cancelEvent($event_id, $reason)
+    {
+        $now = Carbon::now()->timezone('Asia/Jakarta')->format('Y-m-d H:i:s');
+        $data = TestDrive::with(['booking'])->find($event_id);
+        $data->cancelation_date = $now;
+        $data->cancelation_reason = $reason;
+        $data->status = 9;
+
+        if ($data->save()) {
+            return $data;
+        }else {
+            return false;
+        }
+    }
+
+    public function booking($event_id, $data)
+    {
+        $new_booking = new TestDriveBooking();
+        $new_booking->test_drive_id = $event_id;
+        $new_booking->customer_id = Auth::user()->id;
+        $new_booking->visit_date = $data->visit_date;
+        $new_booking->pic_name = $data->pic_name;
+        $new_booking->pic_phone = $this->generatePhone($data->pic_phone);
+        $new_booking->pic_email = $data->pic_email;
+        $new_booking->total_passanger = $data->total_passanger;
+        $new_booking->booking_code = Str::random(8);
+        $new_booking->status = 0;
+
+        if($new_booking->save()){
+            return $new_booking;
+        }else {
+            return false;
+        }
+    }
 }

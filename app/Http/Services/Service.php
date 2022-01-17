@@ -51,6 +51,7 @@ class Service
     '1' => 'Informasi',
     '2' => 'Transaksi',
     '3' => 'Promo',
+    '4' => 'Lainnya'
   ];
 
   static $order_detail_type = [
