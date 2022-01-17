@@ -19,6 +19,8 @@ class CreateVariantStockTable extends Migration
             $table->integer('amount')->nullable();
             $table->json('description')->nullable();
             $table->smallInteger('status')->nullable();
+            $table->string('created_by')->nullable();
+            $table->string('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

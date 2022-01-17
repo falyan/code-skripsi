@@ -15,8 +15,10 @@ class CreateMasterVariantTable extends Migration
     {
         Schema::create('master_variant', function (Blueprint $table) {
             $table->id();
-            $table->string('nama')->nullable();
-            $table->integer('jumlah_opsi')->nullable();
+            $table->string('name')->nullable();
+            $table->integer('total_option')->nullable();
+            $table->string('created_by')->nullable();
+            $table->string('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
