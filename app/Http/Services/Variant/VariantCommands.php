@@ -67,6 +67,8 @@ class VariantCommands
                     'price' => $vvp['price'],
                     'strike_price' => $vvp['strike_price'] ?? null,
                     'created_by' => $data['full_name'],
+                    'main_variant' => $vvp['main_variant'] ?? false,
+                    'status' => $vvp['status'] ?? 0,
                 ]);
 
                 $variant_stock = VariantStock::create([
@@ -154,6 +156,8 @@ class VariantCommands
                         'price' => $vvp['price'],
                         'strike_price' => $vvp['strike_price'] ?? null,
                         'updated_by' => $data['full_name'],
+                        'main_variant' => $vvp['main_variant'] ?? $variant_value_product->main_variant,
+                        'status' => $vvp['status'] ?? $variant_value_product->status,
                     ]);
                     if (isset($vvp['amount'])) {
                         $product_comamnd = new ProductCommands();
@@ -185,6 +189,8 @@ class VariantCommands
                         'price' => $vvp['price'],
                         'strike_price' => $vvp['strike_price'] ?? null,
                         'created_by' => $data['full_name'],
+                        'main_variant' => $vvp['main_variant'] ?? false,
+                        'status' => $vvp['status'] ?? 0,
                     ]);
 
                     $variant_stock = VariantStock::create([
