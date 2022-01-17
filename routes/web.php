@@ -173,6 +173,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('{id}', 'ProductController@getProductById');
             });
 
+            $router->group(['prefix' => 'variant'], static function () use ($router) {
+                $router->get('detail/product', 'VariantController@getVariantByProduct');
+            });
+
             $router->group(['prefix' => 'category'], static function () use ($router) {
                 $router->get('/random', 'CategoryController@getThreeRandomCategory');
                 $router->get('/all', 'CategoryController@getAllCategory');
