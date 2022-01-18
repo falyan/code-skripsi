@@ -17,7 +17,9 @@ class CreateVariantValueTable extends Migration
             $table->id();
             $table->unsignedBigInteger('variant_id');
             $table->unsignedBigInteger('product_id');
-            $table->string('nama_opsi')->nullable();
+            $table->string('option_name')->nullable();
+            $table->string('created_by')->nullable();
+            $table->string('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

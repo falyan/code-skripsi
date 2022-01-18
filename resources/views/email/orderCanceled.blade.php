@@ -91,7 +91,7 @@
                         <img src="https://dev-stroom.air.id/plnmp/sauron-staging/api/firebase/file/load/Marketplace~merchants~16402373074a166c78-3888-4004-86b0-ad9abc9a3c47.png" alt=""
                         style="max-width: 150px;display:block;margin-left: auto;margin-right: auto;">
 
-                        <p style="color: #666;font-size: 15px;">Transaksi Anda telah dibatalkan, Silahkan berbelanja kembali Toko favoritmu.</p>
+                        <p style="color: #666;font-size: 15px;">Transaksi Anda telah dibatalkan, Silakan berbelanja kembali Toko favoritmu.</p>
 
                         <div style="margin-bottom: 10px;border-radius: 20px;background-color: #E6F6F8;">
                             <div style="padding: 30px;">
