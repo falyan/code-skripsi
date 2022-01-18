@@ -210,7 +210,7 @@ class RajaOngkirManager
                 //Notification buyer
                 $notif_command = new NotificationCommands();
                 $title = 'Pesanan anda telah sampai';
-                $message = 'Pesanan anda telah sampai, silahkan cek kelengkapan pesanan anda sebelum menyelesaikan pesanan.';
+                $message = 'Pesanan anda telah sampai, silakan cek kelengkapan pesanan anda sebelum menyelesaikan pesanan.';
                 $url_path = 'v1/buyer/query/transaction/' . $order['buyer_id'] . '/detail/' . $order['id'];
                 $notif_command->create('customer_id', $order['buyer_id'], '2', $title, $message, $url_path);
                 $notif_command->sendPushNotification($order['buyer_id'], $title, $message, 'active');

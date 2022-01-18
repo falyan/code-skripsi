@@ -154,7 +154,7 @@ class TransactionCommands extends Service
                     $column_value = $customer_id;
                     $type = 2;
                     $title = 'Transaksi berhasil dibuat';
-                    $message = 'Transaksimu berhasil dibuat, silahkan melanjutkan pembayaran.';
+                    $message = 'Transaksimu berhasil dibuat, silakan melanjutkan pembayaran.';
                     $url_path = 'v1/buyer/query/transaction/' . $customer_id . '/detail/' . $order->id;
 
                     $notificationCommand = new NotificationCommands();
@@ -367,7 +367,7 @@ class TransactionCommands extends Service
             //Notification buyer
             $notif_command = new NotificationCommands();
             $title = 'Pesanan anda telah sampai';
-            $message = 'Pesanan anda telah sampai, silahkan cek kelengkapan pesanan anda sebelum menyelesaikan pesanan.';
+            $message = 'Pesanan anda telah sampai, silakan cek kelengkapan pesanan anda sebelum menyelesaikan pesanan.';
             $url_path = 'v1/buyer/query/transaction/'. $order['buyer_id'] .'/detail/' . $order['id'];
             $notif_command->create('customer_id', $order['buyer_id'], '2', $title, $message, $url_path);
             $notif_command->sendPushNotification($order['buyer_id'], $title, $message, 'active');

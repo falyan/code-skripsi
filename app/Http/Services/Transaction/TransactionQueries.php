@@ -68,7 +68,7 @@ class TransactionQueries extends Service
             'detail' => function ($product) {
                 $product->with(['product' => function ($j) {
                     $j->with(['product_photo']);
-                }]);
+                }, 'variant_value_product']);
             }, 'progress', 'merchant' => function ($merchant) {
                 $merchant->with(['province', 'city', 'district']);
             }, 'delivery' => function ($region) {

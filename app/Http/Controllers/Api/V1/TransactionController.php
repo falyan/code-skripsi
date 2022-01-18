@@ -690,7 +690,7 @@ class TransactionController extends Controller
                 $column_value = $data->merchant_id;
                 $type = 2;
                 $title = 'Transaksi selesai';
-                $message = 'Transaksi sudah selesai, silahkan memeriksa saldo ICONCASH anda.';
+                $message = 'Transaksi sudah selesai, silakan memeriksa saldo ICONCASH anda.';
                 $url_path = 'v1/seller/query/transaction/detail/' . $id;
 
                 $order = Order::find($id);
@@ -939,7 +939,7 @@ class TransactionController extends Controller
                 $column_name_merchant = 'merchant_id';
                 $column_value_merchant = $order->merchant_id;
                 $title_merchant = 'Pesanan masuk';
-                $message_merchant = 'Ada pesanan masuk, silahkan konfirmasi pesanan.';
+                $message_merchant = 'Ada pesanan masuk, silakan konfirmasi pesanan.';
                 $url_path_merchant = 'v1/seller/query/transaction/detail/' . $order->id;
 
                 $notificationCommand = new NotificationCommands();
