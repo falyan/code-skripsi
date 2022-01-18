@@ -224,6 +224,7 @@ class TestDriveController extends Controller
             return $this->respondWithData($e, 'Error', 400);
         }
     }
+
     public function booking(Request $request, $id)
     {
         try {
@@ -272,6 +273,23 @@ class TestDriveController extends Controller
 
             DB::commit();
             return $this->respondWithResult(true, "Berhasil booking event Test Drive");;
+        } catch (Exception $e) {
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function getHistoryByCustomer(Request $request)
+    {
+        try {
+            $status = $request->status ?? 0;
+            $page = $request->page ?? 0;
+            $data = $this->testDriveQueries->getHistoryBooking(Auth::user()->id, $status, $page);
+
+            if ($data['total'] > 0) {
+                return $this->respondWithData($data, 'Berhasil mendapatkan data History Booking');
+            } else {
+                return $this->respondWithResult(false, 'Data belum tersedia', 400);
+            }  
         } catch (Exception $e) {
             return $this->respondWithData($e, 'Error', 400);
         }

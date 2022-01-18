@@ -89,6 +89,30 @@ class TestDriveQueries extends Service
         
         return $data = ['status' => true];
     }
+    
+    public function getBookingList($test_drive_id, $status = null)
+    {
+        $data = TestDrive::with(['visitor_booking' => function($booking) use($status){
+            $booking->when(!empty($status), function($query) use($status){
+                $query->where('status', $status);
+            })->select(['id', 'test_drive_id', 'pic_name', 'pic_phone', 'pic_email', 'visit_date', 'total_passanger', 'status']);
+        }])->find($test_drive_id, ['id', 'merchant_id', 'title', 'start_date', 'end_date', 'start_time', 'end_time']);
+
+        return $data;
+    }
+
+    public function getHistoryBooking($customer_id, $status = 0, $current_page = 1)
+    {
+        $data = TestDriveBooking::with(['test_drive' => function($test_drive){
+            $test_drive->with(['merchant:id,name,photo_url'])->select(['id', 'merchant_id', 'title', 'area_name']);
+        }])->where('customer_id', $customer_id)
+        ->where('status', $status)
+        ->get(['id', 'test_drive_id', 'visit_date', 'status']);
+        
+        $data = static::paginate(($data)->toArray(), 10, $current_page);
+
+        return $data;
+    }
 
     public function filter($model, $filter = [])
     {
@@ -97,9 +121,8 @@ class TestDriveQueries extends Service
             $city = $filter['city'] ?? null;
             $status = $filter['status'] ?? null;
             $date = $filter['date'] ?? null;
-
             $data = $model->when(!empty($keyword), function ($query) use ($keyword) {
-                $query->where('title', 'LIKE', "%{$keyword}%");
+                $query->where('title', 'ILIKE', "%{$keyword}%");
             })->when(!empty($city), function ($query) use ($city) {
                 if (strpos($city, ',')) {
                     $query->whereIn('city_id', explode(',', $city));
@@ -135,16 +158,5 @@ class TestDriveQueries extends Service
         } else {
             return $model;
         }
-    }
-
-    public function getBookingList($test_drive_id, $status = null)
-    {
-        $data = TestDrive::with(['visitor_booking' => function($booking) use($status){
-            $booking->when(!empty($status), function($query) use($status){
-                $query->where('status', $status);
-            })->select(['id', 'test_drive_id', 'pic_name', 'pic_phone', 'pic_email', 'visit_date', 'total_passanger', 'status']);
-        }])->find($test_drive_id, ['id', 'merchant_id', 'title', 'start_date', 'end_date', 'start_time', 'end_time']);
-
-        return $data;
     }
 }
