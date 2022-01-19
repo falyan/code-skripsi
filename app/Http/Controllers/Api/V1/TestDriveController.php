@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\TestDrive\TestDriveCommands;
 use App\Http\Services\TestDrive\TestDriveQueries;
@@ -167,9 +168,8 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.', 400);
             }
 
-            DB::commit();
             $this->notifyCustomer($data);
-            
+            DB::commit();
             return $this->respondWithResult(true, "{$data->title} telah dibatalkan");
         } catch (Exception $e) {
             DB::rollBack();
@@ -179,27 +179,106 @@ class TestDriveController extends Controller
 
     public function notifyCustomer($event)
     {
-        if (count($event->booking) > 0) {
+        if (count($event->visitor_booking) > 0) {
             $notificationCommand = new NotificationCommands();
-            $title = 'Event : ' . $event->title . 'dibatalkan.';
-            $message = "Event yang akan anda hadiri telah dibatalkan pada tanggal {$event->cancelation_date} dengan alasan : {$event->cancelation_reason}.";
+            $mailSenderManager = new MailSenderManager();
+            $title = 'Notifikasi Event Test Drive.';
+            $message = "Event {$event->title} telah dibatalkan pada tanggal {$event->cancelation_date} dengan alasan : {$event->cancelation_reason}.";
             $url_path = 'v1/buyer/query/testdrive/detail/' . $event->id;
-
-            foreach ($event->booking as $booking) {
+            
+            foreach ($event->visitor_booking as $booking) {                                                                                                                                                                                                                                                                                                                                                                                  
                 $notificationCommand->create('customer_id', $booking->customer_id, 4, $title, $message, $url_path, null, Auth::user()->full_name);
+                // $mailSenderManager->mailTestDrive($booking->pic_name, $booking->pic_email, $message);
             }
         }
-
-        return;
     }
 
     public function getBookingList(Request $request, $id)
     {
         try {
-            $data = $this->testDriveQueries->getBookingList($id, $request->status ?? null);
+            $status = $request->status ?? 0;
+            $data = $this->testDriveQueries->getBookingList($id, $status);
 
             return $this->respondWithData($data, 'berhasil mendapat data calon pengunjung');
         } catch (Exception $e) {
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function approveBooking(Request $request)
+    {
+        try {
+            $rules = [
+                'booking_id' => 'required'
+            ];
+
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => ':attribute diperlukan.',
+            ]);
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+            
+            $booking_id = explode(',', $request->booking_id);
+            $total_id = count($booking_id);
+
+            DB::beginTransaction();
+            for ($i=0; $i < $total_id; $i++) {
+                if ($this->testDriveCommands->updateStatusBooking($booking_id[$i], 1) == false) {
+                    DB::rollBack();
+                    return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.', 400);
+                }
+            }
+            DB::commit();
+            return $this->respondWithResult(true, 'Berhasil Approve calon pengunjung');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function rejectBooking(Request $request)
+    {
+        try {
+            $rules = [
+                'booking_id' => 'required'
+            ];
+
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => ':attribute diperlukan.',
+            ]);
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            $booking_id = explode(',', $request->booking_id);
+            $total_id = count($booking_id);
+
+            DB::beginTransaction();
+            for ($i=0; $i < $total_id; $i++) {
+                if ($this->testDriveCommands->updateStatusBooking($booking_id[$i], 9) == false) {
+                    DB::rollBack();
+                    return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.', 400);
+                }
+            }
+            DB::commit();
+            return $this->respondWithResult(true, 'Berhasil Reject calon pengunjung');
+        } catch (Exception $e) {
+            DB::rollBack();
             return $this->respondWithData($e, 'Error', 400);
         }
     }
@@ -258,7 +337,7 @@ class TestDriveController extends Controller
             }
 
             // validate booking
-            $validate_booking = $this->testDriveQueries->validateBooking($id, $request->visit_date);
+            $validate_booking = $this->testDriveQueries->validateBooking($id, $request->visit_date, Auth::user()->id);
             if ($validate_booking['status'] == false) {
                 return $this->respondWithResult(false, $validate_booking['message'], 400);
             }
@@ -274,6 +353,7 @@ class TestDriveController extends Controller
             DB::commit();
             return $this->respondWithResult(true, "Berhasil booking event Test Drive");;
         } catch (Exception $e) {
+            DB::rollBack();
             return $this->respondWithData($e, 'Error', 400);
         }
     }
@@ -291,6 +371,49 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Data belum tersedia', 400);
             }  
         } catch (Exception $e) {
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
+    public function attendance(Request $request)
+    {
+        try {
+            
+            $rules = [
+                'testd_drive_id' => 'required',
+                'booking_code' => 'required',
+            ];
+    
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => ':attribute diperlukan.',
+            ]);
+    
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+    
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+    
+            $validate = $this->testDriveQueries->validateAttendance($request->test_drive_id, $request->booking_code);
+            if ($validate['status'] == false) {
+                return $this->respondWithResult(false, $validate['message'], 400);
+            }
+    
+            DB::beginTransaction();
+            if($this->testDriveCommands->updateStatusBooking($validate['booking_id'], 2) == false){
+                DB::rollback();
+                return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.');
+            }
+    
+            DB::commit();
+            return $this->respondWithResult(true, 'Selamat datang');
+        } catch (Exception $e) {
+            DB::rollback();
             return $this->respondWithData($e, 'Error', 400);
         }
     }
