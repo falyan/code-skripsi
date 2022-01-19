@@ -174,7 +174,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'variant'], static function () use ($router) {
-                $router->get('detail/product', 'VariantController@getVariantByProduct');
+                $router->get('detail/{variant_value_id}/product', 'VariantController@getVariantByProduct');
             });
 
             $router->group(['prefix' => 'category'], static function () use ($router) {
