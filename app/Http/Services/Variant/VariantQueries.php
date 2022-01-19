@@ -52,7 +52,7 @@ class VariantQueries
         return $response;
     }
 
-    public static function detailVariantByProduct($variant_value_id)
+    public static function detailVariantByProduct(string $variant_value_id)
     {
         $variant = VariantValueProduct::with(['variant_value', 'product', 'variant_stock'])
             ->where('variant_value_id', $variant_value_id)->first();

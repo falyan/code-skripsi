@@ -11,7 +11,8 @@ use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
-class TestDriveCommands extends Service{
+class TestDriveCommands extends Service
+{
     public function generatePhone($param_phone)
     {
         try {
@@ -33,7 +34,7 @@ class TestDriveCommands extends Service{
             return new Exception($ex->getMessage(), $ex->getCode());
         }
     }
-    
+
     public function createEvent($data)
     {
         $new_event = new TestDrive();
@@ -54,11 +55,11 @@ class TestDriveCommands extends Service{
         $new_event->pic_email = $data->pic_email;
         $new_event->status = 1;
         $new_event->created_by = Auth::user()->full_name;
-        
+
         if ($new_event->save()) {
             $this->insertProductTestDrive($new_event->id, $data->product_ids);
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -68,7 +69,7 @@ class TestDriveCommands extends Service{
         foreach ($product_ids as $product_id) {
             $test_drive_product = new TestDriveProduct();
             $test_drive_product->test_drive_id = $event_id;
-            $test_drive_product->product_id = $product_id;            
+            $test_drive_product->product_id = $product_id;
             $test_drive_product->save();
         }
         return;
@@ -77,14 +78,14 @@ class TestDriveCommands extends Service{
     public function cancelEvent($event_id, $reason)
     {
         $now = Carbon::now()->timezone('Asia/Jakarta')->format('Y-m-d H:i:s');
-        $data = TestDrive::with(['booking'])->find($event_id);
+        $data = TestDrive::with(['visitor_booking'])->find($event_id);
         $data->cancelation_date = $now;
         $data->cancelation_reason = $reason;
         $data->status = 9;
 
         if ($data->save()) {
             return $data;
-        }else {
+        } else {
             return false;
         }
     }
@@ -102,10 +103,22 @@ class TestDriveCommands extends Service{
         $new_booking->booking_code = Str::random(8);
         $new_booking->status = 0;
 
-        if($new_booking->save()){
+        if ($new_booking->save()) {
             return $new_booking;
-        }else {
+        } else {
             return false;
         }
+    }
+
+    public function updateStatusBooking($booking_id, $status)
+    {
+        $data = TestDriveBooking::find($booking_id);
+        if ($data->status != 0) {
+            return true;
+        }
+        
+        $data->status = $status;
+        if ($data->save()) return true;
+        else return false;
     }
 }
