@@ -236,4 +236,29 @@ class MailSenderManager
             Log::info('Berhasil mengirim email pesanan dibatalkan ke email: ' . $customer->email);
         }
     }
+
+    public function mailTestDrive($destination_name, $destination_email, $message)
+    {
+        try {
+            //code...
+            $data = [
+                'destination_name' => $destination_name,
+                'message' => $message,
+            ];
+    
+            Mail::send('email.testDriveMail', $data, function ($mail) use ($destination_email) {
+                $mail->to($destination_email, 'no-reply')
+                    ->subject("Notifikasi Event Test Drive");
+                $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+            });
+    
+            if (Mail::failures()) {
+                Log::error('Gagal mengirim email pesanan dibatalkan untuk email: ' . $destination_email);
+            } else {
+                Log::info('Berhasil mengirim email pesanan dibatalkan ke email: ' . $destination_email);
+            }
+        } catch (\Throwable $th) {
+            log::error('error', $th);
+        }
+    }
 }
