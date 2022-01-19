@@ -13,7 +13,6 @@ class VariantController extends Controller
     public function __construct()
     {
         $this->variantQueries = new VariantQueries();
-        $this->variant_value_id = request('variant_value_id');
     }
 
     public function getVariantById($id)
@@ -34,18 +33,17 @@ class VariantController extends Controller
         }
     }
 
-    public function getVariantByProduct()
+    public function getVariantByProduct(string $variant_value_id)
     {
         try {
-            $variantValueID = $this->variant_value_id;
-            if (!$variantValueID) {
+            if (!$variant_value_id) {
                 return [
                     'success' => false,
                     'message' => 'Variant value tidak boleh kosong!'
                 ];
             }
 
-            return VariantQueries::detailVariantByProduct($variantValueID);
+            return VariantQueries::detailVariantByProduct($variant_value_id);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
