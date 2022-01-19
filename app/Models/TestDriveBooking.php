@@ -20,4 +20,9 @@ class TestDriveBooking extends Model
     {
         return $date->format('Y-m-d H:i:s');
     }
+
+    public function test_drive()
+    {
+        return $this->belongsTo(TestDrive::class);
+    }
 }
