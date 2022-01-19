@@ -4,8 +4,10 @@ namespace App\Http\Services\Product;
 
 use App\Http\Services\Service;
 use App\Models\MasterData;
+use App\Models\MasterVariant;
 use App\Models\Merchant;
 use App\Models\Product;
+use App\Models\Variant;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
@@ -251,9 +253,17 @@ class ProductQueries extends Service
             });
         }, 'reviews' => function ($reviews) {
             $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo']);
-        }, 'variant_values' => function ($variant_value) {
-            $variant_value->with(['variant.master_variant']);
         }])->where('id', $id)->first();
+
+        $variant = MasterVariant::whereHas('variants', function ($variant) use ($id) {
+            $variant->whereHas('variant_values', function ($variant_value) use ($id) {
+                $variant_value->where('product_id', $id);
+            });
+        })->with(['variants' => function ($variant) use ($id) {
+            $variant->whereHas('variant_values', function ($variant_value) use ($id) {
+                $variant_value->where('product_id', $id);
+            })->with(['variant_values']);
+        }])->get();
 
         if (!$data) {
             $response['success'] = false;
@@ -268,7 +278,7 @@ class ProductQueries extends Service
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $data;
+        $response['data'] = $variant->isEmpty() ? $data : array_merge($data->toArray(), ['variants' => collect([$variant])->flatten()]);
         return $response;
     }
 
