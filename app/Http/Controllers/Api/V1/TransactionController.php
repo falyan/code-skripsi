@@ -114,7 +114,7 @@ class TransactionController extends Controller
 
                         if (data_get($item, 'variant_value_product_id') != null){
                             $variant_stock = VariantStock::where('variant_value_product_id', data_get($item, 'variant_value_product_id'))
-                                ->where('product_id', data_get($item, 'product_id'))->where('status', 1)->first();
+                                ->where('status', 1)->first();
 
                             $data['amount'] = $variant_stock['amount'] - data_get($item, 'quantity');
                             $data['full_name'] = Auth::user()->full_name;
