@@ -78,7 +78,9 @@ class TestDriveCommands extends Service
     public function cancelEvent($event_id, $reason)
     {
         $now = Carbon::now()->timezone('Asia/Jakarta')->format('Y-m-d H:i:s');
-        $data = TestDrive::with(['visitor_booking'])->find($event_id);
+        $data = TestDrive::with(['visitor_booking' => function($booking){
+            $booking->whereIn('status',[0,1]);
+        }])->find($event_id);
         $data->cancelation_date = $now;
         $data->cancelation_reason = $reason;
         $data->status = 9;
