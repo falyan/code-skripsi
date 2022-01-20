@@ -50,10 +50,16 @@ class CartCommands extends Service
                     if ($productExists->quantity + 1 > $product_stock->amount) {
                         throw new Exception("Stok produk habis. {$product_stock->amount} stok yang tersedia sudah kamu masukkan ke keranjangmu.");
                     }
-
-                    $cartDetail = $productExists->update([
-                        'quantity' => $productExists->quantity + 1
-                    ]);
+                    if ($variant_id != null || 0){
+                        $cartDetail = $productExists->update([
+                            'quantity' => $productExists->quantity + 1,
+                            'variant_value_product_id' => $variant_id
+                        ]);
+                    }else{
+                        $cartDetail = $productExists->update([
+                            'quantity' => $productExists->quantity + 1
+                        ]);
+                    }
                 } else {
                     $cartDetail = CartDetail::create([
                         'cart_id' => $cart->id,
