@@ -9,9 +9,9 @@
 </head>
 
 <body>
-    <h3>Hai, {{ $destination_name }}</h3>
+    <h3>Hai, {{$destination_name}}</h3>
     <p>
-        {{$message}}
+        {{$message_body}}
     </p>
     
     <br>

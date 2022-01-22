@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\Variant;
 
+use App\Models\MasterData;
 use App\Models\Product;
 use App\Models\Variant;
 use App\Models\VariantValueProduct;
@@ -32,7 +33,17 @@ class VariantQueries
 
     public function getByCategory($category_id)
     {
+        $category = MasterData::where('type', 'product_category')->where('id', $category_id)->first();
         $variants = Variant::where('category_id', $category_id)->with(['master_variant', 'master_variant.option_variants'])->get();
+
+        if (empty($category)) {
+            $response = [
+                'success' => false,
+                'message' => 'Category tidak ditemukan!',
+            ];
+
+            return $response;
+        }
 
         if ($variants->isEmpty()) {
             $response = [
@@ -46,6 +57,7 @@ class VariantQueries
         $response = [
             'success' => true,
             'message' => 'Berhasil mendapatkan data varian!',
+            'category' => $category,
             'data' => $variants,
         ];
 
