@@ -18,7 +18,8 @@ class CategoryController extends Controller
         $this->categoryQueries = new CategoryQueries();
     }
 
-    public function getAllCategory(){
+    public function getAllCategory()
+    {
         try {
             return $this->categoryQueries->getAllCategory();
         } catch (Exception $e) {
@@ -26,9 +27,19 @@ class CategoryController extends Controller
         }
     }
 
-    public function getThreeRandomCategory(){
+    public function getThreeRandomCategory()
+    {
         try {
-            return $this->categoryQueries->getThreeRandomCategory();   
+            return $this->categoryQueries->getThreeRandomCategory();
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getBasicCategory()
+    {
+        try {
+            return $this->categoryQueries->getBasicCategory();
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

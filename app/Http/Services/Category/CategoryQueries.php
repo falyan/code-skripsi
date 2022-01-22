@@ -51,13 +51,14 @@ class CategoryQueries extends Service
 
     public function getBasicCategory()
     {
-        $category = MasterData::where('type', 'product_category')->where('parent_id', null)->orderBy('value')->get();
+        $category = MasterData::where('type', 'product_category')->where('parent_id', null)->orderBy('value')->latest()->get();
 
         if ($category->isEmpty()){
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data kategori!';
             return $response;
         }
+
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data kategori!';
         $response['data'] = $category;
