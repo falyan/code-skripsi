@@ -144,7 +144,7 @@ class TransactionQueries extends Service
         $new_merchant = array_map(function ($merchant) use (&$total_price, &$total_payment, &$total_delivery_discount, &$total_delivery_fee){
             $total_weight = 0;
             $merchant_total_price = 0;
-            $data_merchant = Merchant::findOrFail($merchant['merchant_id']);
+            $data_merchant = Merchant::with(['city'])->findOrFail($merchant['merchant_id']);
 
             $new_product = array_map(function ($product) use (&$total_weight, &$merchant_total_price){
                 if (!$data_product = Product::with(['product_photo', 'stock_active'])->find($product['product_id'])) {

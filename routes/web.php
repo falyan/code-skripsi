@@ -160,6 +160,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('{merchant_id}', 'MerchantController@publicProfile');
             });
 
+            $router->group(['prefix' => 'category'], static function () use ($router) {
+                $router->get('basic/all', 'CategoryController@getBasicCategory');
+            });
+
             $router->group(['prefix' => 'etalase'], static function () use ($router) {
                 $router->get('merchant/{merchant_id}', 'EtalaseController@publicEtalase');
             });
