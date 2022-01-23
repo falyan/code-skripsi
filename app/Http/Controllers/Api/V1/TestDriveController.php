@@ -21,10 +21,13 @@ class TestDriveController extends Controller
      * @return void
      */
     protected $testDriveCommands, $testDriveQueries;
+    protected $notificationCommand, $mailSenderManager;
     public function __construct()
     {
         $this->testDriveCommands = new TestDriveCommands();
         $this->testDriveQueries = new TestDriveQueries();
+        $this->notificationCommand = new NotificationCommands();
+        $this->mailSenderManager = new MailSenderManager();
     }
 
     #region seller acti0n
@@ -168,7 +171,7 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.', 400);
             }
 
-            $this->notifyCustomer($data);
+            $this->notifyCancelCustomer($data);
             DB::commit();
             return $this->respondWithResult(true, "{$data->title} telah dibatalkan");
         } catch (Exception $e) {
@@ -177,18 +180,16 @@ class TestDriveController extends Controller
         }
     }
 
-    public function notifyCustomer($event)
+    public function notifyCancelCustomer($event)
     {
         if (count($event->visitor_booking) > 0) {
-            $notificationCommand = new NotificationCommands();
-            $mailSenderManager = new MailSenderManager();
             $title = 'Notifikasi Event Test Drive.';
             $message = "Event {$event->title} telah dibatalkan pada tanggal {$event->cancelation_date} dengan alasan : {$event->cancelation_reason}.";
             $url_path = 'v1/buyer/query/testdrive/detail/' . $event->id;
 
             foreach ($event->visitor_booking as $booking) {
-                $notificationCommand->create('customer_id', $booking->customer_id, 4, $title, $message, $url_path, null, Auth::user()->full_name);
-                $mailSenderManager->mailTestDrive($booking->pic_name, $booking->pic_email, $message);
+                $this->notificationCommand->create('customer_id', $booking->customer_id, 4, $title, $message, $url_path, null, Auth::user()->full_name);
+                $this->mailSenderManager->mailTestDrive($booking->pic_name, $booking->pic_email, $message);
             }
         }
     }
@@ -235,6 +236,7 @@ class TestDriveController extends Controller
                     DB::rollBack();
                     return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.', 400);
                 }
+                $this->notificationCommand->create('customer_id', $booking_id[$i], 4, 'Notifikasi Event Test Drive.', 'Permintaan booking EV Test Drive anda telah Disetujui. Klik untuk membuka halaman History Booking', '/v1/buyer/query/testdrive/history?status=1&page=1', null, Auth::user()->full_name);
             }
             DB::commit();
             return $this->respondWithResult(true, 'Berhasil Approve calon pengunjung');
@@ -274,6 +276,7 @@ class TestDriveController extends Controller
                     DB::rollBack();
                     return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.', 400);
                 }
+                $this->notificationCommand->create('customer_id', $booking_id[$i], 4, 'Notifikasi Event Test Drive.', 'Permintaan booking EV Test Drive anda Dotolak. Klik untuk membuka halaman History Booking', '/v1/buyer/query/testdrive/history?status=9&page=1', null, Auth::user()->full_name);
             }
             DB::commit();
             return $this->respondWithResult(true, 'Berhasil Reject calon pengunjung');
