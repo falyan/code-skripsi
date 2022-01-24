@@ -102,6 +102,12 @@ class TransactionController extends Controller
                     if (data_get($item, 'quantity') < $product->minimum_purchase) {
                         throw new Exception('Pembelian minimum untuk produk ' . $product->name . ' adalah ' . $product->minimum_purchase, 400);
                     }
+                    if (data_get($item, 'variant_value_product_id') != null){
+                        if (VariantStock::where('variant_value_product_id', data_get($item, 'variant_value_product_id'))
+                                ->where('status', 1)->pluck('amount')->first() < data_get($item, 'quantity')){
+                            throw new Exception('Stok variant produk dengan id ' . data_get($item, 'variant_value_product_id') . ' tidak mencukupi', 400);
+                        }
+                    }
                 }, data_get($merchant, 'products'));
                 return $merchant;
             }, request()->get('merchants'));
