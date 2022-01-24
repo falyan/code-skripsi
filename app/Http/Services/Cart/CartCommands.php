@@ -43,8 +43,13 @@ class CartCommands extends Service
             }
 
             if ($cart) {
-                $productExists = $cart->cart_detail->where('product_id', $getProductId)
-                    ->first();
+                if ($variant_id != null || 0){
+                    $productExists = $cart->cart_detail->where('product_id', $getProductId)->where('variant_value_product_id', $variant_id)
+                        ->first();
+                }else{
+                    $productExists = $cart->cart_detail->where('product_id', $getProductId)
+                        ->first();
+                }
 
                 if ($productExists) {
                     if ($productExists->quantity + 1 > $product_stock->amount) {
