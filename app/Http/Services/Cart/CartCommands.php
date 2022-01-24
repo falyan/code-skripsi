@@ -10,6 +10,7 @@ use App\Models\Etalase;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Models\VariantStock;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -40,6 +41,14 @@ class CartCommands extends Service
 
             if (empty($product_stock->amount) || (!empty($product_stock->amount) && $product_stock->amount <= 0)) {
                 throw new Exception('Stok produk belum tersedia', 400);
+            }
+
+            if ($variant_id != null){
+                $variant_stock = VariantStock::where(['variant_value_product_id', $variant_id], ['status', 1])->first();
+
+                if (empty($variant_stock->amount) || (!empty($variant_stock->amount) && $variant_stock->amount <= 0)) {
+                    throw new Exception('Stok variant produk belum tersedia', 400);
+                }
             }
 
             if ($cart) {
