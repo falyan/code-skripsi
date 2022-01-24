@@ -69,18 +69,34 @@ class VariantQueries
         $variant = VariantValueProduct::with(['variant_value', 'product', 'variant_stock'])
             ->where('variant_value_id', $variant_value_id)->first();
 
-        if(!$variant)
+        if (!$variant) {
             $response = [
                 'success' => false,
                 'message' => 'Gagal mendapatkan data varian!'
             ];
-        else
-            $response = [
-                'success' => true,
-                'message' => 'Berhasil mendapatkan data detail variant produk!',
-                'data' => $variant
-            ];
+        } else {
+            $response = static::resultAmountVariant($variant->variant_stock->amount, $variant);
+        }
 
         return $response;
+    }
+
+    public static function resultAmountVariant(int $amount, $data)
+    {
+        if ($amount <= 0) {
+            return [
+                'success' => true,
+                'message' => 'Berhasil mendapatkan data detail varian produk stok kosong!',
+                'isCanBuy' => 0,
+                'data' => $data
+            ];
+        } else {
+            return [
+                'success' => true,
+                'message' => 'Berhasil mendapatkan data detail varian produk stok tersedia',
+                'isCanBuy' => 1,
+                'data' => $data
+            ];
+        }
     }
 }
