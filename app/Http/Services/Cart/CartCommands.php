@@ -44,7 +44,7 @@ class CartCommands extends Service
             }
 
             if ($variant_id != null){
-                $variant_stock = VariantStock::where(['variant_value_product_id', $variant_id], ['status', 1])->first();
+                $variant_stock = VariantStock::where([['variant_value_product_id', $variant_id], ['status', 1]])->first();
 
                 if (empty($variant_stock->amount) || (!empty($variant_stock->amount) && $variant_stock->amount <= 0)) {
                     throw new Exception('Stok variant produk belum tersedia', 400);
