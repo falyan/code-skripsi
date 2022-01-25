@@ -10,6 +10,7 @@ use App\Models\Etalase;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Models\VariantStock;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,7 @@ class CartCommands extends Service
         $getProductId = request('product_id');
         $buyerID = Auth::id() ?? null;
         $related_merchant_id = request('related_merchant_id') ? request('related_merchant_id') : null;
+        $variant_id = request('variant_value_product_id') ? request('variant_value_product_id') : null;
         // $getUser = Customer::findByrelatedCustomerId($related_customer_id);
 
         DB::beginTransaction();
@@ -41,24 +43,44 @@ class CartCommands extends Service
                 throw new Exception('Stok produk belum tersedia', 400);
             }
 
+            if ($variant_id != null){
+                $variant_stock = VariantStock::where([['variant_value_product_id', $variant_id], ['status', 1]])->first();
+
+                if (empty($variant_stock->amount) || (!empty($variant_stock->amount) && $variant_stock->amount <= 0)) {
+                    throw new Exception('Stok variant produk belum tersedia', 400);
+                }
+            }
+
             if ($cart) {
-                $productExists = $cart->cart_detail->where('product_id', $getProductId)
-                    ->first();
+                if ($variant_id != null || 0){
+                    $productExists = $cart->cart_detail->where('product_id', $getProductId)->where('variant_value_product_id', $variant_id)
+                        ->first();
+                }else{
+                    $productExists = $cart->cart_detail->where('product_id', $getProductId)
+                        ->first();
+                }
 
                 if ($productExists) {
                     if ($productExists->quantity + 1 > $product_stock->amount) {
                         throw new Exception("Stok produk habis. {$product_stock->amount} stok yang tersedia sudah kamu masukkan ke keranjangmu.");
                     }
-
-                    $cartDetail = $productExists->update([
-                        'quantity' => $productExists->quantity + 1
-                    ]);
+                    if ($variant_id != null || 0){
+                        $cartDetail = $productExists->update([
+                            'quantity' => $productExists->quantity + 1,
+                            'variant_value_product_id' => $variant_id
+                        ]);
+                    }else{
+                        $cartDetail = $productExists->update([
+                            'quantity' => $productExists->quantity + 1
+                        ]);
+                    }
                 } else {
                     $cartDetail = CartDetail::create([
                         'cart_id' => $cart->id,
                         'product_id' => $getProductId,
                         'quantity' => $minimum_purchase,
-                        'related_merchant_id' => $related_merchant_id
+                        'related_merchant_id' => $related_merchant_id,
+                        'variant_value_product_id' => $variant_id
                     ]);
                 }
             } else {
@@ -72,7 +94,8 @@ class CartCommands extends Service
                     'cart_id' => $cartCreate->id,
                     'product_id' => request('product_id'),
                     'quantity' => $minimum_purchase,
-                    'related_merchant_id' => $related_merchant_id
+                    'related_merchant_id' => $related_merchant_id,
+                    'variant_value_product_id' => $variant_id
                 ]);
             }
 

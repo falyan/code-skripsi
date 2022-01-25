@@ -79,7 +79,7 @@ Deploy Development:
     - docker stack deploy --orchestrator swarm -c docker-development.yml --with-registry-auth pln-marketplace
   environment:
     name: URL Development
-    url: https://api-central.air.id/plnmp-saruman-development/
+    url: https://dev-plnmp.beyondkwh.id/saruman
   only:
     - development
   tags:
@@ -93,7 +93,7 @@ Deploy Staging:
     - docker stack deploy --orchestrator swarm -c docker-staging.yml --with-registry-auth pln-marketplace
   environment:
     name: URL Staging
-    url: https://api-central.air.id/plnmp-saruman-staging/
+    url: https://dev-stroom.air.id/plnmp/saruman-staging
   only:
     - staging
   tags:

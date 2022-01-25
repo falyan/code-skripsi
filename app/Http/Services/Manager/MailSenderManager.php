@@ -175,7 +175,7 @@ class MailSenderManager
             'destination_name' => $merchant->name ?? 'Toko Favorit',
             'order' => $order
         ];
-        
+
         Mail::send('email.confirmFinishOrder', $data, function ($mail) use ($merchant) {
             $mail->to($merchant->email, 'no-reply')
                 ->subject("Pesanan Selesai");
@@ -198,6 +198,7 @@ class MailSenderManager
         $data = [
             'destination_name' => $customer->full_name,
             'reason' => $reason,
+            'order' => $order,
         ];
 
         Mail::send('email.orderRejected', $data, function ($mail) use ($customer) {
@@ -219,7 +220,8 @@ class MailSenderManager
         $order = $transactionQueries->getDetailTransaction($order_id);
         $customer = $order->buyer;
         $data = [
-            'destination_name' => $customer->full_name
+            'destination_name' => $customer->full_name,
+            'order' => $order,
         ];
 
         Mail::send('email.orderCanceled', $data, function ($mail) use ($customer) {
@@ -232,6 +234,26 @@ class MailSenderManager
             Log::error('Gagal mengirim email pesanan dibatalkan untuk email: ' . $customer->email);
         } else {
             Log::info('Berhasil mengirim email pesanan dibatalkan ke email: ' . $customer->email);
+        }
+    }
+
+    public function mailTestDrive($destination_name, $destination_email, $message)
+    {
+        $data = [
+            'destination_name' => $destination_name,
+            'message_body' => $message,
+        ];
+
+        Mail::send('email.testDriveMail', $data, function ($mail) use ($destination_email) {
+            $mail->to($destination_email, 'no-reply')
+                ->subject("Notifikasi Event Test Drive");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        if (Mail::failures()) {
+            Log::error('Gagal mengirim email pesanan dibatalkan untuk email: ' . $destination_email);
+        } else {
+            Log::info('Berhasil mengirim email pesanan dibatalkan ke email: ' . $destination_email);
         }
     }
 }

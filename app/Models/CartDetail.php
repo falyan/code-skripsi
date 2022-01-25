@@ -25,7 +25,8 @@ class CartDetail extends Model
         'cart_id',
         'product_id',
         'quantity',
-        'related_merchant_id'
+        'related_merchant_id',
+        'variant_value_product_id',
     ];
 
     /**
@@ -84,5 +85,10 @@ class CartDetail extends Model
 
     public function product(){
         return $this->belongsTo(Product::class);
+    }
+
+    public function variant_value_product()
+    {
+        return $this->belongsTo(VariantValueProduct::class, 'variant_value_product_id');
     }
 }

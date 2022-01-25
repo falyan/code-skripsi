@@ -3,9 +3,11 @@
 namespace App\Http\Services\Product;
 
 use App\Http\Services\Service;
+use App\Http\Services\Variant\VariantCommands;
 use App\Models\Product;
 use App\Models\ProductPhoto;
 use App\Models\ProductStock;
+use App\Models\VariantStock;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +15,12 @@ use Illuminate\Support\Facades\Validator;
 
 class ProductCommands extends Service
 {
+    protected $variantCommands;
+
+    public function __construct()
+    {
+        $this->variantCommands = new VariantCommands();
+    }
     public function createProduct($data)
     {
         try {
@@ -84,6 +92,27 @@ class ProductCommands extends Service
                 $response['message'] = 'Gagal menambahkan foto produk!';
                 return $response;
             }
+
+            if (!empty($data['variant']) && !empty($data['variant_value_product'])) {
+                $variant_values = $this->variantCommands->createVariantValue($product->id, $data);
+
+                if (!$variant_values['success']) {
+                    $response['success'] = false;
+                    $response['message'] = $variant_values['message'];
+                    DB::rollBack();
+
+                    return $response;
+                }
+
+                $product_data = [$product, $product_stock, $product_photo, $variant_values['data']];
+                $response['success'] = true;
+                $response['message'] = 'Produk berhasil ditambahkan!';
+                $response['data'] = $product_data;
+
+                DB::commit();
+                return $response;
+            }
+
             $product_data = [$product, $product_stock, $product_photo];
             $response['success'] = true;
             $response['message'] = 'Produk berhasil ditambahkan!';
@@ -108,6 +137,13 @@ class ProductCommands extends Service
                 $response['message'] = 'Produk tidak ditemukan!';
                 return $response;
             }
+            if ($data->is_featured_product == true) {
+                $count_featured_product = Product::where('merchant_id', $data->merchant_id)->where('is_featured_product', true)->count();
+                if ($count_featured_product >= 5) {
+                    throw new Exception("Produk Unggulan telah mencapai batas maksimal 5 Produk.", 400);
+                }
+            }
+
             $product->name = ($data->name == null) ? ($product->name) : ($data->name);
             $product->price = ($data->price == null) ? ($product->price) : ($data->price);
             $product->strike_price = ($data->strike_price == null) ? ($product->strike_price) : ($data->strike_price);
@@ -118,12 +154,6 @@ class ProductCommands extends Service
             $product->weight = ($data->weight == null) ? ($product->weight) : ($data->weight);
             $product->description = ($data->description == null) ? ($product->description) : ($data->description);
             $product->is_shipping_insurance = ($data->is_shipping_insurance == null) ? ($product->is_shipping_insurance) : ($data->is_shipping_insurance);
-            if ($data->is_featured_product == true) {
-                $count_featured_product = Product::where('merchant_id', $data->merchant_id)->where('is_featured_product', true)->count();
-                if ($count_featured_product >= 5) {
-                    $data->is_featured_product = false;
-                }
-            }
             $product->is_featured_product = ($data->is_featured_product == null) ? ($product->is_featured_product) : ($data->is_featured_product);
             $product->shipping_service = ($data->shipping_service == null) ? ($product->shipping_service) : ($data->shipping_service);
             $product->updated_by = $data->full_name;
@@ -186,6 +216,18 @@ class ProductCommands extends Service
                 $response['success'] = false;
                 $response['message'] = 'Gagal mengubah foto produk!';
                 return $response;
+            }
+
+            if (!empty($data['variant']) && !empty($data['variant_value_product'])) {
+                $variant_values = $this->variantCommands->updateVariantValue($product->id, $data);
+
+                if (!$variant_values['success']) {
+                    $response['success'] = false;
+                    $response['message'] = $variant_values['message'];
+                    DB::rollBack();
+
+                    return $response;
+                }
             }
 
             $product_data = [$product, $product_stock_new, $product_photo];
@@ -259,6 +301,42 @@ class ProductCommands extends Service
             }
             $response['success'] = true;
             $response['message'] = 'Berhasil mengubah stok produk!';
+            $response['data'] = $stock_new;
+
+            DB::commit();
+            return $response;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage(), $e->getCode());
+        }
+    }
+
+    public function updateStockVariantProduct($variant_value_product_id, $data)
+    {
+        try {
+            DB::beginTransaction();
+            $stock_old = VariantStock::where('variant_value_product_id', $variant_value_product_id)
+                ->where('status', 1)->latest()->first();
+
+            $stock_old->status = 0;
+            $stock_old->save();
+
+            $stock_new = VariantStock::create([
+                'variant_value_product_id' => $variant_value_product_id,
+                'amount' => $data['amount'],
+                'description' => '{"from": "Variant Product", "type": "changing", "title": "Ubah stok variant produk", "amount": "' . $data['amount'] . '"}',
+                'status' => 1,
+                'created_by' => $data['full_name'],
+                'updated_by' => $data['full_name'],
+            ]);
+
+            if (!$stock_new) {
+                $response['success'] = false;
+                $response['message'] = 'Gagal merubah stok variant produk!';
+                return $response;
+            }
+            $response['success'] = true;
+            $response['message'] = 'Berhasil merubah stok variant produk!';
             $response['data'] = $stock_new;
 
             DB::commit();

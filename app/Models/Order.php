@@ -54,4 +54,14 @@ class Order extends Model
     {
         return $this->belongsTo(OrderPayment::class);
     }
+
+    public function review_photo()
+    {
+        return $this->hasMany(ReviewPhoto::class);
+    }
+
+    public function review()
+    {
+        return $this->hasMany(Review::class);
+    }
 }
