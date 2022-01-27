@@ -394,6 +394,58 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function getRecommendProductByCategory($category_key, $filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    {
+        $categories = MasterData::with(['child' => function ($j) {
+            $j->with(['child']);
+        }])->where('type', 'product_category')->where('key', $category_key)->get();
+
+        $cat_child = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    array_push($cat_child, $child->child);
+                }
+            }
+        }
+        $collection_product = [];
+        foreach ($cat_child as $cat) {
+            foreach ($cat as $obj) {
+                $product = new Product();
+                $products = $product->withCount(['order_details' => function ($details) {
+                    $details->whereHas('order', function ($order) {
+                        $order->whereHas('progress_done');
+                    });
+                }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])->where('category_id', $obj->id)->orderBy('order_details_count', 'ASC')->get();
+
+                array_push($collection_product, $products);
+            }
+        }
+        $collection = new Collection($collection_product);
+
+        $filtered_data = $this->filter($collection->collapse(), $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $immutable_data = $sorted_data->map(function ($product) {
+            $product->reviews = null;
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            //            $product->avg_rating =  null;
+            return $product;
+        });
+
+        $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
+
+        //        if ($product->isEmpty()){
+        //            $response['success'] = false;
+        //            $response['message'] = 'Gagal mendapatkan data produk!';
+        //            return $response;
+        //        }
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
     public function filter($model, $filter = [])
     {
         if (count($filter) > 0) {
