@@ -143,7 +143,7 @@ class TestDriveQueries extends Service
             $status = $filter['status'] ?? null;
             $date = $filter['date'] ?? null;
             $data = $model->when(!empty($keyword), function ($query) use ($keyword) {
-                $query->where('title', 'ILIKE', "%{$keyword}%");
+                $query->where('title', 'ILIKE', "%{$keyword}%")->orWhere('area_name', 'ILIKE', "%{$keyword}%");
             })->when(!empty($city), function ($query) use ($city) {
                 if (strpos($city, ',')) {
                     $query->whereIn('city_id', explode(',', $city));
@@ -155,7 +155,7 @@ class TestDriveQueries extends Service
                 if ($status == 1) {
                     $query->where('end_date', '>=', $now)->where('status',1);
                 } else {
-                    $query->whereIn('status', [2,9])->orWhere('end_date', '>', $now);
+                    $query->whereIn('status', [2,9])->orWhere('end_date', '<', $now);
                 }
             })->when(!empty($date), function ($query) use ($date) {
                 $query->where('start_date', '<=', $date)->where('end_date', '>=', $date);
