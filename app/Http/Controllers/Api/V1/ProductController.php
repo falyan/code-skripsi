@@ -319,4 +319,17 @@ class ProductController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function getRecommendProductByCategory($category_key, Request $request)
+    {
+        try {
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? null;
+            $page = $request->page ?? 1;
+            return $this->productQueries->getRecommendProductByCategory($category_key, $filter, $sorting, $limit, $page);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
 }
