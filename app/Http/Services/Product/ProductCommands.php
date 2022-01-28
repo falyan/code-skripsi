@@ -137,6 +137,13 @@ class ProductCommands extends Service
                 $response['message'] = 'Produk tidak ditemukan!';
                 return $response;
             }
+            if ($data->is_featured_product == true) {
+                $count_featured_product = Product::where('merchant_id', $data->merchant_id)->where('is_featured_product', true)->count();
+                if ($count_featured_product >= 5) {
+                    throw new Exception("Produk Unggulan telah mencapai batas maksimal 5 Produk.", 400);
+                }
+            }
+
             $product->name = ($data->name == null) ? ($product->name) : ($data->name);
             $product->price = ($data->price == null) ? ($product->price) : ($data->price);
             $product->strike_price = ($data->strike_price == null) ? ($product->strike_price) : ($data->strike_price);
@@ -147,12 +154,6 @@ class ProductCommands extends Service
             $product->weight = ($data->weight == null) ? ($product->weight) : ($data->weight);
             $product->description = ($data->description == null) ? ($product->description) : ($data->description);
             $product->is_shipping_insurance = ($data->is_shipping_insurance == null) ? ($product->is_shipping_insurance) : ($data->is_shipping_insurance);
-            if ($data->is_featured_product == true) {
-                $count_featured_product = Product::where('merchant_id', $data->merchant_id)->where('is_featured_product', true)->count();
-                if ($count_featured_product >= 5) {
-                    $data->is_featured_product = false;
-                }
-            }
             $product->is_featured_product = ($data->is_featured_product == null) ? ($product->is_featured_product) : ($data->is_featured_product);
             $product->shipping_service = ($data->shipping_service == null) ? ($product->shipping_service) : ($data->shipping_service);
             $product->updated_by = $data->full_name;
