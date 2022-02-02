@@ -8,6 +8,8 @@ use App\Models\MasterVariant;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\Variant;
+use App\Models\VariantValue;
+use App\Models\VariantValueProduct;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
@@ -255,15 +257,23 @@ class ProductQueries extends Service
             $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo']);
         }])->where('id', $id)->first();
 
-        $variant = MasterVariant::whereHas('variants', function ($variant) use ($id) {
-            $variant->whereHas('variant_values', function ($variant_value) use ($id) {
-                $variant_value->where('product_id', $id);
-            });
-        })->with(['variants' => function ($variant) use ($id) {
-            $variant->whereHas('variant_values', function ($variant_value) use ($id) {
-                $variant_value->where('product_id', $id);
-            })->with(['variant_values']);
+        $master_variants = MasterVariant::whereHas('variants', function ($v) use ($id) {
+            $v->whereHas('variant_values', function ($vv) use ($id) {
+                $vv->where('product_id', $id);
+            })->with(['variant_values' => function ($vv) use ($id) {
+                $vv->where('product_id', $id);
+            }]);
+        })->with(['variants' => function ($v) use ($id) {
+            $v->whereHas('variant_values', function ($vv) use ($id) {
+                $vv->where('product_id', $id);
+            })->with(['variant_values' => function ($vv) use ($id) {
+                $vv->where('product_id', $id);
+            }]);
         }])->get();
+
+        if (!$master_variants->isEmpty()) {
+            $data['variants'] = $master_variants;
+        }
 
         if (!$data) {
             $response['success'] = false;
@@ -278,7 +288,7 @@ class ProductQueries extends Service
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $variant->isEmpty() ? $data : array_merge($data->toArray(), ['variants' => collect([$variant])->flatten()]);
+        $response['data'] = $data;
         return $response;
     }
 
