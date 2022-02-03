@@ -289,6 +289,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'testdrive', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('booking/{id}', 'TestDriveController@booking');
+                $router->post('booking/{id}/cancel', 'TestDriveController@cancelBooking');
             });
         });
     });
