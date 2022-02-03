@@ -39,7 +39,7 @@ services:
         #- "traefik.http.routers.public-pln-marketplace-saruman-development-web.middlewares=redirectscheme-pln-marketplace-saruman-development"
         - "traefik.http.routers.public-pln-marketplace-saruman-development-web.middlewares=stripprefix-public-pln-marketplace-saruman-development,compress-pln-marketplace-saruman-development"
         - "traefik.http.routers.public-pln-marketplace-saruman-development-web.entrypoints=web"
-        #- "traefik.http.routers.public-pln-marketplace-saruman-development-websecure.rule=Host(`dev-stroom.air.id`) && PathPrefix(`/plnmp/saruman-development`)"
+        #- "traefik.http.routers.public-pln-marketplace-saruman-development-websecure.rule=Host(`dev-plnmp.beyondkwh.id`) && PathPrefix(`/plnmp/saruman-development`)"
         #- "traefik.http.routers.public-pln-marketplace-saruman-development-websecure.middlewares=stripprefix-public-pln-marketplace-saruman-development,compress-pln-marketplace-saruman-development,ratelimit-pln-marketplace-saruman-development"
         #- "traefik.http.routers.public-pln-marketplace-saruman-development-websecure.tls=true"
         #- "traefik.http.routers.public-pln-marketplace-saruman-development-websecure.entrypoints=websecure"
