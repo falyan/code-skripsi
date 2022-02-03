@@ -93,7 +93,7 @@ Deploy Staging:
     - docker stack deploy --orchestrator swarm -c docker-staging.yml --with-registry-auth pln-marketplace
   environment:
     name: URL Staging
-    url: https://dev-stroom.air.id/plnmp/saruman-staging
+    url: http://sta-plnmp.beyondkwh.id/saruman
   only:
     - staging
   tags:
