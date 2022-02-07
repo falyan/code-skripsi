@@ -115,8 +115,8 @@ class TestDriveCommands extends Service
     public function updateStatusBooking($booking_id, $status)
     {
         $data = TestDriveBooking::find($booking_id);
-        if ($data->status != 0) {
-            return true;
+        if ($data->status == 3 || $data->status == 9) {
+            return false;
         }
         
         $data->status = $status;
