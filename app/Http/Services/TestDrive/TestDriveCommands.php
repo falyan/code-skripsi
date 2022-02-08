@@ -118,9 +118,13 @@ class TestDriveCommands extends Service
         if ($data->status == 3 || $data->status == 9) {
             return false;
         }
+
+        if ($data->status == 1 && $status == 3) {
+            return false;
+        }
         
         $data->status = $status;
-        if ($data->save()) return true;
+        if ($data->save()) return $data;
         else return false;
     }
 }
