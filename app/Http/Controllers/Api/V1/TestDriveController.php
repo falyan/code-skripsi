@@ -232,11 +232,12 @@ class TestDriveController extends Controller
 
             DB::beginTransaction();
             for ($i = 0; $i < $total_id; $i++) {
-                if ($this->testDriveCommands->updateStatusBooking($booking_id[$i], 1) == false) {
+                if (!$data = $this->testDriveCommands->updateStatusBooking($booking_id[$i], 1)) {
                     DB::rollBack();
                     return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.', 400);
                 }
-                $this->notificationCommand->create('customer_id', $booking_id[$i], 4, 'Notifikasi Event Test Drive.', 'Permintaan booking EV Test Drive anda telah Disetujui. Klik untuk membuka halaman History Booking', '/v1/buyer/query/testdrive/history?status=1&page=1', null, Auth::user()->full_name);
+                $this->notificationCommand->create('customer_id', $data->customer_id, 4, 'Notifikasi Event Test Drive.', 'Permintaan booking EV Test Drive anda telah Disetujui. Klik untuk membuka halaman History Booking', '/v1/buyer/query/testdrive/history?status=1&page=1', null, Auth::user()->full_name);
+                $this->notificationCommand->sendPushNotification($data->customer_id, 'Notifikasi Event Test Drive.', 'Permintaan booking EV Test Drive anda telah Disetujui. Klik untuk membuka halaman History Booking', 'active');
             }
             DB::commit();
             return $this->respondWithResult(true, 'Berhasil Approve calon pengunjung');
@@ -272,11 +273,12 @@ class TestDriveController extends Controller
 
             DB::beginTransaction();
             for ($i = 0; $i < $total_id; $i++) {
-                if ($this->testDriveCommands->updateStatusBooking($booking_id[$i], 3) == false) {
+                if (!$data = $this->testDriveCommands->updateStatusBooking($booking_id[$i], 3)) {
                     DB::rollBack();
                     return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.', 400);
                 }
-                $this->notificationCommand->create('customer_id', $booking_id[$i], 4, 'Notifikasi Event Test Drive.', 'Permintaan booking EV Test Drive anda Dotolak. Klik untuk membuka halaman History Booking', '/v1/buyer/query/testdrive/history?status=9&page=1', null, Auth::user()->full_name);
+                $this->notificationCommand->create('customer_id', $data->customer_id, 4, 'Notifikasi Event Test Drive.', 'Permintaan booking EV Test Drive anda Dotolak. Klik untuk membuka halaman History Booking', '/v1/buyer/query/testdrive/history?status=9&page=1', null, Auth::user()->full_name);
+                $this->notificationCommand->sendPushNotification($data->customer_id, 'Notifikasi Event Test Drive.', 'Permintaan booking EV Test Drive anda Dotolak. Klik untuk membuka halaman History Booking', 'active');
             }
             DB::commit();
             return $this->respondWithResult(true, 'Berhasil Reject calon pengunjung');
