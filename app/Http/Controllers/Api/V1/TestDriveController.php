@@ -417,7 +417,7 @@ class TestDriveController extends Controller
             }
 
             DB::beginTransaction();
-            if ($this->testDriveCommands->updateStatusBooking($validate['booking_id'], 2) == false) {
+            if (!$data = $this->testDriveCommands->updateStatusBooking($validate['booking_id'], 2)) {
                 DB::rollback();
                 return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.');
             }
@@ -458,13 +458,13 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Event Test Drive sudah tidak tersedia.');    
             }
             DB::beginTransaction();
-            if ($this->testDriveCommands->updateStatusBooking($request->booking_id, 2) == false) {
+            if (!$data = $this->testDriveCommands->updateStatusBooking($request->booking_id, 2)) {
                 DB::rollback();
                 return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.');
             }
 
             DB::commit();
-            return $this->respondWithResult(true, 'Selamat datang');
+            return $this->respondWithResult(true, 'Pembatalan berhasil');
         } catch (Exception $e) {
             return $this->respondWithData($e, 'Error', 400);
         }
