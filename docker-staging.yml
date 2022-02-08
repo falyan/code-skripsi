@@ -16,7 +16,8 @@ services:
     #     mode: host
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /mnt/nfs-development/pln-marketplace-saruman-staging/logs:/var/www/html/storage/logs
+      - /mnt/nfs-logs/pln-marketplace-saruman-staging:/var/www/html/storage/logs
+      #- /mnt/nfs-development/pln-marketplace-saruman-staging/logs:/var/www/html/storage/logs
     logging:
       driver: loki
       options:
