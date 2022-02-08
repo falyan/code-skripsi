@@ -264,6 +264,36 @@ class ProductController extends Controller
         }
     }
 
+    public function getBestSellingProductByMerchant(Request $request)
+    {
+        try {
+            $merchant_id = Auth::user()->merchant_id;
+            $filter = $request->filter ?? [];
+            $sortby = $request->sortby ?? null;
+            $limit = $request->limit ?? 3;
+            $page = $request->page ?? 1;
+
+            return $this->productQueries->getBestSellingProductByMerchantId($merchant_id, $filter, $sortby, $limit, $page);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getProductAlmostRunningOut(Request $request)
+    {
+        try {
+            $merchant_id = Auth::user()->merchant_id;
+            $filter = $request->filter ?? [];
+            $sortby = $request->sortby ?? null;
+            $limit = $request->limit ?? 3;
+            $page = $request->page ?? 1;
+
+            return $this->productQueries->getProductAlmostRunningOutByMerchantId($merchant_id, $filter, $sortby, $page, $limit);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function getSpecialProduct(Request $request)
     {
         try {
