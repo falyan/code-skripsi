@@ -9,6 +9,7 @@ use App\Models\Customer;
 // use App\Models\Customer;
 use App\Models\Merchant;
 use App\Models\User;
+use Carbon\Carbon;
 use Exception, Input;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -45,8 +46,54 @@ class MerchantController extends Controller
 
     public function homepageProfile()
     {
+        $request = request()->all();
+
         try {
-            return MerchantQueries::homepageProfile(Auth::user()->merchant_id);
+            $daterange = [];
+
+            // $filter_days = [
+            //     '1' => [Carbon::now()->toDateString() . ' 00:00:00', Carbon::now()->toDateString() . ' 23:59:59'], // Today
+            //     '7' => [Carbon::now()->subDays(7)->toDateString() . ' 00:00:00', Carbon::now()->toDateString() . ' 23:59:59'], // Last 7 days
+            //     '30' => [Carbon::now()->subDays(30)->toDateString() . ' 00:00:00', Carbon::now()->toDateString() . ' 23:59:59'], // Last 30 days
+            // ];
+
+            // if (isset($request['filter_day'])) {
+            //     $filter = $request['filter_day'];
+            //     if (isset($filter_days[$filter])) {
+            //         $daterange = $filter_days[$filter];
+            //     } elseif (isset($request['from']) && isset($request['to'])) {
+            //         $daterange = [$request['from'] . ' 00:00:00', $request['to'] . ' 23:59:59'];
+            //     }
+            // } elseif (isset($request['from']) && isset($request['to'])) {
+            //     $daterange = [$request['from'] . ' 00:00:00', $request['to'] . ' 23:59:59'];
+            // }
+
+            if (isset($request['from']) && isset($request['to'])) {
+                $from = Carbon::parse($request['from'] . ' 00:00:00');
+                $to = Carbon::parse($request['to'] . ' 23:59:59');
+                $difference = ceil((strtotime($request['to'] . ' 23:59:59') - strtotime($request['from'] . ' 00:00:00')) / 60 / 60 / 24);
+
+                $before_from = Carbon::parse($from)->subDays($difference)->toDateTimeString();
+                $before_to = Carbon::parse($request['from'] . ' 23:59:59')->subDays(1)->toDateTimeString();
+                $daterange = [
+                    'daterange' => [$from->toDateTimeString(), $to->toDateTimeString()],
+                    'before' => [$before_from, $before_to],
+                ];
+            } else {
+                $from = Carbon::now()->timezone('Asia/Jakarta')->subWeek();
+                $to = Carbon::now()->timezone('Asia/Jakarta');
+                $difference = ceil((strtotime($to) - strtotime($from)) / 60 / 60 / 24);
+
+                $before_from = Carbon::parse($from)->subDays($difference)->format('Y-m-d 00:00:00');
+                $before_to = Carbon::parse($from->format('Y-m-d') . ' 23:59:59')->subDays(1)->toDateTimeString();
+
+                $daterange = [
+                    'daterange' => [$from->format('Y-m-d 00:00:00'), $to->toDateTimeString()],
+                    'before' => [$before_from, $before_to],
+                ];
+            }
+
+            return MerchantQueries::homepageProfile(Auth::user()->merchant_id, $daterange);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
