@@ -16,22 +16,76 @@ class MerchantQueries extends Service
 {
     static $value;
 
-    public static function homepageProfile($merchant_id)
+    public static function homepageProfile($merchant_id, $date = [])
     {
         try {
             $merchant = Merchant::with(['operationals', 'district', 'city', 'province', 'expedition'])->find($merchant_id);
             $orders = [];
+            $order_before = [];
 
-            $orders['success'] = static::getTotalTrx($merchant_id, '88');
-            $orders['canceled'] = static::getTotalTrx($merchant_id, '09');
+            $orders['success'] = static::getTotalTrx($merchant_id, '88', $date['daterange']);
+            $orders['canceled'] = static::getTotalTrx($merchant_id, '09', $date['daterange']);
+            $orders['total'] = array_merge($orders['success'], $orders['canceled']);
+
+            $order_before['success'] = static::getTotalTrx($merchant_id, '88', $date['before']);
+            $order_before['canceled'] = static::getTotalTrx($merchant_id, '09', $date['before']);
+            $order_before['total'] = array_merge($order_before['success'], $order_before['canceled']);
+
+            if (count($orders['success']) == 0) {
+                $percentage_success = ['percent' => 0 . "%", 'status' => ''];
+            } elseif (count($orders['success']) > count($order_before['success']) || count($order_before['success']) == 0) {
+                $percentage_success = [
+                    'percent' => round(((count($orders['success']) - count($order_before['success'])) / count($orders['success'])) * 100) . "%",
+                    'status' => 'up'
+                ];
+            } else {
+                $percentage_success = [
+                    'percent' => round(((count($order_before['success']) - count($orders['success'])) / count($order_before['success'])) * 100) . "%",
+                    'status' => 'down'
+                ];
+            }
+
+            if (count($orders['canceled']) == 0) {
+                $percentage_canceled = ['percent' => 0 . "%", 'status' => ''];
+            } elseif (count($orders['canceled']) > count($order_before['canceled']) || count($order_before['canceled']) == 0) {
+                $percentage_canceled = [
+                    'percent' => round(((count($orders['canceled']) - count($order_before['canceled'])) / count($orders['canceled'])) * 100) . "%",
+                    'status' => "up"
+                ];
+            } else {
+                $percentage_canceled = [
+                    'percent' => round(((count($order_before['canceled']) - count($orders['canceled'])) / count($order_before['canceled'])) * 100) . "%",
+                    'status' => "down"
+                ];
+            }
+
+            if (count($orders['total']) == 0) {
+                $percentage_total = ['percent' => 0 . "%", 'status' => ''];
+            } elseif (count($orders['total']) > count($order_before['total']) || count($order_before['total']) == 0) {
+                $percentage_total = [
+                    'percent' => round(((count($orders['total']) - count($order_before['total'])) / count($orders['total'])) * 100) . "%",
+                    'status' => "up"
+                ];
+            } else {
+                $percentage_total = [
+                    'percent' => round(((count($order_before['total']) - count($orders['total'])) / count($order_before['total'])) * 100) . "%",
+                    'status' => "down"
+                ];
+            }
 
             return [
                 'data' => [
                     'merchant' => $merchant,
                     'transactions' => [
-                        'total_transaction' => count(array_merge($orders['success'], $orders['canceled'])),
+                        'total_transaction' => count($orders['total']),
                         'total_success' => count($orders['success']),
-                        'total_canceled' => count($orders['canceled'])
+                        'total_canceled' => count($orders['canceled']),
+                        // 'total_transaction_before' => count($order_before['total']),
+                        // 'total_success_before' => count($order_before['success']),
+                        // 'total_canceled_before' => count($order_before['canceled']),
+                        'percentage_transaction' => $percentage_total,
+                        'percentage_success' => $percentage_success,
+                        'percentage_canceled' => $percentage_canceled,
                     ]
                 ]
             ];
@@ -55,7 +109,7 @@ class MerchantQueries extends Service
             $total_product = $merchant->products()->count();
 
             $total_trx = count(static::getTotalTrx($merchant_id, 88));
-            
+
             return [
                 'merchant' => $merged_data,
                 'meta_data' => [
@@ -80,15 +134,19 @@ class MerchantQueries extends Service
         return $array;
     }
 
-    public static function getTotalTrx($merchant_id, $status_code)
+    public static function getTotalTrx($merchant_id, $status_code, $daterange = [])
     {
         $data = Order::withCount(['progress' => function ($progress) use ($status_code){
             $progress->where('status', 1)->where('status_code', $status_code);
-        }])->where('merchant_id', $merchant_id)->get();
+        }])->where('merchant_id', $merchant_id);
 
-        $data = $data->toArray();
+        if (count($daterange) == 2) {
+            $data = $data->whereBetween('created_at', $daterange);
+        }
+
+        $data = $data->get()->toArray();
         return array_filter($data, function ($order){
-           return $order['progress_count'] != 0;
+            return $order['progress_count'] != 0;
         });
     }
 
