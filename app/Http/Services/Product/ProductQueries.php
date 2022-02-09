@@ -374,7 +374,11 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist'])->orderBy('order_details_count', 'DESC');
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }]);
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -384,6 +388,12 @@ class ProductQueries extends Service
             $product->reviews = null;
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
             // $product->avg_rating =  null;
+
+            $product->sold = 0;
+            foreach ($product->order_details as $order_detail) {
+                $product->sold += $order_detail->quantity;
+            }
+
             $product->variants = MasterVariant::whereHas('variants', function ($v) use ($id) {
                 $v->whereHas('variant_values', function ($vv) use ($id) {
                     $vv->where('product_id', $id);
@@ -400,6 +410,7 @@ class ProductQueries extends Service
 
             return $product;
         });
+        $immutable_data = collect($immutable_data)->sortBy('sold', SORT_REGULAR, true);
 
         $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
         $data = array_merge(['merchant' => $merchant], $data);
