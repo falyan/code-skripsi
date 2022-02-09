@@ -108,6 +108,24 @@ class MerchantController extends Controller
         }
     }
 
+    public function activity()
+    {
+        $request = request()->all();
+
+        try {
+            $daterange = [];
+            if (isset($request['from']) && isset($request['to'])) {
+                $from = Carbon::parse($request['from'] . ' 00:00:00');
+                $to = Carbon::parse($request['to'] . ' 23:59:59');
+                $daterange = [$from->toDateTimeString(), $to->toDateTimeString()];
+            }
+
+            return MerchantQueries::getActivity(Auth::user()->merchant_id, $daterange);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function setExpedition()
     {
         $validator = Validator::make(request()->all(), [
