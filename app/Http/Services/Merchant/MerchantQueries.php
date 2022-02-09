@@ -4,6 +4,7 @@ namespace App\Http\Services\Merchant;
 
 use App\Http\Resources\Etalase\EtalaseCollection;
 use App\Http\Resources\Etalase\EtalaseResource;
+use App\Http\Services\Review\ReviewQueries;
 use App\Http\Services\Service;
 use App\Models\Etalase;
 use App\Models\Merchant;
@@ -126,6 +127,32 @@ class MerchantQueries extends Service
         }
     }
 
+    public static function getActivity($merchant_id, $daterange = [])
+    {
+        try {
+            $merchant = Merchant::with(['city'])->find($merchant_id);
+            $reviewQueries = new ReviewQueries();
+            $data = [];
+
+            $data['new_order'] = count(static::getTotalTrx($merchant_id, '01', $daterange));
+            $data['ready_to_deliver'] = count(static::getTotalTrx($merchant_id, '02', $daterange));
+            $data['complained_order'] = count($reviewQueries->getListReviewDoneByRate('merchant_id', $merchant_id, 2, '<=', $daterange)['data']);
+            $data['new_review'] = count($reviewQueries->getListReviewDoneByRate('merchant_id', $merchant_id, null, null, $daterange)['data']);
+
+            return [
+                'data' => [
+                    'merchant' => $merchant,
+                    'transactions' => $data
+                ]
+            ];
+        } catch (Exception $th) {
+            if (in_array($th->getCode(), self::$error_codes)) {
+                throw new Exception($th->getMessage(), $th->getCode());
+            }
+            throw new Exception($th->getMessage(), 500);
+        }
+    }
+
     public static function unsetValue(array $array, $value, $strict = TRUE)
     {
         if (($key = array_search($value, $array, $strict)) !== FALSE) {
@@ -149,6 +176,21 @@ class MerchantQueries extends Service
             return $order['progress_count'] != 0;
         });
     }
+
+    // public function getTotalReview($merchant_id, $rate)
+    // {
+    //     $order = Order::with([
+    //         'detail' => function ($product) {
+    //             $product->with(['product' => function ($j) {
+    //                 $j->with(['product_photo']);
+    //             }]);
+    //         }, 'progress_active', 'merchant', 'delivery', 'buyer'
+    //     ])->where([
+    //         [$column_name, $related_id],
+    //     ])->whereHas('progress_active', function ($j) {
+    //         $j->whereIn('status_code', [88]);
+    //     })->whereHas('review')->orderBy('created_at', 'desc')->get();
+    // }
 
     static function format_number($number)
     {
