@@ -10,6 +10,8 @@ use App\Models\Etalase;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\OrderProgress;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Exception;
 use stdClass;
 
@@ -27,6 +29,25 @@ class MerchantQueries extends Service
             $orders['success'] = static::getTotalTrx($merchant_id, '88', $date['daterange']);
             $orders['canceled'] = static::getTotalTrx($merchant_id, '09', $date['daterange']);
             $orders['total'] = array_merge($orders['success'], $orders['canceled']);
+            $orders['charts'] = [];
+
+            $date_from_daterange = array_map(function ($d) {
+                return Carbon::parse($d)->toDateString();
+            }, CarbonPeriod::createFromArray($date['daterange'])->toArray());
+
+            foreach ($date_from_daterange as $d) {
+                $total_trx = 0;
+                foreach ($orders['success'] as $order) {
+                    $order_date = Carbon::parse($order['order_date'])->toDateString();
+                    if ($d == $order_date) {
+                        $total_trx += 1;
+                    }
+                }
+                $orders['charts'][] = [
+                    'date' => $d,
+                    'total_trx' => $total_trx
+                ];
+            }
 
             $order_before['success'] = static::getTotalTrx($merchant_id, '88', $date['before']);
             $order_before['canceled'] = static::getTotalTrx($merchant_id, '09', $date['before']);
@@ -87,7 +108,8 @@ class MerchantQueries extends Service
                         'percentage_transaction' => $percentage_total,
                         'percentage_success' => $percentage_success,
                         'percentage_canceled' => $percentage_canceled,
-                    ]
+                        'charts' => $orders['charts'],
+                    ],
                 ]
             ];
         } catch (Exception $th) {
