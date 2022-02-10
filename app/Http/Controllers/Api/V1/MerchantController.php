@@ -80,7 +80,7 @@ class MerchantController extends Controller
                     'before' => [$before_from, $before_to],
                 ];
             } else {
-                $from = Carbon::now()->timezone('Asia/Jakarta')->subWeek();
+                $from = Carbon::now()->timezone('Asia/Jakarta')->subWeek()->addDay();
                 $to = Carbon::now()->timezone('Asia/Jakarta');
                 $difference = ceil((strtotime($to) - strtotime($from)) / 60 / 60 / 24);
 
