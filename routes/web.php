@@ -85,6 +85,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'query'], static function () use ($router) {
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {
                     $router->get('profile-toko', 'MerchantController@homepageProfile');
+                    $router->get('activity', 'MerchantController@activity');
                 });
 
                 $router->group(['prefix' => 'etalase'], static function () use ($router) {
@@ -94,6 +95,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
                 $router->group(['prefix' => 'product'], static function () use ($router) {
                     $router->get('merchant', 'ProductController@getProductByMerchantSeller');
+                    $router->get('best-selling', 'ProductController@getBestSellingProductByMerchant');
+                    $router->get('almost-running-out', 'ProductController@getProductAlmostRunningOut');
                     $router->get('detail/{id}', 'ProductController@getProductById');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
                     $router->get('search', 'ProductController@searchProductSeller');
