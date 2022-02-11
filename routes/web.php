@@ -248,6 +248,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('list', 'TestDriveController@getAllActiveEvent');
                 $router->get('detail/{id}', 'TestDriveController@getDetail');
                 $router->get('history', 'TestDriveController@getHistoryByCustomer');
+                $router->get('history/detail/{id}', 'TestDriveController@getDetailBooking');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {

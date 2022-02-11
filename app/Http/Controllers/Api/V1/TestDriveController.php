@@ -387,6 +387,21 @@ class TestDriveController extends Controller
         }
     }
 
+    public function getDetailBooking($id)
+    {
+        try {
+            $data = $this->testDriveQueries->getDetailBooking($id);
+
+            if ($data) {
+                return $this->respondWithData($data, 'Berhasil mendapatkan detail History Booking');
+            } else {
+                return $this->respondWithResult(false, 'Terjadi kesalahan saat memuat data', 400);;
+            }
+        } catch (Exception $e) {
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
+
     public function attendance(Request $request)
     {
         try {
