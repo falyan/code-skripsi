@@ -124,7 +124,7 @@ class TestDriveCommands extends Service
             return false;
         }
         
-        // $data->status = $status;
+        $data->status = $status;
         if ($data->save()) return $data;
         else return false;
     }
