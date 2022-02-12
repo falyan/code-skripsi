@@ -23,11 +23,19 @@ class TestDriveQueries extends Service
             })
             ->when(!empty($merchant_id), function ($query) use ($merchant_id) {
                 $query->where('merchant_id', $merchant_id);
-            })->select(['id', 'merchant_id', 'title', 'area_name', 'address', 'city_id', 'latitude', 'longitude', 'start_date', 'end_date', 'start_time', 'end_time', 'status']);
+            })->select(['id', 'merchant_id', 'title', 'area_name', 'address', 'city_id', 'latitude', 'longitude', 'map_link', 'start_date', 'end_date', 'start_time', 'end_time', 'status']);
 
         $filtered_data = $this->filter($raw_data, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
         $data = static::paginate(($sorted_data->get())->toArray(), 10, $current_page);
+
+        return $data;
+    }
+
+    public function getListActiveEventSeller($merchant_id)
+    {
+        $now = Carbon::now()->timezone('Asia/Jakarta')->format('Y-m-d');
+        $data = TestDrive::where('end_date', '>=', $now)->where('status', 1)->where('merchant_id', $merchant_id)->select(['id', 'title'])->get();
 
         return $data;
     }
@@ -53,10 +61,11 @@ class TestDriveQueries extends Service
             $product->with(['product_photo:id,product_id,url'])->select(['product.id', 'product.merchant_id', 'product.name']);
         }])->find($id);
 
+
         return $data;
     }
 
-    public function getVisitorBookingDate($test_drive_id, $visit_date = null)
+    public function getVisitorBookingDate($test_drive_id, $visit_date = null, $booking_id = null)
     {
         $data = DB::table('test_drive_booking')
             ->select('visit_date', DB::raw('count(id) as total_visitor'))
@@ -105,12 +114,21 @@ class TestDriveQueries extends Service
     public function getHistoryBooking($customer_id, $status = 0, $current_page = 1)
     {
         $data = TestDriveBooking::with(['test_drive' => function ($test_drive) {
-            $test_drive->with(['merchant:id,name,photo_url'])->select(['id', 'merchant_id', 'title', 'area_name']);
+            $test_drive->with(['merchant:id,name,photo_url', 'city:id,name'])->select(['id', 'merchant_id', 'title', 'area_name', 'address', 'city_id', 'map_link']);
         }])->where('customer_id', $customer_id)
             ->where('status', $status)
             ->get(['id', 'test_drive_id', 'visit_date', 'status']);
 
         $data = static::paginate(($data)->toArray(), 10, $current_page);
+
+        return $data;
+    }
+
+    public function getDetailBooking($booking_id)
+    {
+        $data = TestDriveBooking::with(['test_drive' => function ($test_drive) {
+            $test_drive->with(['merchant:id,name,photo_url', 'city:id,name'])->select(['id', 'merchant_id', 'title', 'area_name', 'address', 'latitude', 'longitude', 'map_link', 'city_id', 'start_date', 'end_date', 'start_time', 'end_time']);
+        }])->find($booking_id);
 
         return $data;
     }

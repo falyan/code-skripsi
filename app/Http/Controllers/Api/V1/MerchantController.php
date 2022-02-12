@@ -80,7 +80,7 @@ class MerchantController extends Controller
                     'before' => [$before_from, $before_to],
                 ];
             } else {
-                $from = Carbon::now()->timezone('Asia/Jakarta')->subWeek();
+                $from = Carbon::now()->timezone('Asia/Jakarta')->subWeek()->addDay();
                 $to = Carbon::now()->timezone('Asia/Jakarta');
                 $difference = ceil((strtotime($to) - strtotime($from)) / 60 / 60 / 24);
 
@@ -103,6 +103,24 @@ class MerchantController extends Controller
     {
         try {
             return $this->respondWithData(MerchantQueries::publicProfile($merchant_id), 'Berhasil mendapatkan data toko');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function activity()
+    {
+        $request = request()->all();
+
+        try {
+            $daterange = [];
+            if (isset($request['from']) && isset($request['to'])) {
+                $from = Carbon::parse($request['from'] . ' 00:00:00');
+                $to = Carbon::parse($request['to'] . ' 23:59:59');
+                $daterange = [$from->toDateTimeString(), $to->toDateTimeString()];
+            }
+
+            return MerchantQueries::getActivity(Auth::user()->merchant_id, $daterange);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
