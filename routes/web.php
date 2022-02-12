@@ -145,6 +145,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('detail/{id}', 'TestDriveController@getDetail');
                     $router->get('list-booking/{id}', 'TestDriveController@getBookingList');
                     $router->get('history', 'TestDriveController@getHistoryBySeller');
+                    $router->get('list-active', 'TestDriveController@getListActiveEventBySeller');
                 });
             });
         });

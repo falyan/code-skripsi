@@ -141,6 +141,20 @@ class TestDriveController extends Controller
         }
     }
 
+    public function getListActiveEventBySeller(Request $request)
+    {
+        try {
+            $data = $this->testDriveQueries->getListActiveEventSeller(Auth::user()->merchant_id);
+            if ($data) {
+                return $this->respondWithData($data, 'Berhasil mendapatkan data Event Test Drive');
+            } else {
+                return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function cancel(Request $request, $id)
     {
         try {
