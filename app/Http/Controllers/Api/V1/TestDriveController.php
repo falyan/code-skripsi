@@ -114,7 +114,7 @@ class TestDriveController extends Controller
             if ($event) {
                 $data['detail'] = $event;
                 $data['visitor_booking_date'] = $visitor_booking_date;
-                return $this->respondWithData($datas, 'Berhasil mendapatkan detail event');
+                return $this->respondWithData($data, 'Berhasil mendapatkan detail event');
             } else {
                 return $this->respondWithResult(false, 'Terjadi kesalahan saat memuat data', 400);;
             }
