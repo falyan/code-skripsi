@@ -32,6 +32,14 @@ class TestDriveQueries extends Service
         return $data;
     }
 
+    public function getListActiveEventSeller($merchant_id)
+    {
+        $now = Carbon::now()->timezone('Asia/Jakarta')->format('Y-m-d');
+        $data = TestDrive::where('end_date', '>=', $now)->where('status', 1)->where('merchant_id', $merchant_id)->select(['id', 'title'])->get();
+
+        return $data;
+    }
+
     public function getEVProducts($current_page = 1)
     {
         $data = Product::with(['product_photo'])->whereHas('category', function ($category) {
