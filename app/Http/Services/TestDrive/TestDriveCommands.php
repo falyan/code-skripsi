@@ -42,9 +42,10 @@ class TestDriveCommands extends Service
         $new_event->title = $data->title;
         $new_event->area_name = $data->area_name;
         $new_event->address = $data->address;
+        $new_event->map_link = $data->map_link;
         $new_event->city_id = $data->city_id;
-        $new_event->latitude = $data->latitude;
-        $new_event->longitude = $data->longitude;
+        $new_event->latitude = $data->latitude ?? '';
+        $new_event->longitude = $data->longitude ?? '';
         $new_event->start_date = $data->start_date;
         $new_event->end_date = $data->end_date;
         $new_event->start_time = $data->start_time;
