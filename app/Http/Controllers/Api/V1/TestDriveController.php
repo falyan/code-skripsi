@@ -43,7 +43,7 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Data EV Produk belum tersedia', 400);
             }
         } catch (Exception $e) {
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -54,9 +54,8 @@ class TestDriveController extends Controller
                 'title' => 'required|min:3',
                 'area_name' => 'required|min:3',
                 'address' => 'required|min:5',
+                'map_link' => 'sometimes',
                 'city_id' => 'required|exists:city,id',
-                'latitude' => 'required',
-                'longitude' => 'required',
                 'start_date' => 'required',
                 'end_date' => 'required',
                 'start_time' => 'required',
@@ -103,7 +102,7 @@ class TestDriveController extends Controller
             return $this->respondWithResult(true, 'Event Test Drive baru berhasil dibuat');
         } catch (Exception $e) {
             DB::rollBack();
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -120,7 +119,7 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Terjadi kesalahan saat memuat data', 400);;
             }
         } catch (Exception $e) {
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -138,7 +137,21 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
             }
         } catch (Exception $e) {
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getListActiveEventBySeller(Request $request)
+    {
+        try {
+            $data = $this->testDriveQueries->getListActiveEventSeller(Auth::user()->merchant_id);
+            if ($data) {
+                return $this->respondWithData($data, 'Berhasil mendapatkan data Event Test Drive');
+            } else {
+                return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -176,7 +189,7 @@ class TestDriveController extends Controller
             return $this->respondWithResult(true, "{$data->title} telah dibatalkan");
         } catch (Exception $e) {
             DB::rollBack();
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -202,7 +215,7 @@ class TestDriveController extends Controller
 
             return $this->respondWithData($data, 'berhasil mendapat data calon pengunjung');
         } catch (Exception $e) {
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -243,7 +256,7 @@ class TestDriveController extends Controller
             return $this->respondWithResult(true, 'Berhasil Approve calon pengunjung');
         } catch (Exception $e) {
             DB::rollBack();
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -284,7 +297,7 @@ class TestDriveController extends Controller
             return $this->respondWithResult(true, 'Berhasil Reject calon pengunjung');
         } catch (Exception $e) {
             DB::rollBack();
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
     #end region seller acti0n
@@ -312,7 +325,7 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
             }
         } catch (Exception $e) {
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -366,7 +379,7 @@ class TestDriveController extends Controller
             return $this->respondWithResult(true, "Berhasil booking event Test Drive");;
         } catch (Exception $e) {
             DB::rollBack();
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -383,7 +396,22 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Data belum tersedia', 400);
             }
         } catch (Exception $e) {
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getDetailBooking($id)
+    {
+        try {
+            $data = $this->testDriveQueries->getDetailBooking($id);
+
+            if ($data) {
+                return $this->respondWithData($data, 'Berhasil mendapatkan detail History Booking');
+            } else {
+                return $this->respondWithResult(false, 'Terjadi kesalahan saat memuat data', 400);;
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -426,7 +454,7 @@ class TestDriveController extends Controller
             return $this->respondWithResult(true, 'Selamat datang');
         } catch (Exception $e) {
             DB::rollback();
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -466,7 +494,7 @@ class TestDriveController extends Controller
             DB::commit();
             return $this->respondWithResult(true, 'Pembatalan berhasil');
         } catch (Exception $e) {
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
     #End region Buyer action

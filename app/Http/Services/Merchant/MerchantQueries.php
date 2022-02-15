@@ -4,11 +4,14 @@ namespace App\Http\Services\Merchant;
 
 use App\Http\Resources\Etalase\EtalaseCollection;
 use App\Http\Resources\Etalase\EtalaseResource;
+use App\Http\Services\Review\ReviewQueries;
 use App\Http\Services\Service;
 use App\Models\Etalase;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\OrderProgress;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Exception;
 use stdClass;
 
@@ -26,6 +29,25 @@ class MerchantQueries extends Service
             $orders['success'] = static::getTotalTrx($merchant_id, '88', $date['daterange']);
             $orders['canceled'] = static::getTotalTrx($merchant_id, '09', $date['daterange']);
             $orders['total'] = array_merge($orders['success'], $orders['canceled']);
+            $orders['charts'] = [];
+
+            $date_from_daterange = array_map(function ($d) {
+                return Carbon::parse($d)->toDateString();
+            }, CarbonPeriod::createFromArray($date['daterange'])->toArray());
+
+            foreach ($date_from_daterange as $d) {
+                $total_trx = 0;
+                foreach ($orders['success'] as $order) {
+                    $order_date = Carbon::parse($order['order_date'])->toDateString();
+                    if ($d == $order_date) {
+                        $total_trx += 1;
+                    }
+                }
+                $orders['charts'][] = [
+                    'date' => $d,
+                    'total_trx' => $total_trx
+                ];
+            }
 
             $order_before['success'] = static::getTotalTrx($merchant_id, '88', $date['before']);
             $order_before['canceled'] = static::getTotalTrx($merchant_id, '09', $date['before']);
@@ -86,7 +108,8 @@ class MerchantQueries extends Service
                         'percentage_transaction' => $percentage_total,
                         'percentage_success' => $percentage_success,
                         'percentage_canceled' => $percentage_canceled,
-                    ]
+                        'charts' => $orders['charts'],
+                    ],
                 ]
             ];
         } catch (Exception $th) {
@@ -126,6 +149,32 @@ class MerchantQueries extends Service
         }
     }
 
+    public static function getActivity($merchant_id, $daterange = [])
+    {
+        try {
+            $merchant = Merchant::with(['city'])->find($merchant_id);
+            $reviewQueries = new ReviewQueries();
+            $data = [];
+
+            $data['new_order'] = count(static::getTotalTrx($merchant_id, '01', $daterange));
+            $data['ready_to_deliver'] = count(static::getTotalTrx($merchant_id, '02', $daterange));
+            $data['complained_order'] = count($reviewQueries->getListReviewDoneByRate('merchant_id', $merchant_id, 2, '<=', $daterange)['data']);
+            $data['new_review'] = count($reviewQueries->getListReviewDoneByRate('merchant_id', $merchant_id, null, null, $daterange)['data']);
+
+            return [
+                'data' => [
+                    'merchant' => $merchant,
+                    'transactions' => $data
+                ]
+            ];
+        } catch (Exception $th) {
+            if (in_array($th->getCode(), self::$error_codes)) {
+                throw new Exception($th->getMessage(), $th->getCode());
+            }
+            throw new Exception($th->getMessage(), 500);
+        }
+    }
+
     public static function unsetValue(array $array, $value, $strict = TRUE)
     {
         if (($key = array_search($value, $array, $strict)) !== FALSE) {
@@ -149,6 +198,21 @@ class MerchantQueries extends Service
             return $order['progress_count'] != 0;
         });
     }
+
+    // public function getTotalReview($merchant_id, $rate)
+    // {
+    //     $order = Order::with([
+    //         'detail' => function ($product) {
+    //             $product->with(['product' => function ($j) {
+    //                 $j->with(['product_photo']);
+    //             }]);
+    //         }, 'progress_active', 'merchant', 'delivery', 'buyer'
+    //     ])->where([
+    //         [$column_name, $related_id],
+    //     ])->whereHas('progress_active', function ($j) {
+    //         $j->whereIn('status_code', [88]);
+    //     })->whereHas('review')->orderBy('created_at', 'desc')->get();
+    // }
 
     static function format_number($number)
     {
