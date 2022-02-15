@@ -85,6 +85,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'query'], static function () use ($router) {
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {
                     $router->get('profile-toko', 'MerchantController@homepageProfile');
+                    $router->get('activity', 'MerchantController@activity');
                 });
 
                 $router->group(['prefix' => 'etalase'], static function () use ($router) {
@@ -94,6 +95,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
                 $router->group(['prefix' => 'product'], static function () use ($router) {
                     $router->get('merchant', 'ProductController@getProductByMerchantSeller');
+                    $router->get('best-selling', 'ProductController@getBestSellingProductByMerchant');
+                    $router->get('almost-running-out', 'ProductController@getProductAlmostRunningOut');
                     $router->get('detail/{id}', 'ProductController@getProductById');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
                     $router->get('search', 'ProductController@searchProductSeller');
@@ -142,6 +145,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('detail/{id}', 'TestDriveController@getDetail');
                     $router->get('list-booking/{id}', 'TestDriveController@getBookingList');
                     $router->get('history', 'TestDriveController@getHistoryBySeller');
+                    $router->get('list-active', 'TestDriveController@getListActiveEventBySeller');
                 });
             });
         });
@@ -177,6 +181,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('category/{category_id}', 'ProductController@getProductByCategory');
                 $router->get('/merchant/{merchant_id}/featured', 'ProductController@getMerchantFeaturedProduct');
                 $router->get('{id}', 'ProductController@getProductById');
+                $router->get('recommend/category/{category_key}', 'ProductController@getRecommendProductByCategory');
             });
 
             $router->group(['prefix' => 'variant'], static function () use ($router) {
@@ -244,6 +249,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('list', 'TestDriveController@getAllActiveEvent');
                 $router->get('detail/{id}', 'TestDriveController@getDetail');
                 $router->get('history', 'TestDriveController@getHistoryByCustomer');
+                $router->get('history/detail/{id}', 'TestDriveController@getDetailBooking');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
@@ -288,6 +294,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'testdrive', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('booking/{id}', 'TestDriveController@booking');
+                $router->post('booking/{id}/cancel', 'TestDriveController@cancelBooking');
             });
         });
     });

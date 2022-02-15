@@ -42,9 +42,10 @@ class TestDriveCommands extends Service
         $new_event->title = $data->title;
         $new_event->area_name = $data->area_name;
         $new_event->address = $data->address;
+        $new_event->map_link = $data->map_link;
         $new_event->city_id = $data->city_id;
-        $new_event->latitude = $data->latitude;
-        $new_event->longitude = $data->longitude;
+        $new_event->latitude = $data->latitude ?? '';
+        $new_event->longitude = $data->longitude ?? '';
         $new_event->start_date = $data->start_date;
         $new_event->end_date = $data->end_date;
         $new_event->start_time = $data->start_time;
@@ -115,12 +116,16 @@ class TestDriveCommands extends Service
     public function updateStatusBooking($booking_id, $status)
     {
         $data = TestDriveBooking::find($booking_id);
-        if ($data->status != 0) {
-            return true;
+        if ($data->status == 3 || $data->status == 9) {
+            return false;
+        }
+
+        if ($data->status == 1 && $status == 3) {
+            return false;
         }
         
         $data->status = $status;
-        if ($data->save()) return true;
+        if ($data->save()) return $data;
         else return false;
     }
 }

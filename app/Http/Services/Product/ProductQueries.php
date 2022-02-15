@@ -8,6 +8,8 @@ use App\Models\MasterVariant;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\Variant;
+use App\Models\VariantValue;
+use App\Models\VariantValueProduct;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
@@ -66,6 +68,48 @@ class ProductQueries extends Service
         //            $response['message'] = 'Gagal mendapatkan data produk!';
         //            return $response;
         //        }
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function getProductAlmostRunningOutByMerchantId($merchant_id, $filter = [], $sortby = null, $current_page = 1, $limit = 10)
+    {
+        $product = new Product();
+        $products = $product->with(['product_stock', 'product_photo', 'is_wishlist'])->where('merchant_id', $merchant_id);
+
+        $immutable_data = $products->get()->map(function ($product) {
+            $id = $product->id;
+            $product->reviews = null;
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            // $product->avg_rating =  null;
+            $product->stock = $product->product_stock->first()->amount;
+            $product->variants = MasterVariant::whereHas('variants', function ($v) use ($id) {
+                $v->whereHas('variant_values', function ($vv) use ($id) {
+                    $vv->where('product_id', $id);
+                })->with(['variant_values' => function ($vv) use ($id) {
+                    $vv->where('product_id', $id);
+                }]);
+            })->with(['variants' => function ($v) use ($id) {
+                $v->whereHas('variant_values', function ($vv) use ($id) {
+                    $vv->where('product_id', $id);
+                })->with(['variant_values' => function ($vv) use ($id) {
+                    $vv->where('product_id', $id);
+                }]);
+            }])->get();
+
+            return $product;
+        });
+        $immutable_data = collect($immutable_data)->sortBy('stock');
+
+        $data = static::paginate($immutable_data->toArray(), $limit, $current_page);
+
+        // if ($data->isEmpty()){
+        //     $response['success'] = false;
+        //     $response['message'] = 'Gagal mendapatkan data produk!';
+        //     return $response;
+        // }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -255,15 +299,26 @@ class ProductQueries extends Service
             $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo']);
         }])->where('id', $id)->first();
 
-        $variant = MasterVariant::whereHas('variants', function ($variant) use ($id) {
-            $variant->whereHas('variant_values', function ($variant_value) use ($id) {
-                $variant_value->where('product_id', $id);
-            });
-        })->with(['variants' => function ($variant) use ($id) {
-            $variant->whereHas('variant_values', function ($variant_value) use ($id) {
-                $variant_value->where('product_id', $id);
-            })->with(['variant_values']);
+        $master_variants = MasterVariant::whereHas('variants', function ($v) use ($id) {
+            $v->whereHas('variant_values', function ($vv) use ($id) {
+                $vv->where('product_id', $id);
+            })->with(['variant_values' => function ($vv) use ($id) {
+                $vv->where('product_id', $id);
+            }]);
+        })->with(['variants' => function ($v) use ($id) {
+            $v->whereHas('variant_values', function ($vv) use ($id) {
+                $vv->where('product_id', $id);
+            })->with(['variant_values' => function ($vv) use ($id) {
+                $vv->where('product_id', $id);
+            }]);
         }])->get();
+
+        $variant_value_product = VariantValueProduct::where('product_id', $id)->get();
+
+        if (!$master_variants->isEmpty()) {
+            $data['variants'] = $master_variants;
+            $data['variant_value_products'] = $variant_value_product;
+        }
 
         if (!$data) {
             $response['success'] = false;
@@ -278,7 +333,7 @@ class ProductQueries extends Service
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $variant->isEmpty() ? $data : array_merge($data->toArray(), ['variants' => collect([$variant])->flatten()]);
+        $response['data'] = $data;
         return $response;
     }
 
@@ -308,6 +363,66 @@ class ProductQueries extends Service
         //            $response['message'] = 'Gagal mendapatkan data produk!';
         //            return $response;
         //        }
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function getBestSellingProductByMerchantId($merchant_id, $filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    {
+        $product = new Product();
+        $merchant = Merchant::with(['city'])->find($merchant_id);
+        $products = $product->where('merchant_id', $merchant_id)->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }]);
+
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $immutable_data = $sorted_data->get()->map(function ($product) {
+            $id = $product->id;
+            $product->reviews = null;
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            // $product->avg_rating =  null;
+
+            $product->sold = 0;
+            foreach ($product->order_details as $order_detail) {
+                $product->sold += $order_detail->quantity;
+            }
+
+            $product->variants = MasterVariant::whereHas('variants', function ($v) use ($id) {
+                $v->whereHas('variant_values', function ($vv) use ($id) {
+                    $vv->where('product_id', $id);
+                })->with(['variant_values' => function ($vv) use ($id) {
+                    $vv->where('product_id', $id);
+                }]);
+            })->with(['variants' => function ($v) use ($id) {
+                $v->whereHas('variant_values', function ($vv) use ($id) {
+                    $vv->where('product_id', $id);
+                })->with(['variant_values' => function ($vv) use ($id) {
+                    $vv->where('product_id', $id);
+                }]);
+            }])->get();
+
+            return $product;
+        });
+        $immutable_data = collect($immutable_data)->sortBy('sold', SORT_REGULAR, true);
+
+        $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
+        $data = array_merge(['merchant' => $merchant], $data);
+
+        // if ($product->isEmpty()){
+        //     $response['success'] = false;
+        //     $response['message'] = 'Gagal mendapatkan data produk!';
+        //     return $response;
+        // }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -388,6 +503,58 @@ class ProductQueries extends Service
 
         $data = static::paginate($immutable_data->toArray(), $limit, $page);
 
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function getRecommendProductByCategory($category_key, $filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    {
+        $categories = MasterData::with(['child' => function ($j) {
+            $j->with(['child']);
+        }])->where('type', 'product_category')->where('key', $category_key)->get();
+
+        $cat_child = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    array_push($cat_child, $child->child);
+                }
+            }
+        }
+        $collection_product = [];
+        foreach ($cat_child as $cat) {
+            foreach ($cat as $obj) {
+                $product = new Product();
+                $products = $product->withCount(['order_details' => function ($details) {
+                    $details->whereHas('order', function ($order) {
+                        $order->whereHas('progress_done');
+                    });
+                }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])->where('category_id', $obj->id)->orderBy('order_details_count', 'ASC')->get();
+
+                array_push($collection_product, $products);
+            }
+        }
+        $collection = new Collection($collection_product);
+
+        $filtered_data = $this->filter($collection->collapse(), $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $immutable_data = $sorted_data->map(function ($product) {
+            $product->reviews = null;
+            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            //            $product->avg_rating =  null;
+            return $product;
+        });
+
+        $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
+
+        //        if ($product->isEmpty()){
+        //            $response['success'] = false;
+        //            $response['message'] = 'Gagal mendapatkan data produk!';
+        //            return $response;
+        //        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;

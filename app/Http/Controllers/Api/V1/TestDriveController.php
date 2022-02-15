@@ -43,7 +43,7 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Data EV Produk belum tersedia', 400);
             }
         } catch (Exception $e) {
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -54,9 +54,8 @@ class TestDriveController extends Controller
                 'title' => 'required|min:3',
                 'area_name' => 'required|min:3',
                 'address' => 'required|min:5',
+                'map_link' => 'sometimes',
                 'city_id' => 'required|exists:city,id',
-                'latitude' => 'required',
-                'longitude' => 'required',
                 'start_date' => 'required',
                 'end_date' => 'required',
                 'start_time' => 'required',
@@ -103,7 +102,7 @@ class TestDriveController extends Controller
             return $this->respondWithResult(true, 'Event Test Drive baru berhasil dibuat');
         } catch (Exception $e) {
             DB::rollBack();
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -120,7 +119,7 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Terjadi kesalahan saat memuat data', 400);;
             }
         } catch (Exception $e) {
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -138,7 +137,21 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
             }
         } catch (Exception $e) {
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getListActiveEventBySeller(Request $request)
+    {
+        try {
+            $data = $this->testDriveQueries->getListActiveEventSeller(Auth::user()->merchant_id);
+            if ($data) {
+                return $this->respondWithData($data, 'Berhasil mendapatkan data Event Test Drive');
+            } else {
+                return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -176,7 +189,7 @@ class TestDriveController extends Controller
             return $this->respondWithResult(true, "{$data->title} telah dibatalkan");
         } catch (Exception $e) {
             DB::rollBack();
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -202,7 +215,7 @@ class TestDriveController extends Controller
 
             return $this->respondWithData($data, 'berhasil mendapat data calon pengunjung');
         } catch (Exception $e) {
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -232,17 +245,18 @@ class TestDriveController extends Controller
 
             DB::beginTransaction();
             for ($i = 0; $i < $total_id; $i++) {
-                if ($this->testDriveCommands->updateStatusBooking($booking_id[$i], 1) == false) {
+                if (!$data = $this->testDriveCommands->updateStatusBooking($booking_id[$i], 1)) {
                     DB::rollBack();
                     return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.', 400);
                 }
-                $this->notificationCommand->create('customer_id', $booking_id[$i], 4, 'Notifikasi Event Test Drive.', 'Permintaan booking EV Test Drive anda telah Disetujui. Klik untuk membuka halaman History Booking', '/v1/buyer/query/testdrive/history?status=1&page=1', null, Auth::user()->full_name);
+                $this->notificationCommand->create('customer_id', $data->customer_id, 4, 'Notifikasi Event Test Drive.', 'Permintaan booking EV Test Drive anda telah Disetujui. Klik untuk membuka halaman History Booking', '/v1/buyer/query/testdrive/history?status=1&page=1', null, Auth::user()->full_name);
+                $this->notificationCommand->sendPushNotification($data->customer_id, 'Notifikasi Event Test Drive.', 'Permintaan booking EV Test Drive anda telah Disetujui. Klik untuk membuka halaman History Booking', 'active');
             }
             DB::commit();
             return $this->respondWithResult(true, 'Berhasil Approve calon pengunjung');
         } catch (Exception $e) {
             DB::rollBack();
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -272,17 +286,18 @@ class TestDriveController extends Controller
 
             DB::beginTransaction();
             for ($i = 0; $i < $total_id; $i++) {
-                if ($this->testDriveCommands->updateStatusBooking($booking_id[$i], 9) == false) {
+                if (!$data = $this->testDriveCommands->updateStatusBooking($booking_id[$i], 3)) {
                     DB::rollBack();
                     return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.', 400);
                 }
-                $this->notificationCommand->create('customer_id', $booking_id[$i], 4, 'Notifikasi Event Test Drive.', 'Permintaan booking EV Test Drive anda Dotolak. Klik untuk membuka halaman History Booking', '/v1/buyer/query/testdrive/history?status=9&page=1', null, Auth::user()->full_name);
+                $this->notificationCommand->create('customer_id', $data->customer_id, 4, 'Notifikasi Event Test Drive.', 'Permintaan booking EV Test Drive anda Dotolak. Klik untuk membuka halaman History Booking', '/v1/buyer/query/testdrive/history?status=9&page=1', null, Auth::user()->full_name);
+                $this->notificationCommand->sendPushNotification($data->customer_id, 'Notifikasi Event Test Drive.', 'Permintaan booking EV Test Drive anda Dotolak. Klik untuk membuka halaman History Booking', 'active');
             }
             DB::commit();
             return $this->respondWithResult(true, 'Berhasil Reject calon pengunjung');
         } catch (Exception $e) {
             DB::rollBack();
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
     #end region seller acti0n
@@ -295,15 +310,22 @@ class TestDriveController extends Controller
             $sortby = $request->sortby ?? null;
             $page = $request->page ?? 1;
 
+            if (!empty($filter['keyword']) && strlen($filter['keyword']) < 3) {
+                return $this->respondWithResult(false, 'Panjang kata kunci minimal 3 karakter.', 400);
+            }
+
             $data = $this->testDriveQueries->getAllEvent(null, $filter, $sortby, $page, true);
 
             if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'Berhasil mendapatkan data Event Test Drive');
             } else {
+                if (!empty($filter['keyword'])) {
+                    return $this->respondWithResult(false, "Event Test Drive dengan kata kunci {$filter['keyword']} Tidak ditemukan", 400);
+                }
                 return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
             }
         } catch (Exception $e) {
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -357,7 +379,7 @@ class TestDriveController extends Controller
             return $this->respondWithResult(true, "Berhasil booking event Test Drive");;
         } catch (Exception $e) {
             DB::rollBack();
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -374,7 +396,22 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Data belum tersedia', 400);
             }
         } catch (Exception $e) {
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getDetailBooking($id)
+    {
+        try {
+            $data = $this->testDriveQueries->getDetailBooking($id);
+
+            if ($data) {
+                return $this->respondWithData($data, 'Berhasil mendapatkan detail History Booking');
+            } else {
+                return $this->respondWithResult(false, 'Terjadi kesalahan saat memuat data', 400);;
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -383,7 +420,7 @@ class TestDriveController extends Controller
         try {
 
             $rules = [
-                'testd_drive_id' => 'required',
+                'test_drive_id' => 'required',
                 'booking_code' => 'required',
             ];
 
@@ -408,7 +445,7 @@ class TestDriveController extends Controller
             }
 
             DB::beginTransaction();
-            if ($this->testDriveCommands->updateStatusBooking($validate['booking_id'], 2) == false) {
+            if (!$data = $this->testDriveCommands->updateStatusBooking($validate['booking_id'], 2)) {
                 DB::rollback();
                 return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.');
             }
@@ -417,7 +454,47 @@ class TestDriveController extends Controller
             return $this->respondWithResult(true, 'Selamat datang');
         } catch (Exception $e) {
             DB::rollback();
-            return $this->respondWithData($e, 'Error', 400);
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function cancelBooking(Request $request)
+    {
+        try {
+            $rules = [
+                'test_drive_id' => 'required',
+                'booking_id' => 'required',
+            ];
+
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => ':attribute diperlukan.',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            $is_active = $this->testDriveQueries->checkActiveEvent($request->test_drive_id);
+            if (!$is_active['status']) {
+                return $this->respondWithResult(false, 'Event Test Drive sudah tidak tersedia.');    
+            }
+            DB::beginTransaction();
+            if (!$data = $this->testDriveCommands->updateStatusBooking($request->booking_id, 2)) {
+                DB::rollback();
+                return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.');
+            }
+
+            DB::commit();
+            return $this->respondWithResult(true, 'Pembatalan berhasil');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
     #End region Buyer action
