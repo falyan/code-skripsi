@@ -33,8 +33,8 @@ class CreateTestDriveTable extends Migration
             $table->smallInteger('status');
             $table->dateTime('calcelation_date')->nullable();
             $table->string('cancelation_reason')->nullable();
-            $table->string('created_by');
-            $table->string('updated_by');
+            $table->string('created_by')->nullable();
+            $table->string('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
