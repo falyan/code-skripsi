@@ -147,6 +147,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('history', 'TestDriveController@getHistoryBySeller');
                     $router->get('list-active', 'TestDriveController@getListActiveEventBySeller');
                 });
+
+                $router->group(['prefix' => 'mdr'], static function () use ($router) {
+                    $router->get('value/{category_id}', 'MdrController@getMdrValue');
+                });
             });
         });
     });
