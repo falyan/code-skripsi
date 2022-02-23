@@ -193,7 +193,7 @@ class TestDriveQueries extends Service
                     $query->where('end_date', '>=', $now)->where('status', 1);
                 } else {
                     $query->where(function($where)use($now){
-                        $where->whereIn('status', [2, 9])->orWhere('end_date', '<', $now);
+                        $where->whereIn('status', [8, 9])->orWhere('end_date', '<', $now);
                     });
                 }
             })->when(!empty($date), function ($query) use ($date) {
