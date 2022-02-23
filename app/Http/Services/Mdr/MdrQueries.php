@@ -14,7 +14,7 @@ class MdrQueries{
             });
         })->first();
 
-        if (!$basic_category || $basic_category = null){
+        if (!$basic_category || empty($basic_category)){
             $response['success'] = false;
             $response['message'] = 'Data category gagal didapatkan';
             $response['data'] = $basic_category;
