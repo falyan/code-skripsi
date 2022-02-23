@@ -14,6 +14,14 @@ class MdrQueries{
             });
         })->first();
 
+        if (!$basic_category || $basic_category = null){
+            $response['success'] = false;
+            $response['message'] = 'Data category gagal didapatkan';
+            $response['data'] = $basic_category;
+
+            return $response;
+        }
+
         $mdr_value = MdrMerchant::where('merchant_id', $merchant_id)->where('category_id', $basic_category->id)->where('status', 1)->first();
         if ($mdr_value == null){
             $mdr_value = MdrCategory::where('category_id', $basic_category->id)->where('status', 1)->first();
