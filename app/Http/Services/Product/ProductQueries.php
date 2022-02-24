@@ -315,10 +315,8 @@ class ProductQueries extends Service
 
         $variant_value_product = VariantValueProduct::where('product_id', $id)->get();
 
-        if (!$master_variants->isEmpty()) {
-            $data['variants'] = $master_variants;
-            $data['variant_value_products'] = $variant_value_product;
-        }
+        $data['variants'] = $master_variants;
+        $data['variant_value_products'] = $variant_value_product;
 
         if (!$data) {
             $response['success'] = false;
