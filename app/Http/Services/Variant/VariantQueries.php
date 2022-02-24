@@ -45,14 +45,14 @@ class VariantQueries
             return $response;
         }
 
-        if ($variants->isEmpty()) {
-            $response = [
-                'success' => false,
-                'message' => 'Gagal mendapatkan data varian!',
-            ];
-
-            return $response;
-        }
+//        if ($variants->isEmpty()) {
+//            $response = [
+//                'success' => false,
+//                'message' => 'Gagal mendapatkan data varian!',
+//            ];
+//
+//            return $response;
+//        }
 
         $response = [
             'success' => true,
