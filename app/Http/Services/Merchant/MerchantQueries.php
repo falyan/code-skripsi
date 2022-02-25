@@ -40,12 +40,12 @@ class MerchantQueries extends Service
                 foreach ($orders['success'] as $order) {
                     $order_date = Carbon::parse($order['order_date'])->toDateString();
                     if ($d == $order_date) {
-                        $total_trx += 1;
+                        $total_trx += $order['total_amount'];
                     }
                 }
                 $orders['charts'][] = [
                     'date' => $d,
-                    'total_trx' => $total_trx
+                    'total_trx_amount' => $total_trx
                 ];
             }
 
