@@ -185,12 +185,14 @@ class MerchantQueries extends Service
 
     public static function getTotalTrx($merchant_id, $status_code, $daterange = [])
     {
-        $data = Order::withCount(['progress' => function ($progress) use ($status_code){
-            $progress->where('status', 1)->where('status_code', $status_code);
-        }])->where('merchant_id', $merchant_id);
-
         if (count($daterange) == 2) {
-            $data = $data->whereBetween('created_at', $daterange);
+            $data = Order::withCount(['progress' => function ($progress) use ($status_code, $daterange){
+                $progress->where('status', 1)->where('status_code', $status_code)->whereBetween('created_at', $daterange);
+            }])->where('merchant_id', $merchant_id);
+        } else {
+            $data = Order::withCount(['progress' => function ($progress) use ($status_code, $daterange){
+                $progress->where('status', 1)->where('status_code', $status_code);
+            }])->where('merchant_id', $merchant_id);
         }
 
         $data = $data->get()->toArray();
