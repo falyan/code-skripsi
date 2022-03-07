@@ -599,6 +599,19 @@ class TransactionController extends Controller
         try {
             $notes = request()->input('notes');
             $response = $this->transactionCommand->updateOrderStatus($order_id, '09', $notes);
+            $order = Order::with('detail')->find($order_id);
+
+            foreach ($order->detail as $detail){
+                $stock = ProductStock::where('product_id', $detail->product_id)
+                    ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
+
+                $data['amount'] = $stock->amount + $detail->quantity;
+                $data['uom'] = $stock->uom;
+                $data['full_name'] = 'system';
+
+                $productCommand = new ProductCommands();
+                $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
+            }
             if ($response['success'] == true) {
                 $mailSender = new MailSenderManager();
                 $mailSender->mailorderRejected($order_id, $notes);
