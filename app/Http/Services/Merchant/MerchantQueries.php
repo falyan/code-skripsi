@@ -48,7 +48,7 @@ class MerchantQueries extends Service
                 $orders['charts'][] = [
                     'date' => $d,
                     'total_trx' => $total_trx,
-                    'total_trx_amount' => $total_trx
+                    'total_trx_amount' => $total_trx_amount
                 ];
             }
 
