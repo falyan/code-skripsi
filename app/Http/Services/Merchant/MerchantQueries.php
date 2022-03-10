@@ -39,10 +39,12 @@ class MerchantQueries extends Service
                 $total_trx = 0;
                 $total_trx_amount = 0;
                 foreach ($orders['success'] as $order) {
-                    $order_date = Carbon::parse($order['order_date'])->toDateString();
-                    if ($d == $order_date) {
-                        $total_trx += 1;
-                        $total_trx_amount += $order['total_amount'];
+                    foreach ($order['progress'] as $progress) {
+                        $order_date = Carbon::parse($progress['created_at'])->toDateString();
+                        if ($d == $order_date) {
+                            $total_trx += 1;
+                            $total_trx_amount += $order['total_amount'];
+                        }
                     }
                 }
                 $orders['charts'][] = [
@@ -189,7 +191,9 @@ class MerchantQueries extends Service
     public static function getTotalTrx($merchant_id, $status_code, $daterange = [])
     {
         if (count($daterange) == 2) {
-            $data = Order::withCount(['progress' => function ($progress) use ($status_code, $daterange){
+            $data = Order::with(['progress' => function ($progress) use ($status_code, $daterange){
+                $progress->where('status', 1)->where('status_code', $status_code)->whereBetween('created_at', $daterange);
+            }])->withCount(['progress' => function ($progress) use ($status_code, $daterange){
                 $progress->where('status', 1)->where('status_code', $status_code)->whereBetween('created_at', $daterange);
             }])->where('merchant_id', $merchant_id);
         } else {
