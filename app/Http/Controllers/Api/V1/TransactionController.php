@@ -174,6 +174,33 @@ class TransactionController extends Controller
         }
     }
 
+    public function transactionOnProccess($related_id, Request $request)
+    {
+        try {
+            if (empty($related_id)) {
+                return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
+            }
+
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
+            if (Auth::check()) {
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['01', '02', '03', '08'], $limit, $filter, $page);
+            } else {
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['01', '02', '03', '08'], $limit, $filter, $page);
+            }
+
+            if ($data['total'] > 0) {
+                return $this->respondWithData($data, 'sukses get data transaksi');
+            } else {
+                return $this->respondWithResult(true, 'tidak ada transaksi dalam proses');
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function transactionToPay($related_id, Request $request)
     {
         try {
@@ -267,9 +294,9 @@ class TransactionController extends Controller
             $page = $request->page ?? 1;
 
             if (Auth::check()) {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['88'], $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransactionDone('buyer_id', Auth::id(), ['88'], $limit, $filter, $page);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['88'], $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransactionDone('related_pln_mobile_customer_id', $related_id, ['88'], $limit, $filter, $page);
             }
 
             if ($data['total'] > 0) {
@@ -296,7 +323,7 @@ class TransactionController extends Controller
             if (Auth::check()) {
                 $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['99', '09'], $limit, $filter, $page);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['99'], $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['99', '09'], $limit, $filter, $page);
             }
 
             if ($data['total'] > 0) {
@@ -443,7 +470,7 @@ class TransactionController extends Controller
             $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['88'], $limit, $filter, $page);
 
             if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');;
+                return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'belum ada pesanan yang berhasil');
             }
