@@ -71,10 +71,9 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with(['product_photo']);
                 }]);
-            }, 'review' => function ($r) {
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
                 $r->with(['review_photo']);
             },
-            'progress_active', 'merchant', 'delivery', 'buyer'
         ])->where([
             [$column_name, $column_value],
         ])->whereHas('progress_active', function ($j) use ($status_code) {
