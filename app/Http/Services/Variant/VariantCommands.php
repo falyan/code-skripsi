@@ -117,8 +117,8 @@ class VariantCommands
                 ];
             }
 
-            $vv_old = VariantValue::where('product_id', $product_id)->get();
-            $vvp_old = VariantValueProduct::where('product_id', $product_id)->get();
+            $vv_olds = VariantValue::where('product_id', $product_id)->get();
+            $vvp_olds = VariantValueProduct::where('product_id', $product_id)->get();
 
             array_map(function ($variant_value) use ($data) {
                 array_map(function ($vv) use ($data) {
@@ -152,9 +152,9 @@ class VariantCommands
                 }, $variant_value['variant_value']);
             }, $data['variant']);
 
-            array_map(function ($vv_old){
+            foreach ($vv_olds as $vv_old){
                 VariantValue::destroy($vv_old['id']);
-            }, $vv_old);
+            }
 
             array_map(function ($vvp) use ($data) {
                 if (isset($vvp['id'])) {
@@ -210,9 +210,9 @@ class VariantCommands
                 }
             }, $data['variant_value_product']);
 
-            array_map(function ($vvp_old){
-                VariantValue::destroy($vvp_old['id']);
-            }, $vvp_old);
+            foreach ($vvp_olds as $vvp_old){
+                VariantValueProduct::destroy($vvp_old['id']);
+            }
 
             DB::commit();
 
