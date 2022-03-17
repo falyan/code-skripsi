@@ -115,6 +115,16 @@ class Customer extends Model
         return $this->hasMany(CustomerAddress::class);
     }
 
+    public function discussion_master()
+    {
+        return $this->hasMany(DiscussionMaster::class, 'customer_id');
+    }
+
+    public function discussion_response()
+    {
+        return $this->hasMany(DiscussionResponse::class, 'customer_id');
+    }
+
     /**
      * @var void Custom Static Functions
      */
