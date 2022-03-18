@@ -55,7 +55,7 @@ class DiscussionCommands extends Service
             'is_read_merchant' => false
         ]);
 
-        if (!$discussion) {
+        if (!$discussion){
             $response['success'] = false;
             $response['message'] = 'Gagal menyimpan diskusi produk';
             $response['data'] = $discussion;
