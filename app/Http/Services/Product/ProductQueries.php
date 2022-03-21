@@ -281,6 +281,8 @@ class ProductQueries extends Service
             });
         }, 'reviews' => function ($reviews) {
             $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo']);
+        }, 'discussion_master' => function ($master){
+            $master->orderBy('created_at', 'desc')->limit(2)->with(['discussion_response']);
         }])->where('id', $id)->first();
 
         $master_variants = MasterVariant::whereHas('variants', function ($v) use ($id) {
