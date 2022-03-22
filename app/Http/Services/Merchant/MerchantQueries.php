@@ -4,6 +4,7 @@ namespace App\Http\Services\Merchant;
 
 use App\Http\Resources\Etalase\EtalaseCollection;
 use App\Http\Resources\Etalase\EtalaseResource;
+use App\Http\Services\Discussion\DiscussionQueries;
 use App\Http\Services\Review\ReviewQueries;
 use App\Http\Services\Service;
 use App\Models\Etalase;
@@ -173,12 +174,14 @@ class MerchantQueries extends Service
                 'response' => $merchant
             ]);
             $reviewQueries = new ReviewQueries();
+            $discussionQueries = new DiscussionQueries();
             $data = [];
 
             $data['new_order'] = (static::getTotalTrx($merchant_id, '01', $daterange));
             $data['ready_to_deliver'] = (static::getTotalTrx($merchant_id, '02', $daterange));
             $data['complained_order'] = count($reviewQueries->getListReviewDoneByRate('merchant_id', $merchant_id, 2, '<=', $daterange)['data']);
             $data['new_review'] = count($reviewQueries->getListReviewDoneByRate('merchant_id', $merchant_id, null, null, $daterange)['data']);
+            $data['new_discussion'] = count($discussionQueries->getListDiscussionDoneByUnread($merchant_id, 'unread', $daterange)['data']);
 
             return [
                 'data' => [
