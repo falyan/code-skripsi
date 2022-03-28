@@ -5,8 +5,8 @@ stages:
 
 variables:
   # CI VARIABLES
-  CI_REGISTRY_USER: adisu-devops
-  CI_REGISTRY_PASSWORD: TYdtRTgYid43_We-EFaR
+  CI_REGISTRY_USER: dedimk-devops
+  CI_REGISTRY_PASSWORD: z-_XxowpAkwTHzGCTuTN
   CI_REGISTRY: registry-iconx.air.id
 
   # DATASOURCE LOKI
