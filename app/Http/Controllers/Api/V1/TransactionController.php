@@ -847,6 +847,7 @@ class TransactionController extends Controller
 
     public function updatePaymentStatus()
     {
+        sleep(60);
         if (request()->hasHeader('client-id')) {
             $client_id = request()->header('client-id');
             if ($client_id != config('credentials.iconpay.client_id')) {
@@ -1002,7 +1003,6 @@ class TransactionController extends Controller
             }
 
             $this->mailSenderManager->mailPaymentSuccess($order->id);
-            sleep(70);
             return $response;
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
