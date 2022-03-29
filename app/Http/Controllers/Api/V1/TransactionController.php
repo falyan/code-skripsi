@@ -1002,6 +1002,7 @@ class TransactionController extends Controller
             }
 
             $this->mailSenderManager->mailPaymentSuccess($order->id);
+            sleep(10);
             return $response;
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
