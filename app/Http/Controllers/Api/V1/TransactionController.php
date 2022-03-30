@@ -8,6 +8,7 @@ use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
+use App\Http\Services\Voucher\VoucherCommands;
 use App\Models\Customer;
 use App\Models\IconcashInquiry;
 use App\Models\Merchant;
@@ -34,13 +35,14 @@ class TransactionController extends Controller
      *
      * @return void
      */
-    protected $transactionQueries, $transactionCommand, $mailSenderManager;
+    protected $transactionQueries, $transactionCommand, $mailSenderManager, $voucherCommand;
     public function __construct()
     {
         $this->transactionQueries = new TransactionQueries();
         $this->transactionCommand = new TransactionCommands();
         $this->notificationCommand = new NotificationCommands();
         $this->mailSenderManager = new MailSenderManager();
+        $this->voucherCommand = new VoucherCommands();
     }
 
     // Checkout
@@ -653,6 +655,7 @@ class TransactionController extends Controller
     public function addAwbNumberOrder($order_id, $awb)
     {
         try {
+            DB::beginTransaction();
             $response = $this->transactionCommand->addAwbNumber($order_id, $awb);
             if ($response['success'] == false) {
                 return $response;
@@ -670,8 +673,17 @@ class TransactionController extends Controller
             $mailSender = new MailSenderManager();
             $mailSender->mailOrderOnDelivery($order_id);
 
+            $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->where('id', $order_id)->first();
+            $total_amount_trx = Order::where('no_reference', $order->no_reference)->sum('total_amount');
+
+            if ($total_amount_trx >= 100000){
+                $this->voucherCommand->generateVoucher($order);
+            }
+
+            DB::commit();
             return $response;
         } catch (Exception $e) {
+            DB::rollBack();
             return $this->respondErrorException($e, request());
         }
     }

@@ -26,5 +26,9 @@ return [
   ],
   'banner' => [
     'url_flash_popup' => env('BANNER_FLASH_POPUP_URL')
+  ],
+  'gamification' => [
+    'endpoint' => env('GAMIFICATION_ENDPOINT'),
+    'key_name' => 'pln_ubah_daya'
   ]
 ];
