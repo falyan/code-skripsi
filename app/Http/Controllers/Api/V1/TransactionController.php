@@ -676,7 +676,7 @@ class TransactionController extends Controller
             $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->where('id', $order_id)->first();
             $total_amount_trx = Order::where('no_reference', $order->no_reference)->sum('total_amount');
 
-            if ($total_amount_trx >= 100000){
+            if ($order->voucher_ubah_daya_code == null && $total_amount_trx >= 100000){
                 $this->voucherCommand->generateVoucher($order);
             }
 
@@ -721,7 +721,7 @@ class TransactionController extends Controller
             $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->where('id', $order_id)->first();
             $total_amount_trx = Order::where('no_reference', $order->no_reference)->sum('total_amount');
 
-            if ($total_amount_trx >= 100000){
+            if ($order->voucher_ubah_daya_code == null && $total_amount_trx >= 100000){
                 $this->voucherCommand->generateVoucher($order);
             }
 

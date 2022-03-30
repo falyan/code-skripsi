@@ -96,12 +96,7 @@ class VoucherCommands{
             $orders = Order::where('no_reference', $order->no_reference)->update([
                 'voucher_ubah_daya_code' => $voucher->data->voucher_code
             ]);
-//            foreach ($orders as $order){
-//                $order->voucher_ubah_daya_code = $voucher->data->voucher_code;
-//                if (!$order->save()){
-//                    throw new Exception('Terjadi kesalahan: Gagal menyimpan data voucher', 400);
-//                }
-//            }
+
             throw_if(!$orders, Exception::class, new Exception('Terjadi kesalahan: Gagal menyimpan data voucher', 400));
 
             $title = 'Selamat Anda Mendapatkan Voucher';
