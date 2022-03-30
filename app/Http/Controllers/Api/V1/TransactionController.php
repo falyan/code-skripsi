@@ -691,6 +691,7 @@ class TransactionController extends Controller
     public function addAwbNumberAutoOrder($order_id)
     {
         try {
+            DB::beginTransaction();
             if (!is_numeric($order_id)) {
                 $response = [
                     'success' => false,
@@ -717,8 +718,17 @@ class TransactionController extends Controller
             $mailSender = new MailSenderManager();
             $mailSender->mailOrderOnDelivery($order_id);
 
+            $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->where('id', $order_id)->first();
+            $total_amount_trx = Order::where('no_reference', $order->no_reference)->sum('total_amount');
+
+            if ($total_amount_trx >= 100000){
+                $this->voucherCommand->generateVoucher($order);
+            }
+
+            DB::commit();
             return $response;
         } catch (Exception $e) {
+            DB::rollBack();
             return $this->respondErrorException($e, request());
         }
     }
