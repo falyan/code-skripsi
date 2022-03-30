@@ -674,9 +674,15 @@ class TransactionController extends Controller
             $mailSender->mailOrderOnDelivery($order_id);
 
             $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->where('id', $order_id)->first();
-            $total_amount_trx = Order::where('no_reference', $order->no_reference)->sum('total_amount');
+            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+            $total_amount_trx = $total_delivery_fee_trx = 0;
 
-            if ($order->voucher_ubah_daya_code == null && $total_amount_trx >= 100000){
+            foreach($orders as $o){
+                $total_amount_trx += $o->total_amount;
+                $total_delivery_fee_trx += $o->delivery->delivery_fee;
+            }
+
+            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
                 $this->voucherCommand->generateVoucher($order);
             }
 
@@ -719,9 +725,15 @@ class TransactionController extends Controller
             $mailSender->mailOrderOnDelivery($order_id);
 
             $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->where('id', $order_id)->first();
-            $total_amount_trx = Order::where('no_reference', $order->no_reference)->sum('total_amount');
+            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+            $total_amount_trx = $total_delivery_fee_trx = 0;
 
-            if ($order->voucher_ubah_daya_code == null && $total_amount_trx >= 100000){
+            foreach($orders as $o){
+                $total_amount_trx += $o->total_amount;
+                $total_delivery_fee_trx += $o->delivery->delivery_fee;
+            }
+
+            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
                 $this->voucherCommand->generateVoucher($order);
             }
 
