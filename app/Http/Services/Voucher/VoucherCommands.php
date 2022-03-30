@@ -93,13 +93,16 @@ class VoucherCommands{
         throw_if(!$voucher, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
 
         if ($voucher->success == true){
-            $orders = Order::where('no_reference', $order->no_reference)->get();
-            foreach ($orders as $order){
-                $order->voucher_ubah_daya_code = $voucher->data->voucher_code;
-                if (!$order->save()){
-                    throw new Exception('Terjadi kesalahan: Gagal menyimpan data voucher', 400);
-                }
-            }
+            $orders = Order::where('no_reference', $order->no_reference)->update([
+                'voucher_ubah_daya_code' => $voucher->data->voucher_code
+            ]);
+//            foreach ($orders as $order){
+//                $order->voucher_ubah_daya_code = $voucher->data->voucher_code;
+//                if (!$order->save()){
+//                    throw new Exception('Terjadi kesalahan: Gagal menyimpan data voucher', 400);
+//                }
+//            }
+            throw_if(!$orders, Exception::class, new Exception('Terjadi kesalahan: Gagal menyimpan data voucher', 400));
 
             $title = 'Selamat Anda Mendapatkan Voucher';
             $message = 'Selamat anda mendapatkan voucher ubah daya!';
