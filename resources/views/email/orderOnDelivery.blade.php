@@ -104,7 +104,7 @@
                                     <span style="color:#00A2B9;font-weight:bold;">Selamat! Anda mendapatkan Voucher Ubah
                                         Daya</span>
                                 </div>
-                                <div style="width: 60%;;margin-left: auto;margin-right: auto;">
+                                <div style="width: 60%; margin-left: auto;margin-right: auto;">
                                     <div style="
                                     width: 100%;
                                     background-image: url('https://api-central.air.id/plnmp-sauron-development/api/firebase/file/load/Marketplace~products~1648611938e5c7d82e-4b25-445b-8fb4-9460cfa289d0.png');
@@ -131,6 +131,14 @@
                                             </table>
                                         </div>
                                     </div>
+                                </div>
+                                <div
+                                    style="width: fit-content; text-align: center; vertical-align: middle; margin-left: auto;margin-right: auto;border-radius: 5px;background: #fff;padding: 5px 7px 5px 7px;">
+                                    <img style="display: inline-block;width:15px;vertical-align: middle;"
+                                        src="https://api-central.air.id/plnmp-sauron-development/api/firebase/file/load/Marketplace~products~16487308789891cd8b-e1e8-4f14-a69a-6b2018b688ec.png"
+                                        alt="">
+                                    <p style="display: inline-block; font-size: 12px;margin:0;vertical-align: middle;">
+                                        Anda hanya bisa mendapatkan satu voucher ubah daya</p>
                                 </div>
                             </div>
                         @endif
