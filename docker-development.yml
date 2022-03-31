@@ -50,7 +50,7 @@ services:
       placement:
         max_replicas_per_node: 1
         constraints:
-          - node.labels.ip == 10.14.204.124
+          - node.labels.ip == 10.14.204.126
         preferences:
           - spread: node.labels.ip
       resources:
