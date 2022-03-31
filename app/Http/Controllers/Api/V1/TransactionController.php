@@ -667,10 +667,9 @@ class TransactionController extends Controller
 
             $title = 'Pesanan Dikirim';
             $message = 'Pesanan anda sedang dalam pengiriman.';
-            $order = Order::with(['buyer'])->find($order_id);
+            $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
             $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
 
-            $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->where('id', $order_id)->first();
             $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
             $total_amount_trx = $total_delivery_fee_trx = 0;
 
@@ -682,11 +681,11 @@ class TransactionController extends Controller
             if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
                 $this->voucherCommand->generateVoucher($order);
             }
+            DB::commit();
 
             $mailSender = new MailSenderManager();
             $mailSender->mailOrderOnDelivery($order_id);
 
-            DB::commit();
             return $response;
         } catch (Exception $e) {
             DB::rollBack();
@@ -718,13 +717,9 @@ class TransactionController extends Controller
 
             $title = 'Pesanan Dikirim';
             $message = 'Pesanan anda sedang dalam pengiriman.';
-            $order = Order::with(['buyer'])->find($order_id);
+            $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
             $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
 
-            $mailSender = new MailSenderManager();
-            $mailSender->mailOrderOnDelivery($order_id);
-
-            $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->where('id', $order_id)->first();
             $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
             $total_amount_trx = $total_delivery_fee_trx = 0;
 
@@ -736,11 +731,11 @@ class TransactionController extends Controller
             if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
                 $this->voucherCommand->generateVoucher($order);
             }
+            DB::commit();
 
             $mailSender = new MailSenderManager();
             $mailSender->mailOrderOnDelivery($order_id);
 
-            DB::commit();
             return $response;
         } catch (Exception $e) {
             DB::rollBack();
@@ -884,7 +879,6 @@ class TransactionController extends Controller
 
     public function updatePaymentStatus()
     {
-        sleep(60);
         if (request()->hasHeader('client-id')) {
             $client_id = request()->header('client-id');
             if ($client_id != config('credentials.iconpay.client_id')) {
