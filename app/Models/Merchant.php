@@ -133,4 +133,8 @@ class Merchant extends Model
     {
         return $this->hasMany(Wishlist::class);
     }
+
+    public function mdr_merchant_active(){
+        return $this->hasOne(MdrMerchant::class)->where('status', 1);
+    }
 }

@@ -8,6 +8,7 @@ use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
+use App\Http\Services\Voucher\VoucherCommands;
 use App\Models\Customer;
 use App\Models\IconcashInquiry;
 use App\Models\Merchant;
@@ -34,13 +35,14 @@ class TransactionController extends Controller
      *
      * @return void
      */
-    protected $transactionQueries, $transactionCommand, $mailSenderManager;
+    protected $transactionQueries, $transactionCommand, $mailSenderManager, $voucherCommand;
     public function __construct()
     {
         $this->transactionQueries = new TransactionQueries();
         $this->transactionCommand = new TransactionCommands();
         $this->notificationCommand = new NotificationCommands();
         $this->mailSenderManager = new MailSenderManager();
+        $this->voucherCommand = new VoucherCommands();
     }
 
     // Checkout
@@ -174,6 +176,33 @@ class TransactionController extends Controller
         }
     }
 
+    public function transactionOnProccess($related_id, Request $request)
+    {
+        try {
+            if (empty($related_id)) {
+                return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
+            }
+
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
+            if (Auth::check()) {
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['01', '02', '03', '08'], $limit, $filter, $page);
+            } else {
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['01', '02', '03', '08'], $limit, $filter, $page);
+            }
+
+            if ($data['total'] > 0) {
+                return $this->respondWithData($data, 'sukses get data transaksi');
+            } else {
+                return $this->respondWithResult(true, 'tidak ada transaksi dalam proses');
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function transactionToPay($related_id, Request $request)
     {
         try {
@@ -267,9 +296,9 @@ class TransactionController extends Controller
             $page = $request->page ?? 1;
 
             if (Auth::check()) {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['88'], $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransactionDone('buyer_id', Auth::id(), ['88'], $limit, $filter, $page);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['88'], $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransactionDone('related_pln_mobile_customer_id', $related_id, ['88'], $limit, $filter, $page);
             }
 
             if ($data['total'] > 0) {
@@ -296,7 +325,7 @@ class TransactionController extends Controller
             if (Auth::check()) {
                 $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['99', '09'], $limit, $filter, $page);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['99'], $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['99', '09'], $limit, $filter, $page);
             }
 
             if ($data['total'] > 0) {
@@ -443,7 +472,7 @@ class TransactionController extends Controller
             $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['88'], $limit, $filter, $page);
 
             if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');;
+                return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'belum ada pesanan yang berhasil');
             }
@@ -599,6 +628,19 @@ class TransactionController extends Controller
         try {
             $notes = request()->input('notes');
             $response = $this->transactionCommand->updateOrderStatus($order_id, '09', $notes);
+            $order = Order::with('detail')->find($order_id);
+
+            foreach ($order->detail as $detail){
+                $stock = ProductStock::where('product_id', $detail->product_id)
+                    ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
+
+                $data['amount'] = $stock->amount + $detail->quantity;
+                $data['uom'] = $stock->uom;
+                $data['full_name'] = 'system';
+
+                $productCommand = new ProductCommands();
+                $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
+            }
             if ($response['success'] == true) {
                 $mailSender = new MailSenderManager();
                 $mailSender->mailorderRejected($order_id, $notes);
@@ -613,6 +655,7 @@ class TransactionController extends Controller
     public function addAwbNumberOrder($order_id, $awb)
     {
         try {
+            DB::beginTransaction();
             $response = $this->transactionCommand->addAwbNumber($order_id, $awb);
             if ($response['success'] == false) {
                 return $response;
@@ -624,14 +667,28 @@ class TransactionController extends Controller
 
             $title = 'Pesanan Dikirim';
             $message = 'Pesanan anda sedang dalam pengiriman.';
-            $order = Order::with(['buyer'])->find($order_id);
+            $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
             $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+
+            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+            $total_amount_trx = $total_delivery_fee_trx = 0;
+
+            foreach($orders as $o){
+                $total_amount_trx += $o->total_amount;
+                $total_delivery_fee_trx += $o->delivery->delivery_fee;
+            }
+
+            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
+                $this->voucherCommand->generateVoucher($order);
+            }
+            DB::commit();
 
             $mailSender = new MailSenderManager();
             $mailSender->mailOrderOnDelivery($order_id);
 
             return $response;
         } catch (Exception $e) {
+            DB::rollBack();
             return $this->respondErrorException($e, request());
         }
     }
@@ -639,6 +696,7 @@ class TransactionController extends Controller
     public function addAwbNumberAutoOrder($order_id)
     {
         try {
+            DB::beginTransaction();
             if (!is_numeric($order_id)) {
                 $response = [
                     'success' => false,
@@ -659,14 +717,28 @@ class TransactionController extends Controller
 
             $title = 'Pesanan Dikirim';
             $message = 'Pesanan anda sedang dalam pengiriman.';
-            $order = Order::with(['buyer'])->find($order_id);
+            $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
             $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+
+            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+            $total_amount_trx = $total_delivery_fee_trx = 0;
+
+            foreach($orders as $o){
+                $total_amount_trx += $o->total_amount;
+                $total_delivery_fee_trx += $o->delivery->delivery_fee;
+            }
+
+            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
+                $this->voucherCommand->generateVoucher($order);
+            }
+            DB::commit();
 
             $mailSender = new MailSenderManager();
             $mailSender->mailOrderOnDelivery($order_id);
 
             return $response;
         } catch (Exception $e) {
+            DB::rollBack();
             return $this->respondErrorException($e, request());
         }
     }

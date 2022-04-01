@@ -147,6 +147,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('history', 'TestDriveController@getHistoryBySeller');
                     $router->get('list-active', 'TestDriveController@getListActiveEventBySeller');
                 });
+
+                $router->group(['prefix' => 'mdr'], static function () use ($router) {
+                    $router->get('value/{category_id}', 'MdrController@getMdrValue');
+                });
             });
         });
     });
@@ -225,6 +229,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/{related_id}/canceled', 'TransactionController@buyerTransactionCanceled');
                 $router->get('/{related_id}/search', 'TransactionController@buyerSearchTransaction');
                 $router->get('/{related_id}/detail/{id}/invoice', 'TransactionController@getDetailInvoice');
+                $router->get('/{related_id}/on-process', 'TransactionController@transactionOnProccess');
             });
 
             $router->group(['prefix' => 'notification', 'middleware' => 'auth'], static function () use ($router) {

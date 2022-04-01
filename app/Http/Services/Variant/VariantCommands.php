@@ -117,8 +117,11 @@ class VariantCommands
                 ];
             }
 
-            array_map(function ($variant_value) use ($data) {
-                array_map(function ($vv) use ($data) {
+            $vv_olds = VariantValue::where('product_id', $product_id)->get();
+            $vvp_olds = VariantValueProduct::where('product_id', $product_id)->get();
+
+            array_map(function ($variant_value) use ($data, $vv_olds) {
+                array_map(function ($vv) use ($data, $vv_olds) {
                     if (isset($vv['id'])) {
                         $value = VariantValue::find(data_get($vv, 'id'));
                         $variant_value_product = VariantValueProduct::where('product_id', $data['product_id'])
@@ -139,6 +142,10 @@ class VariantCommands
                             'updated_by' => $data['full_name'],
                         ]);
                     } else {
+                        foreach ($vv_olds as $vv_old){
+                            VariantValue::destroy($vv_old['id']);
+                        }
+
                         VariantValue::create([
                             'variant_id' => $vv['variant_id'],
                             'product_id' => $data['product_id'],
@@ -149,7 +156,7 @@ class VariantCommands
                 }, $variant_value['variant_value']);
             }, $data['variant']);
 
-            array_map(function ($vvp) use ($data) {
+            array_map(function ($vvp) use ($data, $vvp_olds) {
                 if (isset($vvp['id'])) {
                     $variant_value_product = VariantValueProduct::find($vvp['id']);
                     $variant_value_product->update([
@@ -181,6 +188,10 @@ class VariantCommands
                         $value_id[] = $find_variant_value->id;
                     }
                     $value_id = trim(implode(',', $value_id));
+
+                    foreach ($vvp_olds as $vvp_old){
+                        VariantValueProduct::destroy($vvp_old['id']);
+                    }
 
                     $variant_value_product = VariantValueProduct::create([
                         'variant_value_id' => $value_id,

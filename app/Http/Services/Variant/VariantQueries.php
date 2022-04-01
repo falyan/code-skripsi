@@ -3,7 +3,6 @@
 namespace App\Http\Services\Variant;
 
 use App\Models\MasterData;
-use App\Models\Product;
 use App\Models\Variant;
 use App\Models\VariantValueProduct;
 
@@ -45,14 +44,14 @@ class VariantQueries
             return $response;
         }
 
-        if ($variants->isEmpty()) {
-            $response = [
-                'success' => false,
-                'message' => 'Gagal mendapatkan data varian!',
-            ];
-
-            return $response;
-        }
+        //        if ($variants->isEmpty()) {
+        //            $response = [
+        //                'success' => false,
+        //                'message' => 'Gagal mendapatkan data varian!',
+        //            ];
+        //
+        //            return $response;
+        //        }
 
         $response = [
             'success' => true,
@@ -70,15 +69,26 @@ class VariantQueries
             ->where('variant_value_id', $variant_value_id)->first();
 
         if (!$variant) {
-            $response = [
-                'success' => false,
-                'message' => 'Gagal mendapatkan data varian!'
-            ];
-        } else {
-            $response = static::resultAmountVariant($variant->variant_stock->amount, $variant);
+            $numbers = array_map('intval', explode(" ", str_replace(",", " ", $variant_value_id)));
+            sort($numbers);
+
+            $result = [];
+            for ($x = 0; $x < count($numbers); $x++) {
+                array_push($result, $numbers[$x]);
+            }
+
+            $variant = VariantValueProduct::with(['variant_value', 'product', 'variant_stock'])
+                ->where('variant_value_id', implode(",", $result))->first();
+
+            if (!$variant) {
+                return [
+                    'success' => false,
+                    'message' => 'Gagal mendapatkan data varian!'
+                ];
+            }
         }
 
-        return $response;
+        return static::resultAmountVariant($variant->variant_stock->amount, $variant);
     }
 
     public static function resultAmountVariant(int $amount, $data)

@@ -21,9 +21,11 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer'
-        ])->where($column_name, $column_value)->when($column_name == 'merchant_id', function($query){
-            $query->whereHas('progress_active', function($q){
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
+                $r->with(['review_photo']);
+            },
+        ])->where($column_name, $column_value)->when($column_name == 'merchant_id', function ($query) {
+            $query->whereHas('progress_active', function ($q) {
                 $q->whereNotIn('status_code', [99]);
             });
         })->orderBy('created_at', 'desc');
@@ -48,8 +50,36 @@ class TransactionQueries extends Service
             [$column_name, $column_value],
         ])->whereHas('progress_active', function ($j) use ($status_code) {
             $j->whereIn('status_code', $status_code);
-        })->when($column_name == 'merchant_id', function($query){
-            $query->whereHas('progress_active', function($q){
+        })->when($column_name == 'merchant_id', function ($query) {
+            $query->whereHas('progress_active', function ($q) {
+                $q->whereNotIn('status_code', [99]);
+            });
+        })->orderBy('created_at', 'desc');
+
+        $data = $this->filter($data, $filter);
+        $data = $data->get();
+
+        $data = static::paginate($data->toArray(), $limit, $page);
+
+        return $data;
+    }
+
+    public function getTransactionDone($column_name, $column_value, $status_code, $limit = 10, $filter = [], $page = 1)
+    {
+        $data = Order::with([
+            'detail' => function ($product) {
+                $product->with(['product' => function ($j) {
+                    $j->with(['product_photo']);
+                }]);
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
+                $r->with(['review_photo']);
+            },
+        ])->where([
+            [$column_name, $column_value],
+        ])->whereHas('progress_active', function ($j) use ($status_code) {
+            $j->whereIn('status_code', $status_code);
+        })->when($column_name == 'merchant_id', function ($query) {
+            $query->whereHas('progress_active', function ($q) {
                 $q->whereNotIn('status_code', [99]);
             });
         })->orderBy('created_at', 'desc');
@@ -73,9 +103,10 @@ class TransactionQueries extends Service
                 $merchant->with(['province', 'city', 'district']);
             }, 'delivery' => function ($region) {
                 $region->with(['city', 'district']);
-            }, 'buyer', 'payment', 'review' => function ($review){
+            }, 'buyer', 'payment', 'review' => function ($review) {
                 $review->with(['review_photo']);
-            }])->find($id);
+            }
+        ])->find($id);
 
         $data->iconpay_product_id = static::$productid;
 
@@ -114,7 +145,8 @@ class TransactionQueries extends Service
         return $data;
     }
 
-    public function getDeliveryDiscount(){
+    public function getDeliveryDiscount()
+    {
         $data = DeliveryDiscount::where('id', '1')->where('is_active', true)->first();
 
         if (empty($data)) {
@@ -125,40 +157,42 @@ class TransactionQueries extends Service
         return $data;
     }
 
-    public function getCustomerDiscount($user_id, $email){
+    public function getCustomerDiscount($user_id, $email)
+    {
         $discount = 0;
         $now = Carbon::now('Asia/Jakarta');
         $data = CustomerDiscount::where('customer_reference_id', $user_id)->orWhere('customer_reference_id', $email)
             ->where('is_used', false)->where('expired_date', '>=', $now)->first();
 
-        if (!empty($data)){
+        if (!empty($data)) {
             $discount = (int) $data->amount;
         }
 
         return $discount;
     }
 
-    public function countCheckoutPrice($customer, $datas){
+    public function countCheckoutPrice($customer, $datas)
+    {
         $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = 0;
 
-        $new_merchant = array_map(function ($merchant) use (&$total_price, &$total_payment, &$total_delivery_discount, &$total_delivery_fee){
+        $new_merchant = array_map(function ($merchant) use (&$total_price, &$total_payment, &$total_delivery_discount, &$total_delivery_fee) {
             $total_weight = 0;
             $merchant_total_price = 0;
             $data_merchant = Merchant::with(['city'])->findOrFail($merchant['merchant_id']);
 
-            $new_product = array_map(function ($product) use (&$total_weight, &$merchant_total_price){
+            $new_product = array_map(function ($product) use (&$total_weight, &$merchant_total_price) {
                 if (!$data_product = Product::with(['product_photo', 'stock_active'])->find($product['product_id'])) {
                     throw new Exception('Produk dengan id ' . $product['product_id'] . ' tidak ditemukan', 404);
                 }
 
                 $variant_data = null;
-                if (isset($product['variant_value_product_id']) && $product['variant_value_product_id'] != null){
+                if (isset($product['variant_value_product_id']) && $product['variant_value_product_id'] != null) {
                     if (!$variant_data = VariantValueProduct::with('variant_stock')->where('id', $product['variant_value_product_id'])
-                        ->where('product_id', $product['product_id'])->first()){
+                        ->where('product_id', $product['product_id'])->first()) {
                         throw new Exception('Variant produk dengan id ' . $product['variant_value_product_id'] . ' tidak ditemukan', 404);
                     }
                     $product['total_price'] = $product['total_amount'] = $total_item_price = $variant_data['price'] * $product['quantity'];
-                }else{
+                } else {
                     $product['total_price'] = $product['total_amount'] = $total_item_price = $data_product['price'] * $product['quantity'];
                 }
 
@@ -174,7 +208,7 @@ class TransactionQueries extends Service
 
             $merchant['products'] = $new_product;
             $merchant['total_weight'] = $total_weight;
-            if ($merchant['delivery_discount'] > $merchant['delivery_fee']){
+            if ($merchant['delivery_discount'] > $merchant['delivery_fee']) {
                 $merchant['delivery_discount'] = $merchant['delivery_fee'];
             }
             $merchant['total_amount'] = $merchant_total_price_with_delivery = $merchant_total_price + $merchant['delivery_fee'];
@@ -201,7 +235,7 @@ class TransactionQueries extends Service
         $is_percent_discount = false;
         $discount = $this->getCustomerDiscount($customer->id, $customer->email);
 
-        if ($discount == 0 && $is_percent_discount == true){
+        if ($discount == 0 && $is_percent_discount == true) {
             $total_item_price = 0;
             array_map(function ($merchant) use (&$total_item_price) {
                 array_map(function ($product) use (&$total_item_price) {
@@ -209,8 +243,8 @@ class TransactionQueries extends Service
                 }, data_get($merchant, 'products'));
             }, data_get($datas, 'merchants'));
 
-            $discount = ($percent_discount/100)*$total_item_price;
-            if ($discount > $max_percent_discount){
+            $discount = ($percent_discount / 100) * $total_item_price;
+            if ($discount > $max_percent_discount) {
                 $discount = $max_percent_discount;
             }
         }
@@ -218,7 +252,7 @@ class TransactionQueries extends Service
         $new_merchant = array_map(function ($merchant) use (&$discount, &$total_discount, &$total_price_discount) {
             $count_discount = $discount;
 
-            if (data_get($merchant, 'total_payment') != null && data_get($merchant, 'total_payment') <= $discount){
+            if (data_get($merchant, 'total_payment') != null && data_get($merchant, 'total_payment') <= $discount) {
                 $count_discount = data_get($merchant, 'total_payment');
             }
 

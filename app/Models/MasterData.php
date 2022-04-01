@@ -111,4 +111,12 @@ class MasterData extends Model
     {
         return $this->hasMany(Variant::class, 'category_id');
     }
+
+    public function mdr_category_active(){
+        return $this->hasOne(MdrCategory::class)->where('status', 1);
+    }
+
+    public function mdr_merchant_active(){
+        return $this->hasOne(MdrMerchant::class)->where('status', 1);
+    }
 }

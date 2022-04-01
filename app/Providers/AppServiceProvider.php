@@ -8,6 +8,7 @@ use App\Http\Services\Manager\RajaOngkirManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Service;
 use App\Http\Services\Transaction\TransactionCommands;
+use App\Http\Services\Voucher\VoucherCommands;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -30,5 +31,6 @@ class AppServiceProvider extends ServiceProvider
         Service::init();
         IconcashManager::init();
         NotificationCommands::init();
+        VoucherCommands::init();
     }
 }
