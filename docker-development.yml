@@ -11,7 +11,7 @@ services:
       - loadbalancer
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      # - /mnt/nfs-logs/pln-marketplace-saruman-development:/var/www/html/storage/logs
+      - /mnt/nfs-logs/pln-marketplace-saruman-development:/var/www/html/storage/logs
     logging:
       driver: loki
       options:
@@ -39,9 +39,9 @@ services:
       placement:
         max_replicas_per_node: 1
         constraints:
-          - node.labels.ip == 10.14.204.126
+          - node.labels.ip == 10.14.204.124
         preferences:
           - spread: node.labels.ip
       resources:
         limits:
-          memory: 512M
+          memory: 1G
