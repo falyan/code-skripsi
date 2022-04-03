@@ -52,7 +52,7 @@ class CategoryQueries extends Service
 
     public function getBasicCategory()
     {
-        $category = MasterData::where('type', 'product_category')->where('parent_id', null)->orderBy('value')->latest()->get();
+        $category = MasterData::where('type', 'product_category')->where('parent_id', null)->orderBy('updated_at', 'DESC')->get();
 
         if ($category->isEmpty()){
             $response['success'] = false;
