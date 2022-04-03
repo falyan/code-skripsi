@@ -23,8 +23,9 @@ class CategoryQueries extends Service
     }
 
     public function getAllCategory(){
-        $category = MasterData::with(['child' => function($j)
-        {$j->with(['child']);}])->where('type', 'product_category')->where('parent_id', null)->get();
+        $category = MasterData::with(['child' => function($j) {
+            $j->with(['child']);
+        }])->where('type', 'product_category')->where('parent_id', null)->orderBy('updated_at', 'DESC')->get();
         if ($category->isEmpty()){
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data kategori!';
