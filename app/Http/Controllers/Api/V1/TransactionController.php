@@ -614,7 +614,13 @@ class TransactionController extends Controller
                 $title = 'Pesanan Dikonfirmasi';
                 $message = 'Pesanan anda sedang diproses oleh penjual.';
                 $order = Order::with(['buyer'])->find($order_id);
-                $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+                if (empty($order)){
+                    $response['success'] = false;
+                    $response['message'] = 'Gagal mendapatkan data pesanan';
+                    return $response;
+                }
+//                $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+                $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
             }
 
             return $response;
@@ -668,7 +674,8 @@ class TransactionController extends Controller
             $title = 'Pesanan Dikirim';
             $message = 'Pesanan anda sedang dalam pengiriman.';
             $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-            $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+//            $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+            $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
             $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
             $total_amount_trx = $total_delivery_fee_trx = 0;
@@ -718,7 +725,8 @@ class TransactionController extends Controller
             $title = 'Pesanan Dikirim';
             $message = 'Pesanan anda sedang dalam pengiriman.';
             $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-            $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+//            $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+            $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
             $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
             $total_amount_trx = $total_delivery_fee_trx = 0;
