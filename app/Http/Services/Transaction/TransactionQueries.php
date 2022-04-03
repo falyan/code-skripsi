@@ -126,7 +126,7 @@ class TransactionQueries extends Service
             ->leftjoin('product', 'order_detail.product_id', '=', 'product.id')
             ->leftjoin('merchant', 'merchant.id', '=', 'order.merchant_id')
             ->where('order.' . $column_name, $column_value)
-            ->orWhere(function ($q) use ($keyword) {
+            ->where(function ($q) use ($keyword) {
                 $q->where('merchant.name', 'ILIKE', '%' . $keyword . '%')
                     ->orWhere('product.name', 'ILIKE', '%' . $keyword . '%')
                     ->orWhere('order.trx_no', 'ILIKE', '%' . $keyword . '%');
