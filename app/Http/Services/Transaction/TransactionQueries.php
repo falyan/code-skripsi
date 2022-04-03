@@ -121,17 +121,16 @@ class TransactionQueries extends Service
                     $j->with(['product_photo']);
                 }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer'
-        ])
-            ->leftjoin('order_detail', 'order_detail.order_id', '=', 'order.id')
-            ->leftjoin('product', 'order_detail.product_id', '=', 'product.id')
-            ->leftjoin('merchant', 'merchant.id', '=', 'order.merchant_id')
-            ->where('order.' . $column_name, $column_value)
-            ->where(function ($q) use ($keyword) {
-                $q->where('merchant.name', 'ILIKE', '%' . $keyword . '%')
-                    ->orWhere('product.name', 'ILIKE', '%' . $keyword . '%')
-                    ->orWhere('order.trx_no', 'ILIKE', '%' . $keyword . '%');
-            })
-            ->orderBy('created_at', 'desc');
+        ])->where('order.' . $column_name, $column_value)
+          ->where(function ($q) use ($keyword) {
+              $q->whereHas('merchant', function ($merchant) use ($keyword){
+                  $merchant->where('name', 'ILIKE', '%' . $keyword . '%');
+              })->orWhereHas('detail', function ($detail) use ($keyword){
+                  $detail->whereHas('product', function ($product) use ($keyword){
+                      $product->where('name', 'ILIKE', '%' . $keyword . '%');
+                  });
+              })->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
+          })->orderBy('order.created_at', 'desc');
 
         $data = $this->filter($data, $filter);
         $data = $data->get();
