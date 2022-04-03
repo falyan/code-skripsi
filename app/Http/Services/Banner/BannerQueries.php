@@ -8,7 +8,7 @@ class BannerQueries extends Service
 {
     public function getFlashPopup()
     {
-        $result = static::$banner_url;
+        $result = null;
         return [
             'sukses' => true,
             'message' => !empty($result) ? 'Berhasil mendapatkan data banner' : 'Data banner tidak ada',
