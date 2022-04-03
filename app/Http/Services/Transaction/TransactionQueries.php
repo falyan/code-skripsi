@@ -137,6 +137,7 @@ class TransactionQueries extends Service
         $data = $data->get();
 
         $data = static::paginate($data->toArray(), $limit, $page);
+        return $data;
     }
 
     public function getStatusOrder($id)
