@@ -30,5 +30,8 @@ return [
   'gamification' => [
     'endpoint' => env('GAMIFICATION_ENDPOINT'),
     'key_name' => 'pln_ubah_daya'
+  ],
+  'plnmobile' => [
+     'endpoint' => env('PLNMOBILE_ENDPOINT')
   ]
 ];

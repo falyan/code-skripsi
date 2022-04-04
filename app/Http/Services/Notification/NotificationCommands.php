@@ -3,15 +3,19 @@
 namespace App\Http\Services\Notification;
 
 use App\Http\Services\Service;
+use App\Models\Customer;
 use App\Models\Notification;
 use GuzzleHttp\Client;
 
 class NotificationCommands extends Service
 {
+    static $apiendpointplnmobile;
+
     static function init()
     {
         self::$curl = new Client();
         self::$apiendpoint = config('credentials.radagast.endpoint');
+        self::$apiendpointplnmobile = env('PLNMOBILE_ENDPOINT');
     }
 
     public function create($column_name, $column_value, $type, $title, $message, $url_path, $related_pln_mobile_customer_id = null, $created_by = null)
@@ -76,6 +80,35 @@ class NotificationCommands extends Service
         ]);
 
         return json_decode($response->getBody());
+    }
+
+    public function sendPushNotificationCustomerPlnMobile($id, $title, $body){
+        $user = Customer::findOrFail($id);
+        $signature = hash('sha256', $user->email.$user->phone);
+
+        self::$header = [
+            'signature' => $signature
+        ];
+
+        $param = static::setParamAPI([
+        ]);
+
+        $json_body = [
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'title' => $title,
+            'body' => $body
+        ];
+
+        $url = sprintf('%s/%s', static::$apiendpointplnmobile, 'beyondkwh/push-notif' . $param);
+
+        $response = static::$curl->request('POST', $url, [
+            'http_errors' => false,
+            'headers' => self::$header,
+            'json' => $json_body
+        ]);
+
+        return true;
     }
 
     static function setParamAPI($data = [])

@@ -32,5 +32,6 @@ class AppServiceProvider extends ServiceProvider
         IconcashManager::init();
         NotificationCommands::init();
         VoucherCommands::init();
+        NotificationCommands::init();
     }
 }

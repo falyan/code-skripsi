@@ -100,11 +100,12 @@ class VoucherCommands{
             throw_if(!$orders, Exception::class, new Exception('Terjadi kesalahan: Gagal menyimpan data voucher', 400));
 
             $title = 'Selamat Anda Mendapatkan Voucher';
-            $message = 'Selamat anda mendapatkan voucher ubah daya!';
+            $message = 'Selamat anda mendapatkan voucher ubah daya! Cek voucher anda pada voucher saya di bagian profil ';
             $url_path = 'v1/buyer/query/transaction/' . $order->buyer->id . '/detail/' . $order->id;
             $notificationCommand = new NotificationCommands();
             $notificationCommand->create('customer_id', $order->buyer->id, 2, $title, $message, $url_path);
-            $notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+//            $notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+            $notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
         }
 
         return [
