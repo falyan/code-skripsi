@@ -88,8 +88,8 @@ class TransactionController extends Controller
             $customer = Auth::user();
             $request = request()->all();
             $request['merchants'] = array_map(function ($merchant) {
-                if (data_get($merchant, 'delivery_method') == 'custom'){
-                    if (data_get($merchant, 'has_custom_logistic') == false || null){
+                if (data_get($merchant, 'delivery_method') == 'custom') {
+                    if (data_get($merchant, 'has_custom_logistic') == false || null) {
                         throw new Exception('Merchant ' . data_get($merchant, 'name') . ' tidak mendukung pengiriman oleh seller', 404);
                     }
                     data_set($merchant, 'delivery_method', 'Pengiriman oleh Seller');
@@ -104,9 +104,11 @@ class TransactionController extends Controller
                     if (data_get($item, 'quantity') < $product->minimum_purchase) {
                         throw new Exception('Pembelian minimum untuk produk ' . $product->name . ' adalah ' . $product->minimum_purchase, 400);
                     }
-                    if (data_get($item, 'variant_value_product_id') != null){
-                        if (VariantStock::where('variant_value_product_id', data_get($item, 'variant_value_product_id'))
-                                ->where('status', 1)->pluck('amount')->first() < data_get($item, 'quantity')){
+                    if (data_get($item, 'variant_value_product_id') != null) {
+                        if (
+                            VariantStock::where('variant_value_product_id', data_get($item, 'variant_value_product_id'))
+                            ->where('status', 1)->pluck('amount')->first() < data_get($item, 'quantity')
+                        ) {
                             throw new Exception('Stok variant produk dengan id ' . data_get($item, 'variant_value_product_id') . ' tidak mencukupi', 400);
                         }
                     }
@@ -120,7 +122,7 @@ class TransactionController extends Controller
                     array_map(function ($item) use ($merchant) {
                         $productCommand = new ProductCommands();
 
-                        if (data_get($item, 'variant_value_product_id') != null){
+                        if (data_get($item, 'variant_value_product_id') != null) {
                             $variant_stock = VariantStock::where('variant_value_product_id', data_get($item, 'variant_value_product_id'))
                                 ->where('status', 1)->first();
 
@@ -615,26 +617,30 @@ class TransactionController extends Controller
                 $title = 'Pesanan Dikonfirmasi';
                 $message = 'Pesanan anda sedang diproses oleh penjual.';
                 $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-                if (empty($order)){
+                if (empty($order)) {
                     $response['success'] = false;
                     $response['message'] = 'Gagal mendapatkan data pesanan';
                     return $response;
                 }
-//                $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+                //                $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
                 $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
                 $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
                 $total_amount_trx = $total_delivery_fee_trx = 0;
 
-                foreach($orders as $o){
+                foreach ($orders as $o) {
                     $total_amount_trx += $o->total_amount;
                     $total_delivery_fee_trx += $o->delivery->delivery_fee;
                 }
 
-                if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
+                if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000) {
                     $this->voucherCommand->generateVoucher($order);
                 }
+
+                $mailSender = new MailSenderManager();
+                $mailSender->mailAcceptOrder($order_id);
             }
+
             DB::commit();
             return $response;
         } catch (Exception $e) {
@@ -650,7 +656,7 @@ class TransactionController extends Controller
             $response = $this->transactionCommand->updateOrderStatus($order_id, '09', $notes);
             $order = Order::with('detail')->find($order_id);
 
-            foreach ($order->detail as $detail){
+            foreach ($order->detail as $detail) {
                 $stock = ProductStock::where('product_id', $detail->product_id)
                     ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
 
@@ -688,20 +694,20 @@ class TransactionController extends Controller
             $title = 'Pesanan Dikirim';
             $message = 'Pesanan anda sedang dalam pengiriman.';
             $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-//            $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+            //            $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
             $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
-//            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
-//            $total_amount_trx = $total_delivery_fee_trx = 0;
-//
-//            foreach($orders as $o){
-//                $total_amount_trx += $o->total_amount;
-//                $total_delivery_fee_trx += $o->delivery->delivery_fee;
-//            }
-//
-//            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
-//                $this->voucherCommand->generateVoucher($order);
-//            }
+            //            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+            //            $total_amount_trx = $total_delivery_fee_trx = 0;
+            //
+            //            foreach($orders as $o){
+            //                $total_amount_trx += $o->total_amount;
+            //                $total_delivery_fee_trx += $o->delivery->delivery_fee;
+            //            }
+            //
+            //            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
+            //                $this->voucherCommand->generateVoucher($order);
+            //            }
             DB::commit();
 
             $mailSender = new MailSenderManager();
@@ -739,20 +745,20 @@ class TransactionController extends Controller
             $title = 'Pesanan Dikirim';
             $message = 'Pesanan anda sedang dalam pengiriman.';
             $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-//            $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+            //            $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
             $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
-//            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
-//            $total_amount_trx = $total_delivery_fee_trx = 0;
-//
-//            foreach($orders as $o){
-//                $total_amount_trx += $o->total_amount;
-//                $total_delivery_fee_trx += $o->delivery->delivery_fee;
-//            }
-//
-//            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
-//                $this->voucherCommand->generateVoucher($order);
-//            }
+            //            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+            //            $total_amount_trx = $total_delivery_fee_trx = 0;
+            //
+            //            foreach($orders as $o){
+            //                $total_amount_trx += $o->total_amount;
+            //                $total_delivery_fee_trx += $o->delivery->delivery_fee;
+            //            }
+            //
+            //            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
+            //                $this->voucherCommand->generateVoucher($order);
+            //            }
             DB::commit();
 
             $mailSender = new MailSenderManager();
@@ -797,9 +803,9 @@ class TransactionController extends Controller
                 $iconcash = Customer::where('merchant_id', $order->merchant_id)->first()->iconcash;
                 $account_type_id = null;
 
-                if (env('APP_ENV') == 'staging'){
+                if (env('APP_ENV') == 'staging') {
                     $account_type_id = 13;
-                } elseif (env('APP_ENV') == 'production'){
+                } elseif (env('APP_ENV') == 'production') {
                     $account_type_id = 50;
                 } else {
                     $account_type_id = 13;
@@ -859,7 +865,7 @@ class TransactionController extends Controller
 
                 $order = Order::with('detail')->find($id);
 
-                foreach ($order->detail as $detail){
+                foreach ($order->detail as $detail) {
                     $stock = ProductStock::where('product_id', $detail->product_id)
                         ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
 
@@ -1046,7 +1052,7 @@ class TransactionController extends Controller
                 $notificationCommand->create($column_name_merchant, $column_value_merchant, $type, $title_merchant, $message_merchant, $url_path_merchant);
             }
 
-            foreach ($orders as $order){
+            foreach ($orders as $order) {
                 $notificationCommand = new NotificationCommands();
                 $customer = Customer::where('merchant_id', $order->merchant_id)->first();
                 $notificationCommand->sendPushNotification($customer->id, $title_merchant, $message_merchant, 'active');
@@ -1062,7 +1068,8 @@ class TransactionController extends Controller
         }
     }
 
-    public function getDeliveryDiscount(){
+    public function getDeliveryDiscount()
+    {
         try {
             $data = $this->transactionQueries->getDeliveryDiscount();
 
@@ -1076,20 +1083,22 @@ class TransactionController extends Controller
         }
     }
 
-    public function getCustomerDiscount(){
+    public function getCustomerDiscount()
+    {
         try {
             $discount = $this->transactionQueries->getCustomerDiscount(Auth::user()->id, Auth::user()->email);
             return $this->respondWithData($discount, 'Data diskon customer berhasil didapatkan');
-        }catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function countCheckoutPrice(){
+    public function countCheckoutPrice()
+    {
         $validator = Validator::make(request()->all(), [
             'merchants' => 'required|array',
             'merchants.*.merchant_id' => 'required',
-//            'merchants.*.delivery_method' => 'required',
+            //            'merchants.*.delivery_method' => 'required',
             'merchants.*.delivery_fee' => 'required',
             'merchants.*.delivery_discount' => 'required',
             'merchants.*.products' => 'required|array',

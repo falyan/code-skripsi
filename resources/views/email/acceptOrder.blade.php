@@ -62,7 +62,7 @@
                                     <p style="font-size: small;font-weight: bold;">Halo Jane Doe,</p>
                                     <h2 style="color: #00A2B9;margin: 0; padding: 0;
                                     line-height: 1.6;">
-                                        Pesanan Anda sedang dikirim!
+                                        Pesanan Dikonfirmasi Penjual
                                     </h2>
                                     @php
                                         \Carbon\Carbon::setLocale('id');
@@ -93,63 +93,100 @@
             <tr>
                 <td width="600">
                     <div style="padding-left: 30px; padding-right: 30px;">
+                        @if ($order->voucher_ubah_daya_code)
+                            <div
+                                style="margin-bottom: 20px;margin-top: 20px;padding-bottom: 20px;padding-top: 20px;border-radius: 20px;background-color: #E6F6F8;">
+                                <div style="text-align: center;">
+                                    <span style="color:#00A2B9;font-weight:bold;">Selamat! Anda mendapatkan Voucher Ubah
+                                        Daya</span>
+                                </div>
+                                <div style="width: 60%; margin-left: auto;margin-right: auto;">
+                                    <div style="
+                                    width: 100%;
+                                    background-image: url('https://api-central.air.id/plnmp-sauron-development/api/firebase/file/load/Marketplace~products~1648611938e5c7d82e-4b25-445b-8fb4-9460cfa289d0.png');
+                                    background-repeat: no-repeat;
+                                    background-size: contain;
+                                    background-position: center;">
+                                        <div style="margin-left: 20%;padding: 10% 5% 10% 0;">
+                                            <table>
+                                                <tbody style="color: #fff;text-align: left;font-size: 12px;">
+                                                    <tr>
+                                                        <td style="font-weight: bold;padding-bottom: 5px;">Voucher Ubah
+                                                            Daya</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="opacity: 0.7;padding-bottom: 5px;">Voucher ini dapat
+                                                            digunakan di PLN Mobile pada menu Ubah Daya dan Migrasi.
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="font-weight: bold;padding-bottom: 5px;">
+                                                            {{ $order->voucher_ubah_daya_code }}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    style="width: fit-content; text-align: center; vertical-align: middle; margin-left: auto;margin-right: auto;border-radius: 5px;background: #fff;padding: 5px 7px 5px 7px;">
+                                    <img style="display: inline-block;width:15px;vertical-align: middle;"
+                                        src="https://api-central.air.id/plnmp-sauron-development/api/firebase/file/load/Marketplace~products~16487308789891cd8b-e1e8-4f14-a69a-6b2018b688ec.png"
+                                        alt="">
+                                    <p style="display: inline-block; font-size: 12px;margin:0;vertical-align: middle;">
+                                        Anda hanya bisa mendapatkan satu voucher ubah daya</p>
+                                </div>
+                            </div>
+                        @endif
 
-                        <img src="https://api-central.air.id/plnmp-sauron-development/api/firebase/file/load/Marketplace~products~1648611114d22261b7-c039-4937-bfe3-93a03a90c85a.png"
-                            alt="" style="max-width: 150px;display:block;margin: 50px auto 50px auto;">
+                        <p style="color: #666;font-size: 15px;">Berikut detail pembayaran Anda :</p>
 
-                        <p style="color: #666;font-size: 15px;margin: 50px 0 50px 0;">Pesanan Anda saat ini sedang dalam
-                            proses pengiriman. Silakan cek nomor resi yang tercantum di bawah ini.</p>
-
-                        <div style="margin-bottom: 20px;border-radius: 20px;background-color: #E6F6F8;">
-                            <div style="padding: 30px;">
-                                <table style="width: 100%">
-                                    <tbody>
-                                        <tr>
-                                            <td style="width: 50%;">
-                                                <span style="color:#00A2B9;font-weight:bold;">Detail Pengiriman</span>
-                                            </td>
-                                            <td style="width: 50%;">
-                                                <span style="color:#00A2B9;font-weight:bold;">Alamat Pengiriman</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="width: 50%;">
-                                                <div>
-                                                    <span style="font-size: 14px;color:#666;">Jasa Pengiriman</span>
-                                                    <p style="color: #666;margin-top: 0;font-weight: bold;">
-                                                        {{ $order->delivery->delivery_method }}</p>
-                                                </div>
-
-                                                <div>
-                                                    <span style="font-size: 14px;color:#666;">Nomor Resi</span>
-                                                    <p style="color: #666;margin-top: 0;font-weight: bold;">
-                                                        {{ $order->delivery->awb_number }}</p>
-                                                </div>
-
-                                                <div>
-                                                    <span style="font-size: 14px;color:#666;">Tanggal Pemesanan</span>
-                                                    <p style="color: #666;margin-top: 0;font-weight: bold;">
-                                                        {{ \Carbon\Carbon::parse($order->order_date)->isoFormat('D MMMM Y, H:m') }}
-                                                        WIB</p>
-                                                </div>
-                                            </td>
-                                            <td style="width: 50%;">
-                                                <p style="color: #666;margin-top: 0;font-weight: bold;">
-                                                    {{ $destination_name }}</p>
-
-                                                <p style="color: #666;">
-                                                    {{ $order->delivery->address ?? '-' }},
-                                                    {{ $order->delivery->district->name }},
-                                                    {{ $order->delivery->city->name }},
-                                                    {{ $order->delivery->postal_code }}
-                                                </p>
-
-                                                <p style="color: #666;">+{{ $order->delivery->receiver_phone }}</p>
-                                            </td>
-                                        </tr>
-                                    </tbody>
+                        <div style="margin-bottom: 10px;
+                        border-radius: 20px;
+                        background-color: #E6F6F8;
+                        margin-right: 50px;
+                        margin-left:50px;">
+                            <div style=" padding: 2px 5px;">
+                                <table style="margin: 0px 10px 0px 10px;">
+                                    <tr>
+                                        <td style="font-size: 14px;color:#666;padding: 10px 30px 10px 10px;">Metode
+                                            Pembayaran</td>
+                                        <td style="font-weight: bold;">{{ $order->payment->payment_method ?? '-' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-size: 14px;color:#666;padding: 10px 30px 10px 10px;">Total
+                                            Pembayaran</td>
+                                        <td style="color: #FF5E5E;font-weight: bold;">Rp {{ number_format($order->payment->payment_amount, 2, ',', '.') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-size: 14px;color:#666;padding: 10px 30px 10px 10px;">Waktu
+                                            Pembayaran</td>
+                                        <td style="font-weight: bold;">{{ \Carbon\Carbon::parse($order->order_date)->isoFormat('dddd, D MMMM Y, H:m') }} WIB</td>
+                                    </tr>
                                 </table>
                             </div>
+                        </div>
+
+                        <div style="border-radius: 20px;
+                        background-color: #ffe7e7;
+                        margin-right: 50px;
+                        margin-left:50px;">
+                            <table style="margin: 10px 25px 10px 25px;">
+                                <tr>
+                                    <td align="left">
+                                        <a style="width: 50px;padding-right: 10px;">
+                                            <img src="https://api-central.air.id/plnmp-sauron-development/api/firebase/file/load/Marketplace~products~164915105549826745-05ca-4db4-b37e-9ed073e63112.png"
+                                                alt="" style="max-width: 30px;">
+                                        </a>
+                                    </td>
+                                    <td align="left">
+                                        <p style="font-size: small;color: #FF5E5E;padding: 0;">Jangan memberitahukan
+                                            bukti dan data pembayaran kepada
+                                            pihak manapun kecuali <span style="font-weight: bold;">Marketplace</span>.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
 
                         <div>
