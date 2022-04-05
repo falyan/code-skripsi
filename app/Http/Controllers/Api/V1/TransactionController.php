@@ -586,6 +586,7 @@ class TransactionController extends Controller
     public function acceptOrder(Request $request)
     {
         try {
+            DB::beginTransaction();
             $rules = [
                 'id.*' => 'required',
             ];
@@ -634,9 +635,10 @@ class TransactionController extends Controller
                     $this->voucherCommand->generateVoucher($order);
                 }
             }
-
+            DB::commit();
             return $response;
         } catch (Exception $e) {
+            DB::rollBack();
             return $this->respondErrorException($e, request());
         }
     }
