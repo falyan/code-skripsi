@@ -12,7 +12,10 @@ class BannerQueries extends Service
         return [
             'sukses' => true,
             'message' => !empty($result) ? 'Berhasil mendapatkan data banner' : 'Data banner tidak ada',
-            'data' => ['url_path' => $result ?? '']
+            'data' => [
+                'url_path' => $result ?? '',
+                'deeplink' => '/mkp'
+            ]
         ];
     }
 }

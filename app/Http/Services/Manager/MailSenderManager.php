@@ -105,6 +105,31 @@ class MailSenderManager
         return;
     }
 
+    public function mailAcceptOrder($order_id)
+    {
+        $transactionQueries = new TransactionQueries();
+        $order = $transactionQueries->getDetailTransaction($order_id);
+        $customer = $order->buyer;
+        $data = [
+            'destination_name' => $order->merchant->name ?? 'Toko Favorit',
+            'order' => $order
+        ];
+
+        Mail::send('email.acceptOrder', $data, function ($mail) use ($customer) {
+            $mail->to($customer->email, 'no-reply')
+            ->subject("Pesanan Sedang Dikirim");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        if (Mail::failures()) {
+            Log::error('Gagal mengirim email pesanan baru untuk ke email: ' . $customer->email);
+        } else {
+            Log::info('Berhasil mengirim email pesanan baru untuk ke email: ' . $customer->email);
+        }
+
+        return;
+    }
+
     public function mailOrderArrived($order_id, $date_arrived)
     {
         $transactionQueries = new TransactionQueries();
