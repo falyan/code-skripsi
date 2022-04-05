@@ -613,7 +613,7 @@ class TransactionController extends Controller
 
                 $title = 'Pesanan Dikonfirmasi';
                 $message = 'Pesanan anda sedang diproses oleh penjual.';
-                $order = Order::with(['buyer'])->find($order_id);
+                $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
                 if (empty($order)){
                     $response['success'] = false;
                     $response['message'] = 'Gagal mendapatkan data pesanan';
@@ -621,6 +621,18 @@ class TransactionController extends Controller
                 }
 //                $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
                 $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+
+                $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+                $total_amount_trx = $total_delivery_fee_trx = 0;
+
+                foreach($orders as $o){
+                    $total_amount_trx += $o->total_amount;
+                    $total_delivery_fee_trx += $o->delivery->delivery_fee;
+                }
+
+                if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
+                    $this->voucherCommand->generateVoucher($order);
+                }
             }
 
             return $response;
@@ -677,17 +689,17 @@ class TransactionController extends Controller
 //            $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
             $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
-            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
-            $total_amount_trx = $total_delivery_fee_trx = 0;
-
-            foreach($orders as $o){
-                $total_amount_trx += $o->total_amount;
-                $total_delivery_fee_trx += $o->delivery->delivery_fee;
-            }
-
-            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
-                $this->voucherCommand->generateVoucher($order);
-            }
+//            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+//            $total_amount_trx = $total_delivery_fee_trx = 0;
+//
+//            foreach($orders as $o){
+//                $total_amount_trx += $o->total_amount;
+//                $total_delivery_fee_trx += $o->delivery->delivery_fee;
+//            }
+//
+//            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
+//                $this->voucherCommand->generateVoucher($order);
+//            }
             DB::commit();
 
             $mailSender = new MailSenderManager();
@@ -728,17 +740,17 @@ class TransactionController extends Controller
 //            $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
             $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
-            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
-            $total_amount_trx = $total_delivery_fee_trx = 0;
-
-            foreach($orders as $o){
-                $total_amount_trx += $o->total_amount;
-                $total_delivery_fee_trx += $o->delivery->delivery_fee;
-            }
-
-            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
-                $this->voucherCommand->generateVoucher($order);
-            }
+//            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+//            $total_amount_trx = $total_delivery_fee_trx = 0;
+//
+//            foreach($orders as $o){
+//                $total_amount_trx += $o->total_amount;
+//                $total_delivery_fee_trx += $o->delivery->delivery_fee;
+//            }
+//
+//            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
+//                $this->voucherCommand->generateVoucher($order);
+//            }
             DB::commit();
 
             $mailSender = new MailSenderManager();
