@@ -157,11 +157,11 @@ class ProductQueries extends Service
         }])->with(['merchant' => function ($merchant) {
             $merchant->with(['city:id,name'])->select('id', 'name', 'address', 'postal_code', 'city_id', 'photo_url');
         }, 'product_stock:id,product_id,amount,uom', 'product_photo:id,product_id,url', 'is_wishlist'])
-            ->where('product.name', 'ILIKE', '%' . $keyword . '%')
-            ->orWhereHas('merchant', function ($query) use ($keyword) {
-                $query->where('name', 'ILIKE', '%' . $keyword . '%');
-            })->whereHas('merchant', function ($merchant){
+            ->whereHas('merchant', function ($merchant){
                 $merchant->where('status', 1);
+            })->where('product.name', 'ILIKE', '%' . $keyword . '%')
+            ->orWhereHas('merchant', function ($query) use ($keyword) {
+                $query->where('name', 'ILIKE', '%' . $keyword . '%')->where('status', 1);
             });
 
         $filtered_data = $this->filter($products, $filter);
