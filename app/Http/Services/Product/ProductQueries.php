@@ -23,7 +23,9 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo', 'merchant.city', 'is_wishlist']); //todo paginate 10
+        }])->with(['product_stock', 'product_photo', 'merchant.city', 'is_wishlist'])->whereHas('merchant', function ($merchant){
+            $merchant->where('status', 1);
+        }); //todo paginate 10
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
@@ -158,6 +160,8 @@ class ProductQueries extends Service
             ->where('product.name', 'ILIKE', '%' . $keyword . '%')
             ->orWhereHas('merchant', function ($query) use ($keyword) {
                 $query->where('name', 'ILIKE', '%' . $keyword . '%');
+            })->whereHas('merchant', function ($merchant){
+                $merchant->where('status', 1);
             });
 
         $filtered_data = $this->filter($products, $filter);
@@ -238,7 +242,9 @@ class ProductQueries extends Service
                     });
                 }])->with(['merchant' => function ($merchant) {
                     $merchant->with('city:id,name');
-                }, 'product_stock', 'product_photo', 'is_wishlist'])->where('category_id', $obj->id)->get();
+                }, 'product_stock', 'product_photo', 'is_wishlist'])->whereHas('merchant', function ($merchant){
+                    $merchant->where('status', 1);
+                })->where('category_id', $obj->id)->get();
 
                 array_push($collection_product, $products);
             }
@@ -342,7 +348,9 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])->orderBy('order_details_count', 'DESC');
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])->whereHas('merchant', function ($merchant){
+            $merchant->where('status', 1);
+        })->orderBy('order_details_count', 'DESC');
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -379,7 +387,9 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }]);
+        }])->whereHas('merchant', function ($merchant){
+            $merchant->where('status', 1);
+        });
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -434,7 +444,10 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])->latest();
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
+            ->whereHas('merchant', function ($merchant){
+                $merchant->where('status', 1);
+            })->latest();
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -467,7 +480,9 @@ class ProductQueries extends Service
         $product = new Product();
 
         $products = $product->with(['product_photo:id,product_id,url'])->where([['merchant_id', $merchant_id], ['is_featured_product', true]])
-            ->select('id', 'name', 'price');
+            ->whereHas('merchant', function ($merchant){
+                $merchant->where('status', 1);
+            })->select('id', 'name', 'price');
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->url_deeplink = 'https://plnmarketplace.page.link?link=https://plnmarketplace.page.link/detail-product?id=' . $product->id;
@@ -529,7 +544,10 @@ class ProductQueries extends Service
                     $details->whereHas('order', function ($order) {
                         $order->whereHas('progress_done');
                     });
-                }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])->where('category_id', $obj->id)->orderBy('order_details_count', 'ASC')->get();
+                }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
+                    ->whereHas('merchant', function ($merchant){
+                        $merchant->where('status', 1);
+                    })->where('category_id', $obj->id)->orderBy('order_details_count', 'ASC')->get();
 
                 array_push($collection_product, $products);
             }
