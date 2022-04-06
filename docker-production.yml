@@ -30,12 +30,12 @@ services:
         - "traefik.http.routers.public-pln-marketplace-saruman-production-websecure.tls=true"
         - "traefik.http.routers.public-pln-marketplace-saruman-production-websecure.entrypoints=websecure"
       mode: replicated
-      replicas: 1
+      replicas: 3
       endpoint_mode: dnsrr
       placement:
         max_replicas_per_node: 1
         constraints:
-          - node.labels.plnmp == gandul
+          - node.labels.plnmp == core
         preferences:
           - spread: node.labels.plnmp
       resources:
