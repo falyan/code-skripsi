@@ -18,6 +18,7 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use LogService;
 
 class TransactionCommands extends Service
 {
@@ -511,7 +512,6 @@ class TransactionCommands extends Service
 
             // $data[] = $product;
         }
-
     }
 
     public function triggerRatingProductSold($type)
