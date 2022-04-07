@@ -59,7 +59,7 @@
                         <tbody>
                             <tr>
                                 <td align="left" style="padding-left:30px;">
-                                    <p style="font-size: small;font-weight: bold;">Halo Jane Doe,</p>
+                                    <p style="font-size: small;font-weight: bold;">Halo {{ $order->buyer->full_name }},</p>
                                     <h2 style="color: #00A2B9;margin: 0; padding: 0;
                                     line-height: 1.6;">
                                         Pesanan Dikonfirmasi Penjual
