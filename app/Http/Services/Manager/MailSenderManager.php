@@ -117,7 +117,7 @@ class MailSenderManager
 
         Mail::send('email.acceptOrder', $data, function ($mail) use ($customer) {
             $mail->to($customer->email, 'no-reply')
-            ->subject("Pesanan Sedang Dikirim");
+            ->subject("Pesanan Siap Dikirim");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
         });
 
