@@ -19,7 +19,7 @@ class DiscussionQueries
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
                     $response->with(['customer', 'merchant']);
-                }])->where('customer_id', $customer_id)->get();
+                }])->where('customer_id', $customer_id)->orderBy('updated_at', 'desc')->get();
             }
 
             if ($status == 'unread') {
@@ -30,7 +30,7 @@ class DiscussionQueries
                 }])->where('customer_id', $customer_id)
                     ->whereHas('discussion_response', function ($response) {
                         $response->where('is_read_customer', false);
-                    })->get();
+                    })->orderBy('updated_at', 'desc')->get();
             }
 
             if ($status == 'read') {
@@ -39,9 +39,9 @@ class DiscussionQueries
                 }, 'discussion_response' => function ($response) {
                     $response->with(['customer', 'merchant']);
                 }])->where('customer_id', $customer_id)
-                    ->whereHas('discussion_response', function ($response) {
-                        $response->where('is_read_customer', true);
-                    })->get();
+                    ->whereDoesntHave('discussion_response', function ($response) {
+                        $response->where('is_read_customer', false);
+                    })->orderBy('updated_at', 'desc')->get();
             }
         }
 
@@ -62,7 +62,7 @@ class DiscussionQueries
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
                     $response->with(['customer', 'merchant']);
-                }])->where('merchant_id', $merchant_id)->get();
+                }])->where('merchant_id', $merchant_id)->orderBy('updated_at', 'desc')->get();
             }
 
             if ($status == 'unread') {
@@ -70,7 +70,7 @@ class DiscussionQueries
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
                     $response->with(['customer', 'merchant']);
-                }])->where([['merchant_id', $merchant_id], ['is_read_merchant', false]])->get();
+                }])->where([['merchant_id', $merchant_id], ['is_read_merchant', false]])->orderBy('updated_at', 'desc')->get();
             }
 
             if ($status == 'read') {
@@ -78,7 +78,7 @@ class DiscussionQueries
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
                     $response->with(['customer', 'merchant']);
-                }])->where([['merchant_id', $merchant_id], ['is_read_merchant', true]])->get();
+                }])->where([['merchant_id', $merchant_id], ['is_read_merchant', true]])->orderBy('updated_at', 'desc')->get();
             }
         }
 
@@ -145,7 +145,7 @@ class DiscussionQueries
             $product->with(['product_photo']);
         }, 'discussion_response' => function ($response) {
             $response->with(['customer', 'merchant']);
-        }])->where('product_id', $product_id)->get();
+        }])->where('product_id', $product_id)->orderBy('updated_at', 'desc')->get();
 
         $data = static::paginate($discussion_list->toArray(), $limit, $page);
         $response['success'] = true;
