@@ -80,6 +80,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('booking/approve', 'TestDriveController@approveBooking');
                     $router->post('booking/reject', 'TestDriveController@rejectBooking');
                 });
+
+                $router->group(['prefix' => 'discussion'], static function () use ($router) {
+                    $router->post('reply', 'DiscussionController@replyBuyerDiscussion');
+                });
             });
 
             $router->group(['prefix' => 'query'], static function () use ($router) {
@@ -155,6 +159,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->group(['prefix' => 'mdr'], static function () use ($router) {
                     $router->get('value/{category_id}', 'MdrController@getMdrValue');
                 });
+
+                $router->group(['prefix' => 'discussion'], static function () use ($router) {
+                    $router->post('list/all', 'DiscussionController@getListAllDiscussionBySeller');
+                    $router->post('list/unread', 'DiscussionController@getListUnreadDiscussionBySeller');
+                    $router->post('list/read', 'DiscussionController@getListReadDiscussionBySeller');
+                });
             });
         });
     });
@@ -162,7 +172,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     $router->group(['prefix' => 'buyer'], static function () use ($router) {
         $router->group(['prefix' => 'query'], static function () use ($router) {
             $router->group(['prefix' => 'address'], static function () use ($router) {
-                $router->group(['middleware' => 'auth'], static function () use ($router){
+                $router->group(['middleware' => 'auth'], static function () use ($router) {
                     $router->get('list', 'CustomerController@getListCustomerAddress');
                     $router->get('default', 'CustomerController@getDefaultCustomerAddress');
                 });
@@ -210,7 +220,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'cart'], static function () use ($router) {
                 $router->get('/', 'CartController@index');
 
-                $router->group(['middleware' => 'auth'], static function () use ($router){
+                $router->group(['middleware' => 'auth'], static function () use ($router) {
                     $router->get('detail/{related_id}[/{buyer_id}]', 'CartController@showDetail');
                 });
             });
@@ -253,6 +263,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('list', 'ReviewController@getListReviewByBuyer');
                 $router->get('list/done', 'ReviewController@getListReviewDoneByBuyer');
                 $router->get('list/undone', 'ReviewController@getListReviewUndoneByBuyer');
+                $router->get('list/transaction/{trx_id}', 'ReviewController@getListReviewByTransaction');
                 $router->get('detail/{review_id}', 'ReviewController@getDetailReview');
             });
 
@@ -267,10 +278,18 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('history', 'TestDriveController@getHistoryByCustomer');
                 $router->get('history/detail/{id}', 'TestDriveController@getDetailBooking');
             });
+
+            $router->group(['prefix' => 'discussion', 'middleware' => 'auth'], static function () use ($router) {
+                $router->post('list/all', 'DiscussionController@getListAllDiscussionByBuyer');
+                $router->post('list/unread', 'DiscussionController@getListUnreadDiscussionByBuyer');
+                $router->post('list/read', 'DiscussionController@getListReadDiscussionByBuyer');
+                $router->post('list/product', 'DiscussionController@getListDiscussionByProduct');
+                $router->get('detail/{id}', 'DiscussionController@getDiscussionByMasterId');
+            });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
             $router->group(['prefix' => 'address'], static function () use ($router) {
-                $router->group(['middleware' => 'auth'], static function () use ($router){
+                $router->group(['middleware' => 'auth'], static function () use ($router) {
                     $router->post('add', 'CustomerController@createCustomerAddress');
                     $router->post('update/{id}', 'CustomerController@updateCustomerAddress');
                     $router->post('default/{id}', 'CustomerController@setDefaultCustomerAddress');
@@ -279,7 +298,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'profile'], static function () use ($router) {
-                $router->group(['middleware' => 'auth'], static function () use ($router){
+                $router->group(['middleware' => 'auth'], static function () use ($router) {
                     $router->post('update', 'CustomerController@updateCustomerProfile');
                 });
             });
@@ -312,6 +331,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->post('booking/{id}', 'TestDriveController@booking');
                 $router->post('booking/{id}/cancel', 'TestDriveController@cancelBooking');
             });
+
+            $router->group(['prefix' => 'discussion', 'middleware' => 'auth'], static function () use ($router) {
+                $router->post('create/master', 'DiscussionController@createDiscussionMaster');
+                $router->post('create/response', 'DiscussionController@createDiscussionResponseByBuyer');
+            });
         });
     });
 
@@ -340,7 +364,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     });
 
     $router->group(['prefix' => 'order'], static function () use ($router) {
-        $router->group(['middleware' => 'auth'], static function () use ($router){
+        $router->group(['middleware' => 'auth'], static function () use ($router) {
             $router->post('/{id}/request-cancel', 'TransactionController@requestCancelOrder');
         });
         $router->post('/{id}/cancel', 'TransactionController@cancelOrder');
