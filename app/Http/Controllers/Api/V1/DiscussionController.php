@@ -339,4 +339,12 @@ class DiscussionController extends Controller
             return $this->respondErrorException($e, $id);
         }
     }
+
+    public function buyerReadDiscussion($id){
+        try {
+            return $this->discussionCommands->buyerReadDiscussion($id);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, $id);
+        }
+    }
 }

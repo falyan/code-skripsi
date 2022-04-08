@@ -335,6 +335,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'discussion', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('create/master', 'DiscussionController@createDiscussionMaster');
                 $router->post('create/response', 'DiscussionController@createDiscussionResponseByBuyer');
+                $router->post('read/{id}', 'DiscussionController@buyerReadDiscussion');
             });
         });
     });
