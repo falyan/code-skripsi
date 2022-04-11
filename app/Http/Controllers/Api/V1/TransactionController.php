@@ -815,7 +815,7 @@ class TransactionController extends Controller
                 $client_ref = $this->unique_code($iconcash->token);
                 $corporate_id = 10;
 
-                $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id);
+                $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
 
                 IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
