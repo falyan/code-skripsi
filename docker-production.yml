@@ -19,8 +19,11 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.http.services.pln-marketplace-saruman-production.loadbalancer.server.port=80"
-        - "traefik.http.middlewares.redirectscheme-pln-marketplace-saruman-production.redirectscheme.scheme=https"
         - "traefik.http.middlewares.compress-pln-marketplace-saruman-production.compress=true"
+        - "traefik.http.middlewares.redirectscheme-pln-marketplace-saruman-production.redirectscheme.scheme=https"
+        - "traefik.http.middlewares.ratelimit-pln-marketplace-saruman-production.ratelimit.period=1m"
+        - "traefik.http.middlewares.ratelimit-pln-marketplace-saruman-production.ratelimit.average=100"
+        - "traefik.http.middlewares.ratelimit-pln-marketplace-saruman-production.ratelimit.burst=50"
         - "traefik.http.middlewares.stripprefix-public-pln-marketplace-saruman-production.stripprefix.prefixes=/v1/core"
         - "traefik.http.routers.public-pln-marketplace-saruman-production-web.rule=Host(`api-mkp.iconcash.id`) && PathPrefix(`/v1/core`)"
         - "traefik.http.routers.public-pln-marketplace-saruman-production-web.middlewares=redirectscheme-pln-marketplace-saruman-production"
