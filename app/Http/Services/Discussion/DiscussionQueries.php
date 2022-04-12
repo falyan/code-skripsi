@@ -177,6 +177,22 @@ class DiscussionQueries
         return $response;
     }
 
+    public function countUnreadDiscussion($customer_id){
+        $count_discussion = DiscussionMaster::with(['discussion_response'])
+            ->where('customer_id', $customer_id)
+            ->whereHas('discussion_response', function ($response) {
+                $response->where('is_read_customer', false);
+            })->orderBy('updated_at', 'desc')->count();
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan jumlah diskusi';
+        $response['data'] = [
+            'count_discussion' => $count_discussion
+        ];
+
+        return $response;
+    }
+
     static function paginate(array $items, $perPage = 10, $page = 1, $options = [])
     {
         $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);

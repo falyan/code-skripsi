@@ -285,6 +285,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->post('list/read', 'DiscussionController@getListReadDiscussionByBuyer');
                 $router->post('list/product', 'DiscussionController@getListDiscussionByProduct');
                 $router->get('detail/{id}', 'DiscussionController@getDiscussionByMasterId');
+                $router->get('count/unread', 'DiscussionController@countUnreadDiscussionBuyer');
             });
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {

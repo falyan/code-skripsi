@@ -347,4 +347,13 @@ class DiscussionController extends Controller
             return $this->respondErrorException($e, $id);
         }
     }
+
+    public function countUnreadDiscussionBuyer(){
+        $customer_id = Auth::id();
+        try {
+            return $this->discussionQueries->countUnreadDiscussion($customer_id);
+        }catch (Exception $e) {
+            return $this->respondErrorException($e, $customer_id);
+        }
+    }
 }
