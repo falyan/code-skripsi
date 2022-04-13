@@ -11,6 +11,7 @@ services:
       - loadbalancer
     volumes:
       - /etc/localtime:/etc/localtime:ro
+      - /mnt/nfs-logs/pln-marketplace-saruman-production:/var/www/html/storage/logs
     logging:
       driver: loki
       options:
