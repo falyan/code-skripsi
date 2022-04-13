@@ -88,7 +88,8 @@ class DiscussionCommands extends Service
                     'message' => $data['message'],
                     'created_by' => $user->full_name ?? 'seller',
                     'updated_by' =>  $user->full_name ?? 'seller',
-                    'is_read_customer' => false
+                    'is_read_customer' => false,
+                    'is_read_merchant' => true
                 ]);
 
                 if (!$reply) {
@@ -136,6 +137,47 @@ class DiscussionCommands extends Service
                 $data = DiscussionResponse::find($resp->id);
                 $data->is_read_customer = true;
                 $data->save();
+            }
+            DB::commit();
+
+            $response['success'] = true;
+            $response['message'] = 'Berhasil merubah status diskusi';
+
+            return $response;
+
+        }catch (Exception $e){
+            DB::rollBack();
+            if (in_array($e->getCode(), self::$error_codes)) {
+                throw new Exception($e->getMessage(), $e->getCode());
+            }
+            throw new Exception($e->getMessage(), 500);
+        }
+    }
+
+    public function sellerReadDiscussion($id){
+        try {
+            DB::beginTransaction();
+            $master = DiscussionMaster::with(['discussion_response'])->where('id', $id)->first();
+
+            if (empty($master)){
+                $response['success'] = false;
+                $response['message'] = 'Data diskusi dengan id '. $id . ' tidak ditemukan';
+
+                return $response;
+            }
+
+            foreach ($master->discussion_response as $resp){
+                $data = DiscussionResponse::find($resp->id);
+                $data->is_read_merchant = true;
+                $data->save();
+            }
+
+            $master->is_read_merchant = true;
+            if (!$master->save()){
+                $response['success'] = false;
+                $response['message'] = 'Gagal merubah status diskusi';
+
+                return $response;
             }
             DB::commit();
 

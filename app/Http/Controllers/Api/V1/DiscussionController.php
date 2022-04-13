@@ -348,6 +348,14 @@ class DiscussionController extends Controller
         }
     }
 
+    public function sellerReadDiscussion($id){
+        try {
+            return $this->discussionCommands->sellerReadDiscussion($id);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, $id);
+        }
+    }
+
     public function countUnreadDiscussionBuyer(){
         $customer_id = Auth::id();
         try {

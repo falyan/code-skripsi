@@ -83,6 +83,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
                 $router->group(['prefix' => 'discussion'], static function () use ($router) {
                     $router->post('reply', 'DiscussionController@replyBuyerDiscussion');
+                    $router->post('read/{id}', 'DiscussionController@sellerReadDiscussion');
                 });
             });
 
@@ -164,6 +165,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('list/all', 'DiscussionController@getListAllDiscussionBySeller');
                     $router->post('list/unread', 'DiscussionController@getListUnreadDiscussionBySeller');
                     $router->post('list/read', 'DiscussionController@getListReadDiscussionBySeller');
+                    $router->get('detail/{id}', 'DiscussionController@getDiscussionByMasterId');
                 });
             });
         });

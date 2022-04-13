@@ -70,7 +70,22 @@ class DiscussionQueries
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
                     $response->with(['customer', 'merchant']);
-                }])->where([['merchant_id', $merchant_id], ['is_read_merchant', false]])->orderBy('updated_at', 'desc')->get();
+                }])->where([['merchant_id', $merchant_id], ['is_read_merchant', false]])
+                    ->orWhere('merchant_id', $merchant_id)
+                    ->whereHas('discussion_response', function ($response) {
+                        $response->where('is_read_merchant', false);
+                    })->orderBy('updated_at', 'desc')->get();
+
+//                if (empty($discussion_list)){
+//                    $discussion_list = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
+//                        $product->with(['product_photo']);
+//                    }, 'discussion_response' => function ($response) {
+//                        $response->with(['customer', 'merchant']);
+//                    }])->where('merchant_id', $merchant_id)
+//                        ->whereHas('discussion_response', function ($response) {
+//                            $response->where('is_read_merchant', false);
+//                        })->orderBy('updated_at', 'desc')->get();
+//                }
             }
 
             if ($status == 'read') {
@@ -78,7 +93,11 @@ class DiscussionQueries
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
                     $response->with(['customer', 'merchant']);
-                }])->where([['merchant_id', $merchant_id], ['is_read_merchant', true]])->orderBy('updated_at', 'desc')->get();
+                }])->where([['merchant_id', $merchant_id], ['is_read_merchant', true]])
+                    ->orWhere('merchant_id', $merchant_id)
+                    ->whereDoesntHave('discussion_response', function ($response) {
+                        $response->where('is_read_merchant', false);
+                    })->orderBy('updated_at', 'desc')->get();
             }
         }
 
