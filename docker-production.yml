@@ -11,6 +11,7 @@ services:
       - loadbalancer
     volumes:
       - /etc/localtime:/etc/localtime:ro
+      - /mnt/nfs-logs/pln-marketplace-saruman-production:/var/www/html/storage/logs
     logging:
       driver: loki
       options:
@@ -29,7 +30,7 @@ services:
         - "traefik.http.routers.public-pln-marketplace-saruman-production-web.middlewares=redirectscheme-pln-marketplace-saruman-production"
         - "traefik.http.routers.public-pln-marketplace-saruman-production-web.entrypoints=web"
         - "traefik.http.routers.public-pln-marketplace-saruman-production-websecure.rule=Host(`api-mkp.iconcash.id`) && PathPrefix(`/v1/core`)"
-        - "traefik.http.routers.public-pln-marketplace-saruman-production-websecure.middlewares=stripprefix-public-pln-marketplace-saruman-production,compress-pln-marketplace-saruman-production"
+        - "traefik.http.routers.public-pln-marketplace-saruman-production-websecure.middlewares=stripprefix-public-pln-marketplace-saruman-production,compress-pln-marketplace-saruman-production,ratelimit-pln-marketplace-saruman-production"
         - "traefik.http.routers.public-pln-marketplace-saruman-production-websecure.tls=true"
         - "traefik.http.routers.public-pln-marketplace-saruman-production-websecure.entrypoints=websecure"
       mode: replicated
