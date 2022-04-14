@@ -13,6 +13,7 @@ use App\Models\OrderProgress;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Exception;
+use Illuminate\Support\Facades\Log;
 use stdClass;
 
 class MerchantQueries extends Service
@@ -158,6 +159,12 @@ class MerchantQueries extends Service
     {
         try {
             $merchant = Merchant::with(['city'])->find($merchant_id);
+            Log::info("T00001", [
+                'path_url' => "select.merchant",
+                'query' => [],
+                'body' => Carbon::now('Asia/Jakarta'),
+                'response' => $merchant
+            ]);
             $reviewQueries = new ReviewQueries();
             $data = [];
 
@@ -203,6 +210,12 @@ class MerchantQueries extends Service
         }
 
         $data = $data->get()->toArray();
+        Log::info("T00001", [
+            'path_url' => "count.order",
+            'query' => [],
+            'body' => Carbon::now('Asia/Jakarta'),
+            'response' => $data
+        ]);
         return array_filter($data, function ($order){
             return $order['progress_count'] != 0;
         });

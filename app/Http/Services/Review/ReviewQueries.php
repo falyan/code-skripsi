@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class ReviewQueries{
     public function getListReview($column_name, $related_id){
@@ -105,6 +106,12 @@ class ReviewQueries{
             })->whereHas('progress_active', function ($j) {
                 $j->whereIn('status_code', [88]);
             })->whereHas('review')->get();
+        Log::info("T00001", [
+            'path_url' => "select.order",
+            'query' => [],
+            'body' => Carbon::now('Asia/Jakarta'),
+            'response' => $order
+        ]);
 
         $detail_array = [];
         $reviews = [];
@@ -119,6 +126,12 @@ class ReviewQueries{
                         if ($rate > 5) $rate = 5;
                         $q->where('rate', $operator, $rate);
                     })->first();
+                Log::info("T00001", [
+                    'path_url' => "select.review",
+                    'query' => [],
+                    'body' => Carbon::now('Asia/Jakarta'),
+                    'response' => $review
+                ]);
                 if ($review != null){
                     // $detail->review = $review;
                     // array_push($detail_array, $detail);
