@@ -10,9 +10,11 @@ use App\Models\Product;
 use App\Models\Variant;
 use App\Models\VariantValue;
 use App\Models\VariantValueProduct;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class ProductQueries extends Service
 {
@@ -363,7 +365,12 @@ class ProductQueries extends Service
         });
 
         $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
-
+        Log::info("T00001", [
+            'path_url' => "select.product.recommend",
+            'query' => [],
+            'body' => Carbon::now('Asia/Jakarta'),
+            'response' => $data
+        ]);
         //        if ($product->isEmpty()){
         //            $response['success'] = false;
         //            $response['message'] = 'Gagal mendapatkan data produk!';

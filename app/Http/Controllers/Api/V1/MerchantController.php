@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Exception, Input;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class MerchantController extends Controller
@@ -110,6 +111,12 @@ class MerchantController extends Controller
 
     public function activity()
     {
+        Log::info("T00001", [
+            'path_url' => "start.activity",
+            'query' => [],
+            'body' => Carbon::now('Asia/Jakarta'),
+            'response' => 'Start'
+        ]);
         $request = request()->all();
 
         try {

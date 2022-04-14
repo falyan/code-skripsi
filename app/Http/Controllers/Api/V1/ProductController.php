@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Services\Category\CategoryQueries;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Product\ProductQueries;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -253,6 +255,12 @@ class ProductController extends Controller
     public function getRecommendProduct(Request $request)
     {
         try {
+            Log::info("T00001", [
+                'path_url' => "start.recommend",
+                'query' => [],
+                'body' => Carbon::now('Asia/Jakarta'),
+                'response' => 'Start'
+            ]);
             $filter = $request->filter ?? [];
             $sortby = $request->sortby ?? null;
             $limit = $request->limit ?? 10;

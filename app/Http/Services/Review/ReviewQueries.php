@@ -107,7 +107,7 @@ class ReviewQueries{
                 $j->whereIn('status_code', [88]);
             })->whereHas('review')->get();
         Log::info("T00001", [
-            'path_url' => "select.order",
+            'path_url' => "select.order.review",
             'query' => [],
             'body' => Carbon::now('Asia/Jakarta'),
             'response' => $order
