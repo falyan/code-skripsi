@@ -30,8 +30,8 @@ class ProductQueries extends Service
         }); //todo paginate 10
 
         $immutable_data = $products->get()->map(function ($product) {
-            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            //            $product->avg_rating =  null;
+//            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            $product->avg_rating =  0.0;
             $product->reviews = null;
             return $product;
         });
@@ -60,8 +60,8 @@ class ProductQueries extends Service
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
-            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            //            $product->avg_rating =  null;
+//            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            $product->avg_rating =  0.0;
             return $product;
         });
 
@@ -131,8 +131,8 @@ class ProductQueries extends Service
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
-            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            //            $product->avg_rating =  null;
+//            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            $product->avg_rating =  0.0;
             return $product;
         });
 
@@ -171,8 +171,8 @@ class ProductQueries extends Service
 
         $immutable_data = $sorted_data->get()->map(function ($product) {
             $product->reviews = null;
-            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            //            $product->avg_rating =  null;
+//            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            $product->avg_rating =  0.0;
             return $product;
         });
 
@@ -205,8 +205,8 @@ class ProductQueries extends Service
 
         $immutable_data = $sorted_data->get()->map(function ($product) {
             $product->reviews = null;
-            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            //            $product->avg_rating =  null;
+//            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            $product->avg_rating = 0.0;
             return $product;
         });
 
@@ -259,8 +259,8 @@ class ProductQueries extends Service
 
         $immutable_data = $sorted_data->map(function ($product) {
             $product->reviews = null;
-            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            //            $product->avg_rating =  null;
+//            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            $product->avg_rating =  0.0;
             return $product;
         });
 
@@ -404,8 +404,8 @@ class ProductQueries extends Service
         $immutable_data = $sorted_data->get()->map(function ($product) {
             $id = $product->id;
             $product->reviews = null;
-            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            // $product->avg_rating =  null;
+//            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            $product->avg_rating =  0.0;
 
             $product->sold = 0;
             foreach ($product->order_details as $order_detail) {
@@ -516,8 +516,8 @@ class ProductQueries extends Service
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
-            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            //            $product->avg_rating =  null;
+//            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            $product->avg_rating = 0.0;
             return $product;
         });
 
@@ -566,8 +566,8 @@ class ProductQueries extends Service
 
         $immutable_data = $sorted_data->map(function ($product) {
             $product->reviews = null;
-            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            //            $product->avg_rating =  null;
+//            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            $product->avg_rating = 0.0;
             return $product;
         });
 
