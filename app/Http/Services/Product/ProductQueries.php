@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ProductQueries extends Service
@@ -346,36 +347,30 @@ class ProductQueries extends Service
     public function getRecommendProduct($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])->whereHas('merchant', function ($merchant){
-            $merchant->where('status', 1);
-        })->orderBy('order_details_count', 'DESC');
+//        $products = $product->withCount(['order_details' => function ($details) {
+//            $details->whereHas('order', function ($order) {
+//                $order->whereHas('progress_done');
+//            });
+//        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])->whereHas('merchant', function ($merchant){
+//            $merchant->where('status', 1);
+//        })->orderBy('order_details_count', 'DESC');
+        $products = $product->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
+            ->whereHas('merchant', function ($merchant){
+                $merchant->where('status', 1);
+            })->inRandomOrder();
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
         $immutable_data = $sorted_data->get()->map(function ($product) {
             $product->reviews = null;
-            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            //            $product->avg_rating =  null;
+            $product->avg_rating = 0.0;
+//            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
             return $product;
         });
 
         $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
-        Log::info("T00001", [
-            'path_url' => "select.product.recommend",
-            'query' => [],
-            'body' => Carbon::now('Asia/Jakarta'),
-            'response' => $data
-        ]);
-        //        if ($product->isEmpty()){
-        //            $response['success'] = false;
-        //            $response['message'] = 'Gagal mendapatkan data produk!';
-        //            return $response;
-        //        }
+
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -459,19 +454,14 @@ class ProductQueries extends Service
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
-        $immutable_data = $sorted_data->get()->map(function ($product) {
+        $immutable_data = $sorted_data->limit(200)->get()->map(function ($product) {
             $product->reviews = null;
-            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            //            $product->avg_rating =  null;
+            $product->avg_rating = 0.0;
+//            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
             return $product;
         });
         $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
 
-        //        if ($product->isEmpty()){
-        //            $response['success'] = false;
-        //            $response['message'] = 'Gagal mendapatkan data produk!';
-        //            return $response;
-        //        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
