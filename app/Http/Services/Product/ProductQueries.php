@@ -354,7 +354,11 @@ class ProductQueries extends Service
 //        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])->whereHas('merchant', function ($merchant){
 //            $merchant->where('status', 1);
 //        })->orderBy('order_details_count', 'DESC');
-        $products = $product->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
             ->whereHas('merchant', function ($merchant){
                 $merchant->where('status', 1);
             })->inRandomOrder();
@@ -362,7 +366,7 @@ class ProductQueries extends Service
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
-        $immutable_data = $sorted_data->get()->map(function ($product) {
+        $immutable_data = $sorted_data->limit(200)->get()->map(function ($product) {
             $product->reviews = null;
             $product->avg_rating = 0.0;
 //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
