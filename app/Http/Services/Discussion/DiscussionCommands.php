@@ -38,6 +38,12 @@ class DiscussionCommands extends Service
 
     public function createDiscussionResponse($data)
     {
+        $read = false;
+        $master = DiscussionMaster::find($data['master_discussion_id']);
+        if ($master->customer_id == $data['customer_id']){
+            $read = true;
+        }
+
         $discussion = DiscussionResponse::create([
             'master_discussion_id' => $data['master_discussion_id'],
             'customer_id' => $data['customer_id'] ?? null,
@@ -45,7 +51,8 @@ class DiscussionCommands extends Service
             'message' => $data['message'] ?? null,
             'created_by' => $data['name'] ?? 'user',
             'updated_by' => $data['name'] ?? 'user',
-            'is_read_customer' => false
+            'is_read_customer' => $read,
+            'is_read_merchant' => false
         ]);
 
         if (!$discussion) {
