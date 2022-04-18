@@ -4,6 +4,8 @@ namespace App\Http\Services\Category;
 
 use App\Http\Services\Service;
 use App\Models\MasterData;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class CategoryQueries extends Service
 {
@@ -52,6 +54,12 @@ class CategoryQueries extends Service
 
     public function getBasicCategory()
     {
+        Log::info("T00001", [
+            'path_url' => "category.basic",
+            'query' => [],
+            'body' => Carbon::now('Asia/Jakarta'),
+            'response' => ''
+        ]);
         $category = MasterData::where('type', 'product_category')->where('parent_id', null)->orderBy('updated_at', 'DESC')->get();
 
         if ($category->isEmpty()){

@@ -81,6 +81,12 @@ class ProductQueries extends Service
 
     public function getProductAlmostRunningOutByMerchantId($merchant_id, $filter = [], $sortby = null, $current_page = 1, $limit = 10)
     {
+        Log::info("T00001", [
+            'path_url' => "merchant.running-out",
+            'query' => [],
+            'body' => Carbon::now('Asia/Jakarta'),
+            'response' => ''
+        ]);
         $product = new Product();
         $products = $product->with(['product_stock', 'product_photo', 'is_wishlist'])->where('merchant_id', $merchant_id);
 
@@ -346,6 +352,12 @@ class ProductQueries extends Service
 
     public function getRecommendProduct($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
+        Log::info("T00001", [
+            'path_url' => "product.recommend",
+            'query' => [],
+            'body' => Carbon::now('Asia/Jakarta'),
+            'response' => ''
+        ]);
         $product = new Product();
 //        $products = $product->withCount(['order_details' => function ($details) {
 //            $details->whereHas('order', function ($order) {
@@ -383,6 +395,12 @@ class ProductQueries extends Service
 
     public function getBestSellingProductByMerchantId($merchant_id, $filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
+        Log::info("T00001", [
+            'path_url' => "merchant.best-selling",
+            'query' => [],
+            'body' => Carbon::now('Asia/Jakarta'),
+            'response' => ''
+        ]);
         $product = new Product();
         $merchant = Merchant::with(['city'])->find($merchant_id);
         $products = $product->where('merchant_id', $merchant_id)->withCount(['order_details' => function ($details) {
@@ -445,6 +463,12 @@ class ProductQueries extends Service
 
     public function getSpecialProduct($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
+        Log::info("T00001", [
+            'path_url' => "product.special",
+            'query' => [],
+            'body' => Carbon::now('Asia/Jakarta'),
+            'response' => ''
+        ]);
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {

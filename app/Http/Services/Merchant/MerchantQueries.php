@@ -157,6 +157,12 @@ class MerchantQueries extends Service
 
     public static function getActivity($merchant_id, $daterange = [])
     {
+        Log::info("T00001", [
+            'path_url' => "merchant.activity",
+            'query' => [],
+            'body' => Carbon::now('Asia/Jakarta'),
+            'response' => ''
+        ]);
         try {
             $merchant = Merchant::with(['city'])->find($merchant_id);
             Log::info("T00001", [
