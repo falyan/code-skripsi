@@ -17,8 +17,8 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /mnt/nfs-logs/pln-marketplace-saruman-production:/var/www/html/storage/logs
-    # logging:
-    #  driver: loki
+    logging:
+      driver: none
     #  options:
     #    loki-url: "$DATASOURCE_LOKI"
     deploy:
