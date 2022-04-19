@@ -9,13 +9,18 @@ services:
     image: $DOCKER_IMAGE_APP
     networks:
       - loadbalancer
+    ports:
+      - target: 80
+        published: 8892
+        protocol: tcp
+        mode: host
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /mnt/nfs-logs/pln-marketplace-saruman-production:/var/www/html/storage/logs
-    logging:
-      driver: loki
-      options:
-        loki-url: "$DATASOURCE_LOKI"
+    # logging:
+    #  driver: loki
+    #  options:
+    #    loki-url: "$DATASOURCE_LOKI"
     deploy:
       labels:
         - "traefik.enable=true"
@@ -25,7 +30,11 @@ services:
         - "traefik.http.middlewares.ratelimit-pln-marketplace-saruman-production.ratelimit.period=1s"
         - "traefik.http.middlewares.ratelimit-pln-marketplace-saruman-production.ratelimit.average=25"
         - "traefik.http.middlewares.ratelimit-pln-marketplace-saruman-production.ratelimit.burst=25"
+        - "traefik.http.middlewares.stripprefix-local-pln-marketplace-saruman-production.stripprefix.prefixes=/api/plnmp/core"
         - "traefik.http.middlewares.stripprefix-public-pln-marketplace-saruman-production.stripprefix.prefixes=/v1/core"
+        - "traefik.http.routers.local-pln-marketplace-saruman-production-web.rule=Host(`10.14.204.119`) && PathPrefix(`/api/plnmp/core`)"
+        - "traefik.http.routers.local-pln-marketplace-saruman-production-web.middlewares=stripprefix-local-pln-marketplace-saruman-production,compress-pln-marketplace-saruman-production,ratelimit-pln-marketplace-saruman-production"
+        - "traefik.http.routers.local-pln-marketplace-saruman-production-web.entrypoints=web"
         - "traefik.http.routers.public-pln-marketplace-saruman-production-web.rule=Host(`api-mkp.iconcash.id`) && PathPrefix(`/v1/core`)"
         - "traefik.http.routers.public-pln-marketplace-saruman-production-web.middlewares=redirectscheme-pln-marketplace-saruman-production"
         - "traefik.http.routers.public-pln-marketplace-saruman-production-web.entrypoints=web"
