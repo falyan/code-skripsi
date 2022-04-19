@@ -186,6 +186,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/merchant/{merchant_id}/featured', 'ProductController@getMerchantFeaturedProduct');
                 $router->get('{id}', 'ProductController@getProductById');
                 $router->get('recommend/category/{category_key}', 'ProductController@getRecommendProductByCategory');
+                $router->post('filter', 'ProductController@getProductWithFilter');
+                $router->post('filter/count', 'ProductController@countProductWithFilter');
             });
 
             $router->group(['prefix' => 'variant'], static function () use ($router) {
