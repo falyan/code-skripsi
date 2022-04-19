@@ -213,6 +213,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'region'], static function () use ($router) {
                 $router->get('search', 'RegionController@searchDistrict');
+                $router->post('search/province', 'RegionController@searchProvince');
+                $router->post('search/city', 'RegionController@searchCity');
             });
 
             $router->group(['prefix' => 'checkout', 'middleware' => 'auth'], static function () use ($router) {
