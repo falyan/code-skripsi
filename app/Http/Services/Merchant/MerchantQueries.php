@@ -174,8 +174,8 @@ class MerchantQueries extends Service
             $reviewQueries = new ReviewQueries();
             $data = [];
 
-            $data['new_order'] = count(static::getTotalTrx($merchant_id, '01', $daterange));
-            $data['ready_to_deliver'] = count(static::getTotalTrx($merchant_id, '02', $daterange));
+            $data['new_order'] = (static::getTotalTrx($merchant_id, '01', $daterange));
+            $data['ready_to_deliver'] = (static::getTotalTrx($merchant_id, '02', $daterange));
             $data['complained_order'] = count($reviewQueries->getListReviewDoneByRate('merchant_id', $merchant_id, 2, '<=', $daterange)['data']);
             $data['new_review'] = count($reviewQueries->getListReviewDoneByRate('merchant_id', $merchant_id, null, null, $daterange)['data']);
 
@@ -215,16 +215,22 @@ class MerchantQueries extends Service
             }])->where('merchant_id', $merchant_id);
         }
 
-        $data = $data->get()->toArray();
+//        $data = $data->get()->toArray();
+//        return array_filter($data, function ($order){
+//            return $order['progress_count'] != 0;
+//        });
+
+        $data = $data->count();
         Log::info("T00001", [
             'path_url' => "count.order",
             'query' => [],
             'body' => Carbon::now('Asia/Jakarta'),
             'response' => $data
         ]);
-        return array_filter($data, function ($order){
-            return $order['progress_count'] != 0;
-        });
+        return $data;
+//        return array_filter($data, function ($order){
+//            return $order['progress_count'] != 0;
+//        });
     }
 
     // public function getTotalReview($merchant_id, $rate)
