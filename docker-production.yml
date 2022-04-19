@@ -11,7 +11,7 @@ services:
       - loadbalancer
     ports:
       - target: 80
-        published: 8891
+        published: 8892
         protocol: tcp
         mode: host
     volumes:
