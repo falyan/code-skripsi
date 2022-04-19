@@ -9,7 +9,6 @@ services:
     image: $DOCKER_IMAGE_APP
     networks:
       - loadbalancer
-      - local
     ports:
       - target: 80
         published: 8891
