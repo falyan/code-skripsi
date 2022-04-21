@@ -637,11 +637,11 @@ class TransactionController extends Controller
                     $this->voucherCommand->generateVoucher($order);
                 }
 
+                DB::commit();
                 $mailSender = new MailSenderManager();
                 $mailSender->mailAcceptOrder($order_id);
             }
 
-            DB::commit();
             return $response;
         } catch (Exception $e) {
             DB::rollBack();

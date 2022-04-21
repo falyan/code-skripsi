@@ -6,8 +6,10 @@ use App\Http\Services\Notification\NotificationCommands;
 use App\Models\Order;
 use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
-class VoucherCommands{
+class VoucherCommands
+{
     static $apiendpoint;
     static $curl;
     static $header;
@@ -23,7 +25,8 @@ class VoucherCommands{
         ];
     }
 
-    public function generateVoucher($order){
+    public function generateVoucher($order)
+    {
         //Request signature
         $param1 = static::setParamAPI([
             'email' => $order->buyer->email,
@@ -31,8 +34,7 @@ class VoucherCommands{
             'phone' => $order->buyer->phone
         ]);
         $url1 = sprintf('%s/%s', static::$apiendpoint, 'oauth/signature' . $param1);
-        $json_body1 = [
-        ];
+        $json_body1 = [];
 
         $response1 = static::$curl->request('POST', $url1, [
             'headers' => static::$header,
@@ -41,10 +43,17 @@ class VoucherCommands{
         ]);
         $signature = json_decode($response1->getBody());
 
+        Log::info("E00003", [
+            'path_url' => "voucher.signature",
+            'query' => [],
+            'body' => $json_body1,
+            'response' => $signature
+        ]);
+
         throw_if(!$signature, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
 
-        if (!isset($signature->success) || $signature->success != true){
-            throw new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 400);
+        if (!isset($signature->success) || $signature->success != true) {
+            throw new Exception('Terjadi kesalahan: Signature tidak dapat diperoleh', 400);
         }
 
         //Sync account
@@ -55,8 +64,7 @@ class VoucherCommands{
             'signature' => $signature->data->signature
         ]);
         $url2 = sprintf('%s/%s', static::$apiendpoint, 'oauth/sync-account' . $param2);
-        $json_body2 = [
-        ];
+        $json_body2 = [];
 
         $response2 = static::$curl->request('POST', $url2, [
             'headers' => static::$header,
@@ -65,18 +73,24 @@ class VoucherCommands{
         ]);
         $sync_account = json_decode($response2->getBody());
 
+        Log::info("E00003", [
+            'path_url' => "voucher.sync-account",
+            'query' => [],
+            'body' => $json_body2,
+            'response' => $sync_account
+        ]);
+
         throw_if(!$sync_account, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
 
-        if (!isset($sync_account->success) || $sync_account->success != true){
-            throw new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 400);
+        if (!isset($sync_account->success) || $sync_account->success != true) {
+            throw new Exception('Terjadi kesalahan: Gagal melakukan sync account', 400);
         }
 
         //Generate voucher ubahdaya
         static::$header = [
-            'Authorization' => 'Bearer '. $sync_account->data->token
+            'Authorization' => 'Bearer ' . $sync_account->data->token
         ];
-        $param3 = static::setParamAPI([
-        ]);
+        $param3 = static::setParamAPI([]);
         $url3 = sprintf('%s/%s', static::$apiendpoint, 'v1/voucher/redeem/specific' . $param3);
         $json_body3 = [
             'activity_code' => '02',
@@ -90,9 +104,16 @@ class VoucherCommands{
         ]);
         $voucher = json_decode($response3->getBody());
 
+        Log::info("E00003", [
+            'path_url' => "voucher.generate",
+            'query' => [],
+            'body' => $json_body3,
+            'response' => $voucher
+        ]);
+
         throw_if(!$voucher, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
 
-        if ($voucher->success == true){
+        if ($voucher->success == true) {
             $orders = Order::where('no_reference', $order->no_reference)->update([
                 'voucher_ubah_daya_code' => $voucher->data->voucher_code
             ]);
@@ -104,7 +125,7 @@ class VoucherCommands{
             $url_path = 'v1/buyer/query/transaction/' . $order->buyer->id . '/detail/' . $order->id;
             $notificationCommand = new NotificationCommands();
             $notificationCommand->create('customer_id', $order->buyer->id, 2, $title, $message, $url_path);
-//            $notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+            //            $notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
             $notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
         }
 
