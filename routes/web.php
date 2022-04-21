@@ -221,6 +221,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/delivery-discount', 'TransactionController@getDeliveryDiscount');
                 $router->get('/customer-discount', 'TransactionController@getCustomerDiscount');
                 $router->get('/{related_id}', 'TransactionController@buyerIndex');
+
+                $router->get('/{related_id}/category/{category_key}', 'TransactionController@transactionByCategoryKey');
+
                 $router->get('/{related_id}/detail/{id}', 'TransactionController@detailTransaction');
                 $router->get('/{related_id}/on-payment', 'TransactionController@transactionToPay');
                 $router->get('/{related_id}/on-approve', 'TransactionController@transactionOnApprove');
