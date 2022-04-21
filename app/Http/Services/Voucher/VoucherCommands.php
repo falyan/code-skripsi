@@ -46,7 +46,7 @@ class VoucherCommands
         Log::info("E00003", [
             'path_url' => "voucher.signature",
             'query' => [],
-            'body' => $json_body1,
+            'body' => $param1,
             'response' => $signature
         ]);
 
@@ -76,7 +76,7 @@ class VoucherCommands
         Log::info("E00003", [
             'path_url' => "voucher.sync-account",
             'query' => [],
-            'body' => $json_body2,
+            'body' => $param2,
             'response' => $sync_account
         ]);
 
