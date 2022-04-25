@@ -177,6 +177,31 @@ class TransactionController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+    public function transactionByCategoryKey($related_id, $category_key, Request $request)
+    {
+        try {
+            if (empty($related_id)) {
+                return $this->respondWithResult(false, 'Kolom related_customer_id kosong', 400);
+            }
+
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
+            if (Auth::check()) {
+                $data = $this->transactionQueries->getTransactionByCategoryKey('buyer_id', Auth::id(), $category_key, $limit, $filter, $page);
+            } else {
+                $data = $this->transactionQueries->getTransactionByCategoryKey('related_pln_mobile_customer_id', $related_id, $category_key, $limit, $filter, $page);
+            }
+            if ($data['total'] > 0) {
+                return $this->respondWithData($data, 'sukses get data transaksi');
+            } else {
+                return $this->respondWithResult(true, 'belum ada transaksi');
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
 
     public function transactionOnProccess($related_id, Request $request)
     {

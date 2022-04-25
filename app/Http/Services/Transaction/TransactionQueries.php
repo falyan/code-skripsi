@@ -5,12 +5,14 @@ namespace App\Http\Services\Transaction;
 use App\Http\Services\Service;
 use App\Models\CustomerDiscount;
 use App\Models\DeliveryDiscount;
+use App\Models\MasterData;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\VariantValueProduct;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Collection;
 
 class TransactionQueries extends Service
 {
@@ -33,6 +35,53 @@ class TransactionQueries extends Service
         $data = $this->filter($data, $filter);
         $data = $data->get();
 
+        $data = static::paginate($data->toArray(), $limit, $page);
+
+        return $data;
+    }
+
+    public function getTransactionByCategoryKey($column_name, $column_value, $category_key, $limit = 3, $filter = [], $page = 1)
+    {
+        $categories = MasterData::with(['child' => function ($j) {
+            $j->with(['child']);
+        }])->where('type', 'product_category')->where('key', $category_key)->get();
+
+        $cat_child = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    array_push($cat_child, $child->child);
+                }
+            }
+        }
+
+        $data = [];
+        foreach ($cat_child as $cat) {
+            foreach ($cat as $obj) {
+                $order = Order::with([
+                    'detail' => function ($product) {
+                        $product->with(['product' => function ($j) {
+                            $j->with(['product_photo']);
+                        }]);
+                    }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
+                        $r->with(['review_photo']);
+                    },
+                ])->where($column_name, $column_value)
+                    ->when($column_name == 'merchant_id', function ($query) {
+                        $query->whereHas('progress_active', function ($q) {
+                            $q->whereNotIn('status_code', [99]);
+                        });
+                    })
+                    ->whereHas('detail', function ($q) use ($obj) {
+                        $q->whereHas('product', function ($p) use ($obj) {
+                            $p->where('category_id', $obj->id);
+                        });
+                    })
+                    ->orderBy('created_at', 'desc')->get();
+                array_push($data, $order);
+            }
+        }
+        $data = $this->filter(collect($data)->collapse(), $filter);
         $data = static::paginate($data->toArray(), $limit, $page);
 
         return $data;
@@ -122,15 +171,15 @@ class TransactionQueries extends Service
                 }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer'
         ])->where('order.' . $column_name, $column_value)
-          ->where(function ($q) use ($keyword) {
-              $q->whereHas('merchant', function ($merchant) use ($keyword){
-                  $merchant->where('name', 'ILIKE', '%' . $keyword . '%');
-              })->orWhereHas('detail', function ($detail) use ($keyword){
-                  $detail->whereHas('product', function ($product) use ($keyword){
-                      $product->where('name', 'ILIKE', '%' . $keyword . '%');
-                  });
-              })->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
-          })->orderBy('order.created_at', 'desc');
+            ->where(function ($q) use ($keyword) {
+                $q->whereHas('merchant', function ($merchant) use ($keyword) {
+                    $merchant->where('name', 'ILIKE', '%' . $keyword . '%');
+                })->orWhereHas('detail', function ($detail) use ($keyword) {
+                    $detail->whereHas('product', function ($product) use ($keyword) {
+                        $product->where('name', 'ILIKE', '%' . $keyword . '%');
+                    });
+                })->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
+            })->orderBy('order.created_at', 'desc');
 
         $data = $this->filter($data, $filter);
         $data = $data->get();
