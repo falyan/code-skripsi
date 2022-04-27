@@ -619,7 +619,10 @@ class IconcashController extends Controller
                     'fee'                       => $item->fee,
                     'amount_fee'                => $item->amountFee,
                     'transaction_date'          => $item->transactionDate,
-                    'description'               => $item->description
+                    'description'               => $item->description,
+                    'beneficiary_account'       => $item->beneficiaryAccount,
+                    'beneficiary_name'          => $item->beneficiaryName,
+                    'bank_name'                 => $item->bankName
                 ];
             });
 
