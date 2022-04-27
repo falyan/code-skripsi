@@ -43,9 +43,10 @@ class IconcashManager
     ];
 
     self::$headerTopup = [
-      'clientId'  => self::$topupClientId,
-      'timestamp' => $timestamp_topup,
-      'signature' => hash_hmac('sha256', self::$topupClientId . $timestamp_topup, self::$topupSecretKey)
+      'clientId'    => self::$topupClientId,
+      'timestamp'   => $timestamp_topup,
+      'signature'   => hash_hmac('sha256', self::$topupClientId . $timestamp_topup, self::$topupSecretKey),
+      'app_source'  => 'marketplace'
     ];
   }
 
@@ -56,6 +57,7 @@ class IconcashManager
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/register_customer' . $param);
 
     $response = self::$curl->request('POST', $url, [
+      'headers'     => ['app_source' => 'marketplace'],
       'http_errors' => false,
       'json' => [
         'corporateId' => $corporateId,
@@ -144,6 +146,7 @@ class IconcashManager
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/auth/login' . $param);
 
     $response = self::$curl->request('POST', $url, [
+      'headers'     => ['app_source' => 'marketplace'],
       'http_errors' => false,
       'json' => [
         'corporateId' => $corporateId,
@@ -174,7 +177,10 @@ class IconcashManager
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/auth/logout' . $param);
 
     $response = self::$curl->request('POST', $url, [
-        'headers' => ['Authorization' => $token],
+        'headers'   => [
+            'Authorization' => $token,
+            'app_source'    => 'marketplace'
+        ],
         'http_errors' => false,
     ]);
 
@@ -196,7 +202,10 @@ class IconcashManager
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/balance/customer' . $param);
 
     $response = self::$curl->request('GET', $url, [
-        'headers' => ['Authorization' => $token],
+        'headers' => [
+            'Authorization' => $token,
+            'app_source'    => 'marketplace'
+        ],
         'http_errors' => false,
     ]);
 
@@ -218,7 +227,10 @@ class IconcashManager
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal/inquiry' . $param);
 
     $response = self::$curl->request('POST', $url, [
-        'headers' => ['Authorization' => $token],
+        'headers' => [
+            'Authorization' => $token,
+            'app_source'    => 'marketplace'
+        ],
         'http_errors' => false,
         'json' => [
           'bankAccountName' => $bankAccountName,
@@ -247,7 +259,11 @@ class IconcashManager
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal' . $param);
 
     $response = self::$curl->request('POST', $url, [
-        'headers' => ['Authorization' => $token, 'Credentials' => $pin],
+        'headers' => [
+            'Authorization' => $token,
+            'Credentials'   => $pin,
+            'app_source'    => 'marketplace'
+        ],
         'http_errors' => false,
         'json' => [
           'orderId' => $orderId
@@ -336,7 +352,10 @@ class IconcashManager
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/ref/bank' . $param);
 
     $response = self::$curl->request('GET', $url, [
-        'headers' => ['Authorization' => $token],
+        'headers' => [
+            'Authorization' => $token,
+            'app_source'    => 'marketplace'
+        ],
         'http_errors' => false
     ]);
 
@@ -358,7 +377,10 @@ class IconcashManager
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/customerbank' . $param);
 
     $response = self::$curl->request('POST', $url, [
-        'headers' => ['Authorization' => $token],
+        'headers' => [
+            'Authorization' => $token,
+            'app_source'    => 'marketplace'
+        ],
         'http_errors' => false,
         'json' => [
           'accountName' => $account_name,
@@ -389,7 +411,10 @@ class IconcashManager
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/customerbank/search' . $param);
 
     $response = self::$curl->request('GET', $url, [
-        'headers' => ['Authorization' => $token],
+        'headers' => [
+            'Authorization' => $token,
+            'app_source'    => 'marketplace'
+        ],
         'http_errors' => false
     ]);
 
@@ -413,7 +438,10 @@ class IconcashManager
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/customerbank/byid' . $param);
 
     $response = self::$curl->request('GET', $url, [
-        'headers' => ['Authorization' => $token],
+        'headers' => [
+            'Authorization' => $token,
+            'app_source'    => 'marketplace'
+        ],
         'http_errors' => false
     ]);
 
@@ -437,7 +465,10 @@ class IconcashManager
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/customerbank' . $param);
 
     $response = self::$curl->request('DELETE', $url, [
-        'headers' => ['Authorization' => $token],
+        'headers' => [
+            'Authorization' => $token,
+            'app_source'    => 'marketplace'
+        ],
         'http_errors' => false
     ]);
 
@@ -459,7 +490,10 @@ class IconcashManager
     $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/customerbank' . $param);
 
     $response = self::$curl->request('PUT', $url, [
-        'headers' => ['Authorization' => $token],
+        'headers' => [
+            'Authorization' => $token,
+            'app_source'    => 'marketplace'
+        ],
         'http_errors' => false,
         'json' => [
           'id' => $customer_bank_id,
@@ -487,7 +521,10 @@ class IconcashManager
         $url = sprintf('%s/%s', self::$apiendpoint, 'api/auth/change-pin' . $param);
 
         $response = self::$curl->request('POST', $url, [
-            'headers' => ['Authorization' => $token],
+            'headers' => [
+                'Authorization' => $token,
+                'app_source'    => 'marketplace'
+            ],
             'http_errors' => false,
             'json' => [
                 'confirmPin' => $confirm_new_pin,
@@ -514,7 +551,10 @@ class IconcashManager
         $url = sprintf('%s/%s', self::$apiendpoint, 'api/auth/forgot-pin' . $param);
 
         $response = self::$curl->request('POST', $url, [
-            'headers' => ['Authorization' => $token],
+            'headers' => [
+                'Authorization' => $token,
+                'app_source'    => 'marketplace'
+            ],
             'http_errors' => false,
             'json' => [
                 'confirmPin' => $confirm_new_pin,
@@ -534,6 +574,34 @@ class IconcashManager
         }
 
         return $response;
+    }
+
+    public static function historySaldo($token, $account_type_id)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/history/customer' . $param);
+
+        $response = self::$curl->request('GET', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source'    => 'marketplace'
+            ],
+            'http_errors' => false,
+            'json' => [
+                'accountTypeId' => $account_type_id
+            ]
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
     }
 
   static function setParamAPI($data = [])

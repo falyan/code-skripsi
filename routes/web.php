@@ -362,6 +362,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->delete('command/customerbank/{id}', 'IconcashController@deleteCustomerBank');
             $router->put('command/customerbank/{id}', 'IconcashController@updateCustomerBank');
             $router->get('hash-salt/generator/{pin}', 'IconcashController@hash_salt_sha256');
+            $router->get('history/saldo-pendapatan', 'IconcashController@historySaldoPendapatan');
 
             $router->group(['prefix' => 'topup', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('command/topup-confirm', 'IconcashController@topupConfirm');

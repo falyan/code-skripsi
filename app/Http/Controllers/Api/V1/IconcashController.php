@@ -588,6 +588,49 @@ class IconcashController extends Controller
         }
     }
 
+    public function historySaldoPendapatan(){
+        try {
+            $iconcash = Auth::user()->iconcash;
+
+            if (!isset($iconcash->token)) {
+                return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
+            }
+
+            if (env('APP_ENV') == 'staging') {
+                $account_type_id = 13;
+            } elseif (env('APP_ENV') == 'production') {
+                $account_type_id = 50;
+            } else {
+                $account_type_id = 13;
+            }
+
+            $response = IconcashManager::historySaldo($iconcash->token, $account_type_id);
+
+            return $this->respondWithCollection($response, function ($item) {
+                return [
+                    'order_id'                  => $item->orderId,
+                    'status'                    => $item->status,
+                    'transaction_type_name'     => $item->transactionTypeName,
+                    'source_account_name'       => $item->sourceAccountName,
+                    'receiver_account_name'     => $item->receiverAccountName,
+                    'receiver_account_type'     => $item->receiverAccountType,
+                    'corporate_name'            => $item->corporateName,
+                    'amount'                    => $item->amount,
+                    'fee'                       => $item->fee,
+                    'amount_fee'                => $item->amountFee,
+                    'transaction_date'          => $item->transactionDate,
+                    'description'               => $item->description,
+                    'beneficiary_account'       => $item->beneficiaryAccount,
+                    'beneficiary_name'          => $item->beneficiaryName,
+                    'bank_name'                 => $item->bankName
+                ];
+            });
+
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function unique_code($value)
     {
         return substr(base_convert(sha1(uniqid($value)), 16, 36), 0, 25);
