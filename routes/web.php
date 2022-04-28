@@ -379,7 +379,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('status', 'VersionController@getVersionStatus');
     });
 
-    $router->group(['prefix' => 'email'], static function () use ($router) {
-        $router->post('resend', 'TransactionController@resendEmailVoucher');
+    $router->group(['prefix' => 'voucher'], static function () use ($router) {
+        $router->post('retry/{order_id}', 'TransactionController@retryVoucher');
+        $router->post('email/{order_id}', 'TransactionController@resendEmailVoucher');
     });
 });

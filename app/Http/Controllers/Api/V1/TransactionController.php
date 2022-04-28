@@ -613,7 +613,6 @@ class TransactionController extends Controller
     public function acceptOrder(Request $request)
     {
         try {
-            DB::beginTransaction();
             $rules = [
                 'id.*' => 'required',
             ];
@@ -634,6 +633,7 @@ class TransactionController extends Controller
             }
 
             foreach ($request->id as $order_id) {
+                DB::beginTransaction();
                 $response = $this->transactionCommand->updateOrderStatus($order_id, '02');
                 if ($response['success'] == false) {
                     return $response;
@@ -1153,13 +1153,43 @@ class TransactionController extends Controller
         }
     }
 
+    public function retryVoucher($order_id){
+        try {
+            DB::beginTransaction();
+            $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
+            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+            $total_amount_trx = $total_delivery_fee_trx = 0;
+
+            foreach ($orders as $o) {
+                $total_amount_trx += $o->total_amount;
+                $total_delivery_fee_trx += $o->delivery->delivery_fee;
+            }
+
+            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000) {
+                $this->voucherCommand->generateVoucher($order);
+            }
+
+            DB::commit();
+            $mailSender = new MailSenderManager();
+            $mailSender->mailResendVoucher($order_id);
+
+            $response['success'] = true;
+            $response['message'] = 'Berhasil retry voucher';
+
+            return $response;
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function resendEmailVoucher($order_id){
         try {
             $mailSender = new MailSenderManager();
-            $mailSender->mailAcceptOrder($order_id);
+            $mailSender->mailResendVoucher($order_id);
 
             $response['success'] = true;
-            $response['message'] = 'Berhasil resend email';
+            $response['message'] = 'Berhasil resend email voucher';
 
             return $response;
         } catch (Exception $e) {
