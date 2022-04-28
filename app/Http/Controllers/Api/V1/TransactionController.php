@@ -1169,9 +1169,9 @@ class TransactionController extends Controller
                 $this->voucherCommand->generateVoucher($order);
             }
 
+            DB::commit();
             $mailSender = new MailSenderManager();
             $mailSender->mailResendVoucher($order_id);
-            DB::commit();
 
             $response['success'] = true;
             $response['message'] = 'Berhasil retry voucher';
