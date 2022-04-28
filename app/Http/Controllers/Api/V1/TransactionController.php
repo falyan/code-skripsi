@@ -1153,6 +1153,20 @@ class TransactionController extends Controller
         }
     }
 
+    public function resendEmailVoucher($order_id){
+        try {
+            $mailSender = new MailSenderManager();
+            $mailSender->mailAcceptOrder($order_id);
+
+            $response['success'] = true;
+            $response['message'] = 'Berhasil resend email';
+
+            return $response;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function unique_code($value)
     {
         return substr(base_convert(sha1(uniqid($value)), 16, 36), 0, 25);
