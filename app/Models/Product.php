@@ -107,7 +107,7 @@ class Product extends Model
     }
 
     public function product_photo(){
-        return $this->hasMany(ProductPhoto::class);
+        return $this->hasMany(ProductPhoto::class)->withTrashed();
     }
 
     public function cart_detail(){
