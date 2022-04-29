@@ -27,6 +27,6 @@ class OrderDetail extends Model
 
     public function variant_value_product()
     {
-        return $this->belongsTo(VariantValueProduct::class, 'variant_value_product_id')->withTrashed();
+        return $this->belongsTo(VariantValueProduct::class, 'variant_value_product_id');
     }
 }
