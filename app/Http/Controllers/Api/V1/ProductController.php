@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Services\Category\CategoryQueries;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Product\ProductQueries;
+use App\Models\MasterData;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -371,7 +372,8 @@ class ProductController extends Controller
         }
     }
 
-    public function getProductWithFilter(Request $request){
+    public function getProductWithFilter(Request $request)
+    {
         try {
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
@@ -379,18 +381,19 @@ class ProductController extends Controller
             $page = $request->page ?? 1;
 
             return $this->productQueries->getProductWithFilter($filter, $sorting, $limit, $page);
-        } catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function countProductWithFilter(Request $request){
+    public function countProductWithFilter(Request $request)
+    {
         try {
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
 
             return $this->productQueries->countProductWithFilter($filter, $sorting);
-        } catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
