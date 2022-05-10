@@ -81,6 +81,7 @@ class ProductQueries extends Service
 
     public function getProductAlmostRunningOutByMerchantId($merchant_id, $filter = [], $sortby = null, $current_page = 1, $limit = 10)
     {
+        // seller
         Log::info("T00001", [
             'path_url' => "merchant.running-out",
             'query' => [],
@@ -88,7 +89,7 @@ class ProductQueries extends Service
             'response' => ''
         ]);
         $product = new Product();
-        $products = $product->where('status', 1)->with(['product_stock', 'product_photo', 'is_wishlist'])->where('merchant_id', $merchant_id);
+        $products = $product->with(['product_stock', 'product_photo', 'is_wishlist'])->where('merchant_id', $merchant_id);
 
         $immutable_data = $products->get()->map(function ($product) {
             $id = $product->id;
@@ -129,12 +130,13 @@ class ProductQueries extends Service
 
     public function getProductByEtalaseId($etalase_id, $filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
+        // seller
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->where('status', 1)->with(['product_stock', 'product_photo', 'is_wishlist'])->where('etalase_id', $etalase_id);
+        }])->with(['product_stock', 'product_photo', 'is_wishlist'])->where('etalase_id', $etalase_id);
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
@@ -286,6 +288,7 @@ class ProductQueries extends Service
 
     public function getProductById($id)
     {
+        // seller/buyer
         // $data = Product::withCount(['reviews', 'order_details' => function ($details) {
         //     $details->whereHas('order', function ($order) {
         //         $order->whereHas('progress_done');
@@ -304,7 +307,7 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->where('status', 1)->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant' => function ($region) {
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant' => function ($region) {
             $region->with(['province', 'city', 'district', 'expedition']);
         }, 'etalase', 'category', 'order_details' => function ($order_details) {
             $order_details->whereHas('order', function ($order) {
@@ -400,6 +403,7 @@ class ProductQueries extends Service
 
     public function getBestSellingProductByMerchantId($merchant_id, $filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
+        // seller
         Log::info("T00001", [
             'path_url' => "merchant.best-selling",
             'query' => [],
