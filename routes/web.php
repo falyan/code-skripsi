@@ -107,6 +107,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('all', 'CategoryController@getAllCategory');
                 });
 
+                $router->group(['prefix' => 'approval'], static function () use ($router) {
+                    $router->get('category/{category_key}', 'ProductCategoryApprovalController@checkCategory');
+                });
+
                 $router->group(['prefix' => 'variant'], static function () use ($router) {
                     $router->get('category/{category_id}', 'VariantController@getVariantByCategory');
                 });
