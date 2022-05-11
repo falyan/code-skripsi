@@ -171,9 +171,11 @@ class TransactionQueries extends Service
                 }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer'
         ])->where('order.' . $column_name, $column_value)
-            ->where(function ($q) use ($keyword) {
-                $q->whereHas('merchant', function ($merchant) use ($keyword) {
-                    $merchant->where('name', 'ILIKE', '%' . $keyword . '%');
+            ->where(function ($q) use ($keyword, $column_name) {
+                $q->when($column_name != 'merchant_id', function ($query) use ($keyword) {
+                    $query->whereHas('merchant', function ($merchant) use ($keyword) {
+                        $merchant->where('name', 'ILIKE', '%' . $keyword . '%');
+                    });
                 })->orWhereHas('detail', function ($detail) use ($keyword) {
                     $detail->whereHas('product', function ($product) use ($keyword) {
                         $product->where('name', 'ILIKE', '%' . $keyword . '%');
