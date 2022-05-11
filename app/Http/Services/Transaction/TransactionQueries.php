@@ -180,10 +180,10 @@ class TransactionQueries extends Service
                     $detail->whereHas('product', function ($product) use ($keyword) {
                         $product->where('name', 'ILIKE', '%' . $keyword . '%');
                     });
+                })->orWhereHas('buyer', function ($buyer) use ($keyword) {
+                    $buyer->where('full_name', 'ilike', "%{$keyword}%")
+                        ->orWhere('phone', 'ilike', "%{$keyword}%");
                 })->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
-            })->orWhereHas('buyer', function ($buyer) use ($keyword) {
-                $buyer->where('full_name', 'ilike', "%{$keyword}%")
-                    ->orWhere('phone', 'ilike', "%{$keyword}%");
             })->orderBy('order.created_at', 'desc');
 
         $data = $this->filter($data, $filter);
