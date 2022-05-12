@@ -5,6 +5,7 @@ namespace App\Http\Services\Product;
 use App\Http\Services\Service;
 use App\Http\Services\Variant\VariantCommands;
 use App\Models\MasterData;
+use App\Models\OrderDetail;
 use App\Models\Product;
 use App\Models\ProductCategoryApproval;
 use App\Models\ProductPhoto;
@@ -270,22 +271,63 @@ class ProductCommands extends Service
         }
     }
 
-    public function deleteProduct($product_id, $merchant_id)
+    public function deleteProduct($product_id, $merchant_id, $delete = false)
     {
         try {
             DB::beginTransaction();
 
-            $product = Product::where('id', $product_id)->where('merchant_id', $merchant_id)->first();
-            if ($product == null) {
-                $response['success'] = false;
-                $response['message'] = 'Produk tidak ditemukan!';
-                return $response;
-            }
+            $order_detail_count = OrderDetail::where('product_id', $product_id)->count();
 
-            if ($product->delete() == 0) {
-                $response['success'] = false;
-                $response['message'] = 'Gagal menghapus produk!';
-                return $response;
+            if ($order_detail_count > 0) {
+                if ($delete) {
+                    $product = Product::where('id', $product_id)->withCount('varian_value_product')->first();
+
+                    if ($product->varian_value_product_count > 0) {
+                        $varian_list = $this->variantCommands->listVarianStock($product_id);
+
+                        $stock_new = $this->variantCommands->updateVariantStockCode($product_id, $varian_list);
+
+                        if (!$stock_new) {
+                            return [
+                                'success' => false,
+                                'message' => 'Produk gagal dihapus!',
+                            ];
+                        }
+
+                    } else {
+                        $stock_new = $this->updateStockProductCode($product_id, $merchant_id, [
+                            'amount' => 0,
+                            'full_name' => auth()->user()->full_name,
+                        ]);
+
+                        if (!$stock_new) {
+                            return [
+                                'success' => false,
+                                'message' => 'Produk gagal dihapus!',
+                            ];
+                        }
+                    }
+
+                } else {
+                    return [
+                        'success' => false,
+                        'message' => 'Produk ini sedang dalam proses transakasi!',
+                    ];
+                }
+            } else {
+
+                $product = Product::where('id', $product_id)->where('merchant_id', $merchant_id)->first();
+                if ($product == null) {
+                    $response['success'] = false;
+                    $response['message'] = 'Produk tidak ditemukan!';
+                    return $response;
+                }
+
+                if ($product->delete() == 0) {
+                    $response['success'] = false;
+                    $response['message'] = 'Gagal menghapus produk!';
+                    return $response;
+                }
             }
 
             $response['success'] = true;
@@ -303,23 +345,8 @@ class ProductCommands extends Service
     {
         try {
             DB::beginTransaction();
-            $stock_old = ProductStock::where('merchant_id', $merchant_id)
-                ->where('product_id', $product_id)
-                ->where('status', 1)->latest()->first();
 
-            $stock_old->status = 0;
-            $stock_old->save();
-
-            $stock_new = ProductStock::create([
-                'merchant_id' => $merchant_id,
-                'product_id' => $product_id,
-                'amount' => $data['amount'],
-                'uom' => $data['uom'],
-                'description' => '{"from": "Product", "type": "changing", "title": "Ubah stok produk", "amount": "' . $data['amount'] . '"}',
-                'status' => 1,
-                'created_by' => $data['full_name'],
-                'updated_by' => $data['full_name'],
-            ]);
+            $stock_new = $this->updateStockProductCode($product_id, $merchant_id, $data);
 
             if (!$stock_new) {
                 $response['success'] = false;
@@ -336,6 +363,29 @@ class ProductCommands extends Service
             DB::rollBack();
             throw new Exception($e->getMessage(), $e->getCode());
         }
+    }
+
+    public function updateStockProductCode($product_id, $merchant_id, $data)
+    {
+        $stock_old = ProductStock::where('merchant_id', $merchant_id)
+            ->where('product_id', $product_id)
+            ->where('status', 1)->latest()->first();
+
+        $stock_old->status = 0;
+        $stock_old->save();
+
+        $stock_new = ProductStock::create([
+            'merchant_id' => $merchant_id,
+            'product_id' => $product_id,
+            'amount' => $data['amount'],
+            'uom' => isset($data['uom']) ? $data['uom'] : $stock_old->uom,
+            'description' => '{"from": "Product", "type": "changing", "title": "Ubah stok produk", "amount": "' . $data['amount'] . '"}',
+            'status' => 1,
+            'created_by' => $data['full_name'],
+            'updated_by' => $data['full_name'],
+        ]);
+
+        return $stock_new;
     }
 
     public function updateStockVariantProduct($variant_value_product_id, $data)

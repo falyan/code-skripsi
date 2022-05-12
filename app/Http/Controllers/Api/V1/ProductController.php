@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Services\Category\CategoryQueries;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Product\ProductQueries;
+use App\Http\Services\Variant\VariantCommands;
+use App\Http\Services\Variant\VariantQueries;
+use App\Models\Product;
 use App\Models\MasterData;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -86,6 +88,7 @@ class ProductController extends Controller
                 'min' => 'panjang :attribute minimum :min karakter.',
                 'gt' => 'nilai :attribute harus lebih besar dari :gt.',
             ]);
+
             if ($validator->fails()) {
                 $errors = collect();
                 foreach ($validator->errors()->getMessages() as $key => $value) {
@@ -117,11 +120,11 @@ class ProductController extends Controller
     }
 
     //Delete Produk
-    public function deleteProduct($product_id)
+    public function deleteProduct(Request $request, $product_id)
     {
         try {
             $merchant_id = Auth::user()->merchant_id;
-            return $this->productCommands->deleteProduct($product_id, $merchant_id);
+            return $this->productCommands->deleteProduct($product_id, $merchant_id, $request->get('accept'));
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
