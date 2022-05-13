@@ -146,7 +146,7 @@ class ProductCommands extends Service
 
             $product->name = ($data->name == null) ? ($product->name) : ($data->name);
             $product->price = ($data->price == null) ? ($product->price) : ($data->price);
-            $product->strike_price = ($data->strike_price == null) ? ($product->strike_price) : ($data->strike_price);
+            $product->strike_price = ($data->strike_price == null || $data->strike_price == 0) ? null : ($data->strike_price);
             $product->minimum_purchase = ($data->minimum_purchase == null) ? ($product->minimum_purchase) : ($data->minimum_purchase);
             $product->category_id = ($data->category_id == null) ? ($product->category_id) : ($data->category_id);
             $product->etalase_id = ($data->etalase_id == null) ? ($product->etalase_id) : ($data->etalase_id);
