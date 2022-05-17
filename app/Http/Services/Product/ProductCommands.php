@@ -190,13 +190,16 @@ class ProductCommands extends Service
                 return $response;
             }
 
-            $product_photo = ProductPhoto::where('merchant_id', $merchant_id)
-                ->where('product_id', $product_id)->get();
+            $product_photo = DB::table('product_photo')->where(['product_id' => $product_id, 'merchant_id' => $merchant_id])->get();
 
             if (!empty($product_photo)) {
+                $id_photos = [];
+
                 foreach ($product_photo as $photo) {
-                    $photo->delete();
+                    array_push($id_photos, $photo->id);
                 }
+
+                DB::table('product_photo')->whereIn('id', $id_photos)->delete();
             }
 
             $photo = [];
