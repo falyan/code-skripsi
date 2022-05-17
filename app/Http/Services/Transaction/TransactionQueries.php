@@ -332,10 +332,11 @@ class TransactionQueries extends Service
             $start_date = $filter['start_date'] ?? null;
             $end_date = $filter['end_date'] ?? null;
 
-            $data = $model->when(!empty($start_date), function ($query) use ($start_date) {
-                $query->where('created_at', '>=', $start_date);
-            })->when(!empty($end_date), function ($query) use ($end_date) {
-                $query->where('created_at', '<=', $end_date);
+            if (validateDate($start_date, 'Y-m-d')) $start_date = $start_date . " 00:00:00";
+            if (validateDate($end_date, 'Y-m-d')) $end_date = $end_date . " 23:59:59";
+
+            $data = $model->when(!empty($start_date) && !empty($end_date), function ($query) use ($start_date, $end_date) {
+                $query->whereBetween('created_at', [$start_date, $end_date]);
             })->when(!empty($status), function ($query) use ($status) {
                 $query->whereHas('progress_active', function ($j) use ($status) {
                     if (strpos($status, ',')) {
