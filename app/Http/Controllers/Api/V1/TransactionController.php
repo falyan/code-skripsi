@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Services\Manager\IconcashManager;
 use App\Http\Services\Manager\IconpayManager;
-use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Transaction\TransactionCommands;
@@ -18,16 +17,17 @@ use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductStock;
-use App\Models\User;
 use App\Models\VariantStock;
-use Exception;
+use Exception, Input;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Input;
 use stdClass;
+use App\Http\Services\Manager\MailSenderManager;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
@@ -440,7 +440,7 @@ class TransactionController extends Controller
             $limit = $request->limit ?? 10;
             $page = $request->page ?? 1;
 
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['01'], $limit, $filter, $page);
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['01'], $limit, $filter);
 
             if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
