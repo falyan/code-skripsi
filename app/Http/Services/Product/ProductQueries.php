@@ -168,8 +168,16 @@ class ProductQueries extends Service
         }])->where('status', 1)->with(['merchant' => function ($merchant) {
             $merchant->with(['city:id,name'])->select('id', 'name', 'address', 'postal_code', 'city_id', 'photo_url');
         }, 'product_stock:id,product_id,amount,uom', 'product_photo:id,product_id,url', 'is_wishlist'])
-            ->whereHas('merchant', function ($merchant) {
+            ->whereHas('merchant', function ($merchant) use ($filter) {
                 $merchant->where('status', 1);
+                $location = $filter['location'] ?? null;
+                if (!empty($location)) {
+                    if (strpos($location, ',')) {
+                        $merchant->whereIn('city_id', explode(',', $location));
+                    } else {
+                        $merchant->where('city_id', 'LIKE', $location);
+                    }
+                }
             })->where('product.name', 'ILIKE', '%' . $keyword . '%')
             ->orWhereHas('merchant', function ($query) use ($keyword) {
                 $query->where('name', 'ILIKE', '%' . $keyword . '%')->where('status', 1);
