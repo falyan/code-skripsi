@@ -613,9 +613,64 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function getProductWithFilter($filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    {
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
+            ->whereHas('merchant', function ($merchant){
+                $merchant->where('status', 1);
+            });
+
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $immutable_data = $sorted_data->get()->map(function ($product) {
+            $product->reviews = null;
+            $product->avg_rating = 0.0;
+//            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            return $product;
+        });
+
+        $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function countProductWithFilter($filter = [], $sortby = null)
+    {
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
+            ->whereHas('merchant', function ($merchant){
+                $merchant->where('status', 1);
+            });
+
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $count = $sorted_data->count();
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = [
+            'count_data' => $count
+        ];
+        return $response;
+    }
+
     public function filter($model, $filter = [])
     {
-        if (count($filter) > 0) {
+        if (count($filter) > 0)  {
             $keyword = $filter['keyword'] ?? null;
             $category = $filter['category'] ?? null;
             $location = $filter['location'] ?? null;
@@ -632,11 +687,11 @@ class ProductQueries extends Service
                     $query->where('category_id', $category);
                 }
             })->when(!empty($location), function ($query) use ($location) {
-                $query->whereHas('merchant:city_id', function ($city) use ($location) {
+                $query->whereHas('merchant', function ($city) use ($location) {
                     if (strpos($location, ',')) {
-                        $city->whereIn('merchant:city_id', explode(',', $location));
+                        $city->whereIn('city_id', explode(',', $location));
                     } else {
-                        $city->where('merchant:city_id', 'LIKE', $location);
+                        $city->where('city_id', 'LIKE', $location);
                     }
                 });
             })->when(!empty($condition), function ($query) use ($condition) {

@@ -121,6 +121,7 @@ class ReviewQueries{
                     ->where('merchant_id', $o->merchant_id)
                     ->where('customer_id', $o->buyer_id)
                     ->where('product_id', $detail->product_id)
+                    ->where('reply_message', null)
                     ->when($rate != null && $operator != null, function ($q) use ($rate, $operator) {
                         if ($rate < 1) $rate = 1;
                         if ($rate > 5) $rate = 5;

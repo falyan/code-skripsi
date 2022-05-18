@@ -370,4 +370,28 @@ class ProductController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function getProductWithFilter(Request $request){
+        try {
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? null;
+            $page = $request->page ?? 1;
+
+            return $this->productQueries->getProductWithFilter($filter, $sorting, $limit, $page);
+        } catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function countProductWithFilter(Request $request){
+        try {
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? null;
+
+            return $this->productQueries->countProductWithFilter($filter, $sorting);
+        } catch (Exception $e){
+            return $this->respondErrorException($e, request());
+        }
+    }
 }

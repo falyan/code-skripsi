@@ -186,6 +186,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('/merchant/{merchant_id}/featured', 'ProductController@getMerchantFeaturedProduct');
                 $router->get('{id}', 'ProductController@getProductById');
                 $router->get('recommend/category/{category_key}', 'ProductController@getRecommendProductByCategory');
+                $router->post('filter', 'ProductController@getProductWithFilter');
+                $router->post('filter/count', 'ProductController@countProductWithFilter');
             });
 
             $router->group(['prefix' => 'variant'], static function () use ($router) {
@@ -211,6 +213,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'region'], static function () use ($router) {
                 $router->get('search', 'RegionController@searchDistrict');
+                $router->post('search/province', 'RegionController@searchProvince');
+                $router->post('search/city', 'RegionController@searchCity');
             });
 
             $router->group(['prefix' => 'checkout', 'middleware' => 'auth'], static function () use ($router) {
