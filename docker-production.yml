@@ -17,6 +17,21 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /mnt/nfs-logs/pln-marketplace-saruman-production:/var/www/html/storage/logs
+    environment:
+      - ELASTIC_APM_ENABLED=true
+      - ELASTIC_APM_LOG_LEVEL_STDERR=INFO
+      - ELASTIC_APM_LOG_LEVEL=TRACE
+      - ELASTIC_APM_LOG_LEVEL_SYSLOG=TRACE
+      - ELASTIC_APM_SERVER_URL=http://10.14.204.239:8200
+      - ELASTIC_APM_SECRET_TOKEN=d1cd3a2b456907792bee56ffd0d43f34a86e42ee602c97763177218e0e23a86f
+      - ELASTIC_APM_SERVER_TIMEOUT=30s
+      - ELASTIC_APM_SERVICE_NAME=plnm-saruman-prod
+      - ELASTIC_APM_SERVICE_VERSION=0.1
+      - ELASTIC_APM_ENVIRONMENT=development
+      - ELASTIC_APM_TRANSACTION_MAX_SPANS=1000
+      - ELASTIC_APM_TRANSACTION_SAMPLE_RATE=1.0
+      # - ELASTIC_APM_VERIFY_SERVER_CERT=false
+      # - ELASTIC_APM_TRANSACTION_IGNORE_URLS=/swagger-resources*, /v2/api-docs*, /actuator*, /webjars/**, /swagger-ui.html
     logging:
       driver: none
     #  options:
