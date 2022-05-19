@@ -1,13 +1,10 @@
 <?php
-//use Anik\ElasticApm\Providers\ElasticApmServiceProvider;
+// use Anik\ElasticApm\Providers\ElasticApmServiceProvider;
+// use Anik\ElasticApm\Exceptions\Handler;
+// use Anik\ElasticApm\Middleware\RecordForegroundTransaction;
 use Illuminate\Contracts\Debug\ExceptionHandler;
-//use Anik\ElasticApm\Exceptions\Handler;
-use App\Exceptions\Handler as AppExceptionHandler;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use GuzzleHttp\Exception\ConnectException;
-//use Anik\ElasticApm\Middleware\RecordForegroundTransaction;
 
-require_once __DIR__.'/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 (new Laravel\Lumen\Bootstrap\LoadEnvironmentVariables(
     dirname(__DIR__)
@@ -24,7 +21,7 @@ date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Jakarta'));
 | that serves as the central piece of this framework. We'll use this
 | application as an "IoC" container and router for this framework.
 |
-*/
+ */
 
 $app = new Laravel\Lumen\Application(
     dirname(__DIR__)
@@ -45,6 +42,10 @@ $app->alias('mailer', Illuminate\Contracts\Mail\MailQueue::class);
 
 $app->configure('swagger-lume');
 $app->configure('credentials');
+
+if (!class_exists('LogService')) {
+    class_alias('App\Helpers\LogServiceFacade', 'LogService');
+}
 /*
 |--------------------------------------------------------------------------
 | Register Container Bindings
@@ -54,19 +55,20 @@ $app->configure('credentials');
 | register the exception handler and the console kernel. You may add
 | your own bindings here if you like or you can make another file.
 |
-*/
+ */
 
- $app->singleton(
-     Illuminate\Contracts\Debug\ExceptionHandler::class,
-     App\Exceptions\Handler::class
- );
+// $app->singleton(
+//     Illuminate\Contracts\Debug\ExceptionHandler::class,
+//     App\Exceptions\Handler::class
+// );
 
-//$app->singleton(ExceptionHandler::class, function ($app) {
-//    return new Handler(new AppExceptionHandler(), [
-//        // NotFoundHttpException::class, //(1)
-//        // ConnectException::class, //(2)
-//    ]);
-//});
+// USE THIS SECTION FOR LUMEN >= 8
+$app->singleton(Illuminate\Contracts\Debug\ExceptionHandler::class, function ($app) {
+    return new Anik\ElasticApm\Exceptions\HandlerThrowable(new App\Exceptions\Handler(), [
+        // NotFoundHttpException::class, // (1)
+        // ConnectException::class, // (2)
+    ]);
+});
 
 $app->singleton(
     Illuminate\Contracts\Console\Kernel::class,
@@ -82,12 +84,12 @@ $app->singleton(
 | your configuration directory it will be loaded; otherwise, we'll load
 | the default version. You may register other files below as needed.
 |
-*/
+ */
 
 $app->configure('app');
 $app->configure('auth');
 $app->configure('swagger-lume');
-//$app->configure('elastic-apm');
+$app->configure('elastic-apm');
 
 /*
 |--------------------------------------------------------------------------
@@ -98,12 +100,13 @@ $app->configure('swagger-lume');
 | be global middleware that run before and after each request into a
 | route or middleware that'll be assigned to some specific routes.
 |
-*/
+ */
 
 $app->middleware([
     // App\Http\Middleware\ExampleMiddleware::class,
     App\Http\Middleware\LogMiddleware::class,
-//    RecordForegroundTransaction::class,
+    \Anik\ElasticApm\Middleware\RecordForegroundTransaction::class,
+    App\Http\Middleware\CorsMiddleware::class,
 ]);
 
 $app->routeMiddleware([
@@ -119,7 +122,7 @@ $app->routeMiddleware([
 | are used to bind services into the container. Service providers are
 | totally optional, so you are not required to uncomment this line.
 |
-*/
+ */
 
 $app->register(App\Providers\AppServiceProvider::class);
 $app->register(App\Providers\AuthServiceProvider::class);
@@ -128,7 +131,8 @@ $app->register(Illuminate\Mail\MailServiceProvider::class);
 $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 $app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
 $app->register(SwaggerLume\ServiceProvider::class);
-//$app->register(ElasticApmServiceProvider::class);
+$app->register(App\Providers\LogServiceProvider::class);
+$app->register(Anik\ElasticApm\Providers\ElasticApmServiceProvider::class);
 
 /*
 |--------------------------------------------------------------------------
@@ -139,12 +143,12 @@ $app->register(SwaggerLume\ServiceProvider::class);
 | the application. This will provide all of the URLs the application
 | can respond to, as well as the controllers that may handle them.
 |
-*/
+ */
 
 $app->router->group([
     'namespace' => 'App\Http\Controllers',
 ], function ($router) {
-    require __DIR__.'/../routes/web.php';
+    require __DIR__ . '/../routes/web.php';
 });
 
 return $app;
