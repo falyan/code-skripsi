@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -38,7 +39,8 @@ class Product extends Model
         'shipping_service',
         'is_featured_product',
         'created_by',
-        'updated_by'
+        'updated_by',
+        'status',
     ];
 
     /**
@@ -88,7 +90,8 @@ class Product extends Model
     public $attachOne = [];
     public $attachMany = [];
 
-    protected function serializeDate($date){
+    protected function serializeDate($date)
+    {
         return $date->format('Y-m-d H:i:s');
     }
 
@@ -97,21 +100,24 @@ class Product extends Model
         return $this->belongsTo(Merchant::class);
     }
 
-    public function product_stock(){
+    public function product_stock()
+    {
         return $this->hasMany(ProductStock::class);
     }
 
     public function stock_active()
     {
-        return $this->hasOne(ProductStock::class)->where('status',1);
+        return $this->hasOne(ProductStock::class)->where('status', 1);
     }
 
-    public function product_photo(){
+    public function product_photo()
+    {
         return $this->hasMany(ProductPhoto::class);
     }
 
-    public function cart_detail(){
-            return $this->hasMany(CartDetail::class);
+    public function cart_detail()
+    {
+        return $this->hasMany(CartDetail::class);
     }
 
     public function reviews()
@@ -124,7 +130,8 @@ class Product extends Model
         return $this->hasMany(Wishlist::class);
     }
 
-    public function is_wishlist(){
+    public function is_wishlist()
+    {
         return $this->hasOne(Wishlist::class)->where('customer_id', Auth::id());
     }
 
@@ -133,11 +140,18 @@ class Product extends Model
         return $this->hasMany(OrderDetail::class, 'product_id');
     }
 
-    public function etalase(){
+    public function etalase()
+    {
         return $this->belongsTo(Etalase::class);
     }
 
-    public function category(){
+    public function category()
+    {
         return $this->belongsTo(MasterData::class);
+    }
+
+    public function varian_value_product()
+    {
+        return $this->hasMany(VariantValueProduct::class, 'product_id');
     }
 }

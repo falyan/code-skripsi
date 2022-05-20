@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Services\Manager\IconcashManager;
+use App\Http\Services\Manager\IconpayManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Transaction\TransactionCommands;
@@ -555,6 +556,22 @@ class TransactionController extends Controller
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
             $page = $request->page ?? 1;
+
+            $validator = Validator::make($filter, [
+                'start_date' => 'date|before_or_equal:end_date',
+                'end_date' => 'date|after_or_equal:start_date',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
 
             $data = $this->transactionQueries->searchTransaction('merchant_id', Auth::user()->merchant_id, $keyword, $limit, $filter, $page);
 

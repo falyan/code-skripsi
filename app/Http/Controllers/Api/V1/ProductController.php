@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Services\Category\CategoryQueries;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Product\ProductQueries;
-use Carbon\Carbon;
+use App\Http\Services\Variant\VariantCommands;
+use App\Http\Services\Variant\VariantQueries;
+use App\Models\Product;
+use App\Models\MasterData;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -85,6 +88,7 @@ class ProductController extends Controller
                 'min' => 'panjang :attribute minimum :min karakter.',
                 'gt' => 'nilai :attribute harus lebih besar dari :gt.',
             ]);
+
             if ($validator->fails()) {
                 $errors = collect();
                 foreach ($validator->errors()->getMessages() as $key => $value) {
@@ -116,11 +120,11 @@ class ProductController extends Controller
     }
 
     //Delete Produk
-    public function deleteProduct($product_id)
+    public function deleteProduct(Request $request, $product_id)
     {
         try {
             $merchant_id = Auth::user()->merchant_id;
-            return $this->productCommands->deleteProduct($product_id, $merchant_id);
+            return $this->productCommands->deleteProduct($product_id, $merchant_id, $request->get('accept'));
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -371,7 +375,8 @@ class ProductController extends Controller
         }
     }
 
-    public function getProductWithFilter(Request $request){
+    public function getProductWithFilter(Request $request)
+    {
         try {
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
@@ -379,18 +384,19 @@ class ProductController extends Controller
             $page = $request->page ?? 1;
 
             return $this->productQueries->getProductWithFilter($filter, $sorting, $limit, $page);
-        } catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function countProductWithFilter(Request $request){
+    public function countProductWithFilter(Request $request)
+    {
         try {
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
 
             return $this->productQueries->countProductWithFilter($filter, $sorting);
-        } catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
