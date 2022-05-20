@@ -4,7 +4,9 @@ namespace App\Http\Services\Product;
 
 use App\Http\Services\Service;
 use App\Http\Services\Variant\VariantCommands;
+use App\Models\MasterData;
 use App\Models\Product;
+use App\Models\ProductCategoryApproval;
 use App\Models\ProductPhoto;
 use App\Models\ProductStock;
 use App\Models\VariantStock;
@@ -32,6 +34,27 @@ class ProductCommands extends Service
                     throw new Exception("Produk Unggulan telah mencapai batas maksimal 5 Produk.", 400);
                 }
             }
+            $needApproval = false;
+            if (isset($data['category_id'])) {
+                $category = MasterData::where('type', 'product_category')->where('id', $data['category_id'])->get();
+                $category_key = $category->toArray()[0]['key'];
+
+                $categories = MasterData::with(['parent' => function ($j) {
+                    $j->with(['parent']);
+                }])->where('type', 'product_category')->where('key', $category_key)->get()->toArray();
+
+                $cat_parent = [];
+                foreach ($categories as $category) {
+                    foreach ($category['parent'] as $key => $parent) {
+                        if ($key === 'parent') {
+                            array_push($cat_parent, $parent);
+                        }
+                    }
+                }
+                $approval = ProductCategoryApproval::where('category_key', $cat_parent[0]['key'])->get();
+                $needApproval = !$approval->isEmpty();
+            }
+
             $product = Product::create([
                 'merchant_id' => $data->merchant_id,
                 'name' => $data->name,
@@ -47,7 +70,8 @@ class ProductCommands extends Service
                 'shipping_service' => $data->shipping_service,
                 'is_featured_product' => $data->is_featured_product,
                 'created_by' => $data->full_name,
-                'updated_by' => $data->full_name
+                'updated_by' => $data->full_name,
+                'status' => $needApproval ? 0 : 1,
             ]);
 
             if (!$product) {
