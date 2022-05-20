@@ -3,6 +3,10 @@
 // use Anik\ElasticApm\Exceptions\Handler;
 // use Anik\ElasticApm\Middleware\RecordForegroundTransaction;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use App\Exceptions\Handler as AppExceptionHandler;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use GuzzleHttp\Exception\ConnectException;
+
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -43,9 +47,6 @@ $app->alias('mailer', Illuminate\Contracts\Mail\MailQueue::class);
 $app->configure('swagger-lume');
 $app->configure('credentials');
 
-if (!class_exists('LogService')) {
-    class_alias('App\Helpers\LogServiceFacade', 'LogService');
-}
 /*
 |--------------------------------------------------------------------------
 | Register Container Bindings
@@ -57,18 +58,18 @@ if (!class_exists('LogService')) {
 |
  */
 
-// $app->singleton(
-//     Illuminate\Contracts\Debug\ExceptionHandler::class,
-//     App\Exceptions\Handler::class
-// );
+ $app->singleton(
+     Illuminate\Contracts\Debug\ExceptionHandler::class,
+     App\Exceptions\Handler::class
+ );
 
-// USE THIS SECTION FOR LUMEN >= 8
-$app->singleton(Illuminate\Contracts\Debug\ExceptionHandler::class, function ($app) {
-    return new Anik\ElasticApm\Exceptions\HandlerThrowable(new App\Exceptions\Handler(), [
-        // NotFoundHttpException::class, // (1)
-        // ConnectException::class, // (2)
-    ]);
-});
+//// USE THIS SECTION FOR LUMEN >= 8
+//$app->singleton(Illuminate\Contracts\Debug\ExceptionHandler::class, function ($app) {
+//    return new Anik\ElasticApm\Exceptions\HandlerThrowable(new App\Exceptions\Handler(), [
+//        // NotFoundHttpException::class, // (1)
+//        // ConnectException::class, // (2)
+//    ]);
+//});
 
 $app->singleton(
     Illuminate\Contracts\Console\Kernel::class,
@@ -89,7 +90,7 @@ $app->singleton(
 $app->configure('app');
 $app->configure('auth');
 $app->configure('swagger-lume');
-$app->configure('elastic-apm');
+//$app->configure('elastic-apm');
 
 /*
 |--------------------------------------------------------------------------
@@ -105,8 +106,9 @@ $app->configure('elastic-apm');
 $app->middleware([
     // App\Http\Middleware\ExampleMiddleware::class,
     App\Http\Middleware\LogMiddleware::class,
-    \Anik\ElasticApm\Middleware\RecordForegroundTransaction::class,
-    App\Http\Middleware\CorsMiddleware::class,
+    //    RecordForegroundTransaction::class,
+//    \Anik\ElasticApm\Middleware\RecordForegroundTransaction::class,
+//    App\Http\Middleware\CorsMiddleware::class,
 ]);
 
 $app->routeMiddleware([
@@ -131,8 +133,8 @@ $app->register(Illuminate\Mail\MailServiceProvider::class);
 $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 $app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
 $app->register(SwaggerLume\ServiceProvider::class);
-$app->register(App\Providers\LogServiceProvider::class);
-$app->register(Anik\ElasticApm\Providers\ElasticApmServiceProvider::class);
+//$app->register(App\Providers\LogServiceProvider::class);
+//$app->register(Anik\ElasticApm\Providers\ElasticApmServiceProvider::class);
 
 /*
 |--------------------------------------------------------------------------
