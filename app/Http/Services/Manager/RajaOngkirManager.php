@@ -27,7 +27,7 @@ class RajaOngkirManager
         self::$curl = new Client();
         self::$apiendpoint = config('credentials.rajaongkir.endpoint');
         date_default_timezone_set('Asia/Jakarta');
-        if (date('Hi') >= '0000' && date('Hi') <= '1400'){
+        if (date('Hi') >= '0000' && date('Hi') <= '1200'){
             self::$appkey = config('credentials.rajaongkir.app_key1');
         }else{
             self::$appkey = config('credentials.rajaongkir.app_key2');
