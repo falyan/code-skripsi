@@ -440,7 +440,7 @@ class TransactionController extends Controller
             $limit = $request->limit ?? 10;
             $page = $request->page ?? 1;
 
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['01'], $limit, $filter);
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['01'], $limit, $filter, $page);
 
             if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
