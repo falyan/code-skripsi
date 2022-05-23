@@ -94,16 +94,19 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer'
-        ])->where([
-            [$column_name, $column_value],
-        ])->whereHas('progress_active', function ($j) use ($status_code) {
-            $j->whereIn('status_code', $status_code);
-        })->when($column_name == 'merchant_id', function ($query) {
-            $query->whereHas('progress_active', function ($q) {
-                $q->whereNotIn('status_code', [99]);
-            });
-        })->orderBy('created_at', 'desc');
+            }, 'progress_active', 'merchant', 'delivery', 'buyer',
+        ])->where(
+            $column_name, $column_value,
+        )->whereHas('progress_active', function ($j) use ($status_code) {
+            $j->where('status_code', $status_code);
+        })
+            ->when($column_name == 'merchant_id', function ($query) {
+                $query->whereHas('progress_active', function ($q) {
+                    // $q->whereNotIn('status_code', [99]);
+                });
+            })
+            ->orderBy('created_at', 'desc')
+        ;
 
         $data = $this->filter($data, $filter);
         $data = $data->get();
@@ -172,24 +175,19 @@ class TransactionQueries extends Service
             }, 'progress_active', 'merchant', 'delivery', 'buyer'
         ])->where('order.' . $column_name, $column_value)
             ->where(function ($q) use ($keyword, $column_name) {
-                $q->when($column_name != 'merchant_id', function ($query) use ($keyword) {
-                    $query->whereHas('merchant', function ($merchant) use ($keyword) {
-                        $merchant->where('name', 'ILIKE', '%' . $keyword . '%');
-                    });
-                })->orWhereHas('detail', function ($detail) use ($keyword) {
-                    $detail->whereHas('product', function ($product) use ($keyword) {
-                        $product->where('name', 'ILIKE', '%' . $keyword . '%');
-                    });
-                })->orWhereHas('buyer', function ($buyer) use ($keyword) {
-                    $buyer->where('full_name', 'ilike', "%{$keyword}%")
-                        ->orWhere('phone', 'ilike', "%{$keyword}%");
-                })->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
+                $q
+                    ->whereHas('buyer', function ($buyer) use ($keyword) {
+                        $buyer->where('full_name', 'ilike', "%{$keyword}%")
+                            ->orWhere('phone', 'ilike', "%{$keyword}%");
+                    })
+                    ->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
             })->orderBy('order.created_at', 'desc');
 
         $data = $this->filter($data, $filter);
         $data = $data->get();
 
         $data = static::paginate($data->toArray(), $limit, $page);
+
         return $data;
     }
 

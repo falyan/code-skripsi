@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Services\Manager\IconcashManager;
 use App\Http\Services\Manager\IconpayManager;
+use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Transaction\TransactionCommands;
@@ -17,17 +18,16 @@ use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Models\User;
 use App\Models\VariantStock;
-use Exception, Input;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use stdClass;
-use App\Http\Services\Manager\MailSenderManager;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Input;
+use stdClass;
 
 class TransactionController extends Controller
 {
@@ -462,7 +462,7 @@ class TransactionController extends Controller
             $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['02'], $limit, $filter, $page);
 
             if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');;
+                return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'belum ada pesanan yang siap dikirim');
             }
@@ -481,7 +481,7 @@ class TransactionController extends Controller
             $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['03', '08'], $limit, $filter, $page);
 
             if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');;
+                return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'tidak ada pesanan yang sedang dikirim');
             }
@@ -519,7 +519,7 @@ class TransactionController extends Controller
             $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['09'], $limit, $filter, $page);
 
             if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');;
+                return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'belum ada pesanan yang dibatalkan');
             }
@@ -1103,7 +1103,7 @@ class TransactionController extends Controller
 
                     $customer = Customer::find($order->buyer_id);
                     $this->mailSenderManager->mailNewOrder($order->id);
-                }else{
+                } else {
                     $response['success'] = true;
                     $response['message'] = 'Berhasil merubah status pesanan';
                     $response['status_code'] = '01';
