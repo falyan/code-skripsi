@@ -584,6 +584,63 @@ class TransactionController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function sellerCountSearchTransaction(Request $request)
+    {
+        try {
+            $validator = Validator::make(request()->all(), [
+                'keyword' => 'min:3',
+                'limit' => 'nullable'
+            ], [
+                'exists' => 'ID :attribute tidak ditemukan.',
+                'required' => ':attribute diperlukan.',
+                'max' => 'panjang :attribute maksimum :max karakter.',
+                'min' => 'panjang :attribute minimum :min karakter.',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            $keyword = $request->keyword;
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $page = $request->page ?? 1;
+
+            $validator = Validator::make($filter, [
+                'start_date' => 'date|before_or_equal:end_date',
+                'end_date' => 'date|after_or_equal:start_date',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            $total = $this->transactionQueries->countSearchTransaction('merchant_id', Auth::user()->merchant_id, $keyword, $limit, $filter, $page);
+
+            if ($total > 0) {
+                return $this->respondWithData($total, 'sukses get total transaksi');
+            } else {
+                return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan');
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
     #End Region
 
     public function detailTransaction($id)

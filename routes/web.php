@@ -128,6 +128,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('/done', 'TransactionController@orderDone');
                     $router->get('/canceled', 'TransactionController@sellerTransactionCanceled');
                     $router->get('/search', 'TransactionController@sellerSearchTransaction');
+                    $router->get('/search/count', 'TransactionController@sellerCountSearchTransaction');
                     $router->get('/detail/{id}', 'TransactionController@detailTransaction');
                 });
 
