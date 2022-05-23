@@ -440,7 +440,7 @@ class TransactionController extends Controller
             $limit = $request->limit ?? 10;
             $page = $request->page ?? 1;
 
-            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['01'], $limit, $filter);
+            $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['01'], $limit, $filter, $page);
 
             if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
@@ -532,7 +532,7 @@ class TransactionController extends Controller
     {
         try {
             $validator = Validator::make(request()->all(), [
-                'keyword' => 'required|min:3',
+                'keyword' => 'min:3',
                 'limit' => 'nullable'
             ], [
                 'exists' => 'ID :attribute tidak ditemukan.',
@@ -630,6 +630,7 @@ class TransactionController extends Controller
     public function acceptOrder(Request $request)
     {
         try {
+            DB::beginTransaction();
             $rules = [
                 'id.*' => 'required',
             ];
@@ -650,38 +651,40 @@ class TransactionController extends Controller
             }
 
             foreach ($request->id as $order_id) {
-                DB::beginTransaction();
-                $response = $this->transactionCommand->updateOrderStatus($order_id, '02');
-                if ($response['success'] == false) {
-                    return $response;
+                $data = $this->transactionQueries->getStatusOrder($order_id);
+                if (in_array($data->progress_active->status_code, ['01'])) {
+                    $response = $this->transactionCommand->updateOrderStatus($order_id, '02');
+                    if ($response['success'] == false) {
+                        return $response;
+                    }
+
+                    $title = 'Pesanan Dikonfirmasi';
+                    $message = 'Pesanan anda sedang diproses oleh penjual.';
+                    $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
+                    if (empty($order)) {
+                        $response['success'] = false;
+                        $response['message'] = 'Gagal mendapatkan data pesanan';
+                        return $response;
+                    }
+                    //                $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+                    $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+
+                    $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+                    $total_amount_trx = $total_delivery_fee_trx = 0;
+
+                    foreach ($orders as $o) {
+                        $total_amount_trx += $o->total_amount;
+                        $total_delivery_fee_trx += $o->delivery->delivery_fee;
+                    }
+
+                    if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000) {
+                        $this->voucherCommand->generateVoucher($order);
+                    }
+
+                    DB::commit();
+                    $mailSender = new MailSenderManager();
+                    $mailSender->mailAcceptOrder($order_id);
                 }
-
-                $title = 'Pesanan Dikonfirmasi';
-                $message = 'Pesanan anda sedang diproses oleh penjual.';
-                $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-                if (empty($order)) {
-                    $response['success'] = false;
-                    $response['message'] = 'Gagal mendapatkan data pesanan';
-                    return $response;
-                }
-                //                $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
-                $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
-
-                $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
-                $total_amount_trx = $total_delivery_fee_trx = 0;
-
-                foreach ($orders as $o) {
-                    $total_amount_trx += $o->total_amount;
-                    $total_delivery_fee_trx += $o->delivery->delivery_fee;
-                }
-
-                if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000) {
-                    $this->voucherCommand->generateVoucher($order);
-                }
-
-                DB::commit();
-                $mailSender = new MailSenderManager();
-                $mailSender->mailAcceptOrder($order_id);
             }
 
             return $response;
@@ -1067,40 +1070,45 @@ class TransactionController extends Controller
             }
 
             $customer = null;
-            $orders = Order::where('no_reference', $no_reference)->get();
+            $orders = Order::where('no_reference', $no_reference)->with(['progress_active'])->get();
             foreach ($orders as $order) {
-                $response = $this->transactionCommand->updateOrderStatus($order->id, '01');
-                if ($response['success'] == false) {
+                if (in_array($order->progress_active->status_code, ['00'])) {
+                    $response = $this->transactionCommand->updateOrderStatus($order->id, '01');
+                    if ($response['success'] == false) {
+                        return $response;
+                    }
+
+                    $column_name = 'customer_id';
+                    $column_value = $order->buyer_id;
+                    $type = 2;
+                    $title = 'Pembayaran transaksi berhasil';
+                    $message = 'Pembayaran berhasil, menunggu konfirmasi pesananmu dari penjual';
+                    $url_path = 'v1/buyer/query/transaction/' . $order->buyer_id . '/detail/' . $order->id;
+
+                    $notificationCommand = new NotificationCommands();
+                    $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
+
+                    $column_name_merchant = 'merchant_id';
+                    $column_value_merchant = $order->merchant_id;
+                    $title_merchant = 'Pesanan masuk';
+                    $message_merchant = 'Ada pesanan masuk, silakan konfirmasi pesanan.';
+                    $url_path_merchant = 'v1/seller/query/transaction/detail/' . $order->id;
+
+                    $notificationCommand = new NotificationCommands();
+                    $notificationCommand->create($column_name_merchant, $column_value_merchant, $type, $title_merchant, $message_merchant, $url_path_merchant);
+
+                    $notificationCommand = new NotificationCommands();
+                    $customer = Customer::where('merchant_id', $order->merchant_id)->first();
+                    $notificationCommand->sendPushNotification($customer->id, $title_merchant, $message_merchant, 'active');
+
+                    $customer = Customer::find($order->buyer_id);
+                    $this->mailSenderManager->mailNewOrder($order->id);
+                }else{
+                    $response['success'] = true;
+                    $response['message'] = 'Berhasil merubah status pesanan';
+                    $response['status_code'] = '01';
                     return $response;
                 }
-
-                $column_name = 'customer_id';
-                $column_value = $order->buyer_id;
-                $type = 2;
-                $title = 'Pembayaran transaksi berhasil';
-                $message = 'Pembayaran berhasil, menunggu konfirmasi pesananmu dari penjual';
-                $url_path = 'v1/buyer/query/transaction/' . $order->buyer_id . '/detail/' . $order->id;
-
-                $notificationCommand = new NotificationCommands();
-                $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
-
-                $column_name_merchant = 'merchant_id';
-                $column_value_merchant = $order->merchant_id;
-                $title_merchant = 'Pesanan masuk';
-                $message_merchant = 'Ada pesanan masuk, silakan konfirmasi pesanan.';
-                $url_path_merchant = 'v1/seller/query/transaction/detail/' . $order->id;
-
-                $notificationCommand = new NotificationCommands();
-                $notificationCommand->create($column_name_merchant, $column_value_merchant, $type, $title_merchant, $message_merchant, $url_path_merchant);
-            }
-
-            foreach ($orders as $order) {
-                $notificationCommand = new NotificationCommands();
-                $customer = Customer::where('merchant_id', $order->merchant_id)->first();
-                $notificationCommand->sendPushNotification($customer->id, $title_merchant, $message_merchant, 'active');
-
-                $customer = Customer::find($order->buyer_id);
-                $this->mailSenderManager->mailNewOrder($order->id);
             }
 
             $this->mailSenderManager->mailPaymentSuccess($order->id);
