@@ -188,29 +188,22 @@ class ProductQueries extends Service
     {
         $product = new Product();
 
-        $products = $product->withCount(['order_details' => function ($order_details) {
-            $order_details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->where('status', 1)->with(['merchant' => function ($merchant) {
-            $merchant->with('city:id,name');
-        }, 'order_details' => function ($trx) {
-            $trx->whereHas('order', function ($j) {
-                $j->whereHas('progress_done');
-            });
-        }, 'product_photo', 'product_stock', 'is_wishlist'])->where('merchant_id', $merchant_id);
+        $products = $product
+            ->where(['merchant_id' => $merchant_id, 'status' => 1])
+            ->withCount(['order_details' => function ($order_details) {
+                $order_details->whereHas('order', function ($order) {
+                    $order->whereHas('progress_done');
+                });
+            }])
+            ->with(['merchant' => function ($merchant) {
+                $merchant->with('city:id,name');
+            },
+                'product_photo', 'product_stock']);
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
-        $immutable_data = $sorted_data->get()->map(function ($product) {
-            $product->reviews = null;
-            //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            $product->avg_rating = 0.0;
-            return $product;
-        });
-
-        $data = static::paginate($immutable_data->toArray(), $size, $current_page);
+        $data = $this->productPaginate($sorted_data, $size);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
