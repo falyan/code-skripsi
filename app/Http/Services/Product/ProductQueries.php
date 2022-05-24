@@ -650,7 +650,7 @@ class ProductQueries extends Service
             $max_price = $filter['max_price'] ?? null;
 
             $data = $model->when(!empty($keyword), function ($query) use ($keyword) {
-                $query->where('name', 'LIKE', "%{$keyword}%");
+                $query->where('name', 'ILIKE', "%{$keyword}%");
             })->when(!empty($category), function ($query) use ($category) {
                 if (strpos($category, ',')) {
                     $query->whereIn('category_id', explode(',', $category));
