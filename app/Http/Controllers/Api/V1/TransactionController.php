@@ -576,7 +576,7 @@ class TransactionController extends Controller
 
             $data = $this->transactionQueries->searchTransaction('merchant_id', Auth::user()->merchant_id, $keyword, $limit, $filter, $page);
 
-            if ($data['total'] > 0) {
+            if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan', 404);
