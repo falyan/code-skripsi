@@ -579,7 +579,7 @@ class TransactionController extends Controller
             if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
-                return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan');
+                return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan', 404);
             }
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -636,7 +636,7 @@ class TransactionController extends Controller
             if ($total > 0) {
                 return $this->respondWithData($total, 'sukses get total transaksi');
             } else {
-                return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan');
+                return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan', 404);
             }
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
