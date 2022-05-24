@@ -432,7 +432,6 @@ class TransactionController extends Controller
         }
     }
 
-
     public function newOrder(Request $request)
     {
         try {
@@ -443,10 +442,12 @@ class TransactionController extends Controller
             $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['01'], $limit, $filter, $page);
 
             if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');
+                $respon = $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'belum ada pesanan baru');
             }
+
+            return $respon;
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
