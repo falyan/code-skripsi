@@ -101,6 +101,8 @@ class ProductCommands extends Service
             $product_photo = '';
             $photo = [];
             foreach ($data->url as $url_photo) {
+                $url_photo = str_replace('https', 'http', $url_photo);
+
                 $product_photo = ProductPhoto::create([
                     'merchant_id' => $data->merchant_id,
                     'product_id' => $product->id,
@@ -229,6 +231,8 @@ class ProductCommands extends Service
 
             $photo = [];
             foreach ($data->url as $url_photo) {
+                $url_photo = str_replace('https', 'http', $url_photo);
+
                 $product_photo = ProductPhoto::create([
                     'merchant_id' => $merchant_id,
                     'product_id' => $product_id,
