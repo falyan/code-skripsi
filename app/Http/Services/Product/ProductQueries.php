@@ -23,7 +23,9 @@ class ProductQueries extends Service
                     $order->whereHas('progress_done');
                 });
             }])
-            ->where('status', 1)->with(['product_stock', 'product_photo', 'merchant.city', 'is_wishlist'])->whereHas('merchant', function ($merchant) {
+            ->where('status', 1)->with(['product_stock', 'product_photo', 'merchant.city', 'is_wishlist', 'varian_product' => function ($query) {
+            $query->with(['variant_stock'])->where('main_variant', true);
+        }])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
         }); //todo paginate 10
 
@@ -47,11 +49,13 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist'])->where('merchant_id', $merchant_id);
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'varian_product' => function ($query) {
+            $query->with(['variant_stock'])->where('main_variant', true);
+        }])->where('merchant_id', $merchant_id);
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
-            //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
             $product->avg_rating = 0.0;
             return $product;
         });
@@ -252,7 +256,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductById($id)
+    public function getProductById($id, $seller = false)
     {
         // seller/buyer
         // $data = Product::withCount(['reviews', 'order_details' => function ($details) {
@@ -281,7 +285,7 @@ class ProductQueries extends Service
             });
         }, 'reviews' => function ($reviews) {
             $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo']);
-        }, 'discussion_master' => function ($master){
+        }, 'discussion_master' => function ($master) {
             $master->orderBy('created_at', 'desc')->limit(2)->with(['discussion_response']);
         }])->where('id', $id)->first();
 
@@ -299,7 +303,11 @@ class ProductQueries extends Service
             }]);
         }])->get();
 
-        $variant_value_product = VariantValueProduct::with(['variant_stock'])->where('product_id', $id)->get();
+        $variant_value_product = VariantValueProduct::with(['variant_stock'])
+            ->when($seller == false, function ($query) {
+                return $query->where('status', 1);
+            })
+            ->where('product_id', $id)->orderBy('main_variant', 'desc')->get();
 
         $data['variants'] = $master_variants;
         $data['variant_value_products'] = $variant_value_product;
