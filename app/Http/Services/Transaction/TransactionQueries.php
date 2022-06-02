@@ -329,6 +329,8 @@ class TransactionQueries extends Service
             $status = $filter['status'] ?? null;
             $start_date = $filter['start_date'] ?? null;
             $end_date = $filter['end_date'] ?? null;
+            $phone = $filter['phone'] ?? null;
+            $customer_name = $filter['customer_name'] ?? null;
 
             if (validateDate($start_date, 'Y-m-d')) $start_date = $start_date . " 00:00:00";
             if (validateDate($end_date, 'Y-m-d')) $end_date = $end_date . " 23:59:59";
@@ -342,6 +344,14 @@ class TransactionQueries extends Service
                     } else {
                         $j->where('status_code', $status);
                     }
+                });
+            })->when(!empty($phone), function ($query) use ($phone) {
+                $query->whereHas('buyer', function ($buyer) use ($phone) {
+                    $buyer->where('phone', 'ilike', "%{$phone}%");
+                });
+            })->when(!empty($customer_name), function ($query) use ($customer_name) {
+                $query->whereHas('buyer', function ($buyer) use ($customer_name) {
+                    $buyer->where('full_name', 'ilike', "%{$customer_name}%");
                 });
             });
 
