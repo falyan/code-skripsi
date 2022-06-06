@@ -137,4 +137,14 @@ class Merchant extends Model
     public function mdr_merchant_active(){
         return $this->hasOne(MdrMerchant::class)->where('status', 1);
     }
+
+    public function discussion_master()
+    {
+        return $this->hasMany(DiscussionMaster::class, 'merchant_id');
+    }
+
+    public function discussion_response()
+    {
+        return $this->hasMany(DiscussionResponse::class, 'merchant_id');
+    }
 }

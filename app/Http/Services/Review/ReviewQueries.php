@@ -251,6 +251,22 @@ class ReviewQueries{
         return $response;
     }
 
+    public function getListReviewByTransaction($order_id){
+        $order = Order::with(['detail' => function ($product) use ($order_id){
+                $product->with(['product' => function ($j) use ($order_id){
+                    $j->with(['merchant', 'product_photo', 'reviews' => function ($review) use ($order_id){
+                        $review->whereIn('order_id', [$order_id])->with(['review_photo']);
+                    }]);
+                }]);
+            }, 'buyer'])->where('id', $order_id)->get();
+
+        $response['success'] = true;
+        $response['message'] = 'Data review berhasil didapatkan!';
+        $response['data'] = static::paginate($order->toArray(), 10, 1);
+
+        return $response;
+    }
+
     static function paginate(array $items, $perPage = 10, $page = 1, $options = [])
     {
         $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);

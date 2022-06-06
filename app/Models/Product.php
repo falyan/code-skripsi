@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -148,6 +147,11 @@ class Product extends Model
     public function category()
     {
         return $this->belongsTo(MasterData::class);
+    }
+
+    public function discussion_master()
+    {
+        return $this->hasMany(DiscussionMaster::class, 'product_id');
     }
 
     public function varian_value_product()

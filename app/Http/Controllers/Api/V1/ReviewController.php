@@ -155,4 +155,12 @@ class ReviewController extends Controller
             return $this->respondWithData($e, 'Error', 400);
         }
     }
+
+    public function getListReviewByTransaction($trx_id){
+        try {
+            return $this->reviewQueries->getListReviewByTransaction($trx_id);
+        }catch (Exception $e){
+            return $this->respondWithData($e, 'Error', 400);
+        }
+    }
 }
