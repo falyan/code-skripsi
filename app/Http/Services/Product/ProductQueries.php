@@ -241,9 +241,12 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->where('status', 1)->with(['merchant' => function ($merchant) {
-            $merchant->with('city:id,name');
-        }, 'product_stock', 'product_photo', 'is_wishlist'])->whereHas('merchant', function ($merchant) {
+        }])->where('status', 1)->with(['product_stock', 'product_photo', 'is_wishlist',
+            'merchant' => function ($merchant) {
+                $merchant->with('city:id,name');
+            }, 'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            }])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
         })->whereIn('category_id', $cat_child_id);
 
