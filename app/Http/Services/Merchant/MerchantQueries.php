@@ -178,6 +178,7 @@ class MerchantQueries extends Service
             $data = [];
 
             $data['new_order'] = (static::getTotalTrx($merchant_id, '01', $daterange));
+            $data['on_progress'] = (static::getTotalTrx($merchant_id, '03', $daterange));
             $data['ready_to_deliver'] = (static::getTotalTrx($merchant_id, '02', $daterange));
             $data['complained_order'] = count($reviewQueries->getListReviewDoneByRate('merchant_id', $merchant_id, 2, '<=', $daterange)['data']);
             $data['new_review'] = count($reviewQueries->getListReviewDoneByRate('merchant_id', $merchant_id, null, null, $daterange)['data']);
