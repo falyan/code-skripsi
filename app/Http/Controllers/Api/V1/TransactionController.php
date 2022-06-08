@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Services\Manager\IconcashManager;
 use App\Http\Services\Manager\IconpayManager;
-use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Transaction\TransactionCommands;
@@ -18,16 +17,17 @@ use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductStock;
-use App\Models\User;
 use App\Models\VariantStock;
-use Exception;
+use Exception, Input;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Input;
 use stdClass;
+use App\Http\Services\Manager\MailSenderManager;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
@@ -432,7 +432,6 @@ class TransactionController extends Controller
         }
     }
 
-
     public function newOrder(Request $request)
     {
         try {
@@ -443,10 +442,12 @@ class TransactionController extends Controller
             $data = $this->transactionQueries->getTransactionWithStatusCode('merchant_id', Auth::user()->merchant_id, ['01'], $limit, $filter, $page);
 
             if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');
+                $respon = $this->respondWithData($data, 'sukses get data transaksi');
             } else {
                 return $this->respondWithResult(true, 'belum ada pesanan baru');
             }
+
+            return $respon;
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -575,10 +576,67 @@ class TransactionController extends Controller
 
             $data = $this->transactionQueries->searchTransaction('merchant_id', Auth::user()->merchant_id, $keyword, $limit, $filter, $page);
 
-            if ($data['total'] > 0) {
+            if ($data->total() > 0) {
                 return $this->respondWithData($data, 'sukses get data transaksi');
             } else {
-                return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan');
+                return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan', 404);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function sellerCountSearchTransaction(Request $request)
+    {
+        try {
+            $validator = Validator::make(request()->all(), [
+                'keyword' => 'min:3',
+                'limit' => 'nullable'
+            ], [
+                'exists' => 'ID :attribute tidak ditemukan.',
+                'required' => ':attribute diperlukan.',
+                'max' => 'panjang :attribute maksimum :max karakter.',
+                'min' => 'panjang :attribute minimum :min karakter.',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            $keyword = $request->keyword;
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $page = $request->page ?? 1;
+
+            $validator = Validator::make($filter, [
+                'start_date' => 'date|before_or_equal:end_date',
+                'end_date' => 'date|after_or_equal:start_date',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            $total = $this->transactionQueries->countSearchTransaction('merchant_id', Auth::user()->merchant_id, $keyword, $limit, $filter, $page);
+
+            if ($total > 0) {
+                return $this->respondWithData($total, 'sukses get total transaksi');
+            } else {
+                return $this->respondWithResult(false, 'transaksi untuk kata kunci ' . $keyword . ' tidak ditemukan', 404);
             }
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());

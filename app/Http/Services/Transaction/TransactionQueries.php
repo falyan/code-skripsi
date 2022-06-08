@@ -184,9 +184,61 @@ class TransactionQueries extends Service
             })->orderBy('order.created_at', 'desc');
 
         $data = $this->filter($data, $filter);
-        $data = $data->get();
+        $data = $this->transactionPaginate($data, $limit);
 
-        $data = static::paginate($data->toArray(), $limit, $page);
+        return $data;
+    }
+
+    public function countSearchTransaction($column_name, $column_value, $keyword, $filter = [])
+    {
+        $data = Order::with([
+            'detail' => function ($product) {
+                $product->with(['product' => function ($j) {
+                    $j->with(['product_photo']);
+                }]);
+            }, 'progress_active', 'merchant', 'delivery', 'buyer'
+        ])->where('order.' . $column_name, $column_value)
+            ->where(function ($q) use ($keyword, $column_name) {
+                $q->when($column_name != 'merchant_id', function ($query) use ($keyword) {
+                    $query->whereHas('merchant', function ($merchant) use ($keyword) {
+                        $merchant->where('name', 'ILIKE', '%' . $keyword . '%');
+                    });
+                })->orWhereHas('detail', function ($detail) use ($keyword) {
+                    $detail->whereHas('product', function ($product) use ($keyword) {
+                        $product->where('name', 'ILIKE', '%' . $keyword . '%');
+                    });
+                })->orWhereHas('buyer', function ($buyer) use ($keyword) {
+                    $buyer->where('full_name', 'ilike', "%{$keyword}%")
+                        ->orWhere('phone', 'ilike', "%{$keyword}%");
+                })->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
+            })->orderBy('order.created_at', 'desc');
+
+        $data = $this->filter($data, $filter);
+        $data = $data->count();
+
+        return $data;
+    }
+
+    public function countSearchTransaction($column_name, $column_value, $keyword, $limit = 0, $filter = [], $page = 1)
+    {
+        $data = Order::with([
+            'detail' => function ($product) {
+                $product->with(['product' => function ($j) {
+                    $j->with(['product_photo']);
+                }]);
+            }, 'progress_active', 'merchant', 'delivery', 'buyer'
+        ])->where('order.' . $column_name, $column_value)
+            ->where(function ($q) use ($keyword, $column_name) {
+                $q
+                    ->whereHas('buyer', function ($buyer) use ($keyword) {
+                        $buyer->where('full_name', 'ilike', "%{$keyword}%")
+                            ->orWhere('phone', 'ilike', "%{$keyword}%");
+                    })
+                    ->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
+            })->orderBy('order.created_at', 'desc');
+
+        $data = $this->filter($data, $filter);
+        $data = $data->count();
 
         return $data;
     }
@@ -359,5 +411,26 @@ class TransactionQueries extends Service
         } else {
             return $model;
         }
+    }
+
+    protected function transactionPaginate($transactions, $limit = 10)
+    {
+        $itemsPaginated = $transactions->paginate($limit);
+
+        $itemsTransformed = $itemsPaginated->getCollection()->toArray();
+
+        $itemsTransformedAndPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $itemsTransformed,
+            $itemsPaginated->total(),
+            $itemsPaginated->perPage(),
+            $itemsPaginated->currentPage(), [
+                // 'path' => \Illuminate\Http\Request::url(),
+                'query' => [
+                    'page' => $itemsPaginated->currentPage(),
+                ],
+            ]
+        );
+
+        return $itemsTransformedAndPaginated;
     }
 }
