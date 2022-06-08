@@ -61,7 +61,7 @@ class MailSenderManager
         $merchant = $order->merchant;
         $data = [
             'destination_name' => $order->merchant->name ?? 'Toko Favorit',
-            'order' => $order
+            'order' => $order,
         ];
 
         Mail::send('email.newOrder', $data, function ($mail) use ($merchant) {
@@ -76,7 +76,6 @@ class MailSenderManager
             Log::info('Berhasil mengirim email pesanan baru untuk ke email: ' . $merchant->email);
         }
 
-
         return;
     }
 
@@ -86,8 +85,8 @@ class MailSenderManager
         $order = $transactionQueries->getDetailTransaction($order_id);
         $customer = $order->buyer;
         $data = [
-            'destination_name' => $order->merchant->name ?? 'Toko Favorit',
-            'order' => $order
+            'destination_name' => $customer->full_name ?? 'Pengguna Setia',
+            'order' => $order,
         ];
 
         Mail::send('email.orderOnDelivery', $data, function ($mail) use ($customer) {
@@ -112,12 +111,12 @@ class MailSenderManager
         $customer = $order->buyer;
         $data = [
             'destination_name' => $order->merchant->name ?? 'Toko Favorit',
-            'order' => $order
+            'order' => $order,
         ];
 
         Mail::send('email.acceptOrder', $data, function ($mail) use ($customer) {
             $mail->to($customer->email, 'no-reply')
-            ->subject("Pesanan Siap Dikirim");
+                ->subject("Pesanan Siap Dikirim");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
         });
 
@@ -139,7 +138,7 @@ class MailSenderManager
         $data = [
             'destination_name' => $customer->full_name ?? 'Pengguna Setia',
             'order' => $order,
-            'date_arrived' => $date_arrived
+            'date_arrived' => $date_arrived,
         ];
 
         Mail::send('email.orderDeliveredBuyer', $data, function ($mail) use ($customer) {
@@ -149,7 +148,7 @@ class MailSenderManager
         });
 
         if (Mail::failures()) {
-            Log::error('Gagal mengirim email pesanan sampai untuk ke email: ' . $customer->email,);
+            Log::error('Gagal mengirim email pesanan sampai untuk ke email: ' . $customer->email, );
         } else {
             Log::info('Berhasil mengirim email pesanan sampai ke email: ' . $customer->email);
         }
@@ -157,7 +156,7 @@ class MailSenderManager
         $data = [
             'destination_name' => $merchant->name ?? 'Toko Favorit',
             'order' => $order,
-            'date_arrived' => $date_arrived
+            'date_arrived' => $date_arrived,
         ];
 
         Mail::send('email.orderDeliveredSeller', $data, function ($mail) use ($customer, $merchant) {
@@ -181,7 +180,7 @@ class MailSenderManager
         $merchant = $order->merchant;
         $data = [
             'destination_name' => $customer->full_name ?? 'Pengguna Setia',
-            'order' => $order
+            'order' => $order,
         ];
 
         Mail::send('email.orderDone', $data, function ($mail) use ($customer) {
@@ -198,7 +197,7 @@ class MailSenderManager
 
         $data = [
             'destination_name' => $merchant->name ?? 'Toko Favorit',
-            'order' => $order
+            'order' => $order,
         ];
 
         Mail::send('email.confirmFinishOrder', $data, function ($mail) use ($merchant) {
