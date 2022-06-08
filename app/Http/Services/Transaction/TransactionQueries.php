@@ -199,36 +199,6 @@ class TransactionQueries extends Service
             }, 'progress_active', 'merchant', 'delivery', 'buyer'
         ])->where('order.' . $column_name, $column_value)
             ->where(function ($q) use ($keyword, $column_name) {
-                $q->when($column_name != 'merchant_id', function ($query) use ($keyword) {
-                    $query->whereHas('merchant', function ($merchant) use ($keyword) {
-                        $merchant->where('name', 'ILIKE', '%' . $keyword . '%');
-                    });
-                })->orWhereHas('detail', function ($detail) use ($keyword) {
-                    $detail->whereHas('product', function ($product) use ($keyword) {
-                        $product->where('name', 'ILIKE', '%' . $keyword . '%');
-                    });
-                })->orWhereHas('buyer', function ($buyer) use ($keyword) {
-                    $buyer->where('full_name', 'ilike', "%{$keyword}%")
-                        ->orWhere('phone', 'ilike', "%{$keyword}%");
-                })->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
-            })->orderBy('order.created_at', 'desc');
-
-        $data = $this->filter($data, $filter);
-        $data = $data->count();
-
-        return $data;
-    }
-
-    public function countSearchTransaction($column_name, $column_value, $keyword, $limit = 0, $filter = [], $page = 1)
-    {
-        $data = Order::with([
-            'detail' => function ($product) {
-                $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
-                }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer'
-        ])->where('order.' . $column_name, $column_value)
-            ->where(function ($q) use ($keyword, $column_name) {
                 $q
                     ->whereHas('buyer', function ($buyer) use ($keyword) {
                         $buyer->where('full_name', 'ilike', "%{$keyword}%")
@@ -381,11 +351,14 @@ class TransactionQueries extends Service
             $status = $filter['status'] ?? null;
             $start_date = $filter['start_date'] ?? null;
             $end_date = $filter['end_date'] ?? null;
-            $phone = $filter['phone'] ?? null;
-            $customer_name = $filter['customer_name'] ?? null;
 
-            if (validateDate($start_date, 'Y-m-d')) $start_date = $start_date . " 00:00:00";
-            if (validateDate($end_date, 'Y-m-d')) $end_date = $end_date . " 23:59:59";
+            if (validateDate($start_date, 'Y-m-d')) {
+                $start_date = $start_date . " 00:00:00";
+            }
+
+            if (validateDate($end_date, 'Y-m-d')) {
+                $end_date = $end_date . " 23:59:59";
+            }
 
             $data = $model->when(!empty($start_date) && !empty($end_date), function ($query) use ($start_date, $end_date) {
                 $query->whereBetween('created_at', [$start_date, $end_date]);
@@ -396,14 +369,6 @@ class TransactionQueries extends Service
                     } else {
                         $j->where('status_code', $status);
                     }
-                });
-            })->when(!empty($phone), function ($query) use ($phone) {
-                $query->whereHas('buyer', function ($buyer) use ($phone) {
-                    $buyer->where('phone', 'ilike', "%{$phone}%");
-                });
-            })->when(!empty($customer_name), function ($query) use ($customer_name) {
-                $query->whereHas('buyer', function ($buyer) use ($customer_name) {
-                    $buyer->where('full_name', 'ilike', "%{$customer_name}%");
                 });
             });
 
