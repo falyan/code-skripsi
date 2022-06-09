@@ -707,6 +707,23 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function checkProductStock($request){
+        $data = [];
+        foreach ($request->product_id as $id){
+            $product = Product::with(['stock_active', 'varian_value_product' => function($variant){
+                $variant->with("variant_stock");
+            }])->where("id", $id)->first();
+
+            array_push($data, $product);
+        }
+
+        $response['success'] = true;
+        $response['message'] = "Berhasil mendapatkan stok produk";
+        $response['data'] = $data;
+
+        return $response;
+    }
+
     public function filter($model, $filter = [])
     {
         if (count($filter) > 0) {

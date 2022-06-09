@@ -32,6 +32,8 @@ class ProductController extends Controller
         $this->productCommands = new ProductCommands();
         $this->productQueries = new ProductQueries();
         $this->categoryQueries = new CategoryQueries();
+        $this->variantCommands = new VariantCommands();
+        $this->variantQueries = new VariantQueries();
     }
 
     //Create Produk
@@ -177,9 +179,117 @@ class ProductController extends Controller
     public function updateStockProduct($product_id, Request $request)
     {
         try {
-            $request['full_name'] = Auth::user()->full_name;
-            $merchant_id = Auth::user()->merchant_id;
-            return $this->productCommands->updateStockProduct($product_id, $merchant_id, $request);
+            $rules = [
+                'amount' => 'numeric',
+                'uom' => 'string',
+                'status' => 'in:1,3',
+            ];
+
+            if (isset($request['variant_value_product']) && isset($request['variant_value_product']['variant_stock'])) {
+                $rules = [
+                    'variant_value_product.variant_stock' => 'array',
+                    'variant_value_product.variant_stock.*' => 'required',
+                    'variant_value_product.variant_stock.*.id' => 'required',
+                    'variant_value_product.variant_stock.*.amount' => 'required|numeric',
+                    'variant_value_product.variant_stock.*.status' => 'in:1,0',
+                ];
+            }
+
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => ':attribute diperlukan.',
+                'numeric' => ':attribute harus berupa angka.',
+                'string' => ':attribute harus berupa string.',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            $product = Product::where([
+                'id' => $product_id,
+                'merchant_id' => auth()->user()->merchant_id,
+            ])->first();
+
+            if (!$product) {
+                return [
+                    'success' => false,
+                    'message' => 'Produk tidak ditemukan!',
+                ];
+            }
+
+            if (isset($request['variant_value_product']) && isset($request['variant_value_product']['variant_stock'])) {
+                return $this->variantCommands->updateVariantStock($product_id, $request['variant_value_product']['variant_stock']);
+            } else {
+                $request['full_name'] = Auth::user()->full_name;
+                $merchant_id = Auth::user()->merchant_id;
+                return $this->productCommands->updateStockProduct($product_id, $merchant_id, $request);
+            }
+
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function updatePriceProduct($product_id, Request $request)
+    {
+        try {
+            $rules = [
+                'price' => 'numeric',
+                'strike_price' => 'numeric',
+            ];
+
+            if (isset($request['variant_value_product'])) {
+                $rules = [
+                    'variant_value_product' => 'array',
+                    'variant_value_product.*' => 'required',
+                    'variant_value_product.*.id' => 'required',
+                    'variant_value_product.*.price' => 'required|numeric',
+                    'variant_value_product.*.strike_price' => 'numeric',
+                ];
+            }
+
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => ':attribute diperlukan.',
+                'numeric' => ':attribute harus berupa angka.',
+                'string' => ':attribute harus berupa string.',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            $product = Product::where([
+                'id' => $product_id,
+                'merchant_id' => auth()->user()->merchant_id,
+            ])->first();
+
+            if (!$product) {
+                return [
+                    'success' => false,
+                    'message' => 'Produk tidak ditemukan!',
+                ];
+            }
+
+            if (isset($request['variant_value_product'])) {
+                return $this->variantCommands->updateVariantPrice($product_id, $request['variant_value_product']);
+            } else {
+                return $this->productCommands->updatePriceProduct($product_id, $request);
+            }
+
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -191,7 +301,7 @@ class ProductController extends Controller
         try {
             $validator = Validator::make(request()->all(), [
                 'keyword' => 'required|min:3',
-                'limit' => 'nullable'
+                'limit' => 'nullable',
             ], [
                 'required' => ':attribute wajib diisi.',
                 'min' => 'panjang :attribute minimum :min karakter.',
@@ -251,6 +361,15 @@ class ProductController extends Controller
     {
         try {
             return $this->productQueries->getProductById($id);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getProductByIdSeller($id)
+    {
+        try {
+            return $this->productQueries->getProductById($id, true);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -335,7 +454,7 @@ class ProductController extends Controller
         try {
             $validator = Validator::make(request()->all(), [
                 'keyword' => 'required|min:3',
-                'limit' => 'nullable'
+                'limit' => 'nullable',
             ], [
                 'required' => ':attribute diperlukan.',
                 'min' => 'panjang :attribute minimum :min karakter.',
@@ -398,6 +517,34 @@ class ProductController extends Controller
 
             return $this->productQueries->countProductWithFilter($filter, $sorting);
         } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function checkProductStock(Request $request){
+        try {
+            $rules = [
+                'product_id' => 'array|required',
+            ];
+
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => ':attribute diperlukan.',
+                'numeric' => ':attribute harus berupa angka.'
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            return $this->productQueries->checkProductStock($request);
+        }catch (Exception $e){
             return $this->respondErrorException($e, request());
         }
     }
