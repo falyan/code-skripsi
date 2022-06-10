@@ -401,7 +401,7 @@ class ProductQueries extends Service
             });
         }])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
-        });
+        })->orderBy('order_details_count', 'DESC');
 
         $itemsPaginated = $products->paginate($limit);
 
