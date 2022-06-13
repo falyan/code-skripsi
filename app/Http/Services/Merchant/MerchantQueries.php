@@ -183,6 +183,8 @@ class MerchantQueries extends Service
             $data['complained_order'] = count($reviewQueries->getListReviewDoneByRate('merchant_id', $merchant_id, 2, '<=', $daterange)['data']);
             $data['new_review'] = count($reviewQueries->getListReviewDoneByRate('merchant_id', $merchant_id, null, null, $daterange)['data']);
             $data['new_discussion'] = count($discussionQueries->getListDiscussionDoneByUnread($merchant_id, 'unread', $daterange)['data']);
+            $data['success_order'] = static::getTotalTrx($merchant_id, '88', $daterange);
+            $data['canceled_order'] = static::getTotalTrx($merchant_id, '09', $daterange);
 
             return [
                 'data' => [
@@ -209,39 +211,26 @@ class MerchantQueries extends Service
     public static function getTotalTrx($merchant_id, $status_code, $daterange = [])
     {
 
-        $data = DB::table('order')
-                    ->join('order_progress', 'order.id', '=', 'order_progress.order_id')
-                    ->where('order_progress.status', '=', 1)
-                    ->where('order_progress.status_code', '=', $status_code)
-                    ->where('order.merchant_id', $merchant_id);
-
-        if (count($daterange) == 2) {
-            // $data = Order::with(['progress' => function ($progress) use ($status_code, $daterange){
-            //     $progress->where('status', 1)->where('status_code', $status_code)->whereBetween('created_at', $daterange);
-            // }])->withCount(['progress' => function ($progress) use ($status_code, $daterange){
-            //     return $progress->where('status', 1)->where('status_code', $status_code)->whereBetween('created_at', $daterange);
-            // }])->where('merchant_id', $merchant_id);
-            $data = $data->whereBetween('order_progress.created_at', $daterange);
-        }
-
-//        $data = $data->get()->toArray();
-//        return array_filter($data, function ($order){
-//            return $order['progress_count'] != 0;
-//        });
-
-        // $data = collect($data->get()->toArray())->where('progress_count', '!=', 0);
+        $data = Order::with('progress_active')
+        ->whereHas('progress_active', function ($query) use ($status_code, $daterange) {
+            $query->where('status_code', $status_code);
+            $query->when(count($daterange) == 2, function($q) use ($daterange) {
+                return $q->whereBetween('created_at', $daterange);
+            });
+            return $query;
+        })
+        ->where('merchant_id', $merchant_id);
 
         $data = $data->count();
+        
         Log::info("T00001", [
             'path_url' => "count.order",
             'query' => [],
             'body' => Carbon::now('Asia/Jakarta'),
             'response' => $data
         ]);
+
         return $data;
-//        return array_filter($data, function ($order){
-//            return $order['progress_count'] != 0;
-//        });
     }
 
     // public function getTotalReview($merchant_id, $rate)

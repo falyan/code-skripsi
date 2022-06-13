@@ -16,10 +16,13 @@ class NotificationQueries extends Service
         return $total_data;
     }
 
-    public function getAllNotification($column_name, $column_value, $limit)
+    public function getAllNotification($column_name, $column_value, $limit = 10, $page = 1)
     {
-        $data = Notification::where($column_name, $column_value)->orderBy('created_at', 'DESC')->get();
-        $data = static::paginate($data->toArray(), $limit);
+        $data = Notification::where($column_name, $column_value)
+        ->orderBy('created_at', 'DESC')
+        ->get();
+        
+        $data = static::paginate($data->toArray(), $limit, $page);
         return $data;
     }
 
