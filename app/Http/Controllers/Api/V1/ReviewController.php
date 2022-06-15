@@ -148,12 +148,12 @@ class ReviewController extends Controller
     }
 
     public function getListReviewDoneUnreplyByMerchant(){
-        try {
+        // try {
             $merchant_id = Auth::user()->merchant_id;
             return $this->reviewQueries->getListReviewDoneUnreply('merchant_id' ,$merchant_id, request()->input('limit') ?? 10, request()->input('page'));
-        }catch (Exception $e){
-            return $this->respondWithData($e, 'Error', 400);
-        }
+        // }catch (Exception $e){
+        //     return $this->respondWithData($e, 'Error', 400);
+        // }
     }
 
     public function getListReviewByTransaction($trx_id){

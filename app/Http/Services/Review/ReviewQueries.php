@@ -15,15 +15,20 @@ class ReviewQueries{
     public function getListReview($column_name, $related_id, $limit = 10,  $page = 1) {
         if($column_name == 'merchant_id') {
             $review = Review::with([
-                'order', 'order.delivery', 'review_photo', 
-                'customer','merchant', 'product', 'product.product_photo'
-                ])
-                ->whereHas('order', function($q) {
+                'product', 'order', 'order.delivery', 'review_photo',
+                'customer', 'merchant', 'product.product_photo',
+            ])
+                ->whereHas('order', function ($q) {
                     return $q->whereHas('progress_active', function ($j) {
                         return $j->where('status_code', 88);
                     });
                 })
-                ->where($column_name, $related_id)->orderBy('created_at', 'desc');
+                ->where('review.' . $column_name, $related_id)
+                ->orderBy('review.created_at', 'desc')
+                ->join('order_detail', function ($q) {
+                    $q->on('order_detail.order_id', '=', 'review.order_id')
+                        ->on('order_detail.product_id', '=', 'review.product_id');
+                })->select('review.*', 'order_detail.quantity', 'order_detail.total_price');
 
             $data = $review->paginate($limit);
         } else {
@@ -38,7 +43,7 @@ class ReviewQueries{
             ])->whereHas('progress_active', function ($j) {
                 $j->whereIn('status_code', [88]);
             })->orderBy('created_at', 'desc')->paginate($limit);
-    
+
             $detail_array = [];
             foreach ($order as $o){
                 foreach ($o->detail as $detail){
@@ -49,7 +54,7 @@ class ReviewQueries{
                     array_push($detail_array, $detail);
                 }
             }
-    
+
             $data = static::paginate($detail_array, $limit, 1);
         }
 
@@ -78,15 +83,20 @@ class ReviewQueries{
 
         if($column_name == 'merchant_id') {
             $review = Review::with([
-                'order', 'order.delivery', 'review_photo', 
-                'customer','merchant', 'product', 'product.product_photo'
-                ])
-                ->whereHas('order', function($q) {
+                'product', 'order', 'order.delivery', 'review_photo',
+                'customer', 'merchant', 'product.product_photo',
+            ])
+                ->whereHas('order', function ($q) {
                     return $q->whereHas('progress_active', function ($j) {
                         return $j->where('status_code', 88);
                     });
                 })
-                ->where($column_name, $related_id)->orderBy('created_at', 'desc');
+                ->where('review.' . $column_name, $related_id)
+                ->orderBy('review.created_at', 'desc')
+                ->join('order_detail', function ($q) {
+                    $q->on('order_detail.order_id', '=', 'review.order_id')
+                        ->on('order_detail.product_id', '=', 'review.product_id');
+                })->select('review.*', 'order_detail.quantity', 'order_detail.total_price');
 
             $data = $review->paginate($limit);
         } else {
@@ -125,7 +135,7 @@ class ReviewQueries{
         return $response;
     }
 
-    public function getListReviewDoneByRate($column_name, $related_id, $rate = null, $operator = null, $daterange = []){
+    public function getCountReviewDoneByRate($column_name, $related_id, $rate = null, $operator = null, $daterange = []){
         // Default daterange
         if ($rate == null && empty($daterange)) {
             $from = Carbon::now()->timezone('Asia/Jakarta')->subMonth();
@@ -219,17 +229,21 @@ class ReviewQueries{
     public function getListReviewDoneReply($column_name, $related_id, $limit = 10,  $page = 1){
         if($column_name == 'merchant_id') {
             $review = Review::with([
-                'order', 'order.delivery', 'review_photo', 
-                'customer','merchant', 'product', 'product.product_photo'
-                ])
-                ->whereHas('order', function($q) {
+                'product', 'order', 'order.delivery', 'review_photo',
+                'customer', 'merchant', 'product.product_photo',
+            ])
+                ->whereHas('order', function ($q) {
                     return $q->whereHas('progress_active', function ($j) {
                         return $j->where('status_code', 88);
                     });
                 })
-                ->where($column_name, $related_id)
-                ->whereNotNull('reply_message')
-                ->orderBy('created_at', 'desc');
+                ->where('review.' . $column_name, $related_id)
+                ->whereNotNull('review.reply_message')
+                ->orderBy('review.created_at', 'desc')
+                ->join('order_detail', function ($q) {
+                    $q->on('order_detail.order_id', '=', 'review.order_id')
+                        ->on('order_detail.product_id', '=', 'review.product_id');
+                })->select('review.*', 'order_detail.quantity', 'order_detail.total_price');
 
             $data = $review->paginate($limit);
         } else {
@@ -273,17 +287,21 @@ class ReviewQueries{
     public function getListReviewDoneUnreply($column_name, $related_id, $limit = 10,  $page = 1){
         if($column_name == 'merchant_id') {
             $review = Review::with([
-                'order', 'order.delivery', 'review_photo', 
-                'customer','merchant', 'product', 'product.product_photo'
-                ])
-                ->whereHas('order', function($q) {
+                'product', 'order', 'order.delivery', 'review_photo',
+                'customer', 'merchant', 'product.product_photo',
+            ])
+                ->whereHas('order', function ($q) {
                     return $q->whereHas('progress_active', function ($j) {
                         return $j->where('status_code', 88);
                     });
                 })
-                ->where($column_name, $related_id)
-                ->where('reply_message', null)
-                ->orderBy('created_at', 'desc');
+                ->where('review.' . $column_name, $related_id)
+                ->where('review.reply_message', null)
+                ->orderBy('review.created_at', 'desc')
+                ->join('order_detail', function ($q) {
+                    $q->on('order_detail.order_id', '=', 'review.order_id')
+                        ->on('order_detail.product_id', '=', 'review.product_id');
+                })->select('review.*', 'order_detail.quantity', 'order_detail.total_price');
 
             $data = $review->paginate($limit);
         } else {
@@ -313,7 +331,7 @@ class ReviewQueries{
                     }
                 }
             }
-            
+
             $data = static::paginate($detail_array, $limit, 1);
         }
 
