@@ -25,4 +25,44 @@ class BannerController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function getAllBanner()
+    {
+        try {
+            $data = $this->bannerQueries->getAllBanner();
+            return $this->respondWithData($data['data'], $data['message']);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getBannerByType($type)
+    {
+        try {
+            $data = $this->bannerQueries->getBannerByType($type);
+            return $this->respondWithData($data['data'], $data['message']);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getBannerAgent()
+    {
+        try {
+            $data = $this->bannerQueries->getBannerAgent();
+            return $this->respondWithData($data['data'], $data['message']);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getBannerHomepage()
+    {
+        try {
+            $data = $this->bannerQueries->getBannerHomepage();
+            return $this->respondWithData($data['data'], $data['message']);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
 }
