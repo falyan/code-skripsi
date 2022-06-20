@@ -896,7 +896,9 @@ class TransactionController extends Controller
     {
         try {
             $data = $this->transactionQueries->getStatusOrder($id);
-            if (in_array($data->progress_active->status_code, ['08'])) {
+            if (in_array($data->progress_active->status_code, ['03','08'])) {
+                $notes = 'finish on delivery';
+                $this->transactionCommand->updateOrderStatus($id, '08', $notes);
                 $this->transactionCommand->updateOrderStatus($id, '88');
 
                 $column_name = 'merchant_id';
