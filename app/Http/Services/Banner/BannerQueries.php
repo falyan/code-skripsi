@@ -7,23 +7,11 @@ use App\Models\Banner;
 
 class BannerQueries extends Service
 {
-    public function getFlashPopup()
-    {
-        $result = static::$banner_url;
 
-        return [
-            'sukses' => true,
-            'message' => !empty($result) ? 'Berhasil mendapatkan data banner' : 'Data banner tidak ada',
-            'data' => [
-                'url_path' => $result ?? '',
-                'deeplink' => '/mkp'
-            ]
-        ];
-    }
-
+    // Query Get All Banner
     public function getAllBanner()
     {
-        $data = Banner::all();
+        $data = Banner::where('status', 1)->get();
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data banner';
@@ -32,6 +20,7 @@ class BannerQueries extends Service
         return $response;
     }
 
+    //Query Get Banner by Type
     public function getBannerByType($type)
     {
         $data = Banner::where('type', $type)
@@ -45,6 +34,20 @@ class BannerQueries extends Service
 
         return $response;
     }
+
+    // public function getFlashPopup()
+    // {
+    //     $result = static::$banner_url;
+
+    //     return [
+    //         'sukses' => true,
+    //         'message' => !empty($result) ? 'Berhasil mendapatkan data banner' : 'Data banner tidak ada',
+    //         'data' => [
+    //             'url_path' => $result ?? '',
+    //             'deeplink' => '/mkp'
+    //         ]
+    //     ];
+    // }
 
     // public function getBannerAgent()
     // {
