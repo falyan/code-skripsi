@@ -29,12 +29,12 @@ class ProductCommands extends Service
         try {
             DB::beginTransaction();
 
-            if ($data->is_featured_product == true) {
-                $count_featured_product = Product::where('merchant_id', $data->merchant_id)->where('is_featured_product', true)->count();
-                if ($count_featured_product >= 5) {
-                    throw new Exception("Produk Unggulan telah mencapai batas maksimal 5 Produk.", 400);
-                }
-            }
+            // if ($data->is_featured_product == true) {
+            //     $count_featured_product = Product::where('merchant_id', $data->merchant_id)->where('is_featured_product', true)->count();
+            //     if ($count_featured_product >= 5) {
+            //         throw new Exception("Produk Unggulan telah mencapai batas maksimal 5 Produk.", 400);
+            //     }
+            // }
             $needApproval = false;
             if (isset($data['category_id'])) {
                 $category = MasterData::where('type', 'product_category')->where('id', $data['category_id'])->get();
@@ -164,12 +164,12 @@ class ProductCommands extends Service
                 $response['message'] = 'Produk tidak ditemukan!';
                 return $response;
             }
-            if ($data->is_featured_product == true) {
-                $count_featured_product = Product::where('merchant_id', $data->merchant_id)->where('is_featured_product', true)->count();
-                if ($count_featured_product >= 5) {
-                    throw new Exception("Produk Unggulan telah mencapai batas maksimal 5 Produk.", 400);
-                }
-            }
+            // if ($data->is_featured_product == true) {
+            //     $count_featured_product = Product::where('merchant_id', $data->merchant_id)->where('is_featured_product', true)->count();
+            //     if ($count_featured_product >= 5) {
+            //         throw new Exception("Produk Unggulan telah mencapai batas maksimal 5 Produk.", 400);
+            //     }
+            // }
 
             $product->name = ($data->name == null) ? ($product->name) : ($data->name);
             $product->price = ($data->price == null) ? ($product->price) : ($data->price);

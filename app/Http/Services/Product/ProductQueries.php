@@ -206,7 +206,8 @@ class ProductQueries extends Service
                 $merchant->with('city:id,name');
             }, 'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
-            }]);
+            }])
+            ->orderBy('updated_at', 'desc');
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
