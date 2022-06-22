@@ -175,6 +175,23 @@ class ProductController extends Controller
         }
     }
 
+    
+    //Get Produk Unggulan Berdasarkan Merchant
+    public function getProductFeatured(Request $request)
+    {
+        try {
+            $merchant_id = Auth::user()->merchant_id;
+            // $limit = request()->query('limit', 10);
+            $limit = 5;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? null;
+            $page = $request->page ?? 1;
+            return $this->productQueries->getProductFeatured($merchant_id, $limit, $filter, $sorting, $page);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     //Adjust Stok Produk
     public function updateStockProduct($product_id, Request $request)
     {

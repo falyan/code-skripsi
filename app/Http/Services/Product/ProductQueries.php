@@ -191,6 +191,34 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function getProductFeatured($merchant_id, $limit, $filter = [], $sortby = null, $current_page)
+    {
+        $product = new Product();
+
+        $products = $product
+            ->where(['merchant_id' => $merchant_id, 'status' => 1, 'is_featured_product' => true])
+            ->withCount(['order_details' => function ($order_details) {
+                $order_details->whereHas('order', function ($order) {
+                    $order->whereHas('progress_done');
+                });
+            }])
+            ->with(['product_photo', 'product_stock', 'merchant' => function ($merchant) {
+                $merchant->with('city:id,name');
+            }, 'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            }]);
+
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $data = $this->productPaginate($sorted_data, $limit);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+    
     public function getProductByMerchantIdBuyer($merchant_id, $size, $filter = [], $sortby = null, $current_page)
     {
         $product = new Product();
