@@ -29,12 +29,12 @@ class ProductCommands extends Service
         try {
             DB::beginTransaction();
 
-            // if ($data->is_featured_product == true) {
-            //     $count_featured_product = Product::where('merchant_id', $data->merchant_id)->where('is_featured_product', true)->count();
-            //     if ($count_featured_product >= 5) {
-            //         throw new Exception("Produk Unggulan telah mencapai batas maksimal 5 Produk.", 400);
-            //     }
-            // }
+            if ($data->is_featured_product == true) {
+                $count_featured_product = Product::where('merchant_id', $data->merchant_id)->where('is_featured_product', true)->count();
+                if ($count_featured_product >= 5) {
+                    throw new Exception("Produk Unggulan telah mencapai batas maksimal 5 Produk.", 400);
+                }
+            }
             $needApproval = false;
             if (isset($data['category_id'])) {
                 $category = MasterData::where('type', 'product_category')->where('id', $data['category_id'])->get();
@@ -164,12 +164,12 @@ class ProductCommands extends Service
                 $response['message'] = 'Produk tidak ditemukan!';
                 return $response;
             }
-            // if ($data->is_featured_product == true) {
-            //     $count_featured_product = Product::where('merchant_id', $data->merchant_id)->where('is_featured_product', true)->count();
-            //     if ($count_featured_product >= 5) {
-            //         throw new Exception("Produk Unggulan telah mencapai batas maksimal 5 Produk.", 400);
-            //     }
-            // }
+            if ($data->is_featured_product == true) {
+                $count_featured_product = Product::where('merchant_id', $data->merchant_id)->where('is_featured_product', true)->count();
+                if ($count_featured_product >= 5) {
+                    throw new Exception("Produk Unggulan telah mencapai batas maksimal 5 Produk.", 400);
+                }
+            }
 
             $product->name = ($data->name == null) ? ($product->name) : ($data->name);
             $product->price = ($data->price == null) ? ($product->price) : ($data->price);
@@ -266,6 +266,44 @@ class ProductCommands extends Service
             $response['success'] = true;
             $response['message'] = 'Produk berhasil diubah!';
             $response['data'] = $product_data;
+
+            DB::commit();
+            return $response;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage(), $e->getCode());
+        }
+    }
+
+    public function updateProductFeatured($merchant_id, $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            Product::where('merchant_id' ,$merchant_id)->update(['is_featured_product' => false]);
+
+            $products = [];
+            foreach ($request['product_feature'] as $value) {
+                $product = Product::where([
+                    'id' => $value['id'], 'merchant_id' => $merchant_id,
+                ])->first();
+
+                if (empty($product)) {
+                    $response['success'] = false;
+                    $response['message'] = 'Produk ' . $value['id'] . ' tidak ditemukan';
+                    DB::rollBack();
+
+                    return $response;
+                }
+
+                $product->update(['is_featured_product' => $value['is_featured_product']]);
+
+                array_push($products, $product);
+            }
+
+            $response['success'] = true;
+            $response['message'] = 'Produk berhasil diubah!';
+            $response['data'] = $products;
 
             DB::commit();
             return $response;

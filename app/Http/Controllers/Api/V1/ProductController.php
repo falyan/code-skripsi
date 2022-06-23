@@ -122,6 +122,40 @@ class ProductController extends Controller
         }
     }
 
+    //Update Produk Featured
+    public function updateProductFeatured(Request $request)
+    {
+        try {
+            $rules = [
+                'product_feature.*.id' => 'required|numeric',
+                'product_feature.*.is_featured_product' => 'required|boolean',
+            ];
+
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => ':attribute diperlukan.',
+                'numeric' => ':attribute harus berupa angka.',
+                'boolean' => ':attribute harus berupa boolean.',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            $request['full_name'] = Auth::user()->full_name;
+            $merchant_id = Auth::user()->merchant_id;
+            return $this->productCommands->updateProductFeatured($merchant_id, $request);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, $request);
+        }
+    }
+
     //Delete Produk
     public function deleteProduct(Request $request, $product_id)
     {
@@ -175,7 +209,6 @@ class ProductController extends Controller
         }
     }
 
-    
     //Get Produk Unggulan Berdasarkan Merchant
     public function getProductFeatured(Request $request)
     {
