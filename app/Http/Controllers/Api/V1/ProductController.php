@@ -188,8 +188,9 @@ class ProductController extends Controller
             $limit = $request->limit ?? 10;
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
+            $featured = $request->is_featured_product ?? false;
             $page = $request->page ?? 1;
-            return $this->productQueries->getProductByMerchantIdSeller($merchant_id, $filter, $sorting, $page, $limit);
+            return $this->productQueries->getProductByMerchantIdSeller($merchant_id, $filter, $sorting, $page, $limit, $featured);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

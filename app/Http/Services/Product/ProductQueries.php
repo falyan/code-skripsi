@@ -42,7 +42,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByMerchantIdSeller($merchant_id, $filter = [], $sortby = null, $current_page = 1, $limit)
+    public function getProductByMerchantIdSeller($merchant_id, $filter = [], $sortby = null, $current_page = 1, $limit, $featured)
     {
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
@@ -51,7 +51,10 @@ class ProductQueries extends Service
             });
         }])->with(['product_stock', 'product_photo', 'is_wishlist', 'varian_product' => function ($query) {
             $query->with(['variant_stock'])->where('main_variant', true);
-        }])->where('merchant_id', $merchant_id);
+        }])->where('merchant_id', $merchant_id)
+        ->when($featured == true, function($q) {
+            $q->orderBy('is_featured_product', 'DESC');
+        });
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
