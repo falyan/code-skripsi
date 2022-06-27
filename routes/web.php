@@ -42,9 +42,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->group(['prefix' => 'product'], static function () use ($router) {
                     $router->post('create', 'ProductController@createProduct');
                     $router->post('edit/{product_id}', 'ProductController@updateProduct');
-                    $router->post('edit/featured', 'ProductController@updateProductFeatured');
                     $router->delete('delete/{product_id}', 'ProductController@deleteProduct');
                     $router->post('stock/edit/{product_id}', 'ProductController@updateStockProduct');
+                    $router->post('price/edit/{product_id}', 'ProductController@updatePriceProduct');
+                    $router->post('featured/edit/', 'ProductController@updateProductFeatured');
                 });
 
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {
@@ -103,7 +104,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('merchant', 'ProductController@getProductByMerchantSeller');
                     $router->get('best-selling', 'ProductController@getBestSellingProductByMerchant');
                     $router->get('almost-running-out', 'ProductController@getProductAlmostRunningOut');
-                    $router->get('detail/{id}', 'ProductController@getProductById');
+                    $router->get('detail/{id}', 'ProductController@getProductByIdSeller');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
                     $router->get('search', 'ProductController@searchProductSeller');
                     $router->get('filter', 'ProductController@getProductByFilter');
