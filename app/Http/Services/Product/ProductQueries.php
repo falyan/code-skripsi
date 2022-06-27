@@ -59,7 +59,7 @@ class ProductQueries extends Service
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            $product->avg_rating = 0.0;
+            // $product->avg_rating = 0.0;
             return $product;
         });
 
@@ -138,7 +138,7 @@ class ProductQueries extends Service
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
             //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            $product->avg_rating = 0.0;
+            // $product->avg_rating = 0.0;
             return $product;
         });
 
@@ -443,7 +443,7 @@ class ProductQueries extends Service
                 $id = $product->id;
                 $product->reviews = null;
                 // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-                $product->avg_rating = 0.0;
+                // $product->avg_rating = 0.0;
 
                 $product->sold = 0;
                 foreach ($product->order_details as $order_detail) {
@@ -614,7 +614,7 @@ class ProductQueries extends Service
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
             //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            $product->avg_rating = 0.0;
+            // $product->avg_rating = 0.0;
             return $product;
         });
 
@@ -667,7 +667,7 @@ class ProductQueries extends Service
         $immutable_data = $sorted_data->map(function ($product) {
             $product->reviews = null;
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            $product->avg_rating = 0.0;
+            // $product->avg_rating = 0.0;
             return $product;
         });
 
@@ -701,12 +701,32 @@ class ProductQueries extends Service
 
         $immutable_data = $sorted_data->get()->map(function ($product) {
             $product->reviews = null;
-            $product->avg_rating = 0.0;
-            //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            // $product->avg_rating = 0.0;
+            // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
             return $product;
         });
+        // $products = $sorted_data->get();
 
         $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
+
+        //check if value min_price is greater than max_price
+        if (isset($filter['min_price']) && isset($filter['max_price']) && $filter['min_price'] > $filter['max_price']) {
+            $response['success'] = false;
+            $response['message'] = 'Minimal harga tidak boleh lebih besar dari maksimal harga!';
+            return $response;
+        } else if(isset($filter['min_price']) && isset($filter['max_price']) && $filter['min_price'] == $filter['max_price']) {
+            $response['success'] = false;
+            $response['message'] = 'Minimal harga tidak boleh sama dengan maksimal harga!';
+            return $response;
+        }
+
+        //check if filter product is empty
+        if ($immutable_data->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Produk tidak ditemukan!';
+            $response['data'] = null;
+            return $response;
+        }
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
@@ -765,6 +785,7 @@ class ProductQueries extends Service
             $condition = $filter['condition'] ?? null;
             $min_price = $filter['min_price'] ?? null;
             $max_price = $filter['max_price'] ?? null;
+            $avg_rating = $filter['avg_rating'] ?? null;
 
             $data = $model->when(!empty($keyword), function ($query) use ($keyword) {
                 $query->where('name', 'ILIKE', "%{$keyword}%");
@@ -792,6 +813,8 @@ class ProductQueries extends Service
                 $query->where('price', '>=', $min_price);
             })->when(!empty($max_price), function ($query) use ($max_price) {
                 $query->where('price', '<=', $max_price);
+            })->when(!empty($avg_rating), function ($query) use ($avg_rating) {
+                $query->where('avg_rating', 'ILIKE', $avg_rating);
             });
 
             return $data;
@@ -809,6 +832,8 @@ class ProductQueries extends Service
                 $query->orderBy('price', 'asc');
             })->when($sortby == 'higher_price', function ($query) {
                 $query->orderBy('price', 'desc');
+            })->when($sortby == 'rating', function ($query) {
+                $query->orderBy('avg_rating', 'desc');
             });
 
             return $data;
