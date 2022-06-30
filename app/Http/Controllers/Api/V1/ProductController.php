@@ -186,7 +186,7 @@ class ProductController extends Controller
         try {
             $merchant_id = Auth::user()->merchant_id;
             $limit = $request->limit ?? 10;
-            $filter = $request->filter ?? [];
+            $filter = $request->filter ?? '';
             $sorting = $request->sortby ?? null;
             $featured = $request->is_featured_product ?? false;
             $page = $request->page ?? 1;

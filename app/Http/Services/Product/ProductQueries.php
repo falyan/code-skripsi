@@ -43,7 +43,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByMerchantIdSeller($merchant_id, $filter = [], $sortby = null, $current_page = 1, $limit, $featured)
+    public function getProductByMerchantIdSeller($merchant_id, $filter = '', $sortby = null, $current_page = 1, $limit, $featured)
     {
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
@@ -55,6 +55,12 @@ class ProductQueries extends Service
         }])->where('merchant_id', $merchant_id)
         ->when($featured == true, function($q) {
             $q->orderBy('is_featured_product', 'DESC');
+        })
+        ->when($filter != '', function($q) use ($filter) {
+            $filters = explode(",", $filter);
+            if (define('status', $filters)) {
+                $q->where('status', 1);
+            }
         });
 
         $immutable_data = $products->get()->map(function ($product) {
