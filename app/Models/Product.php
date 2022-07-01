@@ -42,6 +42,7 @@ class Product extends Model
         'status',
         'avg_rating',
         'items_sold',
+        'review_count',
     ];
 
     /**
