@@ -546,6 +546,16 @@ class ProductController extends Controller
         }
     }
 
+    public function getReviewByProduct($product_id, Request $request)
+    {
+        try {
+            $limit = $request->limit ?? 10;
+            return $this->productQueries->getReviewByProduct($product_id, $limit);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function getProductWithFilter(Request $request)
     {
         try {

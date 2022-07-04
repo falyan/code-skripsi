@@ -7,6 +7,7 @@ use App\Models\MasterData;
 use App\Models\MasterVariant;
 use App\Models\Merchant;
 use App\Models\Product;
+use App\Models\Review;
 use App\Models\VariantValueProduct;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -731,6 +732,20 @@ class ProductQueries extends Service
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
+        return $response;
+    }
+    
+    public function getReviewByProduct($product_id, $limit = 10)
+    {
+        $review = Review::with(['review_photo', 'merchant', 'customer', 'product' => function ($product){
+            $product->with(['product_photo']);
+        }, 'order' => function ($order){
+            $order->with(['detail']);
+        }])->where('product_id', $product_id)->paginate($limit);
+
+        $response['success'] = true;
+        $response['message'] = 'Review berhasil didapatkan!';
+        $response['data'] = $review;
         return $response;
     }
 
