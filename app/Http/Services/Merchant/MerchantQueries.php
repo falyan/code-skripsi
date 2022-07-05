@@ -137,14 +137,14 @@ class MerchantQueries extends Service
             $cityname = $merchant->city->toArray();
 
             $merged_data = array_merge($mc, ['city_name' => $cityname['name']]);
-            $total_product = $merchant->products()->count();
+            $total_product = $merchant->products->count();
 
-            $total_trx = count(static::getTotalTrx($merchant_id, 88));
+            $total_trx = static::getTotalTrx($merchant_id, 88);
 
             return [
                 'merchant' => $merged_data,
                 'meta_data' => [
-                    'total_product' => (string) static::format_number((int) $total_product),
+                    'total_product' =>(string) static::format_number((int) $total_product),
                     'total_transaction' => (string) static::format_number((int) $total_trx),
                     'operational_hour' => $merchant->operationals()->first(['open_time', 'closed_time', 'timezone']),
                 ]
