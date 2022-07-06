@@ -9,6 +9,7 @@ use App\Http\Services\Review\ReviewQueries;
 use App\Http\Services\Service;
 use App\Models\Etalase;
 use App\Models\Merchant;
+use App\Models\MerchantBanner;
 use App\Models\Order;
 use App\Models\OrderProgress;
 use Carbon\Carbon;
@@ -131,18 +132,26 @@ class MerchantQueries extends Service
     public static function publicProfile($merchant_id)
     {
         try {
-            $merchant = Merchant::where('id', (int) $merchant_id)->first(['id', 'name', 'photo_url', 'slogan', 'description', 'city_id', 'whatsapp_number']);
+            $merchant = Merchant::where('id', (int) $merchant_id)
+            ->with('banner')
+            ->first(['id', 'name', 'photo_url', 'slogan', 'description', 'city_id', 'whatsapp_number']);
 
             $mc = $merchant->toArray();
             $cityname = $merchant->city->toArray();
 
             $merged_data = array_merge($mc, ['city_name' => $cityname['name']]);
+            unset($merged_data['banner']);
             $total_product = $merchant->products->count();
 
             $total_trx = static::getTotalTrx($merchant_id, 88);
 
+            $banner = $merchant->banner->map(function ($item) {
+                return $item->url;
+            });
+
             return [
                 'merchant' => $merged_data,
+                'banner' => $banner,
                 'meta_data' => [
                     'total_product' =>(string) static::format_number((int) $total_product),
                     'total_transaction' => (string) static::format_number((int) $total_trx),
@@ -268,6 +277,24 @@ class MerchantQueries extends Service
         }
 
         $result = static::paginate($data->toArray(), $limit, $page);
+        return $result;
+    }
+    
+    public static function getBanner($merchant_id)
+    {
+        $data = MerchantBanner::where('merchant_id', $merchant_id)->get();
+
+        if ($data->count() < 1) {
+            return [
+                'success' => false,
+                'message' => 'Data Banner masih kosong',
+                'data' => null
+            ];
+        }
+
+        $result = [
+            'data' => $data
+        ];
         return $result;
     }
 }

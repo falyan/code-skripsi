@@ -5,12 +5,11 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Services\Merchant\MerchantCommands;
 use App\Http\Services\Merchant\MerchantQueries;
-use App\Models\Customer;
-// use App\Models\Customer;
 use App\Models\Merchant;
+// use App\Models\Merchant;
 use App\Models\User;
 use Carbon\Carbon;
-use Exception, Input;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -103,7 +102,8 @@ class MerchantController extends Controller
     public function publicProfile($merchant_id)
     {
         try {
-            return $this->respondWithData(MerchantQueries::publicProfile($merchant_id), 'Berhasil mendapatkan data toko');
+            $merchant = MerchantQueries::publicProfile($merchant_id);
+            return $this->respondWithData($merchant, 'Berhasil mendapatkan data toko');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -195,7 +195,7 @@ class MerchantController extends Controller
                 'full_name' => Auth::user()->full_name
             ]);
             $data = MerchantCommands::updateLokasi($request, Auth::user()->merchant_id);
-            return $this->respondWithData($data, 'Layanan ekspedisi berhasil disimpan');
+            return $this->respondWithData($data, 'Data lokasi berhasil disimpan');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -254,7 +254,60 @@ class MerchantController extends Controller
                 $merchantCommand = new MerchantCommands();
                 return $merchantCommand->setCustomLogistic(Auth::user()->merchant_id);
             }
-        }catch (Exception $e){
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getBanner()
+    {
+        try {
+            if (Auth::check()) {
+                $merchantQueries = new MerchantQueries();
+                return $merchantQueries->getBanner(Auth::user()->merchant_id);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function createBanner(Request $request)
+    {
+        $validator = Validator::make(
+            request()->all(),
+            ['url' => 'required'],
+            ['required' => ':attribute diperlukan.']
+        );
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            request()->request->add([
+                'full_name' => Auth::user()->full_name,
+            ]);
+            $merchantCommand = new MerchantCommands();
+            $data = $merchantCommand->createBanner($request, Auth::user()->merchant_id);
+            return $this->respondWithData($data, 'Data lokasi berhasil disimpan');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function deleteBanner($banner_id)
+    {
+        try {
+            $merchantCommand = new MerchantCommands();
+            $data = $merchantCommand->deleteBanner($banner_id, Auth::user()->merchant_id);
+            return $this->respondWithData($data, 'Banner berhasil dihapus');
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }

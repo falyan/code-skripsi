@@ -147,4 +147,9 @@ class Merchant extends Model
     {
         return $this->hasMany(DiscussionResponse::class, 'merchant_id');
     }
+
+    public function banner()
+    {
+        return $this->hasMany(MerchantBanner::class, 'merchant_id', 'id');
+    }
 }

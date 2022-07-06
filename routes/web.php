@@ -54,6 +54,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('atur-lokasi', 'MerchantController@aturLokasi');
                     $router->post('update', 'MerchantController@updateMerchantProfile');
                     $router->post('set-customlogistic', 'MerchantController@setCustomLogistic');
+                    $router->get('banner', 'MerchantController@getBanner');
+                    $router->post('banner', 'MerchantController@createBanner');
+                    $router->delete('banner/{banner_id}', 'MerchantController@deleteBanner');
                 });
 
                 $router->group(['prefix' => 'order'], static function () use ($router) {
