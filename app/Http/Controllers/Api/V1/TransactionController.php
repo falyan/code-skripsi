@@ -705,12 +705,12 @@ class TransactionController extends Controller
                 return $this->respondValidationError($errors, 'Validation Error!');
             }
 
-            if (count($request->id) > 1){
-                return [
-                    'success' => false,
-                    'message' => 'Mohon konfirmasi pesanan satu per satu. Terimakasih.'
-                ];
-            }
+            // if (count($request->id) > 1){
+            //     return [
+            //         'success' => false,
+            //         'message' => 'Mohon konfirmasi pesanan satu per satu. Terimakasih.'
+            //     ];
+            // }
 
             foreach ($request->id as $order_id) {
                 $data = $this->transactionQueries->getStatusOrder($order_id);
