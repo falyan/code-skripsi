@@ -29,4 +29,9 @@ class OrderDetail extends Model
     {
         return $this->belongsTo(VariantValueProduct::class, 'variant_value_product_id');
     }
+
+    public function progress_order()
+    {
+        return $this->belongsTo(OrderProgress::class, 'order_id', 'order_id');
+    }
 }

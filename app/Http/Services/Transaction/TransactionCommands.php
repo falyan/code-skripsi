@@ -279,6 +279,31 @@ class TransactionCommands extends Service
         return $response;
     }
 
+    public function triggerItemSold($order_id)
+    {
+        $order = Order::where('id', $order_id)->with('detail', function ($query) {
+            $query->whereHas('progress_order', function ($query) {
+                $query->where('status', 1)
+                    ->where('status_code', '08');
+            });
+        })->first();
+
+        $total_items = [];
+        foreach ($order->detail as $detail) {
+            if (!isset($total_items[$detail->product_id])) {
+                $total_items[$detail->product_id] = $detail->quantity;
+            } else {
+                $total_items[$detail->product_id] += $detail->quantity;
+            }
+        }
+
+        foreach ($total_items as $key => $value) {
+            $product = Product::where('id', $key)->first();
+            $product->items_sold = $value;
+            $product->save();
+        }
+    }
+
     public function addAwbNumber($order_id, $awb)
     {
         $delivery = OrderDelivery::where('order_id', $order_id)->first();
