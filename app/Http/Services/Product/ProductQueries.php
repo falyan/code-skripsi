@@ -235,17 +235,17 @@ class ProductQueries extends Service
         $product = new Product();
 
         $products = $product
-            // ->where(['merchant_id' => $merchant_id, 'status' => 1])
-            // ->withCount(['order_details' => function ($order_details) {
-            //     $order_details->whereHas('order', function ($order) {
-            //         $order->whereHas('progress_done');
-            //     });
-            // }])
-            // ->with(['product_photo', 'product_stock', 'merchant' => function ($merchant) {
-            //     $merchant->with('city:id,name');
-            // }, 'varian_product' => function ($query) {
-            //     $query->with(['variant_stock'])->where('main_variant', true);
-            // }])
+            ->where(['merchant_id' => $merchant_id, 'status' => 1])
+            ->withCount(['order_details' => function ($order_details) {
+                $order_details->whereHas('order', function ($order) {
+                    $order->whereHas('progress_done');
+                });
+            }])
+            ->with(['product_photo', 'product_stock', 'merchant' => function ($merchant) {
+                $merchant->with('city:id,name');
+            }, 'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            }])
             ;
 
         $filtered_data = $this->filter($products, $filter);
