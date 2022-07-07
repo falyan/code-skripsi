@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Services\Manager\IconcashManager;
 use App\Http\Services\Manager\IconpayManager;
+use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Transaction\TransactionCommands;
@@ -17,17 +18,16 @@ use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Models\User;
 use App\Models\VariantStock;
-use Exception, Input;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use stdClass;
-use App\Http\Services\Manager\MailSenderManager;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Input;
+use stdClass;
 
 class TransactionController extends Controller
 {
@@ -71,7 +71,7 @@ class TransactionController extends Controller
             'merchants.*.products.*.total_amount' => 'required',
             'merchants.*.products.*.payment_note' => 'sometimes',
         ], [
-            'required' => ':attribute diperlukan.'
+            'required' => ':attribute diperlukan.',
         ]);
 
         if ($validator->fails()) {
@@ -371,7 +371,7 @@ class TransactionController extends Controller
         try {
             $validator = Validator::make(request()->all(), [
                 'keyword' => 'required|min:3',
-                'limit' => 'nullable'
+                'limit' => 'nullable',
             ], [
                 'exists' => 'ID :attribute tidak ditemukan.',
                 'required' => ':attribute diperlukan.',
@@ -534,7 +534,7 @@ class TransactionController extends Controller
         try {
             $validator = Validator::make(request()->all(), [
                 'keyword' => 'min:3',
-                'limit' => 'nullable'
+                'limit' => 'nullable',
             ], [
                 'exists' => 'ID :attribute tidak ditemukan.',
                 'required' => ':attribute diperlukan.',
@@ -665,7 +665,7 @@ class TransactionController extends Controller
                     if (isset($error->message) && isset($error->code)) {
                         return [
                             $error->message => 'Produk tidak ditemukan',
-                            $error->code => 404
+                            $error->code => 404,
                         ];
                     }
                 }
@@ -673,7 +673,7 @@ class TransactionController extends Controller
                     if (isset($error->message) && isset($error->code)) {
                         return [
                             $error->message => 'Stok produk tidak mencukupi',
-                            $error->code => 400
+                            $error->code => 400,
                         ];
                     }
                 }
@@ -902,6 +902,7 @@ class TransactionController extends Controller
                     $this->transactionCommand->updateOrderStatus($id, '08', $notes);
                 }
 
+                $this->transactionCommand->triggerItemSold($id);
                 $this->transactionCommand->updateOrderStatus($id, '88');
 
                 $column_name = 'merchant_id';
@@ -1026,7 +1027,7 @@ class TransactionController extends Controller
                     'status' => 11,
                     'success' => false,
                     'message' => 'Invalid client id',
-                    'data' => "Must be " . config('credentials.iconpay.client_id')
+                    'data' => "Must be " . config('credentials.iconpay.client_id'),
                 ]);
             }
         } else {
@@ -1037,8 +1038,8 @@ class TransactionController extends Controller
                 'data' => [
                     'client-id' => request()->header('client-id') ?? null,
                     'timestamp' => request()->header('timestamp') ?? null,
-                    'signature' => request()->header('signature') ?? null
-                ]
+                    'signature' => request()->header('signature') ?? null,
+                ],
             ]);
         }
 
@@ -1053,7 +1054,7 @@ class TransactionController extends Controller
                     'status' => 12,
                     'success' => false,
                     'message' => 'Invalid timestamp',
-                    'data' => "Must be between " . $timestamp_min . " and " . $timestamp_plus
+                    'data' => "Must be between " . $timestamp_min . " and " . $timestamp_plus,
                 ]);
             }
         } else {
@@ -1064,8 +1065,8 @@ class TransactionController extends Controller
                 'data' => [
                     'client-id' => request()->header('client-id') ?? null,
                     'timestamp' => request()->header('timestamp') ?? null,
-                    'signature' => request()->header('signature') ?? null
-                ]
+                    'signature' => request()->header('signature') ?? null,
+                ],
             ]);
         }
 
@@ -1079,7 +1080,7 @@ class TransactionController extends Controller
                     'status' => 13,
                     'success' => false,
                     'message' => 'Invalid signature',
-                    'data' => "Must be " . $signature
+                    'data' => "Must be " . $signature,
                 ]);
             }
         } else {
@@ -1090,8 +1091,8 @@ class TransactionController extends Controller
                 'data' => [
                     'client-id' => request()->header('client-id') ?? null,
                     'timestamp' => request()->header('timestamp') ?? null,
-                    'signature' => request()->header('signature') ?? null
-                ]
+                    'signature' => request()->header('signature') ?? null,
+                ],
             ]);
         }
 
@@ -1106,9 +1107,9 @@ class TransactionController extends Controller
             'item_details.*.partner_reference' => 'required',
             'item_details.*.customer_id' => 'required',
             'item_details.*.no_reference' => 'required',
-            'item_details.*.amount' => 'required'
+            'item_details.*.amount' => 'required',
         ], [
-            'required' => ':attribute diperlukan.'
+            'required' => ':attribute diperlukan.',
         ]);
 
         if ($validator->fails()) {
@@ -1223,7 +1224,7 @@ class TransactionController extends Controller
             'merchants.*.products.*.quantity' => 'required',
             'merchants.*.products.*.payment_note' => 'sometimes',
         ], [
-            'required' => ':attribute diperlukan.'
+            'required' => ':attribute diperlukan.',
         ]);
 
         if ($validator->fails()) {
@@ -1281,7 +1282,7 @@ class TransactionController extends Controller
             $mailSender->mailResendVoucher($order_id);
 
             $response['success'] = true;
-            $response['message'] = 'Berhasil resend email voucher';
+            $response['message'] = 'Berhasil resend email';
 
             return $response;
         } catch (Exception $e) {
