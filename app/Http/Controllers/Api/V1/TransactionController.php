@@ -1284,6 +1284,39 @@ class TransactionController extends Controller
         }
     }
 
+    public function refundOngkir($id)
+    {
+        try {
+            DB::beginTransaction();
+            $this->transactionCommand->updateOrderStatus($id, '98', 'refund ongkir');
+
+            $order = Order::with('delivery')->find($id);
+            $iconcash = Customer::where('merchant_id', $order->merchant_id)->first()->iconcash;
+            $account_type_id = null;
+
+            if (env('APP_ENV') == 'staging') {
+                $account_type_id = 13;
+            } elseif (env('APP_ENV') == 'production') {
+                $account_type_id = 50;
+            } else {
+                $account_type_id = 13;
+            }
+
+            $amount = $order->delivery->delivery_fee;
+            $client_ref = $this->unique_code($iconcash->token);
+            $corporate_id = 10;
+
+            $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
+
+            IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+            DB::commit();
+            return $this->respondWithResult(true, 'Topup refund ongkir berhasil!', 200);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function unique_code($value)
     {
         return substr(base_convert(sha1(uniqid($value)), 16, 36), 0, 25);

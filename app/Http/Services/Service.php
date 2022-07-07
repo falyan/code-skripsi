@@ -45,6 +45,7 @@ class Service
     '09' => 'Pesanan Ditolak',
     '88' => 'Pesanan Selesai',
     '99' => 'Pesanan Dibatalkan',
+    '98' => 'Pengembalian Dana Refund'
   ];
 
   static $notification_type = [

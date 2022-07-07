@@ -84,7 +84,7 @@ class IconcashInquiry extends Model
         }
     }
 
-    public static  function createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order)
+    public static  function createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order = null)
     {
         $model = new self;
 
