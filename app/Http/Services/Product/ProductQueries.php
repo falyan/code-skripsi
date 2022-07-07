@@ -235,17 +235,18 @@ class ProductQueries extends Service
         $product = new Product();
 
         $products = $product
-            ->where(['merchant_id' => $merchant_id, 'status' => 1])
-            ->withCount(['order_details' => function ($order_details) {
-                $order_details->whereHas('order', function ($order) {
-                    $order->whereHas('progress_done');
-                });
-            }])
-            ->with(['product_photo', 'product_stock', 'merchant' => function ($merchant) {
-                $merchant->with('city:id,name');
-            }, 'varian_product' => function ($query) {
-                $query->with(['variant_stock'])->where('main_variant', true);
-            }]);
+            // ->where(['merchant_id' => $merchant_id, 'status' => 1])
+            // ->withCount(['order_details' => function ($order_details) {
+            //     $order_details->whereHas('order', function ($order) {
+            //         $order->whereHas('progress_done');
+            //     });
+            // }])
+            // ->with(['product_photo', 'product_stock', 'merchant' => function ($merchant) {
+            //     $merchant->with('city:id,name');
+            // }, 'varian_product' => function ($query) {
+            //     $query->with(['variant_stock'])->where('main_variant', true);
+            // }])
+            ;
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -807,7 +808,8 @@ class ProductQueries extends Service
             $condition = $filter['condition'] ?? null;
             $min_price = $filter['min_price'] ?? null;
             $max_price = $filter['max_price'] ?? null;
-            $avg_rating = $filter['avg_rating'] ?? null;
+            $min_rating = $filter['min_rating'] ?? null;
+            $max_rating = $filter['max_rating'] ?? null;
 
             $data = $model->when(!empty($keyword), function ($query) use ($keyword) {
                 $query->where('name', 'ILIKE', "%{$keyword}%");
@@ -835,8 +837,10 @@ class ProductQueries extends Service
                 $query->where('price', '>=', $min_price);
             })->when(!empty($max_price), function ($query) use ($max_price) {
                 $query->where('price', '<=', $max_price);
-            })->when(!empty($avg_rating), function ($query) use ($avg_rating) {
-                $query->where('avg_rating', 'ILIKE', $avg_rating);
+            })->when(!empty($min_rating), function ($query) use ($min_rating) {
+                $query->where('avg_rating', '>=', $min_rating);
+            })->when(!empty($max_rating), function ($query) use ($max_rating) {
+                $query->where('avg_rating', '<=', $max_rating);
             });
 
             return $data;
@@ -850,12 +854,18 @@ class ProductQueries extends Service
         if (!empty($sortby)) {
             $data = $model->when($sortby == 'newest', function ($query) {
                 $query->orderBy('created_at', 'desc');
+            })->when($sortby == 'lowest', function ($query) {
+                $query->orderBy('created_at', 'asc');
             })->when($sortby == 'lower_price', function ($query) {
                 $query->orderBy('price', 'asc');
             })->when($sortby == 'higher_price', function ($query) {
                 $query->orderBy('price', 'desc');
             })->when($sortby == 'rating', function ($query) {
                 $query->orderBy('avg_rating', 'desc');
+            })->when($sortby == 'review', function ($query) {
+                $query->orderBy('review_count', 'desc');
+            })->when($sortby == 'sold', function ($query) {
+                $query->orderBy('items_sold', 'desc');
             });
 
             return $data;
@@ -871,7 +881,7 @@ class ProductQueries extends Service
         $itemsTransformed = $itemsPaginated
             ->getCollection()
             ->map(function ($item) {
-                $item->avg_rating = 0.0;
+                // $item->avg_rating = 0.0;
                 $item->reviews = null;
                 return $item;
             })->toArray();
