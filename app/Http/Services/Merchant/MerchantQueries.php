@@ -133,14 +133,13 @@ class MerchantQueries extends Service
     {
         try {
             $merchant = Merchant::where('id', (int) $merchant_id)
-            ->with('banner')
-            ->first(['id', 'name', 'photo_url', 'slogan', 'description', 'city_id', 'whatsapp_number']);
+            ->first();
 
             $mc = $merchant->toArray();
             $cityname = $merchant->city->toArray();
 
             $merged_data = array_merge($mc, ['city_name' => $cityname['name']]);
-            unset($merged_data['banner']);
+            unset($merchant['banner']);
             $total_product = $merchant->products->count();
 
             $total_trx = static::getTotalTrx($merchant_id, 88);
