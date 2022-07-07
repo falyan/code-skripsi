@@ -96,7 +96,7 @@ class IconcashInquiry extends Model
             'type'              => 'topup',
             'source_account_id' => $response->accountId,
             'order_id'          => $order->id,
-            'amount'            => $order->total_amount
+            'amount'            => $amount
         ]);
 
         return $response;
