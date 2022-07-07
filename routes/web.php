@@ -288,6 +288,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('detail/{id}', 'TestDriveController@getDetail');
                 $router->get('history', 'TestDriveController@getHistoryByCustomer');
                 $router->get('history/detail/{id}', 'TestDriveController@getDetailBooking');
+                $router->get('merchant/{merchant_id}', 'TestDriveController@getListActiveEventByMerchant');
             });
 
             $router->group(['prefix' => 'discussion', 'middleware' => 'auth'], static function () use ($router) {

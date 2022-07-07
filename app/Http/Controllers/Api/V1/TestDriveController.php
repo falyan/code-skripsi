@@ -155,6 +155,32 @@ class TestDriveController extends Controller
         }
     }
 
+    public function getListActiveEventByMerchant(Request $request,$merchant_id)
+    {
+        try {
+            $filter = $request->filter ?? [];
+            $sortby = $request->sortby ?? null;
+            $page = $request->page ?? 1;
+
+            if (!empty($filter['keyword']) && strlen($filter['keyword']) < 3) {
+                return $this->respondWithResult(false, 'Panjang kata kunci minimal 3 karakter.', 400);
+            }
+
+            $data = $this->testDriveQueries->getAllEvent($merchant_id, $filter, $sortby, $page, true);
+
+            if ($data['total'] > 0) {
+                return $this->respondWithData($data, 'Berhasil mendapatkan data Event Test Drive');
+            } else {
+                if (!empty($filter['keyword'])) {
+                    return $this->respondWithResult(false, "Event Test Drive dengan kata kunci {$filter['keyword']} Tidak ditemukan", 400);
+                }
+                return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function cancel(Request $request, $id)
     {
         try {
