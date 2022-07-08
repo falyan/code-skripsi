@@ -892,6 +892,15 @@ class TransactionController extends Controller
         }
     }
 
+    public function triggerRatingProductSold()
+    {
+        try {
+            return $this->transactionCommand->triggerRatingProductSold();
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function finishOrder($id)
     {
         try {

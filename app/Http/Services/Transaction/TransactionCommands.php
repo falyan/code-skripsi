@@ -304,6 +304,55 @@ class TransactionCommands extends Service
         }
     }
 
+    public function triggerRatingProductSold()
+    {
+        // $order = Order::with(['detail' => function ($query) {
+        //     $query->whereHas('progress_order', function ($query) {
+        //         $query->where('status', 1)
+        //             ->where('status_code', '88');
+        //     });
+        // }])->get();
+
+        $order = Order::with('detail')->whereHas('detail', function ($query) {
+            $query->whereHas('progress_order', function ($query) {
+                $query->where('status', 1)
+                    ->where('status_code', '88');
+            });
+        })->get();
+
+        // return $order;
+
+        $total_items = [];
+        foreach ($order->detail as $detail) {
+            if (!isset($total_items[$detail->product_id])) {
+                $total_items[$detail->product_id] = $detail->quantity;
+            } else {
+                $total_items[$detail->product_id] += $detail->quantity;
+            }
+        }
+
+        // return $total_items;
+
+        foreach ($total_items as $key => $value) {
+            $product = Product::where('id', $key)->first();
+            $product->items_sold = $value;
+            $product->save();
+        }
+
+        $product =  $product->with('reviews')->withCount('reviews')->first();
+
+        $rate = 0;
+        foreach ($product->reviews as $key => $value) {
+            $rate += $value->rate;
+        }
+
+        $product->update([
+            'review_count' => $product->reviews_count,
+            'avg_rating' => $rate/count($product->reviews)
+        ]);
+
+    }
+
     public function addAwbNumber($order_id, $awb)
     {
         $delivery = OrderDelivery::where('order_id', $order_id)->first();
