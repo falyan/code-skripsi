@@ -304,53 +304,67 @@ class TransactionCommands extends Service
         }
     }
 
-    public function triggerRatingProductSold()
+    public function triggerRatingProductSold($type)
     {
-        // $order = Order::with(['detail' => function ($query) {
-        //     $query->whereHas('progress_order', function ($query) {
-        //         $query->where('status', 1)
-        //             ->where('status_code', '88');
-        //     });
-        // }])->get();
+        if ($type == 'items_sold') {
+            $orders = Order::with('detail')->whereHas('detail', function ($query) {
+                $query->whereHas('progress_order', function ($query) {
+                    $query->where('status', 1)
+                        ->where('status_code', '88');
+                });
+            })->get();
 
-        $order = Order::with('detail')->whereHas('detail', function ($query) {
-            $query->whereHas('progress_order', function ($query) {
-                $query->where('status', 1)
-                    ->where('status_code', '88');
-            });
-        })->get();
+            $total_items = [];
+            foreach ($orders as $order) {
+                foreach ($order->detail as $key => $detail) {
+                    if (!isset($total_items[$detail->product_id])) {
+                        $total_items[$detail->product_id] = $detail->quantity;
+                    } else {
+                        $total_items[$detail->product_id] += $detail->quantity;
+                    }
+                }
+            }
 
-        // return $order;
+            // return $total_items;
 
-        $total_items = [];
-        foreach ($order->detail as $detail) {
-            if (!isset($total_items[$detail->product_id])) {
-                $total_items[$detail->product_id] = $detail->quantity;
-            } else {
-                $total_items[$detail->product_id] += $detail->quantity;
+            foreach ($total_items as $key => $value) {
+                $product = Product::find($key);
+                if ($product) {
+                    $product->items_sold = $value;
+                    $product->save();
+                }
+            }
+        } else if ($type == 'review_avg') {
+            $products =  Product::with('reviews')->get();
+
+            $items = [];
+            foreach ($products as $product) {
+                $rate = 0;
+                $review_count = 0;
+                foreach ($product->reviews as $key => $value) {
+                    $rate += $value->rate;
+                    $review_count++;
+                }
+                if ($review_count > 0 || $rate > 0) {
+                    $items[$product->id] = [
+                        'avg_rating' => (int)($rate/$review_count),
+                        'review_count' => $review_count
+                    ];
+                }
+            }
+            
+            foreach ($items as $key => $value) {
+                $product = Product::find($key);
+                if ($product) {
+                    $product->update($value);
+                }
             }
         }
 
-        // return $total_items;
-
-        foreach ($total_items as $key => $value) {
-            $product = Product::where('id', $key)->first();
-            $product->items_sold = $value;
-            $product->save();
-        }
-
-        $product =  $product->with('reviews')->withCount('reviews')->first();
-
-        $rate = 0;
-        foreach ($product->reviews as $key => $value) {
-            $rate += $value->rate;
-        }
-
-        $product->update([
-            'review_count' => $product->reviews_count,
-            'avg_rating' => $rate/count($product->reviews)
-        ]);
-
+        return [
+            'success' => true,
+            'message' => 'Berhasil trigger rating product',
+        ];
     }
 
     public function addAwbNumber($order_id, $awb)

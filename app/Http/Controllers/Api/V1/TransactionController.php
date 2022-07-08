@@ -892,10 +892,18 @@ class TransactionController extends Controller
         }
     }
 
-    public function triggerRatingProductSold()
+    public function triggerRatingProductSold(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'type' => 'required|in:items_sold,review_avg',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->respondValidationError($validator->errors(), 'Validation Error!');
+        }
+
         try {
-            return $this->transactionCommand->triggerRatingProductSold();
+            return $this->transactionCommand->triggerRatingProductSold($request->type);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
