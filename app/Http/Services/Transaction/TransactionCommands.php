@@ -297,11 +297,15 @@ class TransactionCommands extends Service
             }
         }
 
+        // $data = [];
         foreach ($total_items as $key => $value) {
             $product = Product::where('id', $key)->first();
-            $product->items_sold = $value;
+            $product->items_sold += $value;
             $product->save();
+
+            // $data[] = $product;
         }
+
     }
 
     public function triggerRatingProductSold($type)
