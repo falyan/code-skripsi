@@ -741,6 +741,28 @@ class ProductQueries extends Service
         $response['data'] = $data;
         return $response;
     }
+
+    public function getproductMerchantEtalaseId($merchant_id, $etalase_id, $filter = '', $sortby = null, $limit)
+    {
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'varian_product' => function ($query) {
+            $query->with(['variant_stock'])->where('main_variant', true);
+        }])->where([
+            'merchant_id' => $merchant_id,
+            'etalase_id' => $etalase_id,
+        ]);
+        
+        $data = static::productPaginate($products, $limit);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
     
     public function getReviewByProduct($product_id, $limit = 10)
     {

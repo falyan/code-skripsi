@@ -8,9 +8,11 @@ use App\Http\Resources\Etalase\EtalaseResource;
 use App\Http\Services\Etalase\EtalaseCommands;
 use App\Http\Services\Etalase\EtalaseQueries;
 use App\Http\Services\Manager\RajaOngkirManager;
+use App\Http\Services\Product\ProductQueries;
 use App\Models\Etalase;
 use App\Models\Merchant;
 use Exception, Input;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -34,6 +36,18 @@ class EtalaseController extends Controller
         }
     }
 
+    public function publicEtalaseMerchant(Request $request, $merchant_id, $etalase_id)
+    {
+        $limit = $request->limit ?? 10;
+        $filter = $request->filter ?? [];
+        $sorting = $request->sortby ?? null;
+
+        try {
+            return ProductQueries::getproductMerchantEtalaseId($merchant_id, $etalase_id, $filter, $sorting, $limit);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
 
     public function store()
     {
