@@ -14,7 +14,7 @@ class AddColumnItemsSoldToProductTable extends Migration
     public function up()
     {
         Schema::table('product', function (Blueprint $table) {
-            $table->string('items_sold')->nullable()->default(0);
+            $table->integer('items_sold')->nullable()->default(0);
         });
     }
 
