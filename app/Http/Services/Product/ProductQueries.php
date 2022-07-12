@@ -756,7 +756,10 @@ class ProductQueries extends Service
             'etalase_id' => $etalase_id,
         ]);
         
-        $data = static::productPaginate($products, $limit);
+        $filtered_data = static::filter($products, $filter);
+        $sorted_data = static::sorting($filtered_data, $sortby);
+
+        $data = static::productPaginate($sorted_data, $limit);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
