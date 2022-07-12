@@ -190,6 +190,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'merchant'], static function () use ($router) {
                 $router->get('{merchant_id}', 'MerchantController@publicProfile');
+                $router->get('/official/{category_key}', 'MerchantController@getOfficialMerchant');
+                $router->get('/official/{category_key}/{sub_category_key}', 'MerchantController@getOfficialMerchantBySubCategory');
             });
 
             $router->group(['prefix' => 'category'], static function () use ($router) {
@@ -212,6 +214,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('{id}', 'ProductController@getProductById');
                 $router->get('recommend/category/{category_key}', 'ProductController@getRecommendProductByCategory');
                 $router->get('review/{product_id}', 'ProductController@getReviewByProduct');
+                $router->get('official/{category_key}/{sub_category_key}', 'ProductController@getElectricVehicleByCategory');
+                $router->get('official/{category_key}/{sub_category_key}/{id}', 'ProductController@getElectricVehicleWithCategoryById');
+                $router->get('official/{category_key}/others/{category_id}', 'ProductController@getOtherProductElectricVehicle');
                 $router->post('filter', 'ProductController@getProductWithFilter');
                 $router->post('filter/count', 'ProductController@countProductWithFilter');
                 $router->post('check/stock', 'ProductController@checkProductStock');

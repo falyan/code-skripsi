@@ -230,7 +230,7 @@ class MerchantQueries extends Service
         ->where('merchant_id', $merchant_id);
 
         $data = $data->count();
-        
+
         Log::info("T00001", [
             'path_url' => "count.order",
             'query' => [],
@@ -278,7 +278,46 @@ class MerchantQueries extends Service
         $result = static::paginate($data->toArray(), $limit, $page);
         return $result;
     }
-    
+
+    public function getOfficialMerchant($category_key)
+    {
+        $official_store = Merchant::with(['official_store', 'province:id,name', 'city:id,name', 'district:id,name'])
+            ->whereHas('official_store', function ($query) use ($category_key) {
+                $query->where('category_key', $category_key)
+                    ->where('status', 1);
+            })->get(['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url'])
+                ->forget(['province_id', 'city_id', 'district_id']);
+
+        foreach ($official_store as $merchant) {
+            $merchant['url_deeplink'] = 'https://plnmarketplace.page.link/?link=https://plnmarketplace.page.link/profile-toko-seller?id=' . $merchant->id;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan produk kendaraan listrik!';
+        $response['data'] = $official_store;
+        return $response;
+    }
+
+    public function getOfficialMerchantBySubCategory($category_key, $sub_category_key)
+    {
+        $official_store = Merchant::with(['official_store', 'province:id,name', 'city:id,name', 'district:id,name'])
+            ->whereHas('official_store', function ($query) use ($category_key, $sub_category_key) {
+                $query->where('category_key', $category_key)
+                    ->where('sub_category_key', $sub_category_key)
+                    ->where('status', 1);
+            })->get(['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url'])
+                ->forget(['province_id', 'city_id', 'district_id']);
+
+        foreach ($official_store as $merchant) {
+            $merchant['url_deeplink'] = 'https://plnmarketplace.page.link/?link=https://plnmarketplace.page.link/profile-toko-seller?id=' . $merchant->id;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan produk kendaraan listrik!';
+        $response['data'] = $official_store;
+        return $response;
+    }
+
     public static function getBanner($merchant_id)
     {
         $data = MerchantBanner::where('merchant_id', $merchant_id)->get();

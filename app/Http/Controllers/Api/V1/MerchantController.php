@@ -17,6 +17,14 @@ use Illuminate\Support\Facades\Validator;
 
 class MerchantController extends Controller
 {
+    protected $merchantQueries, $merchantCommands;
+
+    public function __construct()
+    {
+        $this->merchantQueries = new MerchantQueries();
+        $this->merchantCommands = new MerchantCommands();
+    }
+
     public function aturToko()
     {
         $validator = Validator::make(request()->all(), [
@@ -104,6 +112,26 @@ class MerchantController extends Controller
         try {
             $merchant = MerchantQueries::publicProfile($merchant_id);
             return $this->respondWithData($merchant, 'Berhasil mendapatkan data toko');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getOfficialMerchant($category_key)
+    {
+        try {
+            $data = $this->merchantQueries->getOfficialMerchant($category_key);
+            return $this->respondWithData($data['data'], $data['message']);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getOfficialMerchantBySubCategory($category_key, $sub_category_key)
+    {
+        try {
+            $data = $this->merchantQueries->getOfficialMerchantBySubCategory($category_key, $sub_category_key);
+            return $this->respondWithData($data['data'], $data['message']);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
