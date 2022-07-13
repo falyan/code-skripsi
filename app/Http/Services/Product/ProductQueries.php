@@ -692,6 +692,63 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function getElectricVehicleByCategory($category_key, $sub_category_key, $sortby = null, $limit = 10)
+    {
+        $products = Product::withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where('status', 1)->with(['product_stock', 'product_photo', 'merchant.city', 'merchant.official_store','is_wishlist', 'varian_product' => function ($query) {
+            $query->with(['variant_stock'])->where('main_variant', true);
+        }])->whereHas('merchant.official_store', function ($merchant) use ($category_key, $sub_category_key) {
+            $merchant->where('category_key', $category_key)
+                ->where('sub_category_key', $sub_category_key);
+        });
+
+        $filtered_data = $this->filter($products);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $data = $this->productPaginate($sorted_data, $limit);
+
+        //if data empty
+        if ($data->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Produk belum tersedia saat ini!';
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan produk kendaraan listrik!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function getElectricVehicleWithCategoryById($category_key, $sub_category_key, $id)
+    {
+        $product = Product::withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where('status', 1)->with(['product_stock', 'product_photo', 'merchant.city', 'merchant.official_store','is_wishlist', 'varian_product' => function ($query) {
+            $query->with(['variant_stock'])->where('main_variant', true);
+        }])->whereHas('merchant.official_store', function ($merchant) use ($category_key, $sub_category_key) {
+            $merchant->where('category_key', $category_key)
+                ->where('sub_category_key', $sub_category_key);
+        })->where('id', $id)->first();
+
+            if(!$product) {
+                $response['success'] = false;
+                $response['message'] = 'Produk tidak ditemukan!';
+                $response['data'] = null;
+                return $response;
+            }
+
+            $response['success'] = true;
+            $response['message'] = 'Berhasil mendapatkan produk kendaraan listrik!';
+            $response['data'] = $product;
+            return $response;
+    }
+
     public function getProductWithFilter($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         $product = new Product();

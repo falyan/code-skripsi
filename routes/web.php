@@ -216,7 +216,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('review/{product_id}', 'ProductController@getReviewByProduct');
                 $router->get('official/{category_key}/{sub_category_key}', 'ProductController@getElectricVehicleByCategory');
                 $router->get('official/{category_key}/{sub_category_key}/{id}', 'ProductController@getElectricVehicleWithCategoryById');
-                $router->get('official/{category_key}/others/{category_id}', 'ProductController@getOtherProductElectricVehicle');
                 $router->post('filter', 'ProductController@getProductWithFilter');
                 $router->post('filter/count', 'ProductController@countProductWithFilter');
                 $router->post('check/stock', 'ProductController@checkProductStock');

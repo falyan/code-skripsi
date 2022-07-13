@@ -540,6 +540,7 @@ class ProductController extends Controller
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
             $page = $request->page ?? 1;
+
             return $this->productQueries->getRecommendProductByCategory($category_key, $filter, $sorting, $limit, $page);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -551,6 +552,30 @@ class ProductController extends Controller
         try {
             $limit = $request->limit ?? 10;
             return $this->productQueries->getReviewByProduct($product_id, $limit);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getElectricVehicleByCategory(Request $request, $category_key, $sub_category_key)
+    {
+        try {
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? null;
+            $page = $request->page ?? 1;
+
+            return $this->productQueries->getElectricVehicleByCategory($category_key, $sub_category_key, $filter, $sorting, $limit, $page);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getElectricVehicleWithCategoryById($category_key, $sub_category_key ,$id)
+    {
+        try {
+            $data = $this->productQueries->getElectricVehicleWithCategoryById($category_key, $sub_category_key, $id);
+            return $this->respondWithData($data['data'], $data['message']);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
