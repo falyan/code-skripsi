@@ -547,16 +547,6 @@ class ProductController extends Controller
         }
     }
 
-    public function getReviewByProduct($product_id, Request $request)
-    {
-        try {
-            $limit = $request->limit ?? 10;
-            return $this->productQueries->getReviewByProduct($product_id, $limit);
-        } catch (Exception $e) {
-            return $this->respondErrorException($e, request());
-        }
-    }
-
     public function getElectricVehicleByCategory(Request $request, $category_key, $sub_category_key)
     {
         try {
@@ -576,6 +566,25 @@ class ProductController extends Controller
         try {
             $data = $this->productQueries->getElectricVehicleWithCategoryById($category_key, $sub_category_key, $id);
             return $this->respondWithData($data['data'], $data['message']);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getOtherEvProductByCategory($category_id)
+    {
+        try {
+            return $this->productQueries->getOtherEvProductByCategory($category_id);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getReviewByProduct($product_id, Request $request)
+    {
+        try {
+            $limit = $request->limit ?? 10;
+            return $this->productQueries->getReviewByProduct($product_id, $limit);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

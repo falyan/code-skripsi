@@ -229,7 +229,7 @@ class ProductQueries extends Service
         $response['data'] = $data;
         return $response;
     }
-    
+
     public function getProductByMerchantIdBuyer($merchant_id, $size, $filter = [], $sortby = null, $current_page)
     {
         $product = new Product();
@@ -749,6 +749,53 @@ class ProductQueries extends Service
             return $response;
     }
 
+    public function getOtherEvProductByCategory($category_id, $filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    {
+        $categories = MasterData::with(['child' => function ($j) use ($category_id) {
+            $j->with('child', function ($query) use ($category_id) {
+                $query->where('id', $category_id);
+            });
+        }])->where('type', 'product_category')->where('key','prodcat_electric_vehicle')->get();
+
+        $cat_child_id = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    foreach ($child->child as $children) {
+                        array_push($cat_child_id, $children->id);
+                    }
+                }
+            }
+        }
+
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where('status', 1)->with(['product_stock', 'product_photo', 'is_wishlist',
+            'merchant' => function ($merchant) {
+                $merchant->with('city:id,name');
+            }, 'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            }])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereIn('category_id', $cat_child_id);
+
+        $data = $this->productPaginate($products, $limit);
+
+        if ($data->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Produk tidak tersedia!';
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
     public function getProductWithFilter($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         $product = new Product();
@@ -812,7 +859,7 @@ class ProductQueries extends Service
             'merchant_id' => $merchant_id,
             'etalase_id' => $etalase_id,
         ]);
-        
+
         $filtered_data = static::filter($products, $filter);
         $sorted_data = static::sorting($filtered_data, $sortby);
 
@@ -823,7 +870,7 @@ class ProductQueries extends Service
         $response['data'] = $data;
         return $response;
     }
-    
+
     public function getReviewByProduct($product_id, $limit = 10)
     {
         $review = Review::with(['review_photo', 'merchant', 'customer', 'product' => function ($product){
