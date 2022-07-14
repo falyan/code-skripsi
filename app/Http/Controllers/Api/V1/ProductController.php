@@ -571,10 +571,29 @@ class ProductController extends Controller
         }
     }
 
-    public function getOtherEvProductByCategory($category_id)
+    public function getOtherEvProductByCategory($category_id, Request $request)
     {
         try {
-            return $this->productQueries->getOtherEvProductByCategory($category_id);
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? null;
+            $page = $request->page ?? 1;
+
+            return $this->productQueries->getOtherEvProductByCategory($category_id, $filter, $sorting, $limit, $page);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getOtherEvProduct(Request $request)
+    {
+        try {
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? null;
+            $page = $request->page ?? 1;
+
+            return $this->productQueries->getOtherEvProductByCategory(null, $filter, $sorting, $limit, $page);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

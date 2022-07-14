@@ -212,6 +212,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('search', 'ProductController@searchProductByName');
                 $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchantBuyer');
                 $router->get('category/{category_id}', 'ProductController@getProductByCategory');
+                $router->get('ev/others', 'ProductController@getOtherEvProduct');
                 $router->get('ev/others/{category_id}', 'ProductController@getOtherEvProductByCategory');
                 $router->get('/merchant/{merchant_id}/featured', 'ProductController@getMerchantFeaturedProduct');
                 $router->get('{id}', 'ProductController@getProductById');

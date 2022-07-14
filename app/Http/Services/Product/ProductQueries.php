@@ -757,6 +757,14 @@ class ProductQueries extends Service
             });
         }])->where('type', 'product_category')->where('key','prodcat_electric_vehicle')->get();
 
+        if (!$category_id){
+            $categories = MasterData::with(['child' => function ($j) {
+                $j->with(['child' => function ($query) {
+                    $query->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_mobil_listrik_', 'prodcat_sepeda_listrik_']);
+                }])->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeda_listrik']);
+            }])->where('type', 'product_category')->where('key', 'prodcat_electric_vehicle')->get();
+        }
+
         $cat_child_id = [];
         foreach ($categories as $category) {
             foreach ($category->child as $child) {
