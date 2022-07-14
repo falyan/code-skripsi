@@ -155,7 +155,7 @@ class TestDriveController extends Controller
         }
     }
 
-    public function getListActiveEventByMerchant(Request $request,$merchant_id)
+    public function getListActiveEventByMerchant(Request $request, $merchant_id)
     {
         try {
             $filter = $request->filter ?? [];
@@ -166,7 +166,7 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Panjang kata kunci minimal 3 karakter.', 400);
             }
 
-            $data = $this->testDriveQueries->getAllEvent($merchant_id, $filter, $sortby, $page, true);
+            $data = $this->testDriveQueries->getAllEvent($merchant_id, $filter, $sortby, $page, $filter != [] ? true : false);
 
             if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'Berhasil mendapatkan data Event Test Drive');

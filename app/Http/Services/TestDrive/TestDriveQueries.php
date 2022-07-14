@@ -24,9 +24,21 @@ class TestDriveQueries extends Service
             ->when(!empty($merchant_id), function ($query) use ($merchant_id) {
                 $query->where('merchant_id', $merchant_id);
             })->select(['id', 'merchant_id', 'title', 'area_name', 'address', 'city_id', 'latitude', 'longitude', 'map_link', 'start_date', 'end_date', 'start_time', 'end_time', 'status']);
-
+            
         $filtered_data = $this->filter($raw_data, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
+        
+        if (!empty($filter['start_date']) || !empty($filter['end_date'])) {
+            $date = [
+                'start_date' => !empty($filter['start_date']) ? $filter['start_date'] : null,
+                'end_date' => !empty($filter['end_date']) ? $filter['end_date'] : null,
+            ];
+            // where or
+            $sorted_data = $sorted_data->where(function ($query) use ($date) {
+                $query->where('start_date', '<=', $date['start_date'])->orWhere('end_date', '>=', $date['end_date']);
+            })->where('status', 1);
+        }
+
         $data = static::paginate(($sorted_data->get())->toArray(), 10, $current_page);
 
         return $data;
