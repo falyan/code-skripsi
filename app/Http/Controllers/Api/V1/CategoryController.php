@@ -44,4 +44,22 @@ class CategoryController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function getChildCategory()
+    {
+        try {
+            return $this->categoryQueries->getChildCategory();
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getParentCategory()
+    {
+        try {
+            return $this->categoryQueries->getParentCategory();
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
 }

@@ -77,7 +77,10 @@ class CategoryQueries extends Service
     public function getParentCategory()
     {
         $category = MasterData::where('type', 'product_category')->where('parent_id', null)
-            ->whereHas('child')->with('child')
+            ->where('key', 'prodcat_electric_vehicle')
+            ->whereHas('child')->with(['child' => function ($query) {
+                $query->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeds_listrik']);
+            }])
             ->orderBy('value')->get()->pluck('child');
 
         $parents = [];
@@ -101,25 +104,40 @@ class CategoryQueries extends Service
 
     public function getChildCategory()
     {
-        $category = MasterData::where('type', 'product_category')->where('parent_id', '!=', null)
-            ->whereHas('child')->with(['child'])
+        // $category = MasterData::where('type', 'product_category')->where('parent_id', '!=', null)
+        //     ->whereHas('child')->with(['child'])
+        //     ->orderBy('value')->get()->pluck('child');
+        $category = MasterData::where('type', 'product_category')->where('parent_id', null)
+            ->where('key', 'prodcat_electric_vehicle')
+            ->whereHas('child')->with(['child' => function ($query) {
+                $query->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeds_listrik']);
+            }])
             ->orderBy('value')->get()->pluck('child');
 
         $childs = [];
-        foreach ($category as $c) {
-            foreach ($c as $child) {
-                $childs[] = $child;
+        foreach ($category as $p) {
+            foreach ($p as $parent) {
+                foreach ($parent->child as $child) {
+                    $childs[] = $child;
+                }
             }
         }
 
+        // $childs = [];
+        // foreach ($category as $c) {
+        //     foreach ($c as $child) {
+        //         $childs[] = $child;
+        //     }
+        // }
+
         if (empty($childs)){
             $response['success'] = false;
-            $response['message'] = 'Gagal mendapatkan data parent kategori!';
+            $response['message'] = 'Gagal mendapatkan data child kategori!';
             return $response;
         }
 
         $response['success'] = true;
-        $response['message'] = 'Berhasil mendapatkan data parent kategori!';
+        $response['message'] = 'Berhasil mendapatkan data child kategori!';
         $response['data'] = collect($childs);
         return $response;
     }

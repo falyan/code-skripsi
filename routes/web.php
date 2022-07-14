@@ -196,6 +196,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'category'], static function () use ($router) {
                 $router->get('basic/all', 'CategoryController@getBasicCategory');
+                $router->get('parent/electric_vehicle', 'CategoryController@getParentCategory');
+                $router->get('child/electric_vehicle', 'CategoryController@getChildCategory');
             });
 
             $router->group(['prefix' => 'etalase'], static function () use ($router) {
@@ -210,6 +212,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('search', 'ProductController@searchProductByName');
                 $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchantBuyer');
                 $router->get('category/{category_id}', 'ProductController@getProductByCategory');
+                $router->get('others/category', 'ProductController@getOtherEvProductByCategory');
                 $router->get('/merchant/{merchant_id}/featured', 'ProductController@getMerchantFeaturedProduct');
                 $router->get('{id}', 'ProductController@getProductById');
                 $router->get('recommend/category/{category_key}', 'ProductController@getRecommendProductByCategory');
