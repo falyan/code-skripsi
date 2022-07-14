@@ -117,7 +117,7 @@ class TestDriveQueries extends Service
     public function getBookingList($test_drive_id, $status = null)
     {
         $data = TestDrive::with(['visitor_booking' => function ($booking) use ($status) {
-            $booking->where('status', $status)->select(['id', 'test_drive_id', 'pic_name', 'pic_phone', 'pic_email', 'visit_date', 'total_passanger', 'status']);
+            $booking->where('status', $status)->orderBy('created_at', 'ASC');
         }])->find($test_drive_id, ['id', 'merchant_id', 'title', 'start_date', 'end_date', 'start_time', 'end_time']);
 
         return $data;

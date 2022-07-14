@@ -363,7 +363,7 @@ class TestDriveController extends Controller
                 'total_passanger' => 'required|integer|max:5|min:1',
                 'pic_name' => 'required',
                 'pic_phone' => 'required|digits_between:8,14',
-                'pic_email' => 'required|email',
+                'pic_email' => 'nullable|email',
             ];
 
             $validator = Validator::make($request->all(), $rules, [
@@ -509,7 +509,7 @@ class TestDriveController extends Controller
 
             $is_active = $this->testDriveQueries->checkActiveEvent($request->test_drive_id);
             if (!$is_active['status']) {
-                return $this->respondWithResult(false, 'Event Test Drive sudah tidak tersedia.');    
+                return $this->respondWithResult(false, 'Event Test Drive sudah tidak tersedia.');
             }
             DB::beginTransaction();
             if (!$data = $this->testDriveCommands->updateStatusBooking($request->booking_id, 2)) {
