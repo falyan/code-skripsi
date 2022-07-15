@@ -47,6 +47,7 @@ class TestDriveQueries extends Service
                 foreach ($list_date as $date) {
                     if ($date >= $start_date && $date <= $end_date) {
                         $data_sort[] = $item;
+                        break;
                     }
                 }
             }
