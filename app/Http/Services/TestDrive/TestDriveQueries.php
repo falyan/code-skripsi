@@ -28,18 +28,32 @@ class TestDriveQueries extends Service
         $filtered_data = $this->filter($raw_data, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
         
-        if (!empty($filter['start_date']) || !empty($filter['end_date'])) {
-            $date = [
-                'start_date' => !empty($filter['start_date']) ? $filter['start_date'] : null,
-                'end_date' => !empty($filter['end_date']) ? $filter['end_date'] : null,
-            ];
-            // where or
-            $sorted_data = $sorted_data->where(function ($query) use ($date) {
-                $query->where('start_date', '<=', $date['start_date'])->orWhere('end_date', '>=', $date['end_date']);
-            })->where('status', 1);
+        $sorted_data = collect($sorted_data->get());
+        if (!empty($filter['start_date']) && !empty($filter['end_date'])) {
+            $start_date = $filter['start_date'];
+            $end_date = $filter['end_date'];
+
+            $data_sort = [];
+            foreach ($sorted_data as $item) {
+                $start = $item->start_date;
+                $end = $item->end_date;
+
+                $count_date = Carbon::parse($start)->diffInDays($end);
+                $list_date = [];
+                for ($i = 0; $i <= $count_date; $i++) {
+                    $list_date[] = Carbon::parse($start)->addDays($i)->format('Y-m-d');
+                }
+
+                foreach ($list_date as $date) {
+                    if ($date >= $start_date && $date <= $end_date) {
+                        $data_sort[] = $item;
+                    }
+                }
+            }
+            $sorted_data = collect($data_sort);
         }
 
-        $data = static::paginate(($sorted_data->get())->toArray(), 10, $current_page);
+        $data = static::paginate(($sorted_data)->toArray(), 10, $current_page);
 
         return $data;
     }
