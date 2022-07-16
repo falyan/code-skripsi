@@ -137,60 +137,34 @@ class ReviewQueries{
 
     public function getCountReviewDoneByRate($column_name, $related_id, $rate = null, $operator = null, $daterange = []){
         // Default daterange
-        if ($rate == null && empty($daterange)) {
-            $from = Carbon::now()->timezone('Asia/Jakarta')->subMonth();
-            $to = Carbon::now()->timezone('Asia/Jakarta');
-            $daterange = [$from->format('Y-m-d 00:00:00'), $to->toDateTimeString()];
-        }
+        // if ($rate == null && empty($daterange)) {
+        //     $from = Carbon::now()->timezone('Asia/Jakarta')->subMonth();
+        //     $to = Carbon::now()->timezone('Asia/Jakarta');
+        //     $daterange = [$from->format('Y-m-d 00:00:00'), $to->toDateTimeString()];
+        // }
 
-        $order = Order::with(['detail', 'progress_active'])
-            ->where([
-                [$column_name, $related_id],
-            ])->when(count($daterange) == 2, function ($q) use ($daterange) {
-                $q->whereBetween('created_at', $daterange);
-            })->whereHas('progress_active', function ($j) {
-                $j->whereIn('status_code', [88]);
-            })->whereHas('review')->get();
-        Log::info("T00001", [
-            'path_url' => "select.order.review",
-            'query' => [],
-            'body' => Carbon::now('Asia/Jakarta'),
-            'response' => $order
-        ]);
+        $review = Review::with(['order'])
+            ->whereHas('order', function($q) use ($daterange) {
+                return $q->whereHas('progress_active', function ($j) {
+                    return $j->where('status_code', 88);
+                })
+                    ->when(count($daterange) == 2, function ($q) use ($daterange) {
+                        return $q->whereBetween('created_at', $daterange);
+                    })
+                    ;
+            })
+            ->where($column_name, $related_id)
+            ->where('reply_message', null)
+            ->when($rate != null && $operator != null, function ($q) use ($rate, $operator) {
+                if ($rate < 1) $rate = 1;
+                if ($rate > 5) $rate = 5;
+                $q->where('rate', $operator, $rate);
+            })
+            ->orderBy('created_at', 'desc');
 
-        $detail_array = [];
-        $reviews = [];
-        foreach ($order as $o){
-            foreach ($o->detail as $detail){
-                $review = Review::where('order_id', $o->id)
-                    ->where('merchant_id', $o->merchant_id)
-                    ->where('customer_id', $o->buyer_id)
-                    ->where('product_id', $detail->product_id)
-                    ->where('reply_message', null)
-                    ->when($rate != null && $operator != null, function ($q) use ($rate, $operator) {
-                        if ($rate < 1) $rate = 1;
-                        if ($rate > 5) $rate = 5;
-                        $q->where('rate', $operator, $rate);
-                    })->first();
-                Log::info("T00001", [
-                    'path_url' => "select.review",
-                    'query' => [],
-                    'body' => Carbon::now('Asia/Jakarta'),
-                    'response' => $review
-                ]);
-                if ($review != null){
-                    // $detail->review = $review;
-                    // array_push($detail_array, $detail);
-                    array_push($reviews, $review);
-                }
-            }
-        }
+        $data = $review->count();
 
-        $response['success'] = true;
-        $response['message'] = 'Data review berhasil didapatkan!';
-        $response['data'] = $reviews;
-
-        return $response;
+        return $data;
     }
 
     public function getListReviewUndone($column_name, $related_id){
