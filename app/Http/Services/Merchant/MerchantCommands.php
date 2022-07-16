@@ -5,6 +5,7 @@ namespace App\Http\Services\Merchant;
 use App\Http\Services\Service;
 use App\Models\Etalase;
 use App\Models\Merchant;
+use App\Models\MerchantBanner;
 use App\Models\MerchantExpedition;
 use Carbon\Carbon;
 use Exception;
@@ -148,6 +149,50 @@ class MerchantCommands extends Service
                 $response['data'] = $merchant;
                 return $response;
             }
+        }
+    }
+
+    public function createBanner($request, $merchant_id)
+    {
+        try {
+            $banner =  MerchantBanner::create([
+                'merchant_id' => $merchant_id,
+                'url' => $request->url,
+                'created_by' => $request->full_name,
+                'updated_by' => $request->full_name
+            ]);
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => 'Berhasil menambah banner',
+                'data' => $banner
+            ];
+        } catch (\Exception $th) {
+            DB::rollBack();
+            if (in_array($th->getCode(), self::$error_codes)) {
+                throw new Exception($th->getMessage(), $th->getCode());
+            }
+            throw new Exception($th->getMessage(), 500);
+        }
+    }
+    
+    public function deleteBanner($banner_id, $merchant_id)
+    {
+        try {
+            $item = MerchantBanner::where([
+                'id' => $banner_id,
+                'merchant_id' => $merchant_id
+            ])->first();
+            if ($item == null) {
+                throw new Exception('Banner tidak ditemukan', 400);
+            }
+            DB::beginTransaction();
+            $item->delete();
+            DB::commit();
+        } catch (\Exception $th) {
+            DB::rollBack();
+            throw new Exception($th->getMessage(), $th->getCode());
         }
     }
 }

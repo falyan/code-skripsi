@@ -12,33 +12,55 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class ReviewQueries{
-    public function getListReview($column_name, $related_id){
-        $order = Order::with([
-            'detail' => function ($product) {
-                $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
-                }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer'
-        ])->where([
-            [$column_name, $related_id],
-        ])->whereHas('progress_active', function ($j) {
-            $j->whereIn('status_code', [88]);
-        })->orderBy('created_at', 'desc')->paginate(10);
+    public function getListReview($column_name, $related_id, $limit = 10,  $page = 1) {
+        if($column_name == 'merchant_id') {
+            $review = Review::with([
+                'product', 'order', 'order.delivery', 'review_photo',
+                'customer', 'merchant', 'product.product_photo',
+            ])
+                ->whereHas('order', function ($q) {
+                    return $q->whereHas('progress_active', function ($j) {
+                        return $j->where('status_code', 88);
+                    });
+                })
+                ->where('review.' . $column_name, $related_id)
+                ->orderBy('review.created_at', 'desc')
+                ->join('order_detail', function ($q) {
+                    $q->on('order_detail.order_id', '=', 'review.order_id')
+                        ->on('order_detail.product_id', '=', 'review.product_id');
+                })->select('review.*', 'order_detail.quantity', 'order_detail.total_price');
 
-        $detail_array = [];
-        foreach ($order as $o){
-            foreach ($o->detail as $detail){
-                $review = Review::with(['review_photo', 'customer'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
-                    ->where('merchant_id', $o->merchant_id)->where('product_id', $detail->product_id)->first();
-                $detail->merchant = $o->merchant;
-                $detail->review = $review;
-                array_push($detail_array, $detail);
+            $data = $review->paginate($limit);
+        } else {
+            $order = Order::with([
+                'detail' => function ($product) {
+                    $product->with(['product' => function ($j) {
+                        $j->with(['product_photo']);
+                    }]);
+                }, 'progress_active', 'merchant', 'delivery', 'buyer'
+            ])->where([
+                [$column_name, $related_id],
+            ])->whereHas('progress_active', function ($j) {
+                $j->whereIn('status_code', [88]);
+            })->orderBy('created_at', 'desc')->paginate($limit);
+
+            $detail_array = [];
+            foreach ($order as $o){
+                foreach ($o->detail as $detail){
+                    $review = Review::with(['review_photo', 'customer'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
+                        ->where('merchant_id', $o->merchant_id)->where('product_id', $detail->product_id)->first();
+                    $detail->merchant = $o->merchant;
+                    $detail->review = $review;
+                    array_push($detail_array, $detail);
+                }
             }
+
+            $data = static::paginate($detail_array, $limit, 1);
         }
 
         $response['success'] = true;
         $response['message'] = 'Data review berhasil didapatkan!';
-        $response['data'] = static::paginate($detail_array, 10, 1);
+        $response['data'] = $data;
 
         return $response;
     }
@@ -57,40 +79,63 @@ class ReviewQueries{
         return $response;
     }
 
-    public function getListReviewDone($column_name, $related_id){
-        $order = Order::with([
-            'detail' => function ($product) {
-                $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
-                }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer'
-        ])->where([
-            [$column_name, $related_id],
-        ])->whereHas('progress_active', function ($j) {
-            $j->whereIn('status_code', [88]);
-        })->whereHas('review')->orderBy('created_at', 'desc')->paginate(10);
+    public function getListReviewDone($column_name, $related_id, $limit = 10,  $page = 1) {
 
-        $detail_array = [];
-        foreach ($order as $o){
-            foreach ($o->detail as $detail){
-                $review = Review::with(['review_photo', 'customer'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
-                    ->where('merchant_id', $o->merchant_id)->where('product_id', $detail->product_id)->first();
-                if ($review != null){
-                    $detail->merchant = $o->merchant;
-                    $detail->review = $review;
-                    array_push($detail_array, $detail);
+        if($column_name == 'merchant_id') {
+            $review = Review::with([
+                'product', 'order', 'order.delivery', 'review_photo',
+                'customer', 'merchant', 'product.product_photo',
+            ])
+                ->whereHas('order', function ($q) {
+                    return $q->whereHas('progress_active', function ($j) {
+                        return $j->where('status_code', 88);
+                    });
+                })
+                ->where('review.' . $column_name, $related_id)
+                ->orderBy('review.created_at', 'desc')
+                ->join('order_detail', function ($q) {
+                    $q->on('order_detail.order_id', '=', 'review.order_id')
+                        ->on('order_detail.product_id', '=', 'review.product_id');
+                })->select('review.*', 'order_detail.quantity', 'order_detail.total_price');
+
+            $data = $review->paginate($limit);
+        } else {
+            $order = Order::with([
+                'detail' => function ($product) {
+                    $product->with(['product' => function ($j) {
+                        $j->with(['product_photo']);
+                    }]);
+                }, 'progress_active', 'merchant', 'delivery', 'buyer'
+            ])->where([
+                [$column_name, $related_id],
+            ])->whereHas('progress_active', function ($j) {
+                $j->whereIn('status_code', [88]);
+            })->whereHas('review')->orderBy('created_at', 'desc')->paginate($limit);
+
+            $detail_array = [];
+            foreach ($order as $o){
+                foreach ($o->detail as $detail){
+                    $review = Review::with(['review_photo', 'customer'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
+                        ->where('merchant_id', $o->merchant_id)->where('product_id', $detail->product_id)->first();
+                    if ($review != null){
+                        $detail->merchant = $o->merchant;
+                        $detail->review = $review;
+                        array_push($detail_array, $detail);
+                    }
                 }
             }
+
+            $data = static::paginate($detail_array, $limit, 1);
         }
 
         $response['success'] = true;
         $response['message'] = 'Data review berhasil didapatkan!';
-        $response['data'] = static::paginate($detail_array, 10, 1);
+        $response['data'] = $data;
 
         return $response;
     }
 
-    public function getListReviewDoneByRate($column_name, $related_id, $rate = null, $operator = null, $daterange = []){
+    public function getCountReviewDoneByRate($column_name, $related_id, $rate = null, $operator = null, $daterange = []){
         // Default daterange
         if ($rate == null && empty($daterange)) {
             $from = Carbon::now()->timezone('Asia/Jakarta')->subMonth();
@@ -181,72 +226,118 @@ class ReviewQueries{
         return $response;
     }
 
-    public function getListReviewDoneReply($column_name, $related_id){
-        $order = Order::with([
-            'detail' => function ($product) {
-                $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
-                }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer'
-        ])->where([
-            [$column_name, $related_id],
-        ])->whereHas('progress_active', function ($j) {
-            $j->whereIn('status_code', [88]);
-        })->whereHas('review', function ($r){
-            $r->whereNotNull('reply_message');
-        })->orderBy('created_at', 'desc')->paginate(10);
+    public function getListReviewDoneReply($column_name, $related_id, $limit = 10,  $page = 1){
+        if($column_name == 'merchant_id') {
+            $review = Review::with([
+                'product', 'order', 'order.delivery', 'review_photo',
+                'customer', 'merchant', 'product.product_photo',
+            ])
+                ->whereHas('order', function ($q) {
+                    return $q->whereHas('progress_active', function ($j) {
+                        return $j->where('status_code', 88);
+                    });
+                })
+                ->where('review.' . $column_name, $related_id)
+                ->whereNotNull('review.reply_message')
+                ->orderBy('review.created_at', 'desc')
+                ->join('order_detail', function ($q) {
+                    $q->on('order_detail.order_id', '=', 'review.order_id')
+                        ->on('order_detail.product_id', '=', 'review.product_id');
+                })->select('review.*', 'order_detail.quantity', 'order_detail.total_price');
 
-        $detail_array = [];
-        foreach ($order as $o){
-            foreach ($o->detail as $detail){
-                $review = Review::with(['review_photo', 'customer'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
-                    ->where('merchant_id', $o->merchant_id)->where('product_id', $detail->product_id)->first();
-                if ($review['reply_message'] != null){
-                    $detail->merchant = $o->merchant;
-                    $detail->review = $review;
-                    array_push($detail_array, $detail);
+            $data = $review->paginate($limit);
+        } else {
+            $order = Order::with([
+                'detail' => function ($product) {
+                    $product->with(['product' => function ($j) {
+                        $j->with(['product_photo']);
+                    }]);
+                }, 'progress_active', 'merchant', 'delivery', 'buyer'
+            ])->where([
+                [$column_name, $related_id],
+            ])->whereHas('progress_active', function ($j) {
+                $j->whereIn('status_code', [88]);
+            })->whereHas('review', function ($r){
+                $r->whereNotNull('reply_message');
+            })->orderBy('created_at', 'desc')->paginate($limit);
+
+            $detail_array = [];
+            foreach ($order as $o){
+                foreach ($o->detail as $detail){
+                    $review = Review::with(['review_photo', 'customer'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
+                        ->where('merchant_id', $o->merchant_id)->where('product_id', $detail->product_id)->first();
+                    if ($review['reply_message'] != null){
+                        $detail->merchant = $o->merchant;
+                        $detail->review = $review;
+                        array_push($detail_array, $detail);
+                    }
                 }
             }
+
+            $data = static::paginate($detail_array, $limit, 1);
         }
 
         $response['success'] = true;
         $response['message'] = 'Data review berhasil didapatkan!';
-        $response['data'] = static::paginate($detail_array, 10, 1);
+        $response['data'] = $data;
 
         return $response;
     }
 
-    public function getListReviewDoneUnreply($column_name, $related_id){
-        $order = Order::with([
-            'detail' => function ($product) {
-                $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
-                }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer'
-        ])->where([
-            [$column_name, $related_id],
-        ])->whereHas('progress_active', function ($j) {
-            $j->whereIn('status_code', [88]);
-        })->whereHas('review', function ($r){
-            $r->where('reply_message', null);
-        })->orderBy('created_at', 'desc')->paginate(10);
+    public function getListReviewDoneUnreply($column_name, $related_id, $limit = 10,  $page = 1){
+        if($column_name == 'merchant_id') {
+            $review = Review::with([
+                'product', 'order', 'order.delivery', 'review_photo',
+                'customer', 'merchant', 'product.product_photo',
+            ])
+                ->whereHas('order', function ($q) {
+                    return $q->whereHas('progress_active', function ($j) {
+                        return $j->where('status_code', 88);
+                    });
+                })
+                ->where('review.' . $column_name, $related_id)
+                ->where('review.reply_message', null)
+                ->orderBy('review.created_at', 'desc')
+                ->join('order_detail', function ($q) {
+                    $q->on('order_detail.order_id', '=', 'review.order_id')
+                        ->on('order_detail.product_id', '=', 'review.product_id');
+                })->select('review.*', 'order_detail.quantity', 'order_detail.total_price');
 
-        $detail_array = [];
-        foreach ($order as $o){
-            foreach ($o->detail as $detail){
-                $review = Review::with(['review_photo', 'customer'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
-                    ->where('merchant_id', $o->merchant_id)->where('product_id', $detail->product_id)->first();
-                if ($review != null && $review['reply_message'] == null){
-                    $detail->merchant = $o->merchant;
-                    $detail->review = $review;
-                    array_push($detail_array, $detail);
+            $data = $review->paginate($limit);
+        } else {
+            $order = Order::with([
+                'detail' => function ($product) {
+                    $product->with(['product' => function ($j) {
+                        $j->with(['product_photo']);
+                    }]);
+                }, 'progress_active', 'merchant', 'delivery', 'buyer'
+            ])->where([
+                [$column_name, $related_id],
+            ])->whereHas('progress_active', function ($j) {
+                $j->whereIn('status_code', [88]);
+            })->whereHas('review', function ($r){
+                $r->where('reply_message', null);
+            })->orderBy('created_at', 'desc')->paginate(10);
+
+            $detail_array = [];
+            foreach ($order as $o){
+                foreach ($o->detail as $detail){
+                    $review = Review::with(['review_photo', 'customer'])->where('order_id', $o->id)->where('customer_id', $o->buyer_id)
+                        ->where('merchant_id', $o->merchant_id)->where('product_id', $detail->product_id)->first();
+                    if ($review != null && $review['reply_message'] == null){
+                        $detail->merchant = $o->merchant;
+                        $detail->review = $review;
+                        array_push($detail_array, $detail);
+                    }
                 }
             }
+
+            $data = static::paginate($detail_array, $limit, 1);
         }
 
         $response['success'] = true;
         $response['message'] = 'Data review berhasil didapatkan!';
-        $response['data'] = static::paginate($detail_array, 10, 1);
+        $response['data'] = $data;
 
         return $response;
     }

@@ -40,6 +40,9 @@ class Product extends Model
         'created_by',
         'updated_by',
         'status',
+        'avg_rating',
+        'items_sold',
+        'review_count',
     ];
 
     /**
@@ -157,5 +160,10 @@ class Product extends Model
     public function varian_value_product()
     {
         return $this->hasMany(VariantValueProduct::class, 'product_id');
+    }
+
+    public function varian_product()
+    {
+        return $this->hasOne(VariantValueProduct::class, 'product_id');
     }
 }

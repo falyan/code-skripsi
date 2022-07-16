@@ -132,7 +132,7 @@ class NotificationController extends Controller
     public function sellerNotificationList()
     {
         try {
-            $data = $this->notificationQueries->getAllNotification('merchant_id', Auth::user()->merchant_id, request()->input('limit') ?? 10);
+            $data = $this->notificationQueries->getAllNotification('merchant_id', Auth::user()->merchant_id, request()->input('limit') ?? 10,  request()->input('page'));
             
             if (count($data['data']) > 0) {
                 return $this->respondWithData($data, 'sukses get data notifikasi');

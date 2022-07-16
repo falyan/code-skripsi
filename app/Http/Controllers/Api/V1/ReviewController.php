@@ -61,7 +61,7 @@ class ReviewController extends Controller
     public function getListReviewByMerchant(){
         try {
             $merchant_id = Auth::user()->merchant_id;
-            return $this->reviewQueries->getListReview('merchant_id' ,$merchant_id);
+            return $this->reviewQueries->getListReview('merchant_id' ,$merchant_id, request()->input('limit') ?? 10,  request()->input('page'));
         }catch (Exception $e){
             return $this->respondWithData($e, 'Error', 400);
         }
@@ -70,7 +70,7 @@ class ReviewController extends Controller
     public function getListReviewByBuyer(){
         try {
             $buyer_id = Auth::id();
-            return $this->reviewQueries->getListReview('buyer_id' ,$buyer_id);
+            return $this->reviewQueries->getListReview('buyer_id' ,$buyer_id, request()->input('limit') ?? 10,  request()->input('page'));
         }catch (Exception $e){
             return $this->respondWithData($e, 'Error', 400);
         }
@@ -141,19 +141,19 @@ class ReviewController extends Controller
     public function getListReviewDoneReplyByMerchant(){
         try {
             $merchant_id = Auth::user()->merchant_id;
-            return $this->reviewQueries->getListReviewDoneReply('merchant_id' ,$merchant_id);
+            return $this->reviewQueries->getListReviewDoneReply('merchant_id' ,$merchant_id, request()->input('limit') ?? 10, request()->input('page'));
         }catch (Exception $e){
             return $this->respondWithData($e, 'Error', 400);
         }
     }
 
     public function getListReviewDoneUnreplyByMerchant(){
-        try {
+        // try {
             $merchant_id = Auth::user()->merchant_id;
-            return $this->reviewQueries->getListReviewDoneUnreply('merchant_id' ,$merchant_id);
-        }catch (Exception $e){
-            return $this->respondWithData($e, 'Error', 400);
-        }
+            return $this->reviewQueries->getListReviewDoneUnreply('merchant_id' ,$merchant_id, request()->input('limit') ?? 10, request()->input('page'));
+        // }catch (Exception $e){
+        //     return $this->respondWithData($e, 'Error', 400);
+        // }
     }
 
     public function getListReviewByTransaction($trx_id){

@@ -275,6 +275,44 @@ class ProductCommands extends Service
         }
     }
 
+    public function updateProductFeatured($merchant_id, $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            Product::where('merchant_id' ,$merchant_id)->update(['is_featured_product' => false]);
+
+            $products = [];
+            foreach ($request['product_feature'] as $value) {
+                $product = Product::where([
+                    'id' => $value['id'], 'merchant_id' => $merchant_id,
+                ])->first();
+
+                if (empty($product)) {
+                    $response['success'] = false;
+                    $response['message'] = 'Produk ' . $value['id'] . ' tidak ditemukan';
+                    DB::rollBack();
+
+                    return $response;
+                }
+
+                $product->update(['is_featured_product' => $value['is_featured_product']]);
+
+                array_push($products, $product);
+            }
+
+            $response['success'] = true;
+            $response['message'] = 'Produk berhasil diubah!';
+            $response['data'] = $products;
+
+            DB::commit();
+            return $response;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage(), $e->getCode());
+        }
+    }
+
     public function deleteProduct($product_id, $merchant_id, $delete = false)
     {
         try {

@@ -54,7 +54,7 @@
                         <tbody>
                             <tr>
                                 <td align="left" style="padding-left:30px;">
-                                    <p style="font-size: small;font-weight: bold;">Halo Jane Doe,</p>
+                                    <p style="font-size: small;font-weight: bold;">Halo {{ $destination_name }},</p>
                                     <h2 style="color: #FF5E5E;margin: 0; padding: 0;
                                     line-height: 1.6;">
                                         Pesanan Anda telah dibatalkan

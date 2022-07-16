@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -71,7 +72,8 @@ class Merchant extends Model
     /**
      * @var void Relations
      */
-    protected function serializeDate($date){
+    protected function serializeDate($date)
+    {
         return $date->format('Y-m-d H:i:s');
     }
 
@@ -116,11 +118,13 @@ class Merchant extends Model
         return $this->hasMany(Cart::class);
     }
 
-    public function province(){
+    public function province()
+    {
         return $this->belongsTo(Province::class);
     }
 
-    public function district(){
+    public function district()
+    {
         return $this->belongsTo(District::class);
     }
 
@@ -134,7 +138,8 @@ class Merchant extends Model
         return $this->hasMany(Wishlist::class);
     }
 
-    public function mdr_merchant_active(){
+    public function mdr_merchant_active()
+    {
         return $this->hasOne(MdrMerchant::class)->where('status', 1);
     }
 
@@ -146,5 +151,15 @@ class Merchant extends Model
     public function discussion_response()
     {
         return $this->hasMany(DiscussionResponse::class, 'merchant_id');
+    }
+
+    public function official_store()
+    {
+        return $this->hasOne(MasterEvStore::class);
+    }
+
+    public function banner()
+    {
+        return $this->hasMany(MerchantBanner::class, 'merchant_id', 'id');
     }
 }

@@ -9,6 +9,7 @@ use App\Http\Services\Review\ReviewQueries;
 use App\Http\Services\Service;
 use App\Models\Etalase;
 use App\Models\Merchant;
+use App\Models\MerchantBanner;
 use App\Models\Order;
 use App\Models\OrderProgress;
 use Carbon\Carbon;
@@ -131,20 +132,27 @@ class MerchantQueries extends Service
     public static function publicProfile($merchant_id)
     {
         try {
-            $merchant = Merchant::where('id', (int) $merchant_id)->first(['id', 'name', 'photo_url', 'slogan', 'description', 'city_id', 'whatsapp_number']);
+            $merchant = Merchant::where('id', (int) $merchant_id)
+            ->first();
 
             $mc = $merchant->toArray();
             $cityname = $merchant->city->toArray();
 
             $merged_data = array_merge($mc, ['city_name' => $cityname['name']]);
-            $total_product = $merchant->products()->count();
+            unset($merchant['banner']);
+            $total_product = $merchant->products->count();
 
-            $total_trx = count(static::getTotalTrx($merchant_id, 88));
+            $total_trx = static::getTotalTrx($merchant_id, 88);
+
+            $banner = $merchant->banner->map(function ($item) {
+                return $item->url;
+            });
 
             return [
                 'merchant' => $merged_data,
+                'banner' => $banner,
                 'meta_data' => [
-                    'total_product' => (string) static::format_number((int) $total_product),
+                    'total_product' =>(string) static::format_number((int) $total_product),
                     'total_transaction' => (string) static::format_number((int) $total_trx),
                     'operational_hour' => $merchant->operationals()->first(['open_time', 'closed_time', 'timezone']),
                 ]
@@ -178,10 +186,13 @@ class MerchantQueries extends Service
             $data = [];
 
             $data['new_order'] = (static::getTotalTrx($merchant_id, '01', $daterange));
+            $data['on_progress'] = (static::getTotalTrx($merchant_id, '03', $daterange));
             $data['ready_to_deliver'] = (static::getTotalTrx($merchant_id, '02', $daterange));
-            $data['complained_order'] = count($reviewQueries->getListReviewDoneByRate('merchant_id', $merchant_id, 2, '<=', $daterange)['data']);
-            $data['new_review'] = count($reviewQueries->getListReviewDoneByRate('merchant_id', $merchant_id, null, null, $daterange)['data']);
+            $data['complained_order'] = $reviewQueries->getCountReviewDoneByRate('merchant_id', $merchant_id, 2, '<=', $daterange);
+            $data['new_review'] = $reviewQueries->getCountReviewDoneByRate('merchant_id', $merchant_id, null, null, $daterange);
             $data['new_discussion'] = count($discussionQueries->getListDiscussionDoneByUnread($merchant_id, 'unread', $daterange)['data']);
+            $data['success_order'] = static::getTotalTrx($merchant_id, '88', $daterange);
+            $data['canceled_order'] = static::getTotalTrx($merchant_id, '09', $daterange);
 
             return [
                 'data' => [
@@ -208,39 +219,26 @@ class MerchantQueries extends Service
     public static function getTotalTrx($merchant_id, $status_code, $daterange = [])
     {
 
-        $data = DB::table('order')
-                    ->join('order_progress', 'order.id', '=', 'order_progress.order_id')
-                    ->where('order_progress.status', '=', 1)
-                    ->where('order_progress.status_code', '=', $status_code)
-                    ->where('order.merchant_id', $merchant_id);
-
-        if (count($daterange) == 2) {
-            // $data = Order::with(['progress' => function ($progress) use ($status_code, $daterange){
-            //     $progress->where('status', 1)->where('status_code', $status_code)->whereBetween('created_at', $daterange);
-            // }])->withCount(['progress' => function ($progress) use ($status_code, $daterange){
-            //     return $progress->where('status', 1)->where('status_code', $status_code)->whereBetween('created_at', $daterange);
-            // }])->where('merchant_id', $merchant_id);
-            $data = $data->whereBetween('order_progress.created_at', $daterange);
-        }
-
-//        $data = $data->get()->toArray();
-//        return array_filter($data, function ($order){
-//            return $order['progress_count'] != 0;
-//        });
-
-        // $data = collect($data->get()->toArray())->where('progress_count', '!=', 0);
+        $data = Order::with('progress_active')
+        ->whereHas('progress_active', function ($query) use ($status_code, $daterange) {
+            $query->where('status_code', $status_code);
+            $query->when(count($daterange) == 2, function($q) use ($daterange) {
+                return $q->whereBetween('created_at', $daterange);
+            });
+            return $query;
+        })
+        ->where('merchant_id', $merchant_id);
 
         $data = $data->count();
+
         Log::info("T00001", [
             'path_url' => "count.order",
             'query' => [],
             'body' => Carbon::now('Asia/Jakarta'),
             'response' => $data
         ]);
+
         return $data;
-//        return array_filter($data, function ($order){
-//            return $order['progress_count'] != 0;
-//        });
     }
 
     // public function getTotalReview($merchant_id, $rate)
@@ -278,6 +276,63 @@ class MerchantQueries extends Service
         }
 
         $result = static::paginate($data->toArray(), $limit, $page);
+        return $result;
+    }
+
+    public function getOfficialMerchant($category_key)
+    {
+        $official_store = Merchant::with(['official_store', 'province:id,name', 'city:id,name', 'district:id,name'])
+            ->whereHas('official_store', function ($query) use ($category_key) {
+                $query->where('category_key', $category_key)
+                    ->where('status', 1);
+            })->get(['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url'])
+                ->forget(['province_id', 'city_id', 'district_id']);
+
+        foreach ($official_store as $merchant) {
+            $merchant['url_deeplink'] = 'https://plnmarketplace.page.link/?link=https://plnmarketplace.page.link/profile-toko-seller?id=' . $merchant->id;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan produk kendaraan listrik!';
+        $response['data'] = $official_store;
+        return $response;
+    }
+
+    public function getOfficialMerchantBySubCategory($category_key, $sub_category_key)
+    {
+        $official_store = Merchant::with(['official_store', 'province:id,name', 'city:id,name', 'district:id,name'])
+            ->whereHas('official_store', function ($query) use ($category_key, $sub_category_key) {
+                $query->where('category_key', $category_key)
+                    ->where('sub_category_key', $sub_category_key)
+                    ->where('status', 1);
+            })->get(['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url'])
+                ->forget(['province_id', 'city_id', 'district_id']);
+
+        foreach ($official_store as $merchant) {
+            $merchant['url_deeplink'] = 'https://plnmarketplace.page.link/?link=https://plnmarketplace.page.link/profile-toko-seller?id=' . $merchant->id;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan produk kendaraan listrik!';
+        $response['data'] = $official_store;
+        return $response;
+    }
+
+    public static function getBanner($merchant_id)
+    {
+        $data = MerchantBanner::where('merchant_id', $merchant_id)->get();
+
+        if ($data->count() < 1) {
+            return [
+                'success' => false,
+                'message' => 'Data Banner masih kosong',
+                'data' => null
+            ];
+        }
+
+        $result = [
+            'data' => $data
+        ];
         return $result;
     }
 }

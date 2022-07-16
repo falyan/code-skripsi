@@ -101,7 +101,7 @@ class TestDriveCommands extends Service
         $new_booking->visit_date = $data->visit_date;
         $new_booking->pic_name = $data->pic_name;
         $new_booking->pic_phone = $this->generatePhone($data->pic_phone);
-        $new_booking->pic_email = $data->pic_email;
+        $new_booking->pic_email = $data->pic_email ?? null;
         $new_booking->total_passanger = $data->total_passanger;
         $new_booking->booking_code = Str::random(8);
         $new_booking->status = 0;
@@ -123,7 +123,7 @@ class TestDriveCommands extends Service
         if ($data->status == 1 && $status == 3) {
             return false;
         }
-        
+
         $data->status = $status;
         if ($data->save()) return $data;
         else return false;

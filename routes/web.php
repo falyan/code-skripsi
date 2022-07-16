@@ -29,6 +29,7 @@ $router->get('/', function () use ($router) {
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
     $router->post('biller/payment/notification', 'TransactionController@updatePaymentStatus');
+    $router->post('trigger/all', 'TransactionController@triggerRatingProductSold');
 
     $router->group(['prefix' => 'seller'], static function () use ($router) {
         $router->group(['middleware' => 'auth'], function () use ($router) {
@@ -44,6 +45,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('edit/{product_id}', 'ProductController@updateProduct');
                     $router->delete('delete/{product_id}', 'ProductController@deleteProduct');
                     $router->post('stock/edit/{product_id}', 'ProductController@updateStockProduct');
+                    $router->post('price/edit/{product_id}', 'ProductController@updatePriceProduct');
+                    $router->post('featured/edit/', 'ProductController@updateProductFeatured');
                 });
 
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {
@@ -52,6 +55,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('atur-lokasi', 'MerchantController@aturLokasi');
                     $router->post('update', 'MerchantController@updateMerchantProfile');
                     $router->post('set-customlogistic', 'MerchantController@setCustomLogistic');
+                    $router->get('banner', 'MerchantController@getBanner');
+                    $router->post('banner', 'MerchantController@createBanner');
+                    $router->delete('banner/{banner_id}', 'MerchantController@deleteBanner');
                 });
 
                 $router->group(['prefix' => 'order'], static function () use ($router) {
@@ -102,10 +108,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('merchant', 'ProductController@getProductByMerchantSeller');
                     $router->get('best-selling', 'ProductController@getBestSellingProductByMerchant');
                     $router->get('almost-running-out', 'ProductController@getProductAlmostRunningOut');
-                    $router->get('detail/{id}', 'ProductController@getProductById');
+                    $router->get('detail/{id}', 'ProductController@getProductByIdSeller');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
                     $router->get('search', 'ProductController@searchProductSeller');
                     $router->get('filter', 'ProductController@getProductByFilter');
+                    $router->get('featured', 'ProductController@getProductFeatured');
                 });
 
                 $router->group(['prefix' => 'category'], static function () use ($router) {
@@ -183,14 +190,19 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'merchant'], static function () use ($router) {
                 $router->get('{merchant_id}', 'MerchantController@publicProfile');
+                $router->get('/official/{category_key}', 'MerchantController@getOfficialMerchant');
+                $router->get('/official/{category_key}/{sub_category_key}', 'MerchantController@getOfficialMerchantBySubCategory');
             });
 
             $router->group(['prefix' => 'category'], static function () use ($router) {
                 $router->get('basic/all', 'CategoryController@getBasicCategory');
+                $router->get('parent/electric_vehicle', 'CategoryController@getParentCategory');
+                $router->get('child/electric_vehicle', 'CategoryController@getChildCategory');
             });
 
             $router->group(['prefix' => 'etalase'], static function () use ($router) {
                 $router->get('merchant/{merchant_id}', 'EtalaseController@publicEtalase');
+                $router->get('merchant/{merchant_id}/etalase/{etalase_id}', 'EtalaseController@publicEtalaseMerchant');
             });
 
             $router->group(['prefix' => 'product'], static function () use ($router) {
@@ -200,11 +212,17 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('search', 'ProductController@searchProductByName');
                 $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchantBuyer');
                 $router->get('category/{category_id}', 'ProductController@getProductByCategory');
+                $router->get('ev/others', 'ProductController@getOtherEvProduct');
+                $router->get('ev/others/{category_id}', 'ProductController@getOtherEvProductByCategory');
                 $router->get('/merchant/{merchant_id}/featured', 'ProductController@getMerchantFeaturedProduct');
                 $router->get('{id}', 'ProductController@getProductById');
                 $router->get('recommend/category/{category_key}', 'ProductController@getRecommendProductByCategory');
+                $router->get('review/{product_id}', 'ProductController@getReviewByProduct');
+                $router->get('official/{category_key}/{sub_category_key}', 'ProductController@getElectricVehicleByCategory');
+                $router->get('official/{category_key}/{sub_category_key}/{id}', 'ProductController@getElectricVehicleWithCategoryById');
                 $router->post('filter', 'ProductController@getProductWithFilter');
                 $router->post('filter/count', 'ProductController@countProductWithFilter');
+                $router->post('check/stock', 'ProductController@checkProductStock');
             });
 
             $router->group(['prefix' => 'variant'], static function () use ($router) {
@@ -280,6 +298,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('detail/{id}', 'TestDriveController@getDetail');
                 $router->get('history', 'TestDriveController@getHistoryByCustomer');
                 $router->get('history/detail/{id}', 'TestDriveController@getDetailBooking');
+                $router->get('merchant/{merchant_id}', 'TestDriveController@getListActiveEventByMerchant');
             });
 
             $router->group(['prefix' => 'discussion', 'middleware' => 'auth'], static function () use ($router) {
@@ -410,7 +429,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     });
 
     $router->group(['prefix' => 'banner'], static function () use ($router) {
-        $router->get('/flash-popup', 'BannerController@getFlashPopup');
+        $router->get('all', 'BannerController@getAllBanner');
+        $router->get('type/{type}', 'BannerController@getBannerByType');
     });
 
     $router->group(['prefix' => 'version'], static function () use ($router) {

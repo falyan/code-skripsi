@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\Review;
 
+use App\Models\Product;
 use App\Models\Review;
 use App\Models\ReviewPhoto;
 use Exception;
@@ -57,6 +58,20 @@ class ReviewCommands{
                     return $response;
                 }
             }
+
+            //trigger for count review and rating
+            $product = Product::where('id' ,$data['product_id']);
+            $product =  $product->with('reviews')->withCount('reviews')->first();
+
+            $rate = 0;
+            foreach ($product->reviews as $key => $value) {
+                $rate += $value->rate;
+            }
+
+            $product->update([
+                'review_count' => $product->reviews_count,
+                'avg_rating' => $rate/count($product->reviews)
+            ]);
 
             DB::commit();
             $review_data = [$review, $photos];

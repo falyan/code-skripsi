@@ -7,6 +7,7 @@ use App\Models\MasterData;
 use App\Models\MasterVariant;
 use App\Models\Merchant;
 use App\Models\Product;
+use App\Models\Review;
 use App\Models\VariantValueProduct;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -23,7 +24,9 @@ class ProductQueries extends Service
                     $order->whereHas('progress_done');
                 });
             }])
-            ->where('status', 1)->with(['product_stock', 'product_photo', 'merchant.city', 'is_wishlist'])->whereHas('merchant', function ($merchant) {
+            ->where('status', 1)->with(['product_stock', 'product_photo', 'merchant.city', 'is_wishlist', 'varian_product' => function ($query) {
+            $query->with(['variant_stock'])->where('main_variant', true);
+        }])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
         }); //todo paginate 10
 
@@ -40,19 +43,30 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByMerchantIdSeller($merchant_id, $filter = [], $sortby = null, $current_page = 1, $limit)
+    public function getProductByMerchantIdSeller($merchant_id, $filter = '', $sortby = null, $current_page = 1, $limit, $featured)
     {
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist'])->where('merchant_id', $merchant_id);
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'varian_product' => function ($query) {
+            $query->with(['variant_stock'])->where('main_variant', true);
+        }])->where('merchant_id', $merchant_id)
+        ->when($featured == true, function($q) {
+            $q->orderBy('is_featured_product', 'DESC');
+        })
+        ->when($filter != '', function($q) use ($filter) {
+            $filters = explode(",", $filter);
+            if (define('status', $filters)) {
+                $q->where('status', 1);
+            }
+        });
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
-            //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            $product->avg_rating = 0.0;
+            // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            // $product->avg_rating = 0.0;
             return $product;
         });
 
@@ -131,7 +145,7 @@ class ProductQueries extends Service
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
             //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            $product->avg_rating = 0.0;
+            // $product->avg_rating = 0.0;
             return $product;
         });
 
@@ -155,9 +169,12 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->where('status', 1)->with(['merchant' => function ($merchant) {
-            $merchant->with(['city:id,name'])->select('id', 'name', 'address', 'postal_code', 'city_id', 'photo_url');
-        }, 'product_stock:id,product_id,amount,uom', 'product_photo:id,product_id,url', 'is_wishlist'])
+        }])->where('status', 1)->with(['product_stock:id,product_id,amount,uom', 'product_photo:id,product_id,url', 'is_wishlist',
+            'merchant' => function ($merchant) {
+                $merchant->with(['city:id,name'])->select('id', 'name', 'address', 'postal_code', 'city_id', 'photo_url');
+            }, 'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            }])
             ->whereHas('merchant', function ($merchant) use ($filter) {
                 $merchant->where('status', 1);
                 $location = $filter['location'] ?? null;
@@ -184,6 +201,35 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function getProductFeatured($merchant_id, $limit, $filter = [], $sortby = null, $current_page)
+    {
+        $product = new Product();
+
+        $products = $product
+            ->where(['merchant_id' => $merchant_id, 'status' => 1, 'is_featured_product' => true])
+            ->withCount(['order_details' => function ($order_details) {
+                $order_details->whereHas('order', function ($order) {
+                    $order->whereHas('progress_done');
+                });
+            }])
+            ->with(['product_photo', 'product_stock', 'merchant' => function ($merchant) {
+                $merchant->with('city:id,name');
+            }, 'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            }])
+            ->orderBy('updated_at', 'desc');
+
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $data = $this->productPaginate($sorted_data, $limit);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
     public function getProductByMerchantIdBuyer($merchant_id, $size, $filter = [], $sortby = null, $current_page)
     {
         $product = new Product();
@@ -195,10 +241,12 @@ class ProductQueries extends Service
                     $order->whereHas('progress_done');
                 });
             }])
-            ->with(['merchant' => function ($merchant) {
+            ->with(['product_photo', 'product_stock', 'merchant' => function ($merchant) {
                 $merchant->with('city:id,name');
-            },
-                'product_photo', 'product_stock']);
+            }, 'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            }])
+            ;
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -233,9 +281,12 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->where('status', 1)->with(['merchant' => function ($merchant) {
-            $merchant->with('city:id,name');
-        }, 'product_stock', 'product_photo', 'is_wishlist'])->whereHas('merchant', function ($merchant) {
+        }])->where('status', 1)->with(['product_stock', 'product_photo', 'is_wishlist',
+            'merchant' => function ($merchant) {
+                $merchant->with('city:id,name');
+            }, 'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            }])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
         })->whereIn('category_id', $cat_child_id);
 
@@ -252,7 +303,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductById($id)
+    public function getProductById($id, $seller = false)
     {
         // seller/buyer
         // $data = Product::withCount(['reviews', 'order_details' => function ($details) {
@@ -281,7 +332,7 @@ class ProductQueries extends Service
             });
         }, 'reviews' => function ($reviews) {
             $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo']);
-        }, 'discussion_master' => function ($master){
+        }, 'discussion_master' => function ($master) {
             $master->orderBy('created_at', 'desc')->limit(2)->with(['discussion_response']);
         }])->where('id', $id)->first();
 
@@ -299,7 +350,11 @@ class ProductQueries extends Service
             }]);
         }])->get();
 
-        $variant_value_product = VariantValueProduct::with(['variant_stock'])->where('product_id', $id)->get();
+        $variant_value_product = VariantValueProduct::with(['variant_stock'])
+            ->when($seller == false, function ($query) {
+                return $query->where('status', 1);
+            })
+            ->where('product_id', $id)->orderBy('main_variant', 'desc')->get();
 
         $data['variants'] = $master_variants;
         $data['variant_value_products'] = $variant_value_product;
@@ -337,7 +392,10 @@ class ProductQueries extends Service
         //        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])->whereHas('merchant', function ($merchant){
         //            $merchant->where('status', 1);
         //        })->orderBy('order_details_count', 'DESC');
-        $products = $product->where('status', 1)->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
+        $products = $product->where('status', 1)->with([
+            'product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name', 'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            }])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
             })->inRandomOrder();
@@ -353,15 +411,7 @@ class ProductQueries extends Service
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
-        $immutable_data = $sorted_data->get()->map(function ($product) {
-            $product->reviews = null;
-            $product->avg_rating = 0.0;
-            $product->order_details_count = 0;
-            //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            return $product;
-        });
-
-        $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
+        $data = $this->productPaginate($sorted_data, $limit);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
@@ -378,53 +428,111 @@ class ProductQueries extends Service
             'body' => Carbon::now('Asia/Jakarta'),
             'response' => '',
         ]);
-        //         $product = new Product();
-        //         $merchant = Merchant::with(['city'])->find($merchant_id);
-        //         $products = $product->where('merchant_id', $merchant_id)->withCount(['order_details' => function ($details) {
-        //             $details->whereHas('order', function ($order) {
-        //                 $order->whereHas('progress_done');
-        //             });
-        //         }])->with(['product_stock', 'product_photo', 'is_wishlist', 'order_details' => function ($details) {
-        //             $details->whereHas('order', function ($order) {
-        //                 $order->whereHas('progress_done');
-        //             });
-        //         }])->whereHas('merchant', function ($merchant){
-        //             $merchant->where('status', 1);
-        //         });
 
-        //         $filtered_data = $this->filter($products, $filter);
-        //         $sorted_data = $this->sorting($filtered_data, $sortby);
+        $product = new Product();
+        // $merchant = Merchant::with(['city'])->find($merchant_id);
+        $products = $product->where('merchant_id', $merchant_id)->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->orderBy('order_details_count', 'DESC');
 
-        //         $immutable_data = $sorted_data->get()->map(function ($product) {
-        //             $id = $product->id;
-        //             $product->reviews = null;
-        // //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-        //             $product->avg_rating =  0.0;
+        $itemsPaginated = $products->paginate($limit);
 
-        //             $product->sold = 0;
-        //             foreach ($product->order_details as $order_detail) {
-        //                 $product->sold += $order_detail->quantity;
-        //             }
+        $itemsTransformed = $itemsPaginated
+            ->getCollection()
+            ->map(function ($product) {
+                $id = $product->id;
+                $product->reviews = null;
+                // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+                // $product->avg_rating = 0.0;
 
-        //             $product->variants = MasterVariant::whereHas('variants', function ($v) use ($id) {
-        //                 $v->whereHas('variant_values', function ($vv) use ($id) {
-        //                     $vv->where('product_id', $id);
-        //                 })->with(['variant_values' => function ($vv) use ($id) {
-        //                     $vv->where('product_id', $id);
-        //                 }]);
-        //             })->with(['variants' => function ($v) use ($id) {
-        //                 $v->whereHas('variant_values', function ($vv) use ($id) {
-        //                     $vv->where('product_id', $id);
-        //                 })->with(['variant_values' => function ($vv) use ($id) {
-        //                     $vv->where('product_id', $id);
-        //                 }]);
-        //             }])->get();
+                $product->sold = 0;
+                foreach ($product->order_details as $order_detail) {
+                    $product->sold += $order_detail->quantity;
+                }
 
-        //             return $product;
-        //         });
-        //         $immutable_data = collect($immutable_data)->sortBy('sold', SORT_REGULAR, true);
+                $product->variants = MasterVariant::whereHas('variants', function ($v) use ($id) {
+                    $v->whereHas('variant_values', function ($vv) use ($id) {
+                        $vv->where('product_id', $id);
+                    })->with(['variant_values' => function ($vv) use ($id) {
+                        $vv->where('product_id', $id);
+                    }]);
+                })->with(['variants' => function ($v) use ($id) {
+                    $v->whereHas('variant_values', function ($vv) use ($id) {
+                        $vv->where('product_id', $id);
+                    })->with(['variant_values' => function ($vv) use ($id) {
+                        $vv->where('product_id', $id);
+                    }]);
+                }])->get();
 
-        $data = static::paginate([], (int) $limit, $current_page);
+                return $product;
+
+            })->toArray();
+
+        $data = new \Illuminate\Pagination\LengthAwarePaginator(
+            $itemsTransformed,
+            $itemsPaginated->total(),
+            $itemsPaginated->perPage(),
+            $itemsPaginated->currentPage(), [
+                // 'path' => \Illuminate\Http\Request::url(),
+                'query' => [
+                    'page' => $itemsPaginated->currentPage(),
+                ],
+            ]
+        );
+
+        // $filtered_data = $this->filter($products, $filter);
+        // $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        // $immutable_data = $sorted_data->get()->map(function ($product) {
+        //     $id = $product->id;
+        //     $product->reviews = null;
+        //     // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+        //     $product->avg_rating = 0.0;
+
+        //     $product->sold = 0;
+        //     foreach ($product->order_details as $order_detail) {
+        //         $product->sold += $order_detail->quantity;
+        //     }
+
+        //     $product->variants = MasterVariant::whereHas('variants', function ($v) use ($id) {
+        //         $v->whereHas('variant_values', function ($vv) use ($id) {
+        //             $vv->where('product_id', $id);
+        //         })->with(['variant_values' => function ($vv) use ($id) {
+        //             $vv->where('product_id', $id);
+        //         }]);
+        //     })->with(['variants' => function ($v) use ($id) {
+        //         $v->whereHas('variant_values', function ($vv) use ($id) {
+        //             $vv->where('product_id', $id);
+        //         })->with(['variant_values' => function ($vv) use ($id) {
+        //             $vv->where('product_id', $id);
+        //         }]);
+        //     }])->get();
+
+        //     return $product;
+        // });
+
+        // $immutable_data = collect($immutable_data)->sortBy('sold', SORT_REGULAR, true);
+        // $collection = new Collection($immutable_data);
+
+        // $filtered_data = $this->filter($collection->collapse(), $filter);
+        // $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        // $immutable_data = $sorted_data->map(function ($product) {
+        //     $product->reviews = null;
+        //     // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+        //     $product->avg_rating = 0.0;
+        //     return $product;
+        // });
+
+        // $data = static::paginate([], (int) $limit, $current_page);
         // $data = array_merge(['merchant' => $merchant], $data);
         // $data = [];
 
@@ -433,6 +541,7 @@ class ProductQueries extends Service
         //     $response['message'] = 'Gagal mendapatkan data produk!';
         //     return $response;
         // }
+
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -448,15 +557,18 @@ class ProductQueries extends Service
             'response' => '',
         ]);
         $product = new Product();
-        //        $products = $product->withCount(['order_details' => function ($details) {
-        //            $details->whereHas('order', function ($order) {
-        //                $order->whereHas('progress_done');
-        //            });
-        //        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
-        //            ->whereHas('merchant', function ($merchant){
-        //                $merchant->where('status', 1);
-        //            })->latest();
-        $products = $product->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
+        // $products = $product->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
+        //     ->whereHas('merchant', function ($merchant) {
+        //         $merchant->where('status', 1);
+        //     })->latest();
+        $products = $product->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name',
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            }])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
             })->where('status', 1)->latest();
@@ -464,14 +576,7 @@ class ProductQueries extends Service
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
-        $immutable_data = $sorted_data->limit(200)->get()->map(function ($product) {
-            $product->reviews = null;
-            $product->avg_rating = 0.0;
-            $product->order_details_count = 0;
-            //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            return $product;
-        });
-        $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
+        $data = $this->productPaginate($sorted_data, $limit);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
@@ -517,7 +622,7 @@ class ProductQueries extends Service
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
             //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            $product->avg_rating = 0.0;
+            // $product->avg_rating = 0.0;
             return $product;
         });
 
@@ -551,7 +656,10 @@ class ProductQueries extends Service
                     $details->whereHas('order', function ($order) {
                         $order->whereHas('progress_done');
                     });
-                }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
+                }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name',
+                    'varian_product' => function ($query) {
+                        $query->with(['variant_stock'])->where('main_variant', true);
+                    }])
                     ->whereHas('merchant', function ($merchant) {
                         $merchant->where('status', 1);
                     })->where('category_id', $obj->id)->where('status', 1)->orderBy('order_details_count', 'ASC')->get();
@@ -566,18 +674,130 @@ class ProductQueries extends Service
 
         $immutable_data = $sorted_data->map(function ($product) {
             $product->reviews = null;
-            //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            $product->avg_rating = 0.0;
+            // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            // $product->avg_rating = 0.0;
             return $product;
         });
 
         $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
 
-        //        if ($product->isEmpty()){
-        //            $response['success'] = false;
-        //            $response['message'] = 'Gagal mendapatkan data produk!';
-        //            return $response;
-        //        }
+        // if ($product->isEmpty()) {
+        //     $response['success'] = false;
+        //     $response['message'] = 'Gagal mendapatkan data produk!';
+        //     return $response;
+        // }
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function getElectricVehicleByCategory($category_key, $sub_category_key, $sortby = null, $limit = 10)
+    {
+        $products = Product::withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where('status', 1)->with(['product_stock', 'product_photo', 'merchant.city', 'merchant.official_store','is_wishlist', 'varian_product' => function ($query) {
+            $query->with(['variant_stock'])->where('main_variant', true);
+        }])->whereHas('merchant.official_store', function ($merchant) use ($category_key, $sub_category_key) {
+            $merchant->where('category_key', $category_key)
+                ->where('sub_category_key', $sub_category_key);
+        });
+
+        $filtered_data = $this->filter($products);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $data = $this->productPaginate($sorted_data, $limit);
+
+        //if data empty
+        if ($data->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Produk belum tersedia saat ini!';
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan produk kendaraan listrik!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function getElectricVehicleWithCategoryById($category_key, $sub_category_key, $id)
+    {
+        $product = Product::withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where('status', 1)->with(['product_stock', 'product_photo', 'merchant.city', 'merchant.official_store','is_wishlist', 'varian_product' => function ($query) {
+            $query->with(['variant_stock'])->where('main_variant', true);
+        }])->whereHas('merchant.official_store', function ($merchant) use ($category_key, $sub_category_key) {
+            $merchant->where('category_key', $category_key)
+                ->where('sub_category_key', $sub_category_key);
+        })->where('id', $id)->first();
+
+            if(!$product) {
+                $response['success'] = false;
+                $response['message'] = 'Produk tidak ditemukan!';
+                $response['data'] = null;
+                return $response;
+            }
+
+            $response['success'] = true;
+            $response['message'] = 'Berhasil mendapatkan produk kendaraan listrik!';
+            $response['data'] = $product;
+            return $response;
+    }
+
+    public function getOtherEvProductByCategory($category_id, $filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    {
+        $categories = MasterData::with(['child' => function ($j) use ($category_id) {
+            $j->with('child', function ($query) use ($category_id) {
+                $query->where('id', $category_id);
+            });
+        }])->where('type', 'product_category')->where('key','prodcat_electric_vehicle')->get();
+
+        if (!$category_id){
+            $categories = MasterData::with(['child' => function ($j) {
+                $j->with(['child' => function ($query) {
+                    $query->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_mobil_listrik_', 'prodcat_sepeda_listrik_']);
+                }])->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeda_listrik']);
+            }])->where('type', 'product_category')->where('key', 'prodcat_electric_vehicle')->get();
+        }
+
+        $cat_child_id = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    foreach ($child->child as $children) {
+                        array_push($cat_child_id, $children->id);
+                    }
+                }
+            }
+        }
+
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where('status', 1)->with(['product_stock', 'product_photo', 'is_wishlist',
+            'merchant' => function ($merchant) {
+                $merchant->with('city:id,name');
+            }, 'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            }])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereIn('category_id', $cat_child_id);
+
+        $data = $this->productPaginate($products, $limit);
+
+        if ($data->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Produk tidak tersedia!';
+            return $response;
+        }
+
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -601,16 +821,75 @@ class ProductQueries extends Service
 
         $immutable_data = $sorted_data->get()->map(function ($product) {
             $product->reviews = null;
-            $product->avg_rating = 0.0;
-            //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            // $product->avg_rating = 0.0;
+            // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
             return $product;
         });
+        // $products = $sorted_data->get();
 
         $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
+
+        //check if value min_price is greater than max_price
+        if (isset($filter['min_price']) && isset($filter['max_price']) && $filter['min_price'] > $filter['max_price']) {
+            $response['success'] = false;
+            $response['message'] = 'Minimal harga tidak boleh lebih besar dari maksimal harga!';
+            return $response;
+        } else if(isset($filter['min_price']) && isset($filter['max_price']) && $filter['min_price'] == $filter['max_price']) {
+            $response['success'] = false;
+            $response['message'] = 'Minimal harga tidak boleh sama dengan maksimal harga!';
+            return $response;
+        }
+
+        //check if filter product is empty
+        if ($immutable_data->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Produk tidak ditemukan!';
+            $response['data'] = null;
+            return $response;
+        }
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
+        return $response;
+    }
+
+    public function getproductMerchantEtalaseId($merchant_id, $etalase_id, $filter = '', $sortby = null, $limit)
+    {
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'varian_product' => function ($query) {
+            $query->with(['variant_stock'])->where('main_variant', true);
+        }])->where([
+            'merchant_id' => $merchant_id,
+            'etalase_id' => $etalase_id,
+        ]);
+
+        $filtered_data = static::filter($products, $filter);
+        $sorted_data = static::sorting($filtered_data, $sortby);
+
+        $data = static::productPaginate($sorted_data, $limit);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function getReviewByProduct($product_id, $limit = 10)
+    {
+        $review = Review::with(['review_photo', 'merchant', 'customer', 'product' => function ($product){
+            $product->with(['product_photo']);
+        }, 'order' => function ($order){
+            $order->with(['detail']);
+        }])->where('product_id', $product_id)->paginate($limit);
+
+        $response['success'] = true;
+        $response['message'] = 'Review berhasil didapatkan!';
+        $response['data'] = $review;
         return $response;
     }
 
@@ -639,6 +918,24 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function checkProductStock($request)
+    {
+        $data = [];
+        foreach ($request->product_id as $id){
+            $product = Product::with(['stock_active', 'varian_value_product' => function($variant){
+                $variant->with("variant_stock");
+            }])->where("id", $id)->first();
+
+            array_push($data, $product);
+        }
+
+        $response['success'] = true;
+        $response['message'] = "Berhasil mendapatkan stok produk";
+        $response['data'] = $data;
+
+        return $response;
+    }
+
     public function filter($model, $filter = [])
     {
         if (count($filter) > 0) {
@@ -648,6 +945,8 @@ class ProductQueries extends Service
             $condition = $filter['condition'] ?? null;
             $min_price = $filter['min_price'] ?? null;
             $max_price = $filter['max_price'] ?? null;
+            $min_rating = $filter['min_rating'] ?? null;
+            $max_rating = $filter['max_rating'] ?? null;
 
             $data = $model->when(!empty($keyword), function ($query) use ($keyword) {
                 $query->where('name', 'ILIKE', "%{$keyword}%");
@@ -675,6 +974,10 @@ class ProductQueries extends Service
                 $query->where('price', '>=', $min_price);
             })->when(!empty($max_price), function ($query) use ($max_price) {
                 $query->where('price', '<=', $max_price);
+            })->when(!empty($min_rating), function ($query) use ($min_rating) {
+                $query->where('avg_rating', '>=', $min_rating);
+            })->when(!empty($max_rating), function ($query) use ($max_rating) {
+                $query->where('avg_rating', '<=', $max_rating);
             });
 
             return $data;
@@ -688,10 +991,18 @@ class ProductQueries extends Service
         if (!empty($sortby)) {
             $data = $model->when($sortby == 'newest', function ($query) {
                 $query->orderBy('created_at', 'desc');
+            })->when($sortby == 'lowest', function ($query) {
+                $query->orderBy('created_at', 'asc');
             })->when($sortby == 'lower_price', function ($query) {
                 $query->orderBy('price', 'asc');
             })->when($sortby == 'higher_price', function ($query) {
                 $query->orderBy('price', 'desc');
+            })->when($sortby == 'rating', function ($query) {
+                $query->orderBy('avg_rating', 'desc');
+            })->when($sortby == 'review', function ($query) {
+                $query->orderBy('review_count', 'desc');
+            })->when($sortby == 'sold', function ($query) {
+                $query->orderBy('items_sold', 'desc');
             });
 
             return $data;
@@ -707,7 +1018,7 @@ class ProductQueries extends Service
         $itemsTransformed = $itemsPaginated
             ->getCollection()
             ->map(function ($item) {
-                $item->avg_rating = 0.0;
+                // $item->avg_rating = 0.0;
                 $item->reviews = null;
                 return $item;
             })->toArray();

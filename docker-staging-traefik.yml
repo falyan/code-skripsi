@@ -1,0 +1,49 @@
+version: "3.8"
+
+networks:
+  loadbalancer:
+    external: true
+
+services:
+  pln-marketplace-saruman-staging:
+    image: $DOCKER_IMAGE_APP
+    networks:
+      - loadbalancer
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/nfs-logs/pln-marketplace-saruman-staging:/var/www/html/storage/logs
+    environment:
+      - ELASTIC_APM_ENABLED=true
+    logging:
+      driver: loki
+      options:
+        loki-url: "$DATASOURCE_LOKI"
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.services.pln-marketplace-saruman-staging.loadbalancer.server.port=80"
+        - "traefik.http.middlewares.compress-pln-marketplace-saruman-staging.compress=true"
+        - "traefik.http.middlewares.redirectscheme-pln-marketplace-saruman-staging.redirectscheme.scheme=https"
+        - "traefik.http.middlewares.ratelimit-pln-marketplace-saruman-staging.ratelimit.period=1m"
+        - "traefik.http.middlewares.ratelimit-pln-marketplace-saruman-staging.ratelimit.average=100"
+        - "traefik.http.middlewares.ratelimit-pln-marketplace-saruman-staging.ratelimit.burst=50"
+        - "traefik.http.middlewares.stripprefix-local-pln-marketplace-saruman-staging.stripprefix.prefixes=/api/plnmp/saruman-staging"
+        - "traefik.http.middlewares.stripprefix-public-pln-marketplace-saruman-staging.stripprefix.prefixes=/saruman"
+        - "traefik.http.routers.local-pln-marketplace-saruman-staging-web.rule=Host(`10.14.204.76`) && PathPrefix(`/api/plnmp/saruman-staging`)"
+        - "traefik.http.routers.local-pln-marketplace-saruman-staging-web.middlewares=stripprefix-local-pln-marketplace-saruman-staging,compress-pln-marketplace-saruman-staging"
+        - "traefik.http.routers.local-pln-marketplace-saruman-staging-web.entrypoints=web"
+        - "traefik.http.routers.public-pln-marketplace-saruman-staging-web.rule=Host(`sta-plnmp.beyondkwh.id`) && PathPrefix(`/saruman`)"
+        - "traefik.http.routers.public-pln-marketplace-saruman-staging-web.middlewares=stripprefix-public-pln-marketplace-saruman-staging,compress-pln-marketplace-saruman-staging"
+        - "traefik.http.routers.public-pln-marketplace-saruman-staging-web.entrypoints=web"
+      mode: replicated
+      replicas: 1
+      endpoint_mode: dnsrr
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+          - node.labels.ip == 10.14.204.125
+        preferences:
+          - spread: node.labels.ip
+      resources:
+        limits:
+          memory: 1G

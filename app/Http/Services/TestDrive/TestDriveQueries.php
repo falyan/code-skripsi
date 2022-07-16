@@ -24,10 +24,37 @@ class TestDriveQueries extends Service
             ->when(!empty($merchant_id), function ($query) use ($merchant_id) {
                 $query->where('merchant_id', $merchant_id);
             })->select(['id', 'merchant_id', 'title', 'area_name', 'address', 'city_id', 'latitude', 'longitude', 'map_link', 'start_date', 'end_date', 'start_time', 'end_time', 'status']);
-
+            
         $filtered_data = $this->filter($raw_data, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
-        $data = static::paginate(($sorted_data->get())->toArray(), 10, $current_page);
+        
+        $sorted_data = collect($sorted_data->get());
+        if (!empty($filter['start_date']) && !empty($filter['end_date'])) {
+            $start_date = $filter['start_date'];
+            $end_date = $filter['end_date'];
+
+            $data_sort = [];
+            foreach ($sorted_data as $item) {
+                $start = $item->start_date;
+                $end = $item->end_date;
+
+                $count_date = Carbon::parse($start)->diffInDays($end);
+                $list_date = [];
+                for ($i = 0; $i <= $count_date; $i++) {
+                    $list_date[] = Carbon::parse($start)->addDays($i)->format('Y-m-d');
+                }
+
+                foreach ($list_date as $date) {
+                    if ($date >= $start_date && $date <= $end_date) {
+                        $data_sort[] = $item;
+                        break;
+                    }
+                }
+            }
+            $sorted_data = collect($data_sort);
+        }
+
+        $data = static::paginate(($sorted_data)->toArray(), 10, $current_page);
 
         return $data;
     }
@@ -105,7 +132,7 @@ class TestDriveQueries extends Service
     public function getBookingList($test_drive_id, $status = null)
     {
         $data = TestDrive::with(['visitor_booking' => function ($booking) use ($status) {
-            $booking->where('status', $status)->select(['id', 'test_drive_id', 'pic_name', 'pic_phone', 'pic_email', 'visit_date', 'total_passanger', 'status']);
+            $booking->where('status', $status)->orderBy('created_at', 'ASC');
         }])->find($test_drive_id, ['id', 'merchant_id', 'title', 'start_date', 'end_date', 'start_time', 'end_time']);
 
         return $data;
