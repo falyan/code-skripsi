@@ -175,12 +175,6 @@ class MerchantQueries extends Service
         ]);
         try {
             $merchant = Merchant::with(['city'])->find($merchant_id);
-            Log::info("T00001", [
-                'path_url' => "select.merchant",
-                'query' => [],
-                'body' => Carbon::now('Asia/Jakarta'),
-                'response' => $merchant
-            ]);
             $reviewQueries = new ReviewQueries();
             $discussionQueries = new DiscussionQueries();
             $data = [];
