@@ -62,7 +62,7 @@ class DiscussionQueries
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
                     $response->with(['customer', 'merchant']);
-                }])->where('merchant_id', $merchant_id)->orderBy('updated_at', 'desc')->get();
+                }])->where('merchant_id', $merchant_id)->orderBy('updated_at', 'desc')->paginate($limit);
             }
 
             if ($status == 'unread') {
@@ -71,10 +71,9 @@ class DiscussionQueries
                 }, 'discussion_response' => function ($response) {
                     $response->with(['customer', 'merchant']);
                 }])->where([['merchant_id', $merchant_id], ['is_read_merchant', false]])
-                    ->orWhere('merchant_id', $merchant_id)
-                    ->whereHas('discussion_response', function ($response) {
+                    ->orWhereHas('discussion_response', function ($response) {
                         $response->where('is_read_merchant', false);
-                    })->orderBy('updated_at', 'desc')->get();
+                    })->where('merchant_id', $merchant_id)->orderBy('updated_at', 'desc')->paginate($limit);
 
 //                if (empty($discussion_list)){
 //                    $discussion_list = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
@@ -94,14 +93,14 @@ class DiscussionQueries
                 }, 'discussion_response' => function ($response) {
                     $response->with(['customer', 'merchant']);
                 }])->where([['merchant_id', $merchant_id], ['is_read_merchant', true]])
-                    ->orWhere('merchant_id', $merchant_id)
                     ->whereDoesntHave('discussion_response', function ($response) {
                         $response->where('is_read_merchant', false);
-                    })->orderBy('updated_at', 'desc')->get();
+                    })->where('merchant_id', $merchant_id)->orderBy('updated_at', 'desc')->paginate($limit);
             }
         }
 
-        $data = static::paginate($discussion_list->toArray(), $limit, $page);
+//        $data = static::paginate($discussion_list->toArray(), $limit, $page);
+        $data = $discussion_list;
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data diskusi';
         $response['data'] = $data;
