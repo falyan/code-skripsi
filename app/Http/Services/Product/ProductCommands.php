@@ -465,4 +465,38 @@ class ProductCommands extends Service
             throw new Exception($e->getMessage(), $e->getCode());
         }
     }
+
+    public function updatePriceProduct($product_id, $data)
+    {
+        try {
+            DB::beginTransaction();
+
+            $price_old = Product::find($product_id);
+
+            $price_old->update([
+                'price' => $data['price'],
+                'strike_price' => ($data['strike_price'] == null || $data['strike_price'] == 0) ? null : $data['strike_price'],
+            ]);
+
+            if (!$price_old) {
+                DB::rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'Gagal mengubah harga produk!',
+                ];
+            }
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => 'Berhasil update price produk!',
+                'data' => $price_old,
+            ];
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage(), $e->getCode());
+        }
+    }
+
 }

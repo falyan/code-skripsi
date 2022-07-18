@@ -3,7 +3,7 @@
 namespace App\Http\Services\Variant;
 
 use App\Http\Services\Product\ProductCommands;
-use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\Variant;
 use App\Models\VariantStock;
 use App\Models\VariantValue;
@@ -93,7 +93,7 @@ class VariantCommands
             return [
                 'success' => true,
                 'message' => 'Berhasil membuat varian produk!',
-                'data' => $variant_data
+                'data' => $variant_data,
             ];
         } catch (Exception $e) {
             DB::rollBack();
@@ -142,7 +142,7 @@ class VariantCommands
                             'updated_by' => $data['full_name'],
                         ]);
                     } else {
-                        foreach ($vv_olds as $vv_old){
+                        foreach ($vv_olds as $vv_old) {
                             VariantValue::destroy($vv_old['id']);
                         }
 
@@ -170,7 +170,7 @@ class VariantCommands
                         $product_comamnd = new ProductCommands();
                         $product_comamnd->updateStockVariantProduct($variant_value_product->id, [
                             'amount' => $vvp['amount'],
-                            'full_name' => $data['full_name']
+                            'full_name' => $data['full_name'],
                         ]);
                     }
                 } else {
@@ -189,7 +189,7 @@ class VariantCommands
                     }
                     $value_id = trim(implode(',', $value_id));
 
-                    foreach ($vvp_olds as $vvp_old){
+                    foreach ($vvp_olds as $vvp_old) {
                         VariantValueProduct::destroy($vvp_old['id']);
                     }
 
@@ -225,4 +225,144 @@ class VariantCommands
             throw new Exception($e->getMessage(), $e->getCode());
         }
     }
+
+    public function updateVariantPrice($product_id, $data)
+    {
+        try {
+            DB::beginTransaction();
+
+            foreach ($data as $value) {
+                $vvp_old = VariantValueProduct::where(['product_id' => $product_id, 'id' => $value['id']])->first();
+
+                if (!$vvp_old) {
+                    DB::rollBack();
+                    return [
+                        'success' => false,
+                        'message' => 'Varian Produk tidak ditemukan!',
+                    ];
+                }
+
+                $vvp_old->update([
+                    'price' => $value['price'],
+                    'strike_price' => empty($value['strike_price']) || ($value['strike_price'] == null || $value['strike_price'] == 0) ? null : $value['strike_price'],
+                ]);
+            }
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => 'Berhasil update price varian!',
+            ];
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage(), $e->getCode());
+        }
+    }
+
+    public function updateVariantStock($product_id, $data)
+    {
+        try {
+            DB::beginTransaction();
+
+            $vvp_status = $this->updateVariantStatusCode($product_id, $data);
+            $this->updateVariantStockCode($product_id, $data);
+
+            DB::commit();
+
+            if ($vvp_status != null) {
+                return [
+                    'success' => true,
+                    'message' => 'Berhasil update stock dan status varian berhasil!',
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Berhasil update stock varian berhasil!',
+                ];
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage(), $e->getCode());
+        }
+    }
+
+    public function listVarianStock($product_id)
+    {
+        $vvp = VariantStock::with('variant_value_product')
+            ->whereHas('variant_value_product', function ($q) use ($product_id) {
+                $q->where('product_id', $product_id);
+            })->get();
+
+        $data = [];
+        foreach ($vvp as $variant_stock) {
+            $data[] = [
+                'id' => $variant_stock->id,
+                'amount' => 0,
+            ];
+        }
+
+        return $data;
+    }
+
+    public function updateVariantStockCode($product_id, $data)
+    {
+        foreach ($data as $value) {
+            $vvp_old = VariantStock::with('variant_value_product')
+                ->whereHas('variant_value_product', function ($q) use ($product_id) {
+                    $q->where('product_id', $product_id);
+                })
+                ->where('id', $value['id'])
+                ->first();
+
+            if (!$vvp_old) {
+                DB::rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'Varian Produk tidak ditemukan!',
+                ];
+            }
+
+            $vvp_old->update(['amount' => $value['amount']]);
+        }
+
+        $vvp_amount = VariantValueProduct::with('variant_stock')
+            ->where(['product_id' => $product_id, 'status' => 1])
+            ->withSum('variant_stock', 'amount')
+            ->get()
+            ->sum('variant_stock_sum_amount');
+
+        return ProductStock::where('product_id', $product_id)->first()
+            ->update(['amount' => $vvp_amount]);
+    }
+
+    public function updateVariantStatusCode($product_id, $data)
+    {
+        $vvp = [];
+        foreach ($data as $value) {
+            $vvp_old = VariantStock::with('variant_value_product')
+                ->whereHas('variant_value_product', function ($q) use ($product_id) {
+                    $q->where('product_id', $product_id);
+                })
+                ->where('id', $value['id'])
+                ->first();
+
+            if (isset($value['status'])) {
+                $vvp_status = VariantValueProduct::where('id', $vvp_old->variant_value_product_id)->first();
+                $vvp_status->update(['status' => $value['status']]);
+
+                $vvp[] = $vvp_status;
+            }
+
+            if (!$vvp_old) {
+                DB::rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'Varian Produk tidak ditemukan!',
+                ];
+            }
+        }
+        return $vvp;
+    }
+
 }
