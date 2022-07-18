@@ -133,12 +133,14 @@ class TestDriveQueries extends Service
     public function validateBooking($test_drive_id, $param_date, $customer_id = null)
     {
         $event = TestDrive::find($test_drive_id);
-        $booked_date = TestDriveBooking::where('test_drive_id', $test_drive_id)->where('visit_date', $param_date)->where('customer_id', $customer_id)->count();
-        if ($booked_date > 0) {
-            $data['status'] = false;
-            $data['message'] = "Anda telah memiliki jadwal kunjungan pada tanggal {$param_date}";
-
-            return $data;
+        if($customer_id) {
+            $booked_date = TestDriveBooking::where('test_drive_id', $test_drive_id)->where('visit_date', $param_date)->where('customer_id', $customer_id)->count();
+            if ($booked_date > 0) {
+                $data['status'] = false;
+                $data['message'] = "Anda telah memiliki jadwal kunjungan pada tanggal {$param_date}";
+                
+                return $data;
+            }
         }
 
         if ($event->start_date > $param_date || $event->end_date < $param_date || in_array($event->status, [2, 9])) {

@@ -405,19 +405,14 @@ class TestDriveController extends Controller
                 return $this->respondValidationError($errors, 'Validation Error!');
             }
 
-            $validate_user = $this->testDriveQueries->validateUser($request->pic_email, $request->pic_phone);
-            if (!$validate_user) {
-                return $this->respondWithResult(false, 'User tidak ditemukan', 400);
-            }
-
             // validate booking
-            $validate_booking = $this->testDriveQueries->validateBooking($event_id, $request->visit_date, $validate_user->id);
+            $validate_booking = $this->testDriveQueries->validateBooking($event_id, $request->visit_date);
             if ($validate_booking['status'] == false) {
                 return $this->respondWithResult(false, $validate_booking['message'], 400);
             }
 
             DB::beginTransaction();
-            $data = $this->testDriveCommands->booking($event_id, $request, $validate_user->id);
+            $data = $this->testDriveCommands->booking($event_id, $request, Auth::user()->id);
 
             if (!$data) {
                 DB::rollBack();
