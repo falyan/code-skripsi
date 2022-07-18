@@ -6,6 +6,7 @@ use App\Http\Services\Service;
 use App\Models\Product;
 use App\Models\TestDrive;
 use App\Models\TestDriveBooking;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -63,6 +64,20 @@ class TestDriveQueries extends Service
     {
         $now = Carbon::now()->timezone('Asia/Jakarta')->format('Y-m-d');
         $data = TestDrive::where('end_date', '>=', $now)->where('status', 1)->where('merchant_id', $merchant_id)->select(['id', 'title'])->get();
+
+        return $data;
+    }
+
+    public function getListActiveEvent($filter, $sortby, $page)
+    {
+        $now = Carbon::now()->timezone('Asia/Jakarta')->format('Y-m-d');
+        $data = TestDrive::where('end_date', '>=', $now)
+                ->where('status', 1)
+                ->when(!empty($filter['date']), function ($query) use ($filter) {
+                    $date = $filter['date'];
+                    $query->where('start_date', '<=', $date)->where('end_date', '>=', $date);
+                })
+                ->get();
 
         return $data;
     }
@@ -127,6 +142,35 @@ class TestDriveQueries extends Service
         }
 
         return $data = ['status' => true];
+    }
+
+    public function validateUser($email, $phone)
+    {
+        $user = User::where('email', $email)->first();
+
+        if (empty($user)) {
+            $user = User::where('phone', static::generatePhone($phone))->first();
+        }
+
+        return $user;
+    }
+
+    private function generatePhone($param_phone)
+    {
+        $result = $param_phone;
+        if (substr($result, 0, 3) == '+62') {
+            $result = str_replace('+62', '62', $result);
+        }
+
+        if ($result[0] == '0') {
+            $result = str_replace($result[0], '62', $result);
+        }
+
+        if (substr($result, 0, 2) != '62') {
+            $result = '62' . $result;
+        }
+
+        return $result;
     }
 
     public function getBookingList($test_drive_id, $status = null)
