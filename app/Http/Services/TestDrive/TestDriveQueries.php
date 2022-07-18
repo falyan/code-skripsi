@@ -72,12 +72,21 @@ class TestDriveQueries extends Service
     {
         $now = Carbon::now()->timezone('Asia/Jakarta')->format('Y-m-d');
         $data = TestDrive::where('end_date', '>=', $now)
-                ->where('status', 1)
-                ->when(!empty($filter['date']), function ($query) use ($filter) {
-                    $date = $filter['date'];
-                    $query->where('start_date', '<=', $date)->where('end_date', '>=', $date);
-                })
-                ->get();
+            ->where('status', 1)
+            ->when(!empty($filter['date']), function ($query) use ($filter) {
+                $date = $filter['date'];
+                $query->where('start_date', '<=', $date)->where('end_date', '>=', $date);
+            })
+            ->when(!empty($filter['keyword']), function ($query) use ($filter) {
+                $keyword = $filter['keyword'];
+
+                $query->where(function ($where) use ($keyword) {
+                    $where->where('title', 'ilike', "%{$keyword}%")
+                        ->orWhere('area_name', 'ilike', "%{$keyword}%")
+                        ->orWhere('address', 'ilike', "%{$keyword}%");
+                });
+            })
+            ->get();
 
         return $data;
     }
