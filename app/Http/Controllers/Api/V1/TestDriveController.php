@@ -130,6 +130,10 @@ class TestDriveController extends Controller
             $sortby = $request->sortby ?? null;
             $page = $request->page ?? 1;
 
+            if (!empty($filter['keyword']) && strlen($filter['keyword']) < 3) {
+                return $this->respondWithResult(false, 'Panjang kata kunci minimal 3 karakter.', 400);
+            }
+
             $data = $this->testDriveQueries->getAllEvent(Auth::user()->merchant_id, $filter, $sortby, $page);
             if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'Berhasil mendapatkan data Event Test Drive');
@@ -347,6 +351,25 @@ class TestDriveController extends Controller
     #end region seller acti0n
 
     #region Buyer action
+    public function getListPeserta(Request $request)
+    {
+        try {
+            $filter = $request->filter ?? [];
+            $sortby = $request->sortby ?? null;
+            $page = $request->page ?? 1;
+
+            $data = $this->testDriveQueries->getPeserta($filter, $sortby, $page);
+
+            if ($data['total'] > 0) {
+                return $this->respondWithData($data, 'Berhasil mendapatkan data Event Test Drive');
+            } else {
+                return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function getAllActiveEvent(Request $request)
     {
         try {

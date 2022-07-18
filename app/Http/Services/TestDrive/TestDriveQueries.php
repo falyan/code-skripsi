@@ -215,6 +215,19 @@ class TestDriveQueries extends Service
         return $data;
     }
 
+    public function getPeserta($filter = [], $sortby = null, $current_page = 1)
+    {
+        $booking = TestDriveBooking::with('test_drive')
+            ->whereHas('test_drive', function ($query) {
+                $query->where('status', 1);
+            });
+        $data = $booking->get();
+
+        $data = static::paginate(($data)->toArray(), 10, $current_page);
+
+        return $data;
+    }
+
     public function validateAttendance($event_id, $booking_code)
     {
         $now = Carbon::now()->timezone('Asia/Jakarta')->format('Y-m-d');
