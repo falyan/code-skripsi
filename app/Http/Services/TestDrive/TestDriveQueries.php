@@ -117,7 +117,7 @@ class TestDriveQueries extends Service
             return $data;
         }
 
-        if ($event->start_date >= $param_date || $event->end_date <= $param_date || in_array($event->status, [2, 9])) {
+        if ($event->start_date > $param_date || $event->end_date < $param_date || in_array($event->status, [2, 9])) {
             return $data = ['status' => false, 'message' => 'Tanggal yang dipilih tidak sesuai.'];
         }
 
