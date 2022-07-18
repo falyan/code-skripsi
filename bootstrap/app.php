@@ -106,9 +106,9 @@ $app->configure('swagger-lume');
 $app->middleware([
     // App\Http\Middleware\ExampleMiddleware::class,
     App\Http\Middleware\LogMiddleware::class,
-    //    RecordForegroundTransaction::class,
-//    \Anik\ElasticApm\Middleware\RecordForegroundTransaction::class,
-//    App\Http\Middleware\CorsMiddleware::class,
+    // RecordForegroundTransaction::class,
+    // \Anik\ElasticApm\Middleware\RecordForegroundTransaction::class,
+    App\Http\Middleware\CorsMiddleware::class,
 ]);
 
 $app->routeMiddleware([
