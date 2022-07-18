@@ -6,6 +6,7 @@ use App\Http\Services\Service;
 use App\Models\Product;
 use App\Models\TestDrive;
 use App\Models\TestDriveBooking;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -67,6 +68,29 @@ class TestDriveQueries extends Service
         return $data;
     }
 
+    public function getListActiveEvent($filter, $sortby, $page)
+    {
+        $now = Carbon::now()->timezone('Asia/Jakarta')->format('Y-m-d');
+        $data = TestDrive::where('end_date', '>=', $now)
+            ->where('status', 1)
+            ->when(!empty($filter['date']), function ($query) use ($filter) {
+                $date = $filter['date'];
+                $query->where('start_date', '<=', $date)->where('end_date', '>=', $date);
+            })
+            ->when(!empty($filter['keyword']), function ($query) use ($filter) {
+                $keyword = $filter['keyword'];
+
+                $query->where(function ($where) use ($keyword) {
+                    $where->where('title', 'ilike', "%{$keyword}%")
+                        ->orWhere('area_name', 'ilike', "%{$keyword}%")
+                        ->orWhere('address', 'ilike', "%{$keyword}%");
+                });
+            })
+            ->get();
+
+        return $data;
+    }
+
     public function getEVProducts($current_page = 1)
     {
         $data = Product::with(['product_photo'])->whereHas('category', function ($category) {
@@ -109,12 +133,14 @@ class TestDriveQueries extends Service
     public function validateBooking($test_drive_id, $param_date, $customer_id = null)
     {
         $event = TestDrive::find($test_drive_id);
-        $booked_date = TestDriveBooking::where('test_drive_id', $test_drive_id)->where('visit_date', $param_date)->where('customer_id', $customer_id)->count();
-        if ($booked_date > 0) {
-            $data['status'] = false;
-            $data['message'] = "Anda telah memiliki jadwal kunjungan pada tanggal {$param_date}";
-
-            return $data;
+        if($customer_id) {
+            $booked_date = TestDriveBooking::where('test_drive_id', $test_drive_id)->where('visit_date', $param_date)->where('customer_id', $customer_id)->count();
+            if ($booked_date > 0) {
+                $data['status'] = false;
+                $data['message'] = "Anda telah memiliki jadwal kunjungan pada tanggal {$param_date}";
+                
+                return $data;
+            }
         }
 
         if ($event->start_date > $param_date || $event->end_date < $param_date || in_array($event->status, [2, 9])) {
@@ -127,6 +153,35 @@ class TestDriveQueries extends Service
         }
 
         return $data = ['status' => true];
+    }
+
+    public function validateUser($email, $phone)
+    {
+        $user = User::where('email', $email)->first();
+
+        if (empty($user)) {
+            $user = User::where('phone', static::generatePhone($phone))->first();
+        }
+
+        return $user;
+    }
+
+    private function generatePhone($param_phone)
+    {
+        $result = $param_phone;
+        if (substr($result, 0, 3) == '+62') {
+            $result = str_replace('+62', '62', $result);
+        }
+
+        if ($result[0] == '0') {
+            $result = str_replace($result[0], '62', $result);
+        }
+
+        if (substr($result, 0, 2) != '62') {
+            $result = '62' . $result;
+        }
+
+        return $result;
     }
 
     public function getBookingList($test_drive_id, $status = null)
@@ -156,6 +211,43 @@ class TestDriveQueries extends Service
         $data = TestDriveBooking::with(['test_drive' => function ($test_drive) {
             $test_drive->with(['merchant:id,name,photo_url', 'city:id,name'])->select(['id', 'merchant_id', 'title', 'area_name', 'address', 'latitude', 'longitude', 'map_link', 'city_id', 'start_date', 'end_date', 'start_time', 'end_time']);
         }])->find($booking_id);
+
+        return $data;
+    }
+
+    public function getPeserta($filter = [], $sortby = null, $current_page = 1)
+    {
+        $booking = TestDriveBooking::with('test_drive')
+            ->whereHas('test_drive', function ($query) {
+                $query->where('status', 1);
+            })
+            ->when(!empty($filter['start_date']) && !empty($filter['end_date']), function ($query) use ($filter) {
+                $query->whereBetween('visit_date', [$filter['start_date'], $filter['end_date']]);
+            })
+            ->when(!empty($filter['keyword']), function ($query) use ($filter) {
+                $query->where('pic_name', 'ilike', '%' . $filter['keyword'] . '%')
+                    ->orWhere('pic_phone', 'ilike', '%' . $filter['keyword'] . '%')
+                    ->orWhere('pic_email', 'ilike', '%' . $filter['keyword'] . '%')
+                    ->orWhereHas('test_drive', function ($query) use ($filter) {
+                        $query->where('title', 'ilike', '%' . $filter['keyword'] . '%')
+                        ->orWhere('area_name', 'ilike', '%' . $filter['keyword'] . '%')
+                        ->orWhere('address', 'ilike', '%' . $filter['keyword'] . '%');
+                    });
+            })
+            ->orderBy('created_at', 'DESC');
+        
+        $data = $booking->get();
+
+        return $data;
+    }
+
+    public function getPesertaById($peserta_id)
+    {
+        $booking = TestDriveBooking::with('test_drive')
+            ->whereHas('test_drive', function ($query) {
+                $query->where('status', 1);
+            });
+        $data = $booking->where('id', $peserta_id)->first();
 
         return $data;
     }

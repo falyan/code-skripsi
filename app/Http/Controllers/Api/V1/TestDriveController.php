@@ -130,6 +130,10 @@ class TestDriveController extends Controller
             $sortby = $request->sortby ?? null;
             $page = $request->page ?? 1;
 
+            if (!empty($filter['keyword']) && strlen($filter['keyword']) < 3) {
+                return $this->respondWithResult(false, 'Panjang kata kunci minimal 3 karakter.', 400);
+            }
+
             $data = $this->testDriveQueries->getAllEvent(Auth::user()->merchant_id, $filter, $sortby, $page);
             if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'Berhasil mendapatkan data Event Test Drive');
@@ -145,6 +149,24 @@ class TestDriveController extends Controller
     {
         try {
             $data = $this->testDriveQueries->getListActiveEventSeller(Auth::user()->merchant_id);
+            if ($data) {
+                return $this->respondWithData($data, 'Berhasil mendapatkan data Event Test Drive');
+            } else {
+                return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getListActiveEvent(Request $request)
+    {
+        try {
+            $filter = $request->filter ?? [];
+            $sortby = $request->sortby ?? null;
+            $page = $request->page ?? 1;
+
+            $data = $this->testDriveQueries->getListActiveEvent($filter, $sortby, $page);
             if ($data) {
                 return $this->respondWithData($data, 'Berhasil mendapatkan data Event Test Drive');
             } else {
@@ -329,6 +351,40 @@ class TestDriveController extends Controller
     #end region seller acti0n
 
     #region Buyer action
+    public function getListPeserta(Request $request)
+    {
+        try {
+            $filter = $request->filter ?? [];
+            $sortby = $request->sortby ?? null;
+            $page = $request->page ?? 1;
+
+            $data = $this->testDriveQueries->getPeserta($filter, $sortby, $page);
+
+            if ($data) {
+                return $this->respondWithData($data, 'Berhasil mendapatkan data peserta Test Drive');
+            } else {
+                return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+    
+    public function getListPesertaById($id)
+    {
+        try {
+            $data = $this->testDriveQueries->getPesertaById($id);
+
+            if ($data) {
+                return $this->respondWithData($data, 'Berhasil mendapatkan data peserta Test Drive');
+            } else {
+                return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function getAllActiveEvent(Request $request)
     {
         try {
@@ -351,6 +407,60 @@ class TestDriveController extends Controller
                 return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
             }
         } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function buyerBookingFromMerchant(Request $request, $event_id)
+    {
+        try {
+            $rules = [
+                'visit_date' => 'required',
+                'total_passanger' => 'integer|max:5|min:1',
+                'pic_name' => 'required',
+                'pic_phone' => 'required|digits_between:8,14',
+                'pic_email' => 'required|email',
+            ];
+
+            $validator = Validator::make($request->all(), $rules, [
+                'required' => ':attribute diperlukan.',
+                'digits_between' => 'panjang :attribute harus diantara :min dan :max karakter.',
+                'min' => 'panjang :attribute minimum :min karakter.',
+                'total_passanger.max' => ':attribute tidak boleh lebih besar dari :max.',
+                'total_passanger.min' => ':attribute tidak boleh lebih kecil dari :min.',
+                'integer' => ':attribute harus menggunakan angka.',
+                'email' => ':attribute harus menggunakan email valid.',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            // validate booking
+            $validate_booking = $this->testDriveQueries->validateBooking($event_id, $request->visit_date);
+            if ($validate_booking['status'] == false) {
+                return $this->respondWithResult(false, $validate_booking['message'], 400);
+            }
+
+            DB::beginTransaction();
+            $data = $this->testDriveCommands->booking($event_id, $request, Auth::user()->id);
+
+            if (!$data) {
+                DB::rollBack();
+                return $this->respondWithResult(false, 'Terjadi kesalahan! Silakan coba beberapa saat lagi.', 400);
+            }
+
+            DB::commit();
+            return $this->respondWithResult(true, "Berhasil booking event Test Drive");;
+        } catch (Exception $e) {
+            DB::rollBack();
             return $this->respondErrorException($e, request());
         }
     }

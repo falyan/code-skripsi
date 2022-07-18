@@ -93,11 +93,11 @@ class TestDriveCommands extends Service
         }
     }
 
-    public function booking($event_id, $data)
+    public function booking($event_id, $data, $user_id = null)
     {
         $new_booking = new TestDriveBooking();
         $new_booking->test_drive_id = $event_id;
-        $new_booking->customer_id = Auth::user()->id;
+        $new_booking->customer_id = $user_id ?? Auth::user()->id;
         $new_booking->visit_date = $data->visit_date;
         $new_booking->pic_name = $data->pic_name;
         $new_booking->pic_phone = $this->generatePhone($data->pic_phone);

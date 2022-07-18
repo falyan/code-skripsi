@@ -85,6 +85,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('cancel/{id}', 'TestDriveController@cancel');
                     $router->post('booking/approve', 'TestDriveController@approveBooking');
                     $router->post('booking/reject', 'TestDriveController@rejectBooking');
+                    $router->post('booking/buyer/{event_id}', 'TestDriveController@buyerBookingFromMerchant');
                 });
 
                 $router->group(['prefix' => 'discussion'], static function () use ($router) {
@@ -163,6 +164,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('list-booking/{id}', 'TestDriveController@getBookingList');
                     $router->get('history', 'TestDriveController@getHistoryBySeller');
                     $router->get('list-active', 'TestDriveController@getListActiveEventBySeller');
+                    $router->get('list-all', 'TestDriveController@getListActiveEvent');
+                    $router->get('list-peserta', 'TestDriveController@getListPeserta');
+                    $router->get('peserta/{id}', 'TestDriveController@getListPesertaById');
                 });
 
                 $router->group(['prefix' => 'mdr'], static function () use ($router) {
