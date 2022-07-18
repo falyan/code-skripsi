@@ -220,10 +220,33 @@ class TestDriveQueries extends Service
         $booking = TestDriveBooking::with('test_drive')
             ->whereHas('test_drive', function ($query) {
                 $query->where('status', 1);
+            })
+            ->when(!empty($filter['start_date']) && !empty($filter['end_date']), function ($query) use ($filter) {
+                $query->whereBetween('visit_date', [$filter['start_date'], $filter['end_date']]);
+            })
+            ->when(!empty($filter['keyword']), function ($query) use ($filter) {
+                $query->where('pic_name', 'ilike', '%' . $filter['keyword'] . '%')
+                    ->orWhere('pic_phone', 'ilike', '%' . $filter['keyword'] . '%')
+                    ->orWhere('pic_email', 'ilike', '%' . $filter['keyword'] . '%')
+                    ->orWhereHas('test_drive', function ($query) use ($filter) {
+                        $query->where('title', 'ilike', '%' . $filter['keyword'] . '%')
+                        ->orWhere('area_name', 'ilike', '%' . $filter['keyword'] . '%')
+                        ->orWhere('address', 'ilike', '%' . $filter['keyword'] . '%');
+                    });
             });
+        
         $data = $booking->get();
 
-        $data = static::paginate(($data)->toArray(), 10, $current_page);
+        return $data;
+    }
+
+    public function getPesertaById($peserta_id)
+    {
+        $booking = TestDriveBooking::with('test_drive')
+            ->whereHas('test_drive', function ($query) {
+                $query->where('status', 1);
+            });
+        $data = $booking->where('id', $peserta_id)->first();
 
         return $data;
     }

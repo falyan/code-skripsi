@@ -166,6 +166,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('list-active', 'TestDriveController@getListActiveEventBySeller');
                     $router->get('list-all', 'TestDriveController@getListActiveEvent');
                     $router->get('list-peserta', 'TestDriveController@getListPeserta');
+                    $router->get('peserta/{id}', 'TestDriveController@getListPesertaById');
                 });
 
                 $router->group(['prefix' => 'mdr'], static function () use ($router) {

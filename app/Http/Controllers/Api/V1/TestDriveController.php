@@ -360,8 +360,23 @@ class TestDriveController extends Controller
 
             $data = $this->testDriveQueries->getPeserta($filter, $sortby, $page);
 
-            if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'Berhasil mendapatkan data Event Test Drive');
+            if ($data) {
+                return $this->respondWithData($data, 'Berhasil mendapatkan data peserta Test Drive');
+            } else {
+                return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+    
+    public function getListPesertaById($id)
+    {
+        try {
+            $data = $this->testDriveQueries->getPesertaById($id);
+
+            if ($data) {
+                return $this->respondWithData($data, 'Berhasil mendapatkan data peserta Test Drive');
             } else {
                 return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
             }
