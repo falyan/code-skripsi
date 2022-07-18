@@ -233,7 +233,8 @@ class TestDriveQueries extends Service
                         ->orWhere('area_name', 'ilike', '%' . $filter['keyword'] . '%')
                         ->orWhere('address', 'ilike', '%' . $filter['keyword'] . '%');
                     });
-            });
+            })
+            ->orderBy('created_at', 'DESC');
         
         $data = $booking->get();
 
