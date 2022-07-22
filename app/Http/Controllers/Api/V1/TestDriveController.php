@@ -193,10 +193,7 @@ class TestDriveController extends Controller
             if ($data['total'] > 0) {
                 return $this->respondWithData($data, 'Berhasil mendapatkan data Event Test Drive');
             } else {
-                if (!empty($filter['keyword'])) {
-                    return $this->respondWithResult(false, "Event Test Drive dengan kata kunci {$filter['keyword']} Tidak ditemukan", 400);
-                }
-                return $this->respondWithResult(false, 'Data Event Test Drive belum tersedia', 400);
+                return $this->respondWithData($data, 'Data Event Test Drive belum tersedia');
             }
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
