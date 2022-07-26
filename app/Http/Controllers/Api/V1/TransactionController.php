@@ -1064,8 +1064,17 @@ class TransactionController extends Controller
     public function orderConfirmHasArrived($order_id)
     {
         try {
-            $order = $this->transactionQueries->getStatusOrder($order_id);
-            if (in_array($order->progress_active->status_code, ['03'])) {
+            $order = $this->transactionQueries->getStatusOrder($order_id, true);
+
+            $status_codes = [];
+            foreach ($order->progress as $item) {
+                if (in_array($item->status_code, ['01', '02', '03'])) {
+                    $status_codes[] = $item;
+                }
+            }
+
+            $status_code = collect($status_codes)->where('status_code', '03')->first();
+            if (count($status_codes) == 3 && $status_code['status'] == 1) {
                 return DB::transaction(function () use ($order) {
                     return $this->transactionCommand->orderConfirmHasArrived($order->trx_no);
                 });
