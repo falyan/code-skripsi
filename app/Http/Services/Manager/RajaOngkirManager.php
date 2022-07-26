@@ -12,6 +12,7 @@ use App\Models\OrderProgress;
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 
@@ -208,8 +209,20 @@ class RajaOngkirManager
             //Update status order
             $order = Order::where('trx_no', $trx_no)->first();
 
-            $order_progress = OrderProgress::where('order_id', $order['id'])->where('status', 1)->first();
-            if ($order_progress['status_code'] == '03') {
+            DB::beginTransaction();
+
+            $transactionQueries = new TransactionQueries();
+            $data = $transactionQueries->getStatusOrder($order['id'], true);
+
+            $status_codes = [];
+            foreach ($data->progress as $item) {
+                if (in_array($item->status_code, ['01', '02', '03'])) {
+                    $status_codes[] = $item;
+                }
+            }
+
+            $status_code = collect($status_codes)->where('status_code', '03')->first();
+            if (count($status_codes) == 3 && $status_code['status'] == 1) {
                 $trx_command = new TransactionCommands();
                 $trx_command->updateOrderStatus($order['id'], '08');
 
@@ -229,8 +242,12 @@ class RajaOngkirManager
                 $notif_command->create('merchant_id', $order['merchant_id'], '2', $title_seller, $message_seller, $url_path_seller);
                 $notif_command->sendPushNotification($seller['id'], $title_seller, $message_seller, 'active');
 
+                DB::commit();
+
                 $mailSender = new MailSenderManager();
                 $mailSender->mailOrderArrived($order['id'], Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s'));
+            } else {
+                DB::rollBack();
             }
         }
 
