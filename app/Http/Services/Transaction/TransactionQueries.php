@@ -213,9 +213,13 @@ class TransactionQueries extends Service
         return $data;
     }
 
-    public function getStatusOrder($id)
+    public function getStatusOrder($id, $allStatus = false)
     {
-        $data = Order::with(['progress_active'])->find($id);
+        $data = Order::when($allStatus == false, function($query) {
+            $query->with('progress_active');
+        })->when($allStatus == true, function($query) {
+            $query->with('progress');
+        })->find($id);
         return $data;
     }
 

@@ -685,7 +685,6 @@ class TransactionController extends Controller
     public function acceptOrder(Request $request)
     {
         try {
-            DB::beginTransaction();
             $rules = [
                 'id.*' => 'required',
             ];
@@ -701,20 +700,24 @@ class TransactionController extends Controller
                         $errors->push($error);
                     }
                 }
-
+                
                 return $this->respondValidationError($errors, 'Validation Error!');
             }
-
-            // if (count($request->id) > 1){
-            //     return [
-            //         'success' => false,
-            //         'message' => 'Mohon konfirmasi pesanan satu per satu. Terimakasih.'
-            //     ];
-            // }
-
+            
+            DB::beginTransaction();
             foreach ($request->id as $order_id) {
-                $data = $this->transactionQueries->getStatusOrder($order_id);
-                if (in_array($data->progress_active->status_code, ['01'])) {
+                $data = $this->transactionQueries->getStatusOrder($order_id, true);
+
+                $status_codes = [];
+                foreach ($data->progress as $item) {
+                    if (in_array($item->status_code, ['01'])) {
+                        $status_codes[] = $item;
+                    }
+                }
+
+                $status_code = collect($status_codes)->where('status_code', '01')->first();
+
+                if (count($status_codes) == 1 && $status_code['status'] == 1) {
                     $response = $this->transactionCommand->updateOrderStatus($order_id, '02');
                     if ($response['success'] == false) {
                         return $response;
@@ -728,7 +731,7 @@ class TransactionController extends Controller
                         $response['message'] = 'Gagal mendapatkan data pesanan';
                         return $response;
                     }
-                    //                $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+                    // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
                     $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
                     $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
@@ -746,6 +749,8 @@ class TransactionController extends Controller
                     DB::commit();
                     $mailSender = new MailSenderManager();
                     $mailSender->mailAcceptOrder($order_id);
+                } else {
+                    return $this->respondWithResult(false, 'Pesanan '. $order_id .' tidak dalam status menunggu konfirmasi!', 400);
                 }
             }
 
@@ -788,39 +793,61 @@ class TransactionController extends Controller
     public function addAwbNumberOrder($order_id, $awb)
     {
         try {
-            DB::beginTransaction();
-            $response = $this->transactionCommand->addAwbNumber($order_id, $awb);
-            if ($response['success'] == false) {
+            if (!is_numeric($order_id)) {
+                $response = [
+                    'success' => false,
+                    'message' => 'order id harus berupa angka',
+                ];
                 return $response;
             }
-            $status = $this->transactionCommand->updateOrderStatus($order_id, '03');
-            if ($status['success'] == false) {
-                return $status;
+
+            DB::beginTransaction();
+            $data = $this->transactionQueries->getStatusOrder($order_id, true);
+
+            $status_codes = [];
+            foreach ($data->progress as $item) {
+                if (in_array($item->status_code, ['01', '02'])) {
+                    $status_codes[] = $item;
+                }
             }
 
-            $title = 'Pesanan Dikirim';
-            $message = 'Pesanan anda sedang dalam pengiriman.';
-            $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-            //            $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
-            $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+            $status_code = collect($status_codes)->where('status_code', '02')->first();
+            if (count($status_codes) == 2 && $status_code['status'] == 1) {
+                $response = $this->transactionCommand->addAwbNumber($order_id, $awb);
+                if ($response['success'] == false) {
+                    return $response;
+                }
+                $status = $this->transactionCommand->updateOrderStatus($order_id, '03');
+                if ($status['success'] == false) {
+                    return $status;
+                }
 
-            //            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
-            //            $total_amount_trx = $total_delivery_fee_trx = 0;
-            //
-            //            foreach($orders as $o){
-            //                $total_amount_trx += $o->total_amount;
-            //                $total_delivery_fee_trx += $o->delivery->delivery_fee;
-            //            }
-            //
-            //            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
-            //                $this->voucherCommand->generateVoucher($order);
-            //            }
-            DB::commit();
+                $title = 'Pesanan Dikirim';
+                $message = 'Pesanan anda sedang dalam pengiriman.';
+                $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
+                // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+                $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
-            $mailSender = new MailSenderManager();
-            $mailSender->mailOrderOnDelivery($order_id);
+                // $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+                // $total_amount_trx = $total_delivery_fee_trx = 0;
 
-            return $response;
+                // foreach($orders as $o){
+                //     $total_amount_trx += $o->total_amount;
+                //     $total_delivery_fee_trx += $o->delivery->delivery_fee;
+                // }
+
+                // if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
+                //     $this->voucherCommand->generateVoucher($order);
+                // }
+                DB::commit();
+
+                $mailSender = new MailSenderManager();
+                $mailSender->mailOrderOnDelivery($order_id);
+
+                return $response;
+            } else {
+                return $this->respondWithResult(false, 'Pesanan ' . $order_id . ' tidak dalam status siap dikirim!', 400);
+            }
         } catch (Exception $e) {
             DB::rollBack();
             return $this->respondErrorException($e, request());
@@ -830,7 +857,6 @@ class TransactionController extends Controller
     public function addAwbNumberAutoOrder($order_id)
     {
         try {
-            DB::beginTransaction();
             if (!is_numeric($order_id)) {
                 $response = [
                     'success' => false,
@@ -838,40 +864,56 @@ class TransactionController extends Controller
                 ];
                 return $response;
             }
+            DB::beginTransaction();
 
-            $response = $this->transactionCommand->addAwbNumberAuto($order_id);
-            if ($response['success'] == false) {
+            $data = $this->transactionQueries->getStatusOrder($order_id, true);
+
+            $status_codes = [];
+            foreach ($data->progress as $item) {
+                if (in_array($item->status_code, ['01', '02'])) {
+                    $status_codes[] = $item;
+                }
+            }
+
+            $status_code = collect($status_codes)->where('status_code', '02')->first();
+            if (count($status_codes) == 2 && $status_code['status'] == 1) {
+                $response = $this->transactionCommand->addAwbNumberAuto($order_id);
+                if ($response['success'] == false) {
+                    return $response;
+                }
+
+                $status = $this->transactionCommand->updateOrderStatus($order_id, '03');
+                if ($status['success'] == false) {
+                    return $status;
+                }
+
+                $title = 'Pesanan Dikirim';
+                $message = 'Pesanan anda sedang dalam pengiriman.';
+                $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
+                // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+                $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+
+                // $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+                // $total_amount_trx = $total_delivery_fee_trx = 0;
+
+                // foreach($orders as $o){
+                //     $total_amount_trx += $o->total_amount;
+                //     $total_delivery_fee_trx += $o->delivery->delivery_fee;
+                // }
+
+                // if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
+                //     $this->voucherCommand->generateVoucher($order);
+                // }
+                DB::commit();
+
+                $mailSender = new MailSenderManager();
+                $mailSender->mailOrderOnDelivery($order_id);
+
                 return $response;
+            } else {
+                return $this->respondWithResult(false, 'Pesanan ' . $order_id . ' tidak dalam status siap dikirim!', 400);
             }
 
-            $status = $this->transactionCommand->updateOrderStatus($order_id, '03');
-            if ($status['success'] == false) {
-                return $status;
-            }
-
-            $title = 'Pesanan Dikirim';
-            $message = 'Pesanan anda sedang dalam pengiriman.';
-            $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-            //            $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
-            $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
-
-            //            $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
-            //            $total_amount_trx = $total_delivery_fee_trx = 0;
-            //
-            //            foreach($orders as $o){
-            //                $total_amount_trx += $o->total_amount;
-            //                $total_delivery_fee_trx += $o->delivery->delivery_fee;
-            //            }
-            //
-            //            if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
-            //                $this->voucherCommand->generateVoucher($order);
-            //            }
-            DB::commit();
-
-            $mailSender = new MailSenderManager();
-            $mailSender->mailOrderOnDelivery($order_id);
-
-            return $response;
         } catch (Exception $e) {
             DB::rollBack();
             return $this->respondErrorException($e, request());
@@ -1022,8 +1064,17 @@ class TransactionController extends Controller
     public function orderConfirmHasArrived($order_id)
     {
         try {
-            $order = $this->transactionQueries->getStatusOrder($order_id);
-            if (in_array($order->progress_active->status_code, ['03'])) {
+            $order = $this->transactionQueries->getStatusOrder($order_id, true);
+
+            $status_codes = [];
+            foreach ($order->progress as $item) {
+                if (in_array($item->status_code, ['01', '02', '03'])) {
+                    $status_codes[] = $item;
+                }
+            }
+
+            $status_code = collect($status_codes)->where('status_code', '03')->first();
+            if (count($status_codes) == 3 && $status_code['status'] == 1) {
                 return DB::transaction(function () use ($order) {
                     return $this->transactionCommand->orderConfirmHasArrived($order->trx_no);
                 });
