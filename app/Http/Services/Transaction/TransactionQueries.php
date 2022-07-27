@@ -8,6 +8,7 @@ use App\Models\DeliveryDiscount;
 use App\Models\MasterData;
 use App\Models\Merchant;
 use App\Models\Order;
+use App\Models\OrderDelivery;
 use App\Models\Product;
 use App\Models\VariantValueProduct;
 use Carbon\Carbon;
@@ -220,6 +221,12 @@ class TransactionQueries extends Service
         })->when($allStatus == true, function($query) {
             $query->with('progress');
         })->find($id);
+        return $data;
+    }
+    
+    public function checkAwb($awb)
+    {
+        $data = OrderDelivery::where('awb_number', $awb)->first();
         return $data;
     }
 

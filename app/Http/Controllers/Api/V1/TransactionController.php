@@ -800,6 +800,15 @@ class TransactionController extends Controller
                 ];
                 return $response;
             }
+            $awb = $this->transactionQueries->checkAwb($awb);
+
+            if (!empty($awb)) {
+                $response = [
+                    'success' => false,
+                    'message' => 'awb sudah terdaftar',
+                ];
+                return $response;
+            }
 
             DB::beginTransaction();
             $data = $this->transactionQueries->getStatusOrder($order_id, true);
