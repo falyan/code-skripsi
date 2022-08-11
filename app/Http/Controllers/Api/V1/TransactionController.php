@@ -700,10 +700,10 @@ class TransactionController extends Controller
                         $errors->push($error);
                     }
                 }
-                
+
                 return $this->respondValidationError($errors, 'Validation Error!');
             }
-            
+
             DB::beginTransaction();
             foreach ($request->id as $order_id) {
                 $data = $this->transactionQueries->getStatusOrder($order_id, true);
@@ -793,6 +793,7 @@ class TransactionController extends Controller
     public function addAwbNumberOrder($order_id, $awb)
     {
         try {
+
             if (!is_numeric($order_id)) {
                 $response = [
                     'success' => false,
@@ -800,9 +801,11 @@ class TransactionController extends Controller
                 ];
                 return $response;
             }
-            $awb = $this->transactionQueries->checkAwb($awb);
 
-            if (!empty($awb)) {
+            // $awb_number = $request->input('awb_number');
+            $check_awb = $this->transactionQueries->checkAwb($awb);
+
+            if (!empty($check_awb)) {
                 $response = [
                     'success' => false,
                     'message' => 'awb sudah terdaftar',
