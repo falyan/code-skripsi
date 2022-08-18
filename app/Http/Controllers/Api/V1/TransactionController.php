@@ -99,7 +99,7 @@ class TransactionController extends Controller
                     if (!$product = Product::find(data_get($item, 'product_id'))) {
                         throw new Exception('Produk dengan id ' . data_get($item, 'product_id') . ' tidak ditemukan', 404);
                     }
-                    if ($product->product_stock->pluck('amount')->first() < data_get($item, 'quantity')) {
+                    if ($product->stock_active->amount < data_get($item, 'quantity')) {
                         throw new Exception('Stok produk dengan id ' . $product->id . ' tidak mencukupi', 400);
                     }
                     if (data_get($item, 'quantity') < $product->minimum_purchase) {
