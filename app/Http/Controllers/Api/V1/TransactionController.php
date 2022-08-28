@@ -1342,6 +1342,82 @@ class TransactionController extends Controller
         }
     }
 
+    public function updatePaymentStatusForBOT()
+    {
+        $validator = Validator::make(request()->all(), [
+            'no_reference' => 'required'
+        ], [
+            'required' => ':attribute diperlukan.',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            $no_reference = request()->no_reference;
+
+            $customer = null;
+            $orders = Order::where('no_reference', $no_reference)->with(['progress_active'])->get();
+            foreach ($orders as $order) {
+                if (in_array($order->progress_active->status_code, ['00'])) {
+                    $response = $this->transactionCommand->updateOrderStatus($order->id, '01');
+                    if ($response['success'] == false) {
+                        return $response;
+                    }
+
+                    $column_name = 'customer_id';
+                    $column_value = $order->buyer_id;
+                    $type = 2;
+                    $title = 'Pembayaran transaksi berhasil';
+                    $message = 'Pembayaran berhasil, menunggu konfirmasi pesananmu dari penjual';
+                    $url_path = 'v1/buyer/query/transaction/' . $order->buyer_id . '/detail/' . $order->id;
+
+                    $notificationCommand = new NotificationCommands();
+                    $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
+
+                    $column_name_merchant = 'merchant_id';
+                    $column_value_merchant = $order->merchant_id;
+                    $title_merchant = 'Pesanan masuk';
+                    $message_merchant = 'Ada pesanan masuk, silakan konfirmasi pesanan.';
+                    $url_path_merchant = 'v1/seller/query/transaction/detail/' . $order->id;
+
+                    $notificationCommand = new NotificationCommands();
+                    $notificationCommand->create($column_name_merchant, $column_value_merchant, $type, $title_merchant, $message_merchant, $url_path_merchant);
+
+                    $notificationCommand = new NotificationCommands();
+                    $customer = Customer::where('merchant_id', $order->merchant_id)->first();
+                    $notificationCommand->sendPushNotification($customer->id, $title_merchant, $message_merchant, 'active');
+
+                    $customer = Customer::find($order->buyer_id);
+                    $this->mailSenderManager->mailNewOrder($order->id);
+                } else {
+                    $response['response_code'] = '00';
+                    $response['response_message'] = 'Sukses.';
+                    $response['data'] = null;
+                    return $response;
+                }
+            }
+
+            $this->mailSenderManager->mailPaymentSuccess($order->id);
+
+            //Request custom response BA ICP
+            $response_ba['response_code'] = '00';
+            $response_ba['response_message'] = 'Sukses.';
+            $response_ba['data'] = null;
+            return $response_ba;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function getDeliveryDiscount()
     {
         try {
