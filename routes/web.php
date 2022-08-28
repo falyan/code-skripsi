@@ -29,6 +29,7 @@ $router->get('/', function () use ($router) {
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
     $router->post('biller/payment/notification', 'TransactionController@updatePaymentStatus');
+    $router->post('biller/payment/notification-bot', 'TransactionController@updatePaymentStatusForBOT');
     $router->post('trigger/all', 'TransactionController@triggerRatingProductSold');
 
     $router->group(['prefix' => 'seller'], static function () use ($router) {
