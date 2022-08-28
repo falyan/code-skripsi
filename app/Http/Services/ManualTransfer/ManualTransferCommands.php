@@ -68,11 +68,11 @@ class ManualTransferCommands extends Service
                 'kode' => '00',
                 'pesan' => 'SUKSES',
                 'data' => [
-                    "idtrx" => date('YmdHis') . $random_num,
+                    "idtrx" => $payment->no_reference,
                     "kodebank" => $payment->payment_method,
                     "idpel" => $payment->no_reference,
                     "produk" => $payment->produk,
-                    "refnum" => $payment->no_reference,
+                    "refnum" => date('YmdHis') . $random_num,
                     "caref" => $payment->order->trx_no,
                     "nama" => $payment->customer->full_name,
                     "rpadminBank" => 0,
