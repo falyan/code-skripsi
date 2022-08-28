@@ -43,7 +43,7 @@ class ManualTransferCommands extends Service
             }
 
             // Merchant bukan volta
-            if ($payment->order->merchant_id != 1386) {
+            if ($payment->order->merchant_id != env('VOLTA_MERCHANT_ID')) {
                 return ['kode' => 92, 'pesan' => 'PEMBAYARAN BANK TRANSFER SAAT INI HANYA BERLAKU UNTUK MERCHANT VOLTA'];
             }
 
