@@ -42,7 +42,7 @@ class ManualTransferCommands extends Service
                 return ['kode' => 91, 'pesan' => 'TAGIHAN TIDAK DITEMUKAN'];
             }
 
-            $random_num = sprintf("%03d", mt_rand(1, 999));
+            $random_num = sprintf("%03d", mt_rand(100, 999));
             $payments = OrderPayment::where('payment_method', 'bank-transfer')->whereDate('created_at', date('Y-m-d'))->get();
             $uniq_code = $this->generateUniqCode();
 
