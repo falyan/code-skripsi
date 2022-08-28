@@ -3,6 +3,7 @@
 namespace App\Http\Services\ManualTransfer;
 
 use App\Http\Services\Service;
+use App\Models\InquiryToken;
 use App\Models\ManualTransferInquiry;
 use App\Models\OrderPayment;
 use Carbon\Carbon;
@@ -11,6 +12,15 @@ use Illuminate\Support\Facades\DB;
 
 class ManualTransferCommands extends Service
 {
+    static $inquiry_baseurl, $inquiry_username, $inquiry_password;
+
+    function __construct()
+    {
+        self::$inquiry_baseurl = env('INQUIRY_BASEURL');
+        self::$inquiry_username = env('MANDIRI_DEBIT_USERNAME');
+        self::$inquiry_password = env('MANDIRI_DEBIT_PASSWORD');
+    }
+
     public function create($request)
     {
         try {
@@ -55,6 +65,38 @@ class ManualTransferCommands extends Service
                 "billinfo9" => null,
                 "billinfo10" => null,
             ];
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage(), $e->getCode());
+        }
+    }
+
+    public function getToken()
+    {
+        try {
+            $url = sprintf('%s/%s', self::$inquiry_baseurl, 'gettoken');
+
+            $response = self::$curl->request('GET', $url, [
+                'headers' => [
+                    'Authorization' => 'Basic ' . base64_encode(self::$inquiry_username . ':' . self::$inquiry_password),
+                ],
+            ]);
+
+            $response = json_decode($response->getBody(), true);
+
+            throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+            $data = $response['data'];
+            DB::beginTransaction();
+            InquiryToken::where('status', 1)->update(['status' => 0]);
+            InquiryToken::create([
+                'token' => $data['token'],
+                'type' => $data['type'],
+                'status' => 1,
+            ]);
+            DB::commit();
+
+            return $response;
         } catch (Exception $e) {
             DB::rollBack();
             throw new Exception($e->getMessage(), $e->getCode());

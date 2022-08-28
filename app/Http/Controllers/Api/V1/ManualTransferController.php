@@ -49,4 +49,15 @@ class ManualTransferController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function getToken(Request $request)
+    {
+        try {
+            $token = $this->commands->getToken();
+
+            return response()->json($token);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
 }

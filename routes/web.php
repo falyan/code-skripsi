@@ -434,6 +434,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
     // $router->group(['middleware' => 'auth'], static function () use ($router) {
     $router->post('manual-transfer', 'ManualTransferController@create');
+    $router->get('inquiry/gettoken', 'ManualTransferController@getToken');
     // });
 
     $router->group(['prefix' => 'banner'], static function () use ($router) {
