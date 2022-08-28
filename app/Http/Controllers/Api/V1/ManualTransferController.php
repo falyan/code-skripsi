@@ -21,7 +21,7 @@ class ManualTransferController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'idpel' => 'required|exists:payment,no_reference',
+                'idpel' => 'required',
                 'produk' => 'required',
             ], [
                 'required' => ':attribute diperlukan.',
@@ -40,11 +40,7 @@ class ManualTransferController extends Controller
 
             $data = $this->commands->create($request);
 
-            return response()->json([
-                'kode' => '00',
-                'pesan' => 'SUKSES',
-                'data' => $data,
-            ]);
+            return response()->json($data);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -71,7 +67,7 @@ class ManualTransferController extends Controller
 
             return response()->json([
                 'kode' => '00',
-                'pesan'=> 'Successfull',
+                'pesan' => 'Successfull',
                 'data' => [
                     'token' => $token
                 ]
