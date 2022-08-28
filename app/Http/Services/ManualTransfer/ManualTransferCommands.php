@@ -54,7 +54,7 @@ class ManualTransferCommands extends Service
                 "rptag" => $payment->payment_amount + $payment->uniq_code,
                 "rptotal" => $payment->payment_amount + $payment->uniq_code,
                 "expired" => $manual_tf_inquiry->date_expired->format('Y/m/d H:i:s'),
-                "billinfo1" => null,
+                "billinfo1" => '1260010026531',
                 "billinfo2" => null,
                 "billinfo3" => null,
                 "billinfo4" => null,
