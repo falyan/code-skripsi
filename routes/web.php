@@ -433,7 +433,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     });
 
     $router->group(['middleware' => 'auth'], static function () use ($router) {
-        $router->post('manual-transfer', 'ManualTransferController@create');
+        $router->post('aggregator/pln/inquiry', 'ManualTransferController@create');
         $router->get('inquiry/gettoken', 'ManualTransferController@getToken');
     });
 
