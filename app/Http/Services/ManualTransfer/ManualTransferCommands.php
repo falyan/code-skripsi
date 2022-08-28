@@ -42,6 +42,11 @@ class ManualTransferCommands extends Service
                 return ['kode' => 91, 'pesan' => 'TAGIHAN TIDAK DITEMUKAN'];
             }
 
+            // Merchant bukan volta
+            if ($payment->order->merchant_id != 1386) {
+                return ['kode' => 92, 'pesan' => 'PEMBAYARAN BANK TRANSFER SAAT INI HANYA BERLAKU UNTUK MERCHANT VOLTA'];
+            }
+
             $random_num = sprintf("%03d", mt_rand(100, 999));
             $payments = OrderPayment::where('payment_method', 'bank-transfer')->whereDate('created_at', date('Y-m-d'))->get();
             $uniq_code = $this->generateUniqCode();
