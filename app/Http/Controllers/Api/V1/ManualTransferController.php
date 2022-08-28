@@ -52,12 +52,28 @@ class ManualTransferController extends Controller
 
     public function getToken(Request $request)
     {
-        try {
-            $token = $this->commands->getToken();
-
-            return response()->json($token);
-        } catch (Exception $e) {
-            return $this->respondErrorException($e, request());
+        if (!request()->hasHeader('Authorization')) {
+            return response()->json([
+                'kode'  => '81',
+                'pesan' => 'INVALID USER-PASSWORD'
+            ]);
         }
+
+        $token   = hash_hmac('sha256', env('TOKEN_USERNAME'), env('TOKEN_PASSWORD'));
+
+        if (request()->header('Authorization') != $token) {
+            return response()->json([
+                'kode'  => '81',
+                'pesan' => 'INVALID USER-PASSWORD'
+            ]);
+        };
+
+        return response()->json([
+            'kode' => '00',
+            'pesan'=> 'Successfull',
+            'data' => (object) [
+                'token' => $token
+            ]
+        ]);
     }
 }
