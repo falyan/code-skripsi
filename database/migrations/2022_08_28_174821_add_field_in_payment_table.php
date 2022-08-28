@@ -16,7 +16,7 @@ class AddFieldInPaymentTable extends Migration
         Schema::table('payment', function (Blueprint $table) {
             $table->string('ref_mutasi_rekening')->nullable();
             $table->string('uniq_code', 3)->nullable();
-            $table->enum('status_verification', ['unpaid', 'waiting_verification', 'paid', 'canceled', 'refund', 'expired'])->nullable();
+            $table->enum('status_verification', ['unpaid', 'waiting_verification', 'paid', 'canceled', 'refund', 'expired'])->default('unpaid')->nullable();
         });
     }
 
