@@ -23,7 +23,7 @@ class ManualTransferCommands extends Service
 
     private function generateUniqCode()
     {
-        $num_str = sprintf("%03d", mt_rand(1, 999));
+        $num_str = sprintf("%03d", mt_rand(100, 999));
 
         return $num_str;
     }
