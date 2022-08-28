@@ -19,7 +19,7 @@ class ManualTransferCommands extends Service
             $payment = OrderPayment::where('payment_method', 'bank-transfer')->getByRefnum($request['idpel'])->with(['order', 'order.merchant', 'customer'])->first();
             if (empty($payment)) throw new Exception('payment not found', 404);
 
-            $random_num = sprintf("%03d", mt_rand(100, 999));
+            $random_num = sprintf("%03d", mt_rand(1, 999));
             $manual_tf_inquiry = ManualTransferInquiry::create([
                 'idtrx' => date('YmdHis') . $random_num,
                 'kodebank' => 'bank-transfer',
