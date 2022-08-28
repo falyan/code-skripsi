@@ -52,28 +52,35 @@ class ManualTransferController extends Controller
 
     public function getToken(Request $request)
     {
-        if (!request()->hasHeader('Authorization')) {
+        try {
+            if (!request()->hasHeader('Authorization')) {
+                return response()->json([
+                    'kode'  => '81',
+                    'pesan' => 'INVALID USER-PASSWORD'
+                ]);
+            }
+
+            $token   = hash_hmac('sha256', env('TOKEN_USERNAME'), env('TOKEN_PASSWORD'));
+
+            if (request()->header('Authorization') != $token) {
+                return response()->json([
+                    'kode'  => '81',
+                    'pesan' => 'INVALID USER-PASSWORD'
+                ]);
+            };
+
+            return response()->json([
+                'kode' => '00',
+                'pesan'=> 'Successfull',
+                'data' => [
+                    'token' => $token
+                ]
+            ]);
+        } catch (Exception $e) {
             return response()->json([
                 'kode'  => '81',
-                'pesan' => 'INVALID USER-PASSWORD'
+                'pesan' => $e->getMessage()
             ]);
         }
-
-        $token   = hash_hmac('sha256', env('TOKEN_USERNAME'), env('TOKEN_PASSWORD'));
-
-        if (request()->header('Authorization') != $token) {
-            return response()->json([
-                'kode'  => '81',
-                'pesan' => 'INVALID USER-PASSWORD'
-            ]);
-        };
-
-        return response()->json([
-            'kode' => '00',
-            'pesan'=> 'Successfull',
-            'data' => (object) [
-                'token' => $token
-            ]
-        ]);
     }
 }
