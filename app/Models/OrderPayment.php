@@ -24,4 +24,14 @@ class OrderPayment extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function scopeGetByRefnum($query, $no_reference)
+    {
+        return $query->where('no_reference', $no_reference);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }
