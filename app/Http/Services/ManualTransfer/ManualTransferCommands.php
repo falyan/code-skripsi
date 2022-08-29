@@ -34,7 +34,7 @@ class ManualTransferCommands extends Service
             DB::beginTransaction();
 
             $payment = OrderPayment::getByRefnum($request['idpel'])
-                ->whereDate('date_expired', '>', date('Y-m-d'))
+                ->where('date_expired', '>', Carbon::now('Asia/Jakarta'))
                 ->whereIn('status_verification', ['unpaid', 'waiting_verification'])
                 ->with(['order', 'order.merchant', 'customer'])->first();
 
