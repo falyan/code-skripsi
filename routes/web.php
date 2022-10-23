@@ -186,9 +186,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'merchant'], static function () use ($router) {
-                $router->get('{merchant_id}', 'MerchantController@publicProfile');
                 $router->get('/official-store', 'MerchantController@getOfficialStore');
                 $router->get('/official-store/search', 'MerchantController@searchOfficialStoreByName');
+                $router->get('{merchant_id}', 'MerchantController@publicProfile');
                 $router->get('/official/{category_key}', 'MerchantController@getOfficialMerchant');
                 $router->get('/official/{category_key}/{sub_category_key}', 'MerchantController@getOfficialMerchantBySubCategory');
             });
