@@ -295,7 +295,7 @@ class ProductCommands extends Service
 
                 $response['success'] = true;
                 $response['message'] = 'Produk berhasil diaktifkan!';
-                $response['data'] = $product;
+                // $response['data'] = $product;
 
                 DB::commit();
                 return $response;
@@ -308,7 +308,7 @@ class ProductCommands extends Service
 
             $response['success'] = true;
             $response['message'] = 'Produk berhasil diarsipkan!';
-            $response['data'] = $product;
+            // $response['data'] = $product;
 
             DB::commit();
             return $response;
