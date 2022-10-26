@@ -40,6 +40,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('stock/edit/{product_id}', 'ProductController@updateStockProduct');
                     $router->post('price/edit/{product_id}', 'ProductController@updatePriceProduct');
                     $router->post('featured/edit/', 'ProductController@updateProductFeatured');
+                    $router->post('archived/{product_id}', 'ProductController@updateProductArchived');
                 });
 
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {

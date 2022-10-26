@@ -275,12 +275,56 @@ class ProductCommands extends Service
         }
     }
 
+    public function updateProductArchived($product_id)
+    {
+        try {
+            DB::beginTransaction();
+            $product = Product::find($product_id);
+
+            if ($product == null) {
+                $response['success'] = false;
+                $response['message'] = 'Produk tidak ditemukan!';
+                return $response;
+            }
+
+            //Non-Arsip
+            if ($product->status == 9) {
+                $product->update([
+                    'status' => 1,
+                ]);
+
+                $response['success'] = true;
+                $response['message'] = 'Produk berhasil diaktifkan!';
+                $response['data'] = $product;
+
+                DB::commit();
+                return $response;
+            }
+
+            //Arsip
+            $product->update([
+                'status' => 9,
+            ]);
+
+            $response['success'] = true;
+            $response['message'] = 'Produk berhasil diarsipkan!';
+            $response['data'] = $product;
+
+            DB::commit();
+            return $response;
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage(), $e->getCode());
+        }
+    }
+
     public function updateProductFeatured($merchant_id, $request)
     {
         try {
             DB::beginTransaction();
 
-            Product::where('merchant_id' ,$merchant_id)->update(['is_featured_product' => false]);
+            Product::where('merchant_id', $merchant_id)->update(['is_featured_product' => false]);
 
             $products = [];
             foreach ($request['product_feature'] as $value) {
