@@ -23,8 +23,8 @@
     <div><strong>Tujuan Pengiriman</strong></div>
     <div><strong>{{$order->delivery->receiver_name}} ({{$order->delivery->receiver_phone}})</strong></div>
     <div>{{$order->delivery->address,}}</div>
-    <div>{{$order->delivery->district->name}}, {{$order->delivery->city->name}}, {{$order->delivery->postal_code}}</div>
-    
+    <div>{{$order->delivery->district_id != null ? $order->delivery->district->name : '-'}}, {{$order->delivery->city_id != null ? $order->delivery->city->name : '-'}}, {{ $order->delivery->postal_code ?? '-' }}</div>
+
     <br>
     <span style="color: grey;">Email ini dibuat otomatis, mohon untuk tidak membalas.</span>
 </body>
