@@ -1,0 +1,15 @@
+FROM registry-iconx.air.id/iconcash/latios:php-fpm-7.4.28-pgsql-elastic
+
+COPY ./docker/config/fpm-pool.conf /usr/local/etc/php-fpm.d/www.conf
+COPY ./docker/config/nginx-site.conf /etc/nginx/sites-enabled/default
+COPY ./docker/config/elastic_apm.ini /usr/local/etc/php/conf.d/elastic_apm.ini
+COPY ./docker/config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+COPY --chown=www-data . /var/www/html/
+
+RUN composer update
+RUN php artisan swagger-lume:generate
+RUN rm -Rf docker/
+WORKDIR /var/www/html
+EXPOSE 80
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
