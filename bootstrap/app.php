@@ -3,10 +3,6 @@
 // use Anik\ElasticApm\Exceptions\Handler;
 // use Anik\ElasticApm\Middleware\RecordForegroundTransaction;
 use Illuminate\Contracts\Debug\ExceptionHandler;
-use App\Exceptions\Handler as AppExceptionHandler;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use GuzzleHttp\Exception\ConnectException;
-
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -58,10 +54,10 @@ $app->configure('credentials');
 |
  */
 
- $app->singleton(
-     Illuminate\Contracts\Debug\ExceptionHandler::class,
-     App\Exceptions\Handler::class
- );
+$app->singleton(
+    Illuminate\Contracts\Debug\ExceptionHandler::class,
+    App\Exceptions\Handler::class
+);
 
 //// USE THIS SECTION FOR LUMEN >= 8
 //$app->singleton(Illuminate\Contracts\Debug\ExceptionHandler::class, function ($app) {
@@ -109,6 +105,7 @@ $app->middleware([
     // RecordForegroundTransaction::class,
     // \Anik\ElasticApm\Middleware\RecordForegroundTransaction::class,
     App\Http\Middleware\CorsMiddleware::class,
+    // Fruitcake\Cors\HandleCors::class,
 ]);
 
 $app->routeMiddleware([
@@ -133,8 +130,12 @@ $app->register(Illuminate\Mail\MailServiceProvider::class);
 $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 $app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
 $app->register(SwaggerLume\ServiceProvider::class);
-//$app->register(App\Providers\LogServiceProvider::class);
-//$app->register(Anik\ElasticApm\Providers\ElasticApmServiceProvider::class);
+// $app->register(App\Providers\LogServiceProvider::class);
+// $app->register(Anik\ElasticApm\Providers\ElasticApmServiceProvider::class);
+// $app->register(Fruitcake\Cors\CorsServiceProvider::class);
+$app->register(Maatwebsite\Excel\ExcelServiceProvider::class);
+
+class_alias(Maatwebsite\Excel\Facades\Excel::class, 'Excel');
 
 /*
 |--------------------------------------------------------------------------

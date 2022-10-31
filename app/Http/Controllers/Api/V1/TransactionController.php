@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exports\TransactionExport;
 use App\Http\Controllers\Controller;
 use App\Http\Services\Manager\IconcashManager;
 use App\Http\Services\Manager\MailSenderManager;
@@ -24,6 +25,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Input;
+use Maatwebsite\Excel\Facades\Excel;
 use stdClass;
 
 class TransactionController extends Controller
@@ -630,6 +632,56 @@ class TransactionController extends Controller
             } else {
                 return $this->respondWithResult(true, 'belum ada pesanan yang dibatalkan');
             }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    //Export order to excel
+    public function exportExcel(Request $request)
+    {
+        $validator = Validator::make(request()->all(), [
+            'status_code' => 'string|in:01,02,03,08,09,88',
+            'start_date' => 'date',
+            'end_date' => 'date',
+        ], [
+            'required' => ':attribute diperlukan.',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        $data = [];
+        try {
+
+            $transactions = $this->transactionQueries->getTransactionToExport('merchant_id', Auth::user()->merchant_id, $request->all());
+            // return $transactions;
+            foreach ($transactions as $transaction) {
+                $data[] = [
+                    'trx_no' => $transaction->trx_no,
+                    'buyer_name' => $transaction->buyer->full_name ?? '',
+                    'order_date' => $transaction->order_date,
+                    'total_amount' => $transaction->total_amount,
+                    'total_weight' => $transaction->total_weight,
+                    'payment_method' => $transaction->payment->payment_method ?? '',
+                    'status_name' => $transaction->progress_active->status_name,
+                    'related_pln_mobile_customer_id' => $transaction->related_pln_mobile_customer_id,
+                    'created_by' => $transaction->created_by,
+                    'updated_by' => $transaction->updated_by,
+                ];
+            }
+
+            // return $data;
+            return Excel::download(new TransactionExport($data), 'MKP-' . date('YmdHis') . '.xlsx');
+
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
