@@ -25,7 +25,7 @@ class TransactionQueries extends Service
                     $j->with(['product_photo']);
                 }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
-                $r->with(['review_photo']);
+                $r->with(['review_photo'])->where('status', 1);
             },
         ])->where($column_name, $column_value)->when($column_name == 'merchant_id', function ($query) {
             $query->whereHas('progress_active', function ($q) {

@@ -331,7 +331,7 @@ class ProductQueries extends Service
                 $order->whereHas('progress_done');
             });
         }, 'reviews' => function ($reviews) {
-            $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo']);
+            $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo'])->where('status', 1);
         }, 'discussion_master' => function ($master) {
             $master->orderBy('created_at', 'desc')->limit(2)->with(['discussion_response']);
         }])->where('id', $id)->first();
@@ -885,7 +885,7 @@ class ProductQueries extends Service
             $product->with(['product_photo']);
         }, 'order' => function ($order){
             $order->with(['detail']);
-        }])->where('product_id', $product_id)->paginate($limit);
+        }])->where('product_id', $product_id)->where('status', 1)->paginate($limit);
 
         $response['success'] = true;
         $response['message'] = 'Review berhasil didapatkan!';

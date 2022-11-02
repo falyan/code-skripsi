@@ -365,6 +365,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->post('create/response', 'DiscussionController@createDiscussionResponseByBuyer');
                 $router->post('read/{id}', 'DiscussionController@buyerReadDiscussion');
             });
+
+            $router->group(['prefix' => 'report', 'middleware' => 'auth'], static function () use ($router) {
+                $router->get('reason', 'ReportController@getMasterData');
+            });
         });
     });
 

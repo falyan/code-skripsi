@@ -16,27 +16,35 @@ class DiscussionMaster extends Model
     protected $dates = [
         'created_at',
         'updated_at',
-        'deleted_at'
+        'deleted_at',
     ];
     protected function serializeDate($date)
     {
         return $date->format('Y-m-d H:i:s');
     }
 
-    public function product(){
+    public function product()
+    {
         return $this->belongsTo(Product::class);
     }
 
-    public function customer(){
+    public function customer()
+    {
         return $this->belongsTo(Customer::class);
     }
 
-    public function merchant(){
+    public function merchant()
+    {
         return $this->belongsTo(Merchant::class);
     }
 
     public function discussion_response()
     {
         return $this->hasMany(DiscussionResponse::class, 'master_discussion_id');
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class, 'discussion_master_id');
     }
 }
