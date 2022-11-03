@@ -14,8 +14,10 @@ class Report extends Model
         'product_discussion_master_id',
         'product_discussion_response_id',
         'reported_by',
+        'reported_user_id',
         'reason',
         'description',
+        'report_type',
     ];
 
     public function product()

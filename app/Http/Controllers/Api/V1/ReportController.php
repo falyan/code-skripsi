@@ -35,8 +35,11 @@ class ReportController extends Controller
                 'review_id' => 'nullable|exists:review,id',
                 'product_discussion_master_id' => 'nullable|exists:product_discussion_master,id',
                 'product_discussion_response_id' => 'nullable|exists:product_discussion_response,id',
-                'reason' => 'required',
+                'reason' => 'nullable',
                 'description' => 'nullable',
+                'reported_by' => 'nullable',
+                'reported_user_id' => 'nullable',
+                'report_type' => 'required',
             ];
 
             $validator = Validator::make($request->all(), $rules, [

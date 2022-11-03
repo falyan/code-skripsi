@@ -15,11 +15,13 @@ class CreateReportTable extends Migration
     {
         Schema::create('report', function (Blueprint $table) {
             $table->id();
+            $table->string('report_type');
             $table->unsignedBigInteger('product_id');
             $table->unsignedBigInteger('review_id')->nullable();
             $table->unsignedBigInteger('product_discussion_master_id')->nullable();
             $table->unsignedBigInteger('product_discussion_response_id')->nullable();
-            $table->string('reported_by')->nullable();
+            $table->unsignedBigInteger('reported_by')->nullable();
+            $table->unsignedBigInteger('reported_user_id')->nullable();
             $table->string('reason')->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
@@ -29,6 +31,9 @@ class CreateReportTable extends Migration
             $table->foreign('review_id')->references('id')->on('review')->onDelete('cascade');
             $table->foreign('product_discussion_master_id')->references('id')->on('product_discussion_master')->onDelete('cascade');
             $table->foreign('product_discussion_response_id')->references('id')->on('product_discussion_response')->onDelete('cascade');
+            $table->foreign('reported_by')->references('id')->on('customer')->onDelete('cascade');
+            $table->foreign('reported_user_id')->references('id')->on('customer')->onDelete('cascade');
+
         });
     }
 

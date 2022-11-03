@@ -18,40 +18,50 @@ class ReportCommands extends Service
         try {
             DB::beginTransaction();
 
-            // $discussion = DiscussionMaster::with(['discussion_response' => function ($query) {
-            //     $query->where('status', 1);
-            // }])->where('product_id', $product_id)
-            //     ->where('status', 1)
-            //     ->whereHas('discussion_response', function ($query) use ($data) {
-            //         $query->where('master_discussion_id', $data->discussion_response_id);
-            //     })->first();
+            if ($data->report_type == 'violation' || $data->report_type == 'block_user') {
+                $report = Report::create([
+                    'product_id' => $data->product_id,
+                    'review_id' => $data->review_id,
+                    'product_discussion_master_id' => $data->product_discussion_master_id,
+                    'product_discussion_response_id' => $data->product_discussion_response_id,
+                    'report_type' => $data->report_type,
+                    'reported_by' => Auth::user()->id,
+                    'reported_user_id' => $data->reported_user_id,
+                    'reason' => $data->reason,
+                    'description' => $data->description ?? null,
+                ]);
 
-            $report = Report::create([
-                'product_id' => $data->product_id,
-                'review_id' => $data->review_id,
-                'product_discussion_master_id' => $data->product_discussion_master_id,
-                'product_discussion_response_id' => $data->product_discussion_response_id,
-                'reported_by' => Auth::user()->id,
-                'reason' => $data->reason,
-                'description' => $data->description ?? null,
-            ]);
+                if (isset($data->review_id) && !empty($data->review_id)) {
+                    $review = Review::find($data->review_id);
+                    $review->status = 0;
+                    $review->save();
+                }
 
-            if (isset($data->review_id) && !empty($data->review_id)) {
-                $review = Review::find($data->review_id);
-                $review->status = 0;
-                $review->save();
+                if (isset($data->product_discussion_master_id) && !empty($data->product_discussion_master_id)) {
+                    $discussion = DiscussionMaster::find($data->product_discussion_master_id);
+                    $discussion->status = 0;
+                    $discussion->save();
+                }
+
+                if (isset($data->product_discussion_response_id) && !empty($data->product_discussion_response_id)) {
+                    $discussion = DiscussionResponse::find($data->product_discussion_response_id);
+                    $discussion->status = 0;
+                    $discussion->save();
+                }
             }
 
-            if (isset($data->product_discussion_master_id) && !empty($data->product_discussion_master_id)) {
-                $discussion = DiscussionMaster::find($data->product_discussion_master_id);
-                $discussion->status = 0;
-                $discussion->save();
-            }
-
-            if (isset($data->product_discussion_response_id) && !empty($data->product_discussion_response_id)) {
-                $discussion = DiscussionResponse::find($data->product_discussion_response_id);
-                $discussion->status = 0;
-                $discussion->save();
+            if ($data->report_type == 'violation_potential') {
+                $report = Report::create([
+                    'product_id' => $data->product_id,
+                    'review_id' => $data->review_id,
+                    'product_discussion_master_id' => $data->product_discussion_master_id,
+                    'product_discussion_response_id' => $data->product_discussion_response_id,
+                    'report_type' => $data->report_type,
+                    'reported_by' => Auth::user()->id,
+                    'reported_user_id' => $data->reported_user_id,
+                    'reason' => $data->reason,
+                    'description' => $data->description ?? null,
+                ]);
             }
 
             if (!$report) {
