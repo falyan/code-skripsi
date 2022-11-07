@@ -9,7 +9,7 @@ class ReportQueries extends Service
 {
     public function getMasterData()
     {
-        $reason = MasterData::where('type', 'report')->select('id', 'key', 'value')->get();
+        $reason = MasterData::where('type', 'report')->select('id', 'key', 'value')->orderBy('created_at', 'asc')->get();
 
         if (!$reason) {
             $response['status'] = false;
