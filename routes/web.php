@@ -2,14 +2,6 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
-use App\Http\Services\Manager\MailSenderManager;
-use App\Http\Services\Manager\RajaOngkirManager;
-use App\Models\Coba;
-use App\Models\Customer;
-use App\Models\Order;
-use GuzzleHttp\Client;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 /*
@@ -21,7 +13,7 @@ use Illuminate\Support\Facades\Hash;
 | It is a breeze. Simply tell Lumen the URIs it should respond to
 | and give it the Closure to call when that URI is requested.
 |
-*/
+ */
 
 $router->get('/', function () use ($router) {
     return $router->app->version();
@@ -194,6 +186,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'merchant'], static function () use ($router) {
+                $router->get('/official-store', 'MerchantController@getOfficialStore');
+                $router->get('/official-store/search', 'MerchantController@searchOfficialStoreByName');
                 $router->get('{merchant_id}', 'MerchantController@publicProfile');
                 $router->get('/official/{category_key}', 'MerchantController@getOfficialMerchant');
                 $router->get('/official/{category_key}/{sub_category_key}', 'MerchantController@getOfficialMerchantBySubCategory');
@@ -366,6 +360,41 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->post('read/{id}', 'DiscussionController@buyerReadDiscussion');
             });
         });
+    });
+
+    $router->group(['prefix' => 'agent'], static function () use ($router) {
+        $router->group(['middleware' => 'auth'], function () use ($router) {
+            $router->group(['prefix' => 'command', 'middleware' => 'auth'], static function () use ($router) {
+                $router->group(['prefix' => 'merchant'], static function () use ($router) {
+                    $router->post('atur-profile', 'MerchantController@aturTokoAgent');
+                    $router->post('atur-margin', 'MerchantAgentController@setMarginDefault');
+                });
+                $router->group(['prefix' => 'kudo'], static function () use ($router) {
+                    $router->post('payment', 'KudoController@payment');
+                });
+            });
+
+            $router->group(['prefix' => 'query'], static function () use ($router) {
+                $router->group(['prefix' => 'merchant'], static function () use ($router) {
+                    $router->get('menu', 'MerchantAgentController@getMenu');
+                    $router->get('menu/{agent_id}', 'MerchantAgentController@getDetailMenu');
+                });
+
+                $router->group(['prefix' => 'kudo'], static function () use ($router) {
+                    $router->get('product-categories', 'KudoController@getProductCategory');
+                    $router->get('product-groups/{category_id}', 'KudoController@getProductGroupByCategoryId');
+                    $router->get('products/{group_id}', 'KudoController@getProductsByGroupId');
+                    $router->get('transaction/user-invoice', 'KudoController@getUserInvoices');
+                    $router->post('origin-inquiry', 'KudoController@inquiryKudo');
+                    $router->post('invoice/create', 'KudoController@createInvoice');
+                });
+            });
+        });
+    });
+
+    $router->group(['prefix' => 'report', 'middleware' => 'auth'], static function () use ($router) {
+        $router->get('reason', 'ReportController@getMasterData');
+        $router->post('create', 'ReportController@createReport');
     });
 
     $router->group(['prefix' => 'setting'], static function () use ($router) {

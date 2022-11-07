@@ -6,7 +6,6 @@ use App\Models\DiscussionMaster;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
-use Carbon\Carbon;
 
 class DiscussionQueries
 {
@@ -18,16 +17,16 @@ class DiscussionQueries
                 $discussion_list = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
-                    $response->with(['customer', 'merchant']);
-                }])->where('customer_id', $customer_id)->orderBy('updated_at', 'desc')->get();
+                    $response->with(['customer', 'merchant'])->where('status', 1);
+                }])->where('status', 1)->where('customer_id', $customer_id)->orderBy('updated_at', 'desc')->paginate($limit);
             }
 
             if ($status == 'unread') {
                 $discussion_list = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
-                    $response->with(['customer', 'merchant']);
-                }])->where('customer_id', $customer_id)
+                    $response->with(['customer', 'merchant'])->where('status', 1);
+                }])->where('status', 1)->where('customer_id', $customer_id)
                     ->whereHas('discussion_response', function ($response) {
                         $response->where('is_read_customer', false);
                     })->orderBy('updated_at', 'desc')->get();
@@ -37,8 +36,8 @@ class DiscussionQueries
                 $discussion_list = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
-                    $response->with(['customer', 'merchant']);
-                }])->where('customer_id', $customer_id)
+                    $response->with(['customer', 'merchant'])->where('status', 1);
+                }])->where('status', 1)->where('customer_id', $customer_id)
                     ->whereDoesntHave('discussion_response', function ($response) {
                         $response->where('is_read_customer', false);
                     })->orderBy('updated_at', 'desc')->get();
@@ -61,38 +60,38 @@ class DiscussionQueries
                 $discussion_list = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
-                    $response->with(['customer', 'merchant']);
-                }])->where('merchant_id', $merchant_id)->orderBy('updated_at', 'desc')->paginate($limit);
+                    $response->with(['customer', 'merchant'])->where('status', 1);
+                }])->where('status', 1)->where('merchant_id', $merchant_id)->orderBy('updated_at', 'desc')->paginate($limit);
             }
 
             if ($status == 'unread') {
                 $discussion_list = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
-                    $response->with(['customer', 'merchant']);
-                }])->where([['merchant_id', $merchant_id], ['is_read_merchant', false]])
+                    $response->with(['customer', 'merchant'])->where('status', 1);
+                }])->where('status', 1)->where([['merchant_id', $merchant_id], ['is_read_merchant', false]])
                     ->orWhereHas('discussion_response', function ($response) {
                         $response->where('is_read_merchant', false);
                     })->where('merchant_id', $merchant_id)->orderBy('updated_at', 'desc')->paginate($limit);
 
 //                if (empty($discussion_list)){
-//                    $discussion_list = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
-//                        $product->with(['product_photo']);
-//                    }, 'discussion_response' => function ($response) {
-//                        $response->with(['customer', 'merchant']);
-//                    }])->where('merchant_id', $merchant_id)
-//                        ->whereHas('discussion_response', function ($response) {
-//                            $response->where('is_read_merchant', false);
-//                        })->orderBy('updated_at', 'desc')->get();
-//                }
+                //                    $discussion_list = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
+                //                        $product->with(['product_photo']);
+                //                    }, 'discussion_response' => function ($response) {
+                //                        $response->with(['customer', 'merchant']);
+                //                    }])->where('merchant_id', $merchant_id)
+                //                        ->whereHas('discussion_response', function ($response) {
+                //                            $response->where('is_read_merchant', false);
+                //                        })->orderBy('updated_at', 'desc')->get();
+                //                }
             }
 
             if ($status == 'read') {
                 $discussion_list = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
-                    $response->with(['customer', 'merchant']);
-                }])->where([['merchant_id', $merchant_id], ['is_read_merchant', true]])
+                    $response->with(['customer', 'merchant'])->where('status', 1);
+                }])->where('status', 1)->where([['merchant_id', $merchant_id], ['is_read_merchant', true]])
                     ->whereDoesntHave('discussion_response', function ($response) {
                         $response->where('is_read_merchant', false);
                     })->where('merchant_id', $merchant_id)->orderBy('updated_at', 'desc')->paginate($limit);
@@ -123,30 +122,30 @@ class DiscussionQueries
                 $discussions = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
-                    $response->with(['customer', 'merchant']);
+                    $response->with(['customer', 'merchant'])->where('status', 1);
                 }])->when(count($daterange) == 2, function ($q) use ($daterange) {
                     $q->whereBetween('created_at', $daterange);
-                })->where('merchant_id', $merchant_id)->get();
+                })->where('status', 1)->where('merchant_id', $merchant_id)->get();
             }
 
             if ($status == 'unread') {
                 $discussions = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
-                    $response->with(['customer', 'merchant']);
+                    $response->with(['customer', 'merchant'])->where('status', 1);
                 }])->when(count($daterange) == 2, function ($q) use ($daterange) {
                     $q->whereBetween('created_at', $daterange);
-                })->where([['merchant_id', $merchant_id], ['is_read_merchant', false]])->get();
+                })->where('status', 1)->where([['merchant_id', $merchant_id], ['is_read_merchant', false]])->get();
             }
 
             if ($status == 'read') {
                 $discussions = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
-                    $response->with(['customer', 'merchant']);
+                    $response->with(['customer', 'merchant'])->where('status', 1);
                 }])->when(count($daterange) == 2, function ($q) use ($daterange) {
                     $q->whereBetween('created_at', $daterange);
-                })->where([['merchant_id', $merchant_id], ['is_read_merchant', true]])->get();
+                })->where('status', 1)->where([['merchant_id', $merchant_id], ['is_read_merchant', true]])->get();
             }
         }
 
@@ -162,8 +161,8 @@ class DiscussionQueries
         $discussion_list = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
             $product->with(['product_photo']);
         }, 'discussion_response' => function ($response) {
-            $response->with(['customer', 'merchant']);
-        }])->where('product_id', $product_id)->orderBy('updated_at', 'desc')->get();
+            $response->with(['customer', 'merchant'])->where('status', 1);
+        }])->where('status', 1)->where('product_id', $product_id)->orderBy('updated_at', 'desc')->get();
 
         $data = static::paginate($discussion_list->toArray(), $limit, $page);
         $response['success'] = true;
@@ -173,16 +172,17 @@ class DiscussionQueries
         return $response;
     }
 
-    public function getDiscussionByMasterId($id){
+    public function getDiscussionByMasterId($id)
+    {
         $discussion = DiscussionMaster::with(['customer', 'merchant', 'product' => function ($product) {
             $product->with(['product_photo']);
         }, 'discussion_response' => function ($response) {
-            $response->with(['customer', 'merchant']);
-        }])->where('id', $id)->first();
+            $response->with(['customer', 'merchant'])->where('status', 1);
+        }])->where('status', 1)->where('id', $id)->first();
 
-        if (empty($discussion)){
+        if (empty($discussion)) {
             $response['success'] = false;
-            $response['message'] = 'Data diskusi dengan id '. $id . ' tidak ditemukan';
+            $response['message'] = 'Data diskusi dengan id ' . $id . ' tidak ditemukan';
             $response['data'] = $discussion;
 
             return $response;
@@ -195,8 +195,10 @@ class DiscussionQueries
         return $response;
     }
 
-    public function countUnreadDiscussion($customer_id){
+    public function countUnreadDiscussion($customer_id)
+    {
         $count_discussion = DiscussionMaster::with(['discussion_response'])
+            ->where('status', 1)
             ->where('customer_id', $customer_id)
             ->whereHas('discussion_response', function ($response) {
                 $response->where('is_read_customer', false);
@@ -205,13 +207,13 @@ class DiscussionQueries
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan jumlah diskusi';
         $response['data'] = [
-            'count_discussion' => $count_discussion
+            'count_discussion' => $count_discussion,
         ];
 
         return $response;
     }
 
-    static function paginate(array $items, $perPage = 10, $page = 1, $options = [])
+    public static function paginate(array $items, $perPage = 10, $page = 1, $options = [])
     {
         $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
         $items = $items instanceof Collection ? $items : Collection::make($items);
@@ -223,19 +225,19 @@ class DiscussionQueries
         }
 
         return [
-            'current_page'    => $paginated->currentPage(),
-            'data'            => $modified,
-            'first_page_url'  => "/?page=1",
-            'from'            => $paginated->firstItem(),
-            'last_page'       => $paginated->lastPage(),
-            'last_page_url'   => "/?page=" . $paginated->lastPage(),
-            'links'           => $paginated->linkCollection(),
-            'next_page_url'   => $paginated->nextPageUrl(),
-            'path'            => $paginated->path(),
-            'per_page'        => $paginated->perPage(),
-            'prev_page_url'   => $paginated->previousPageUrl(),
-            'to'              => count($modified),
-            'total'           => $paginated->total()
+            'current_page' => $paginated->currentPage(),
+            'data' => $modified,
+            'first_page_url' => "/?page=1",
+            'from' => $paginated->firstItem(),
+            'last_page' => $paginated->lastPage(),
+            'last_page_url' => "/?page=" . $paginated->lastPage(),
+            'links' => $paginated->linkCollection(),
+            'next_page_url' => $paginated->nextPageUrl(),
+            'path' => $paginated->path(),
+            'per_page' => $paginated->perPage(),
+            'prev_page_url' => $paginated->previousPageUrl(),
+            'to' => count($modified),
+            'total' => $paginated->total(),
         ];
     }
 }

@@ -14,35 +14,45 @@ variables:
 
   # IMAGE VARIABLES
   DOCKER_IMAGE_APP: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-  DOCKER_IMAGE_EVDS: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-evds
-  DOCKER_IMAGE_PHPFPM: $CI_REGISTRY_IMAGE:7.4.25-fpm-alpine3.13
+  #DOCKER_IMAGE_PHPFPM: $CI_REGISTRY_IMAGE:7.4.25-fpm-alpine3.13
+  DOCKER_IMAGE_PHPFPM: registry-iconx.air.id/iconcash/latios:php-fpm-7.4.28-pgsql-elastic
 
-Build Base:
-  stage: build
-  image: docker:20.10.5
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  script:
-    - docker build --no-cache -t $DOCKER_IMAGE_PHPFPM -f Dockerfile-Build .
-    - docker push $DOCKER_IMAGE_PHPFPM
-  when: manual
-  tags:
-    - docker
+# Build Base:
+#   stage: build
+#   image: docker:20.10.5
+#   before_script:
+#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#   script:
+#     - docker build --no-cache -t $DOCKER_IMAGE_PHPFPM -f Dockerfile-Build .
+#     - docker push $DOCKER_IMAGE_PHPFPM
+#   when: manual
+#   tags:
+#     - docker
 
 Package Container:
   stage: package
-  image: docker:20.10.5-git
+  image: docker:20.10.5
+  services:
+    - docker:20.10.5-dind
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
     - >
       if [ "$CI_COMMIT_REF_NAME" == "development" ]; then
         cp .env.development .env &&
-        docker build --no-cache -t $DOCKER_IMAGE_APP -f Dockerfile-App . &&
+        docker build --no-cache -t $DOCKER_IMAGE_APP -f docker/deployment/Dockerfile-App . &&
         docker push $DOCKER_IMAGE_APP
       elif [ "$CI_COMMIT_REF_NAME" == "staging" ]; then
         cp .env.staging .env &&
-        docker build --no-cache -t $DOCKER_IMAGE_APP -f Dockerfile-App . &&
+        docker build --no-cache -t $DOCKER_IMAGE_APP -f docker/deployment/Dockerfile-App . &&
+        docker push $DOCKER_IMAGE_APP
+      elif [ "$CI_COMMIT_REF_NAME" == "staging-stable" ]; then
+        cp .env.staging .env &&
+        docker build --no-cache -t $DOCKER_IMAGE_APP -f docker/deployment/Dockerfile-App . &&
+        docker push $DOCKER_IMAGE_APP
+      else
+        cp .env.production .env &&
+        docker build --no-cache -t $DOCKER_IMAGE_APP -f docker/deployment/Dockerfile-App . &&
         docker push $DOCKER_IMAGE_APP
       fi
   only:
@@ -51,35 +61,15 @@ Package Container:
   tags:
     - docker
 
-Package Production:
-  stage: package
-  image: docker:20.10.5-git
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  script:
-    - >
-      cp .env.production .env &&
-      docker build --no-cache -t $DOCKER_IMAGE_APP -f Dockerfile-App . &&
-      docker push $DOCKER_IMAGE_APP
-    - >
-      cp .env.production-evds .env &&
-      docker build --no-cache -t $DOCKER_IMAGE_EVDS -f Dockerfile-App . &&
-      docker push $DOCKER_IMAGE_EVDS
-  only:
-    - tags
-  when: manual
-  tags:
-    - docker
-
 Deploy Development:
   stage: deploy
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - docker stack deploy --orchestrator swarm -c docker-development.yml --with-registry-auth pln-marketplace
+    - docker stack deploy --orchestrator swarm -c docker/deployment/docker-development.yml --with-registry-auth pln-marketplace
   environment:
     name: URL Development
-    url: https://dev-plnmp.beyondkwh.id/saruman
+    url: https://devmkp.beyondkwh.id/api/core/
   only:
     - development
   tags:
@@ -90,10 +80,10 @@ Deploy Staging:
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - docker stack deploy --orchestrator swarm -c docker-staging.yml --with-registry-auth pln-marketplace
+    - docker stack deploy --orchestrator swarm -c docker/deployment/docker-staging.yml --with-registry-auth pln-marketplace
   environment:
     name: URL Staging
-    url: http://sta-plnmp.beyondkwh.id/saruman
+    url: https://stamkp.beyondkwh.id/api/core/
   only:
     - staging
   tags:
@@ -105,28 +95,11 @@ Deploy Production:
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - docker stack deploy --orchestrator swarm -c docker-production.yml --with-registry-auth pln-marketplace
+    - docker stack deploy --orchestrator swarm -c docker/deployment/docker-production.yml --with-registry-auth pln-marketplace
   environment:
     name: URL Production
     url: https://api-mkp.iconcash.id/v1/core/
   only:
     - tags
-  when: manual
-  tags:
-    - docker
-
-Deploy EVDS:
-  stage: deploy
-  image: docker:20.10.5
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  script:
-    - docker stack deploy --orchestrator swarm -c docker-production-evds.yml --with-registry-auth pln-marketplace
-  environment:
-    name: URL Saruman EVDS
-    url: https://api-ev.iconcash.id/v1/core/
-  only:
-    - tags
-  when: manual
   tags:
     - docker

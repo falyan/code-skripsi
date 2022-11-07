@@ -273,6 +273,47 @@ class MerchantQueries extends Service
         return $result;
     }
 
+    public function getOfficialStore($limit, $page)
+    {
+        $official_store = Merchant::with(['province:id,name', 'city:id,name', 'district:id,name'])
+            ->where('official_store', true)
+            ->get(['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url', 'official_store'])
+            ->forget(['province_id', 'city_id', 'district_id']);
+
+        foreach ($official_store as $merchant) {
+            $merchant['url_deeplink'] = 'https://plnmarketplace.page.link/?link=https://plnmarketplace.page.link/profile-toko-seller?id=' . $merchant->id;
+        }
+
+        if ($official_store->isEmpty()) {
+            return [];
+        }
+
+        $result = static::paginate($official_store->toArray(), $limit, $page);
+
+        return $result;
+    }
+
+    public function searchOfficialStoreByName($name, $limit, $page)
+    {
+        $official_store = Merchant::with(['province:id,name', 'city:id,name', 'district:id,name'])
+            ->where('official_store', true)
+            ->where('name', 'ILIKE', '%' . $name . '%')
+            ->get(['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url', 'official_store'])
+            ->forget(['province_id', 'city_id', 'district_id']);
+
+        foreach ($official_store as $merchant) {
+            $merchant['url_deeplink'] = 'https://plnmarketplace.page.link/?link=https://plnmarketplace.page.link/profile-toko-seller?id=' . $merchant->id;
+        }
+
+        // if ($official_store->isEmpty()) {
+        //     return [];
+        // }
+
+        $result = static::paginate($official_store->toArray(), $limit, $page);
+
+        return $result;
+    }
+
     public function getOfficialMerchant($category_key)
     {
         $official_store = Merchant::with(['official_store', 'province:id,name', 'city:id,name', 'district:id,name'])

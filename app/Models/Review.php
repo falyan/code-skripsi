@@ -30,8 +30,14 @@ class Review extends Model
         return $this->hasMany(ReviewPhoto::class);
     }
 
-    public function merchant(){
+    public function merchant()
+    {
         return $this->belongsTo(Merchant::class);
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class, 'review_id');
     }
 
     protected function serializeDate($date)

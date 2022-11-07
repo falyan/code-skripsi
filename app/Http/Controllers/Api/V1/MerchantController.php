@@ -143,7 +143,7 @@ class MerchantController extends Controller
             'path_url' => "start.activity",
             'query' => [],
             'body' => Carbon::now('Asia/Jakarta'),
-            'response' => 'Start'
+            'response' => 'Start',
         ]);
         $request = request()->all();
 
@@ -224,6 +224,35 @@ class MerchantController extends Controller
             ]);
             $data = MerchantCommands::updateLokasi($request, Auth::user()->merchant_id);
             return $this->respondWithData($data, 'Data lokasi berhasil disimpan');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getOfficialStore(Request $request)
+    {
+        try {
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
+            $data = $this->merchantQueries->getOfficialStore($limit, $page);
+
+            return $this->respondWithData($data, 'Berhasil mendapatkan data toko');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function searchOfficialStoreByName(Request $request)
+    {
+        try {
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+            $name = $request->name ?? '';
+
+            $data = $this->merchantQueries->searchOfficialStoreByName($name, $limit, $page);
+
+            return $this->respondWithData($data, 'Berhasil mendapatkan data toko');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
