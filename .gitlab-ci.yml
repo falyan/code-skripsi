@@ -17,17 +17,17 @@ variables:
   #DOCKER_IMAGE_PHPFPM: $CI_REGISTRY_IMAGE:7.4.25-fpm-alpine3.13
   DOCKER_IMAGE_PHPFPM: registry-iconx.air.id/iconcash/latios:php-fpm-7.4.28-pgsql-elastic
 
-# Build Base:
-#   stage: build
-#   image: docker:20.10.5
-#   before_script:
-#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#   script:
-#     - docker build --no-cache -t $DOCKER_IMAGE_PHPFPM -f Dockerfile-Build .
-#     - docker push $DOCKER_IMAGE_PHPFPM
-#   when: manual
-#   tags:
-#     - docker
+Build Base:
+  stage: build
+  image: docker:20.10.5
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build --no-cache -t $DOCKER_IMAGE_PHPFPM -f Dockerfile-Build .
+    - docker push $DOCKER_IMAGE_PHPFPM
+  when: manual
+  tags:
+    - docker
 
 Package Container:
   stage: package
@@ -46,10 +46,6 @@ Package Container:
         cp .env.staging .env &&
         docker build --no-cache -t $DOCKER_IMAGE_APP -f docker/deployment/Dockerfile-App . &&
         docker push $DOCKER_IMAGE_APP
-      elif [ "$CI_COMMIT_REF_NAME" == "staging-stable" ]; then
-        cp .env.staging .env &&
-        docker build --no-cache -t $DOCKER_IMAGE_APP -f docker/deployment/Dockerfile-App . &&
-        docker push $DOCKER_IMAGE_APP
       else
         cp .env.production .env &&
         docker build --no-cache -t $DOCKER_IMAGE_APP -f docker/deployment/Dockerfile-App . &&
@@ -58,6 +54,7 @@ Package Container:
   only:
     - development
     - staging
+    - tags
   tags:
     - docker
 
