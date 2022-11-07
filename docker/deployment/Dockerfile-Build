@@ -21,14 +21,13 @@ RUN mkdir -p /home/apm-agent && \
     make clean && make && make install
 
 COPY --from=composer /usr/bin/composer /usr/bin/composer
-COPY ./docker/php.ini /usr/local/etc/php/php.ini
-COPY ./docker/elastic_apm.ini /usr/local/etc/php/conf.d/elastic_apm.ini
-COPY ./docker/fpm-pool.conf /usr/local/etc/php-fpm.d/fpm-pool.conf
-COPY ./docker/nginx.conf /etc/nginx/nginx.conf
-COPY ./docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-RUN rm -Rf /etc/nginx/conf.d/default.conf \
-    && composer --version
+RUN rm -Rf /etc/nginx/conf.d/default.conf && composer --version
+RUN rm -Rf /usr/local/etc/php-fpm.d/zz-docker.conf
+RUN mv /usr/local/etc/php-fpm.d/docker.conf /usr/local/etc/php-fpm.d/01-docker.conf
+RUN mv /usr/local/etc/php-fpm.d/www.conf /usr/local/etc/php-fpm.d/02-www.conf
 
-EXPOSE 80
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+COPY ./docker/config/php.ini /usr/local/etc/php/php.ini
+COPY ./docker/config/elastic_apm.ini /usr/local/etc/php/conf.d/elastic_apm.ini
+COPY ./docker/config/fpm-pool.conf /usr/local/etc/php-fpm.d/03-fpm-pool.conf
+COPY ./docker/config/nginx.conf /etc/nginx/nginx.conf
