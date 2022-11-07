@@ -358,8 +358,8 @@ class ReviewQueries
             $product->with(['product' => function ($j) use ($order_id) {
                 $j->with(['merchant', 'product_photo', 'reviews' => function ($review) use ($order_id) {
                     $review->whereIn('order_id', [$order_id])->with(['review_photo']);
+                    $review->where('status', 1);
                 }]);
-                $review->where('status', 1);
             }]);
         }, 'buyer'])->where('id', $order_id)->get();
 
