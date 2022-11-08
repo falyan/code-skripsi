@@ -30,9 +30,9 @@ class MerchantController extends Controller
         $validator = Validator::make(request()->all(), [
             'slogan' => 'required',
             'description' => 'required',
-            'operational' => 'required'
+            'operational' => 'required',
         ], [
-            'required' => ':attribute diperlukan.'
+            'required' => ':attribute diperlukan.',
         ]);
 
         try {
@@ -166,7 +166,7 @@ class MerchantController extends Controller
         $validator = Validator::make(request()->all(), [
             'list_expeditions' => 'required',
         ], [
-            'required' => 'Minimal harus pilih 1 expedisi.'
+            'required' => 'Minimal harus pilih 1 expedisi.',
         ]);
 
         if ($validator->fails()) {
@@ -220,7 +220,7 @@ class MerchantController extends Controller
 
         try {
             request()->request->add([
-                'full_name' => Auth::user()->full_name
+                'full_name' => Auth::user()->full_name,
             ]);
             $data = MerchantCommands::updateLokasi($request, Auth::user()->merchant_id);
             return $this->respondWithData($data, 'Data lokasi berhasil disimpan');
@@ -263,7 +263,7 @@ class MerchantController extends Controller
         $validator = Validator::make(request()->all(), [
             'key' => 'required',
         ], [
-            'required' => ':attribute diperlukan.'
+            'required' => ':attribute diperlukan.',
         ]);
 
         if ($validator->fails()) {
@@ -294,20 +294,22 @@ class MerchantController extends Controller
         }
     }
 
-    public function updateMerchantProfile(Request $request){
+    public function updateMerchantProfile(Request $request)
+    {
         try {
-            if (Auth::check()){
+            if (Auth::check()) {
                 $merchantCommand = new MerchantCommands();
                 return $merchantCommand->updateMerchantProfile(Auth::user()->merchant_id, $request);
             }
-        }catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function setCustomLogistic(){
+    public function setCustomLogistic()
+    {
         try {
-            if (Auth::check()){
+            if (Auth::check()) {
                 $merchantCommand = new MerchantCommands();
                 return $merchantCommand->setCustomLogistic(Auth::user()->merchant_id);
             }
