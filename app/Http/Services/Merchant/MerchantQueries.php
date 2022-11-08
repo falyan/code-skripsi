@@ -284,10 +284,6 @@ class MerchantQueries extends Service
             $merchant['url_deeplink'] = 'https://plnmarketplace.page.link/?link=https://plnmarketplace.page.link/profile-toko-seller?id=' . $merchant->id;
         }
 
-        if ($official_store->isEmpty()) {
-            return [];
-        }
-
         $result = static::paginate($official_store->toArray(), $limit, $page);
 
         return $result;
@@ -370,4 +366,5 @@ class MerchantQueries extends Service
         ];
         return $result;
     }
+
 }
