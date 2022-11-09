@@ -70,7 +70,7 @@ class ReviewCommands{
 
             $product->update([
                 'review_count' => $product->reviews_count,
-                'avg_rating' => $rate/count($product->reviews)
+                'avg_rating' => round($rate / count($product->reviews), 1)
             ]);
 
             DB::commit();
