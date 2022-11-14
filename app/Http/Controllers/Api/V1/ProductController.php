@@ -543,6 +543,22 @@ class ProductController extends Controller
         }
     }
 
+    //get product by filter (seller)
+    public function getProductByFilter(Request $request)
+    {
+        try {
+            $merchant_id = Auth::user()->merchant_id;
+            $status = $request->status;
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? null;
+            $page = $request->page ?? 1;
+            return $this->productQueries->filterProductBySeller($merchant_id, $status, $limit, $filter, $sorting, $page);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function getRecommendProductByCategory($category_key, Request $request)
     {
         try {

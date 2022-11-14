@@ -106,7 +106,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('detail/{id}', 'ProductController@getProductByIdSeller');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
                     $router->get('search', 'ProductController@searchProductSeller');
-                    $router->get('filter', 'ProductController@getProductByFilter');
+                    $router->post('filter', 'ProductController@getProductByFilter');
+                    $router->post('filter/count', 'ProductController@countProductByFilter');
                     $router->get('featured', 'ProductController@getProductFeatured');
                 });
 
