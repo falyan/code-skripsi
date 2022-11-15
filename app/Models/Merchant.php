@@ -53,7 +53,7 @@ class Merchant extends Model
     protected $dates = [
         'created_at',
         'updated_at',
-        'deleted_at'
+        'deleted_at',
     ];
 
     /**
@@ -76,7 +76,6 @@ class Merchant extends Model
     {
         return $date->format('Y-m-d H:i:s');
     }
-
 
     public function etalase()
     {
@@ -160,6 +159,6 @@ class Merchant extends Model
 
     public function banner()
     {
-        return $this->hasMany(MerchantBanner::class, 'merchant_id', 'id');
+        return $this->hasMany(MerchantBanner::class, 'merchant_id', 'id')->where('status', 1);
     }
 }

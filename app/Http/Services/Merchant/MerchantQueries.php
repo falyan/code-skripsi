@@ -145,7 +145,10 @@ class MerchantQueries extends Service
             $total_trx = static::getTotalTrx($merchant_id, 88);
 
             $banner = $merchant->banner->map(function ($item) {
-                return $item->url;
+                return [
+                    'id' => $item->id,
+                    'url' => $item->url,
+                ];
             });
 
             return [

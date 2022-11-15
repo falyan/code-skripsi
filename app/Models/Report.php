@@ -13,6 +13,7 @@ class Report extends Model
         'review_id',
         'product_discussion_master_id',
         'product_discussion_response_id',
+        'merchant_banner_id',
         'reported_by',
         'reported_user_id',
         'reason',
@@ -38,5 +39,10 @@ class Report extends Model
     public function productDiscussionResponse()
     {
         return $this->belongsTo(DiscussionResponse::class);
+    }
+
+    public function merchantBanner()
+    {
+        return $this->belongsTo(MerchantBanner::class);
     }
 }
