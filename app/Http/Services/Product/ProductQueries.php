@@ -56,8 +56,8 @@ class ProductQueries extends Service
             }])
             ->with(['product_photo', 'product_stock', 'is_wishlist', 'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
-            }])->when($featured == true, function ($q) {
-            $q->orderBy('is_featured_product', 'DESC');
+            }])->when($featured == true, function ($query) {
+            $query->where('is_featured_product', true);
         });
         // ->when($filter != '', function ($q) use ($filter) {
         //     $filters = explode(",", $filter);
