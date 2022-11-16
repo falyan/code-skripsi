@@ -43,27 +43,33 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByMerchantIdSeller($merchant_id, $filter = '', $sortby = null, $current_page = 1, $limit, $featured)
+    public function getProductByMerchantIdSeller($merchant_id, $filter = [], $sortby = null, $current_page = 1, $limit, $featured)
     {
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'varian_product' => function ($query) {
-            $query->with(['variant_stock'])->where('main_variant', true);
-        }])->where('merchant_id', $merchant_id)
-            ->when($featured == true, function ($q) {
-                $q->orderBy('is_featured_product', 'DESC');
-            })
-            ->when($filter != '', function ($q) use ($filter) {
-                $filters = explode(",", $filter);
-                if (define('status', $filters)) {
-                    $q->where('status', 1);
-                }
-            });
 
-        $immutable_data = $products->get()->map(function ($product) {
+        $products = $product
+            ->where(['merchant_id' => $merchant_id])
+            ->withCount(['order_details' => function ($order_details) {
+                $order_details->whereHas('order', function ($order) {
+                    $order->whereHas('progress_done');
+                });
+            }])
+            ->with(['product_photo', 'product_stock', 'is_wishlist', 'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            }])->when($featured == true, function ($q) {
+            $q->orderBy('is_featured_product', 'DESC');
+        });
+        // ->when($filter != '', function ($q) use ($filter) {
+        //     $filters = explode(",", $filter);
+        //     if (define('status', $filters)) {
+        //         $q->where('status', 1);
+        //     }
+        // });
+
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $immutable_data = $sorted_data->get()->map(function ($product) {
             $product->reviews = null;
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
             // $product->avg_rating = 0.0;
