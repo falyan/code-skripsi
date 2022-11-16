@@ -930,6 +930,7 @@ class ProductQueries extends Service
         }])->where([
             'merchant_id' => $merchant_id,
             'etalase_id' => $etalase_id,
+            'status' => 1,
         ]);
 
         $filtered_data = static::filter($products, $filter);

@@ -140,7 +140,7 @@ class MerchantQueries extends Service
 
             $merged_data = array_merge($mc, ['city_name' => $cityname['name']]);
             unset($merchant['banner']);
-            $total_product = $merchant->products->count();
+            $total_product = $merchant->products->where('status', 1)->count();
 
             $total_trx = static::getTotalTrx($merchant_id, 88);
 
