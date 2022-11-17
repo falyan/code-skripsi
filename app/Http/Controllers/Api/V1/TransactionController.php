@@ -680,7 +680,9 @@ class TransactionController extends Controller
             }
 
             // return $data;
-            return Excel::download(new TransactionExport($data), 'MKP-' . date('YmdHis') . '.xlsx');
+            $response = Excel::download(new TransactionExport($data), 'MKP-' . date('YmdHis') . '.xlsx');
+
+            return $response->deleteFileAfterSend(false);
 
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());

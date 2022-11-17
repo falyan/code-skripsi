@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "78bc6e625c7bbe369c69927c07563e76",
+    "content-hash": "7e9a9d51111e9cd2650c842095d8021f",
     "packages": [
         {
             "name": "anik/elastic-apm-php",
@@ -998,7 +998,7 @@
                 "exclude-from-classmap": ["/library/HTMLPurifier/Language/"]
             },
             "notification-url": "https://packagist.org/downloads/",
-            "license": ["LGPL-2.1-or-later"],
+            "license": ["MIT"],
             "authors": [
                 {
                     "name": "Edward Z. Yang",
@@ -1006,9 +1006,8 @@
                     "homepage": "http://ezyang.com"
                 }
             ],
-            "description": "Standards compliant HTML filter written in PHP",
-            "homepage": "http://htmlpurifier.org/",
-            "keywords": ["html"],
+            "description": "Adds CORS (Cross-Origin Resource Sharing) headers support in your Laravel application",
+            "keywords": ["api", "cors", "crossdomain", "laravel"],
             "support": {
                 "issues": "https://github.com/ezyang/htmlpurifier/issues",
                 "source": "https://github.com/ezyang/htmlpurifier/tree/v4.16.0"
