@@ -31,10 +31,11 @@ class ReportController extends Controller
     {
         try {
             $rules = [
-                'product_id' => 'required|exists:product,id',
+                'product_id' => 'nullable|exists:product,id',
                 'review_id' => 'nullable|exists:review,id',
                 'product_discussion_master_id' => 'nullable|exists:product_discussion_master,id',
                 'product_discussion_response_id' => 'nullable|exists:product_discussion_response,id',
+                'merchant_banner_id' => 'nullable|exists:merchant_banner,id',
                 'reason' => 'nullable',
                 'description' => 'nullable',
                 'reported_by' => 'nullable',

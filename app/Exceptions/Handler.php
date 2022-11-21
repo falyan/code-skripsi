@@ -142,7 +142,11 @@ class Handler extends ExceptionHandler
                 }
             }
         } else {
-            return parent::render($request, $e);
+            if ($e instanceof \PDOException) {
+                return response(['status' => 'ERROR', 'message' => "Sedang ada gangguan di jaringan atau sistem. Mohon coba kembali beberapa saat lagi. - MKP01", 'error_code' => 500], 500);
+            } else {
+                return parent::render($request, $e);
+            }
         }
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Services\Report;
 use App\Http\Services\Service;
 use App\Models\DiscussionMaster;
 use App\Models\DiscussionResponse;
+use App\Models\MerchantBanner;
 use App\Models\Report;
 use App\Models\Review;
 use Exception;
@@ -24,6 +25,7 @@ class ReportCommands extends Service
                     'review_id' => $data->review_id,
                     'product_discussion_master_id' => $data->product_discussion_master_id,
                     'product_discussion_response_id' => $data->product_discussion_response_id,
+                    'merchant_banner_id' => $data->merchant_banner_id,
                     'report_type' => $data->report_type,
                     'reported_by' => Auth::user()->id,
                     'reported_user_id' => $data->reported_user_id,
@@ -48,6 +50,12 @@ class ReportCommands extends Service
                     $discussion->status = 0;
                     $discussion->save();
                 }
+
+                if (isset($data->merchant_banner_id) && !empty($data->merchant_banner_id)) {
+                    $banner = MerchantBanner::find($data->merchant_banner_id);
+                    $banner->status = 0;
+                    $banner->save();
+                }
             }
 
             if ($data->report_type == 'violation_potential') {
@@ -56,6 +64,7 @@ class ReportCommands extends Service
                     'review_id' => $data->review_id,
                     'product_discussion_master_id' => $data->product_discussion_master_id,
                     'product_discussion_response_id' => $data->product_discussion_response_id,
+                    'merchant_banner_id' => $data->merchant_banner_id,
                     'report_type' => $data->report_type,
                     'reported_by' => Auth::user()->id,
                     'reported_user_id' => $data->reported_user_id,

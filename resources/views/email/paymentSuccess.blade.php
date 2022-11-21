@@ -109,7 +109,7 @@
                                     </tr>
                                     <tr>
                                         <td style="font-size: 14px;color:#666;padding: 10px 30px 10px 10px;">Waktu Pembayaran</td>
-                                        <td style="font-weight: bold;">{{ \Carbon\Carbon::parse($payment_date)->isoFormat('dddd, D MMMM Y, H:m')}} WIB</td>
+                                        <td style="font-weight: bold;">{{ \Carbon\Carbon::parse($order->payment->date_created)->isoFormat('dddd, D MMMM Y, H:m')}} WIB</td>
                                     </tr>
                                 </table>
                             </div>
