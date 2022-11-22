@@ -1252,15 +1252,20 @@ class TransactionController extends Controller
                     $customer = Customer::find($order->buyer_id);
                     $this->mailSenderManager->mailNewOrder($order->id);
                 } else {
-                    $response['success'] = true;
-                    $response['message'] = 'Berhasil merubah status pesanan';
-                    $response['status_code'] = '01';
+                    $response['response_code'] = '00';
+                    $response['response_message'] = 'Sukses.';
+                    $response['data'] = null;
                     return $response;
                 }
             }
 
             $this->mailSenderManager->mailPaymentSuccess($order->id);
-            return $response;
+
+            //Request custom response BA ICP
+            $response_ba['response_code'] = '00';
+            $response_ba['response_message'] = 'Sukses.';
+            $response_ba['data'] = null;
+            return $response_ba;
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

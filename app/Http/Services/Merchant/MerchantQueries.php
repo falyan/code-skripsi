@@ -145,6 +145,42 @@ class MerchantQueries extends Service
             $total_trx = static::getTotalTrx($merchant_id, 88);
 
             $banner = $merchant->banner->map(function ($item) {
+                return $item->url;
+            });
+
+            return [
+                'merchant' => $merged_data,
+                'banner' => $banner,
+                'meta_data' => [
+                    'total_product' => (string) static::format_number((int) $total_product),
+                    'total_transaction' => (string) static::format_number((int) $total_trx),
+                    'operational_hour' => $merchant->operationals()->first(['open_time', 'closed_time', 'timezone']),
+                ],
+            ];
+        } catch (Exception $th) {
+            if (in_array($th->getCode(), self::$error_codes)) {
+                throw new Exception($th->getMessage(), $th->getCode());
+            }
+            throw new Exception($th->getMessage(), 500);
+        }
+    }
+
+    public static function publicProfileV2($merchant_id)
+    {
+        try {
+            $merchant = Merchant::where('id', (int) $merchant_id)
+                ->first();
+
+            $mc = $merchant->toArray();
+            $cityname = $merchant->city->toArray();
+
+            $merged_data = array_merge($mc, ['city_name' => $cityname['name']]);
+            unset($merchant['banner']);
+            $total_product = $merchant->products->where('status', 1)->count();
+
+            $total_trx = static::getTotalTrx($merchant_id, 88);
+
+            $banner = $merchant->banner->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'url' => $item->url,

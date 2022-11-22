@@ -117,6 +117,16 @@ class MerchantController extends Controller
         }
     }
 
+    public function publicProfileV2($merchant_id)
+    {
+        try {
+            $merchant = MerchantQueries::publicProfileV2($merchant_id);
+            return $this->respondWithData($merchant, 'Berhasil mendapatkan data toko');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function getOfficialMerchant($category_key)
     {
         try {
