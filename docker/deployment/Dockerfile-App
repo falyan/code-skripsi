@@ -1,4 +1,5 @@
-FROM registry-iconx.air.id/iconcash/latios:php-fpm-7.4.28-pgsql-elastic
+ARG IMAGE_NAME
+FROM $IMAGE_NAME
 
 COPY ./docker/config/elastic_apm.ini /usr/local/etc/php/conf.d/elastic_apm.ini
 COPY ./docker/config/fpm-pool.conf /usr/local/etc/php-fpm.d/03-fpm-pool.conf

@@ -13,9 +13,9 @@ variables:
   DATASOURCE_LOKI: http://10.14.204.239/log/loki/loki/api/v1/push
 
   # IMAGE VARIABLES
+  DOCKER_IMAGE_BASE: $CI_REGISTRY_IMAGE:base
   DOCKER_IMAGE_APP: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-  #DOCKER_IMAGE_PHPFPM: $CI_REGISTRY_IMAGE:7.4.25-fpm-alpine3.13
-  DOCKER_IMAGE_PHPFPM: registry-iconx.air.id/iconcash/latios:php-fpm-7.4.28-pgsql-elastic
+  DOCKER_IMAGE_PHPFPM: registry-iconx.air.id/iconcash/latios:php-fpm-7.4.28-elastic
 
 Build Base:
   stage: build
@@ -23,13 +23,13 @@ Build Base:
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - docker build --no-cache -t $DOCKER_IMAGE_PHPFPM -f Dockerfile-Build .
-    - docker push $DOCKER_IMAGE_PHPFPM
+    - docker build --no-cache -t $DOCKER_IMAGE_BASE --build-arg IMAGE_NAME=$DOCKER_IMAGE_PHPFPM -f docker/deployment/Dockerfile-Build .
+    - docker push $DOCKER_IMAGE_BASE
   when: manual
   tags:
     - docker
 
-Package Container:
+Package Docker:
   stage: package
   image: docker:20.10.5
   services:
@@ -40,21 +40,35 @@ Package Container:
     - >
       if [ "$CI_COMMIT_REF_NAME" == "development" ]; then
         cp .env.development .env &&
-        docker build --no-cache -t $DOCKER_IMAGE_APP -f docker/deployment/Dockerfile-App . &&
+        docker build --no-cache -t $DOCKER_IMAGE_APP --build-arg IMAGE_NAME=$DOCKER_IMAGE_BASE -f docker/deployment/Dockerfile-App . &&
         docker push $DOCKER_IMAGE_APP
       elif [ "$CI_COMMIT_REF_NAME" == "staging" ]; then
         cp .env.staging .env &&
-        docker build --no-cache -t $DOCKER_IMAGE_APP -f docker/deployment/Dockerfile-App . &&
+        docker build --no-cache -t $DOCKER_IMAGE_APP --build-arg IMAGE_NAME=$DOCKER_IMAGE_BASE -f docker/deployment/Dockerfile-App . &&
         docker push $DOCKER_IMAGE_APP
       else
         cp .env.production .env &&
-        docker build --no-cache -t $DOCKER_IMAGE_APP -f docker/deployment/Dockerfile-App . &&
+        docker build --no-cache -t $DOCKER_IMAGE_APP --build-arg IMAGE_NAME=$DOCKER_IMAGE_BASE -f docker/deployment/Dockerfile-App . &&
         docker push $DOCKER_IMAGE_APP
       fi
-  only:
-    - development
-    - staging
-    - tags
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "development" || $CI_COMMIT_BRANCH == "staging" || $CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+  tags:
+    - docker
+
+Package k8s:
+  stage: package
+  image: docker:20.10.5
+  services:
+    - docker:20.10.5-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - >
+      docker build --no-cache -t $DOCKER_IMAGE_APP --build-arg IMAGE_NAME=$DOCKER_IMAGE_BASE -f docker/deployment/Dockerfile-App . &&
+      docker push $DOCKER_IMAGE_APP
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+-k8s$/'
   tags:
     - docker
 
