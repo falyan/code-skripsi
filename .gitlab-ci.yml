@@ -110,7 +110,7 @@ Deploy Production:
   environment:
     name: URL Production
     url: https://api-mkp.iconcash.id/v1/core/
-  only:
-    - tags
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   tags:
     - docker
