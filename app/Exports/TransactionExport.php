@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class TransactionExport implements FromArray, WithHeadings, WithTitle, WithEvents, WithCustomStartCell, WithColumnWidths, WithStyles
@@ -37,6 +38,8 @@ class TransactionExport implements FromArray, WithHeadings, WithTitle, WithEvent
             'Metode Pembayaran',
             'Status',
             'Related Pln Mobile Customer ID',
+            'Jasa Pengiriman',
+            'Biaya Pengiriman',
             'Dibuat Oleh',
             'Diupdate Oleh',
         ];
@@ -54,12 +57,14 @@ class TransactionExport implements FromArray, WithHeadings, WithTitle, WithEvent
             'B' => 30,
             'C' => 15,
             'D' => 15,
-            'E' => 10,
+            'E' => 15,
             'F' => 20,
             'G' => 20,
             'H' => 20,
             'I' => 20,
             'J' => 20,
+            'K' => 20,
+            'L' => 20,
         ];
     }
 
@@ -67,9 +72,18 @@ class TransactionExport implements FromArray, WithHeadings, WithTitle, WithEvent
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                $event->sheet->getStyle('A2:F2')->applyFromArray([
-                    'font' => ['bold' => true],
-                ]);
+                // $event->sheet->getStyle('A2:F2')->applyFromArray([
+                //     'font' => ['bold' => true],
+                // ]);
+
+                //append "Rp " to all cells in column D
+                $event->sheet->getDelegate()->getStyle('D2:D' . $event->sheet->getDelegate()->getHighestRow())
+                    ->getNumberFormat()
+                    ->setFormatCode('Rp #,##0');
+
+                $event->sheet->getDelegate()->getStyle('J2:J' . $event->sheet->getDelegate()->getHighestRow())
+                    ->getNumberFormat()
+                    ->setFormatCode('Rp #,##0');
             },
         ];
     }

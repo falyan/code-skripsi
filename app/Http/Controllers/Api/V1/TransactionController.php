@@ -674,6 +674,8 @@ class TransactionController extends Controller
                     'payment_method' => $transaction->payment->payment_method ?? '',
                     'status_name' => $transaction->progress_active->status_name,
                     'related_pln_mobile_customer_id' => $transaction->related_pln_mobile_customer_id,
+                    'delivery_method' => $transaction->delivery->delivery_method ?? '',
+                    'delivery_fee' => $transaction->delivery->delivery_fee ?? '',
                     'created_by' => $transaction->created_by,
                     'updated_by' => $transaction->updated_by,
                 ];
