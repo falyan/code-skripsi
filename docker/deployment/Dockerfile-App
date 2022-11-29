@@ -6,9 +6,11 @@ COPY ./docker/config/nginx-site.conf /etc/nginx/sites-enabled/default
 #COPY ./docker/config/elastic_apm.ini /usr/local/etc/php/conf.d/elastic_apm.ini
 COPY ./docker/config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-RUN composer update
+COPY --chown=www-data . /var/www/html/
+
 RUN php artisan swagger-lume:generate
 RUN rm -Rf /var/www/html/docker
 
 EXPOSE 80
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+
