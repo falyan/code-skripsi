@@ -16,16 +16,16 @@ RUN docker-php-ext-install mysqli pgsql pdo pdo_mysql pdo_pgsql zip bcmath gd mb
     docker-php-ext-enable mysqli pgsql pdo pdo_mysql pdo_pgsql zip bcmath gd mbstring
 
 
-RUN mkdir -p /home/apm-agent && \
-    cd /home/apm-agent && \
-    git clone https://github.com/elastic/apm-agent-php.git apm && \
-    cd apm/src/ext && \
-    /usr/local/bin/phpize && ./configure --enable-elastic_apm && \
-    make clean && make && make install
+# RUN mkdir -p /home/apm-agent && \
+#     cd /home/apm-agent && \
+#     git clone https://github.com/elastic/apm-agent-php.git apm && \
+#     cd apm/src/ext && \
+#     /usr/local/bin/phpize && ./configure --enable-elastic_apm && \
+#     make clean && make && make install
 
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 COPY ./docker/config/php.ini /usr/local/etc/php/php.ini
-COPY ./docker/config/elastic_apm.ini /usr/local/etc/php/conf.d/elastic_apm.ini
+#COPY ./docker/config/elastic_apm.ini /usr/local/etc/php/conf.d/elastic_apm.ini
 COPY ./docker/config/fpm-pool.conf /usr/local/etc/php-fpm.d/fpm-pool.conf
 COPY ./docker/config/nginx.conf /etc/nginx/nginx.conf
 COPY ./docker/config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
