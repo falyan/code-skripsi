@@ -4,9 +4,8 @@ ARG IMAGE_NAME
 FROM composer:2.1.8 as composer
 
 # Build PHP FPM & NGINX
-FROM $IMAGE_NAME
-
-COPY --from=composer /usr/bin/composer /usr/bin/composer
+# FROM php:7.4.25-fpm-alpine3.13
+FROM php:7.4.25-fpm-alpine3.13
 
 RUN apk update && \
     apk --no-cache --update add build-base autoconf curl-dev unzip zip git jq && \
@@ -31,7 +30,7 @@ COPY ./docker/config/fpm-pool.conf /usr/local/etc/php-fpm.d/fpm-pool.conf
 COPY ./docker/config/nginx.conf /etc/nginx/nginx.conf
 COPY ./docker/config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-RUN rm -Rf /etc/nginx/conf.d/default.conf 
+RUN rm -Rf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
