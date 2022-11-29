@@ -18,9 +18,17 @@ class MerchantCommands extends Service
         try {
             DB::beginTransaction();
             $merchant = Merchant::find($merchant_id);
+
+            if (isset($request['is_npwp_required'])) {
+                $request['is_npwp_required'] = in_array($request['is_npwp_required'], [1, true]) ? true : false;
+            } else {
+                $request['is_npwp_required'] = $merchant->is_npwp_required;
+            }
+
             $merchant->update([
                 'slogan' => data_get($request, 'slogan'),
-                'description' => data_get($request, 'description')
+                'description' => data_get($request, 'description'),
+                'is_npwp_required' => data_get($request, 'is_npwp_required'),
             ]);
 
             $merchant->operationals()->delete();

@@ -30,7 +30,10 @@ class Merchant extends Model
     /**
      * @var array Attributes to be cast to native types
      */
-    protected $casts = [];
+    protected $casts = [
+        'can_credit' => 'boolean',
+        'is_npwp_required' => 'boolean',
+    ];
 
     /**
      * @var array Attributes to be cast to JSON
