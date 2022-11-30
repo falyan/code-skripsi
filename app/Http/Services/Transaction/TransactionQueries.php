@@ -206,7 +206,9 @@ class TransactionQueries extends Service
                             ->orWhere('phone', 'ilike', "%{$keyword}%");
                     })
                     ->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
-            })->orderBy('order.created_at', 'desc');
+            })->whereHas('progress_active', function ($q) {
+            $q->whereNotIn('status_code', ['00', '99']);
+        })->orderBy('order.created_at', 'desc');
 
         $data = $this->filter($data, $filter);
         $data = $this->transactionPaginate($data, $limit);
@@ -230,7 +232,9 @@ class TransactionQueries extends Service
                             ->orWhere('phone', 'ilike', "%{$keyword}%");
                     })
                     ->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
-            })->orderBy('order.created_at', 'desc');
+            })->whereHas('progress_active', function ($q) {
+            $q->whereNotIn('status_code', ['00', '99']);
+        })->orderBy('order.created_at', 'desc');
 
         $data = $this->filter($data, $filter);
         $data = $data->count();

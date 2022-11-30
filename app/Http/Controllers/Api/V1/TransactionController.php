@@ -641,7 +641,7 @@ class TransactionController extends Controller
     public function exportExcel(Request $request)
     {
         $validator = Validator::make(request()->all(), [
-            'status_code' => 'string|in:01,02,03,08,09,88',
+            'status_code' => 'string',
             'start_date' => 'date',
             'end_date' => 'date',
         ], [
