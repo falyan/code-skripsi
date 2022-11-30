@@ -13,7 +13,6 @@ use App\Models\Product;
 use App\Models\VariantValueProduct;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Collection;
 
 class TransactionQueries extends Service
 {
@@ -117,6 +116,31 @@ class TransactionQueries extends Service
         return $data;
     }
 
+    public function getTransactionToExport($column_name, $column_value, $filter = null)
+    {
+
+        $data = Order::with([
+            'detail' => function ($product) {
+                $product->with(['product' => function ($j) {
+                    $j->select('id', 'merchant_id', 'name')->with(['product_photo']);
+                }]);
+            }, 'progress_active', 'merchant', 'delivery', 'buyer',
+        ])->where(
+            $column_name,
+            $column_value,
+        )->whereHas('progress_active', function ($j) use ($filter) {
+            if (isset($filter['status_code']) && !empty($filter['status_code'])) {
+                $j->whereIn('status_code', explode(',', $filter['status_code']));
+            } else {
+                $j->whereIn('status_code', ['01', '02', '03', '08', '09', '88']);
+            }
+        })->when(!empty($filter['start_date']) && !empty($filter['end_date']), function ($query) use ($filter) {
+            $query->whereDate('created_at', '>=', $filter['start_date'])->whereDate('created_at', '<=', $filter['end_date']);
+        })->orderBy('created_at', 'desc')->get();
+
+        return $data;
+    }
+
     public function getTransactionDone($column_name, $column_value, $status_code, $limit = 10, $filter = [], $page = 1)
     {
         $data = Order::with([
@@ -158,7 +182,7 @@ class TransactionQueries extends Service
                 $region->with(['city', 'district']);
             }, 'buyer', 'payment', 'review' => function ($review) {
                 $review->with(['review_photo']);
-            }
+            },
         ])->find($id);
 
         $data->iconpay_product_id = static::$productid;
@@ -173,7 +197,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer'
+            }, 'progress_active', 'merchant', 'delivery', 'buyer',
         ])->where('order.' . $column_name, $column_value)
             ->where(function ($q) use ($keyword, $column_name) {
                 $q
@@ -197,7 +221,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer'
+            }, 'progress_active', 'merchant', 'delivery', 'buyer',
         ])->where('order.' . $column_name, $column_value)
             ->where(function ($q) use ($keyword, $column_name) {
                 $q
@@ -216,14 +240,14 @@ class TransactionQueries extends Service
 
     public function getStatusOrder($id, $allStatus = false)
     {
-        $data = Order::when($allStatus == false, function($query) {
+        $data = Order::when($allStatus == false, function ($query) {
             $query->with('progress_active');
-        })->when($allStatus == true, function($query) {
+        })->when($allStatus == true, function ($query) {
             $query->with('progress');
         })->find($id);
         return $data;
     }
-    
+
     public function checkAwb($awb)
     {
         $data = OrderDelivery::where('awb_number', $awb)->first();
@@ -349,6 +373,7 @@ class TransactionQueries extends Service
 
             return $merchant;
         }, data_get($datas, 'merchants'));
+        $datas['buyer_npwp'] = auth()->user()->npwp;
         $datas['merchants'] = $new_merchant;
         $datas['total_discount'] = $total_discount;
         $datas['total_payment'] -= $total_discount;

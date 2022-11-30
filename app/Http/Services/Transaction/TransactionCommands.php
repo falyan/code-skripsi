@@ -430,7 +430,7 @@ class TransactionCommands extends Service
             DB::commit();
             return [
                 'success' => true,
-                'status_code' => 201,
+                'status_code' => 200,
                 'message' => 'Berhasil create order',
                 'data' => $response,
             ];
