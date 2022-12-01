@@ -15,7 +15,8 @@ variables:
   # IMAGE VARIABLES
   DOCKER_IMAGE_BASE: $CI_REGISTRY_IMAGE:base
   DOCKER_IMAGE_APP: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-  DOCKER_IMAGE_PHPFPM: registry-iconx.air.id/iconcash/latios:php-fpm-7.4.28
+  DOCKER_IMAGE_PHPFPM: $CI_REGISTRY_IMAGE:7.4.25-fpm-alpine3.13
+  #DOCKER_IMAGE_PHPFPM: registry-iconx.air.id/iconcash/latios:php-fpm-7.4.28
 
 Build Base:
   stage: build
