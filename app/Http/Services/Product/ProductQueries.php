@@ -302,6 +302,55 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function getProductByMerchantIdBuyerAndSearch($merchant_id, $size, $filter = [], $sortby = null, $current_page)
+    {
+        $product = new Product();
+
+        $products = $product
+            ->where(['merchant_id' => $merchant_id, 'status' => 1])
+            ->withCount(['order_details' => function ($order_details) {
+                $order_details->whereHas('order', function ($order) {
+                    $order->whereHas('progress_done');
+                });
+            }])
+            ->with(['product_photo', 'product_stock', 'merchant' => function ($merchant) {
+                $merchant->with('city:id,name');
+            }, 'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            }]);
+
+        if (!empty($filter['category_id_parent'])) {
+            $cat_id_parent = $filter['category_id_parent'];
+
+            $categories = MasterData::with(['child' => function ($j) {
+                $j->with('child');
+            }])->where('type', 'product_category')->where('id', $cat_id_parent)->get();
+
+            $cat_child_id = [];
+            foreach ($categories as $category) {
+                foreach ($category->child as $child) {
+                    if (!$child->child->isEmpty()) {
+                        foreach ($child->child as $children) {
+                            array_push($cat_child_id, $children->id);
+                        }
+                    }
+                }
+            }
+
+            $products = $products->whereIn('category_id', $cat_child_id);
+        }
+
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $data = $this->productPaginate($sorted_data, $size);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
     public function getProductByCategory($category_id, $filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         $categories = MasterData::with(['child' => function ($j) {

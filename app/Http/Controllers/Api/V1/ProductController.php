@@ -292,7 +292,6 @@ class ProductController extends Controller
                 $merchant_id = Auth::user()->merchant_id;
                 return $this->productCommands->updateStockProduct($product_id, $merchant_id, $request);
             }
-
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -350,7 +349,6 @@ class ProductController extends Controller
             } else {
                 return $this->productCommands->updatePriceProduct($product_id, $request);
             }
-
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -430,6 +428,20 @@ class ProductController extends Controller
             $sorting = $request->sortby ?? null;
             $page = $request->page ?? 1;
             return $this->productQueries->getProductByMerchantIdBuyer($merchant_id, $size, $filter, $sorting, $page);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    //Get Produk Berdasarkan Merchant Buyer dan Category
+    public function getProductByMerchantIdBuyerAndSearch($merchant_id, Request $request)
+    {
+        try {
+            $size = request()->query('size', 10);
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? null;
+            $page = $request->page ?? 1;
+            return $this->productQueries->getProductByMerchantIdBuyerAndSearch($merchant_id, $size, $filter, $sorting, $page);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
