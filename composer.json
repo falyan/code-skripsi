@@ -19,6 +19,7 @@
         "laravelista/lumen-vendor-publish": "^8.0",
         "league/commonmark": "1.6.6",
         "league/fractal": "^0.19.2",
+        "maatwebsite/excel": "^3.1",
         "netflie/monolog-stackdriver-handler": "^0.0.1",
         "phpseclib/phpseclib": "^3.0",
         "tymon/jwt-auth": "^1.0",

@@ -31,6 +31,7 @@ class MerchantController extends Controller
             'slogan' => 'required',
             'description' => 'required',
             'operational' => 'required',
+            'is_npwp_required' => 'required|boolean'
         ], [
             'required' => ':attribute diperlukan.',
         ]);

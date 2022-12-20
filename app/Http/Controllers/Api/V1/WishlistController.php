@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Services\Wishlist\WishlistCommands;
 use App\Http\Services\Wishlist\WishlistQueries;
-use Illuminate\Http\Request;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -24,16 +24,17 @@ class WishlistController extends Controller
         $this->wishlistQueries = new WishlistQueries();
     }
 
-    public function addOrRemoveWishlist(Request $request){
+    public function addOrRemoveWishlist(Request $request)
+    {
         $request['customer_id'] = Auth::id();
         try {
             $rules = [
                 'merchant_id' => 'required',
-                'product_id' => 'required'
+                'product_id' => 'required',
             ];
 
             $validator = Validator::make($request->all(), $rules, [
-                'required' => ':attribute diperlukan.'
+                'required' => ':attribute diperlukan.',
             ]);
 
             if ($validator->fails()) {
@@ -48,24 +49,29 @@ class WishlistController extends Controller
             }
 
             return $this->wishlistCommand->addOrRemoveWishlist($request);
-        }catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, $request);
         }
     }
 
-    public function getListWishlistByCustomer(){
+    public function getListWishlistByCustomer(Request $request)
+    {
         try {
-            return $this->wishlistQueries->getListWishlistByCustomer(Auth::id());
-        }catch (Exception $e){
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
+            return $this->wishlistQueries->getListWishlistByCustomer(Auth::id(), $limit, $page);
+        } catch (Exception $e) {
             return $this->respondWithData($e, 'Error', 400);
         }
     }
 
-    public function searchListWishlistByName(Request $request){
+    public function searchListWishlistByName(Request $request)
+    {
         $request['customer_id'] = Auth::id();
         try {
             $rules = [
-                'keyword' => 'required|min:3'
+                'keyword' => 'required|min:3',
             ];
 
             $validator = Validator::make($request->all(), $rules, [
@@ -84,8 +90,11 @@ class WishlistController extends Controller
                 return $this->respondValidationError($errors, 'Validation Error!');
             }
 
-            return $this->wishlistQueries->searchListWishlistByName($request);
-        }catch (Exception $e){
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
+            return $this->wishlistQueries->searchListWishlistByName($request, $limit, $page);
+        } catch (Exception $e) {
             return $this->respondErrorException($e, $request);
         }
     }

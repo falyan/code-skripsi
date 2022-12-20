@@ -40,6 +40,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('stock/edit/{product_id}', 'ProductController@updateStockProduct');
                     $router->post('price/edit/{product_id}', 'ProductController@updatePriceProduct');
                     $router->post('featured/edit/', 'ProductController@updateProductFeatured');
+                    $router->post('archived/{product_id}', 'ProductController@updateProductArchived');
                 });
 
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {
@@ -105,7 +106,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('detail/{id}', 'ProductController@getProductByIdSeller');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
                     $router->get('search', 'ProductController@searchProductSeller');
-                    $router->get('filter', 'ProductController@getProductByFilter');
+                    $router->post('filter', 'ProductController@getProductByFilter');
+                    $router->post('filter/count', 'ProductController@countProductByFilter');
                     $router->get('featured', 'ProductController@getProductFeatured');
                 });
 
@@ -131,6 +133,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('/search', 'TransactionController@sellerSearchTransaction');
                     $router->get('/search/count', 'TransactionController@sellerCountSearchTransaction');
                     $router->get('/detail/{id}', 'TransactionController@detailTransaction');
+                    $router->get('/export/excel', 'TransactionController@exportExcel');
                 });
 
                 $router->group(['prefix' => 'notification'], static function () use ($router) {

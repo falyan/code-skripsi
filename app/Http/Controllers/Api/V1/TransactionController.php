@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exports\TransactionExport;
 use App\Http\Controllers\Controller;
 use App\Http\Services\Manager\IconcashManager;
-use App\Http\Services\Manager\IconpayManager;
 use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Product\ProductCommands;
@@ -13,9 +13,7 @@ use App\Http\Services\Transaction\TransactionQueries;
 use App\Http\Services\Voucher\VoucherCommands;
 use App\Models\Customer;
 use App\Models\IconcashInquiry;
-use App\Models\Merchant;
 use App\Models\Order;
-use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\User;
@@ -27,6 +25,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Input;
+use Maatwebsite\Excel\Facades\Excel;
 use stdClass;
 
 class TransactionController extends Controller
@@ -146,6 +145,115 @@ class TransactionController extends Controller
             }
 
             return $response;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    // Checkout V2
+    public function checkoutV2()
+    {
+        $validator = Validator::make(request()->all(), [
+            'destination_info.receiver_name' => 'required',
+            'merchants' => 'required|array',
+            'merchants.*.merchant_id' => 'required',
+            'merchants.*.total_weight' => 'required',
+            'merchants.*.delivery_method' => 'required',
+            // 'merchants.*.image_logistic' => 'required',
+            'merchants.*.total_amount' => 'required',
+            'merchants.*.total_payment' => 'required',
+            'merchants.*.products' => 'required',
+            'merchants.*.products.*.product_id' => 'required',
+            'merchants.*.products.*.quantity' => 'required',
+            'merchants.*.products.*.price' => 'required',
+            'merchants.*.products.*.weight' => 'required',
+            'merchants.*.products.*.insurance_cost' => 'required',
+            'merchants.*.products.*.discount' => 'required',
+            'merchants.*.products.*.total_price' => 'required',
+            'merchants.*.products.*.total_weight' => 'required',
+            'merchants.*.products.*.total_discount' => 'required',
+            'merchants.*.products.*.total_insurance_cost' => 'required',
+            'merchants.*.products.*.total_amount' => 'required',
+            'merchants.*.products.*.payment_note' => 'sometimes',
+            "npwp" => 'nullable|string',
+            'save_npwp' => 'nullable|boolean|required_with:npwp',
+        ], [
+            'required' => ':attribute diperlukan.',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            $customer = Auth::user();
+            $request = request()->all();
+            $request['merchants'] = array_map(function ($merchant) {
+                if (data_get($merchant, 'delivery_method') == 'custom') {
+                    if (data_get($merchant, 'has_custom_logistic') == false || null) {
+                        throw new Exception('Merchant ' . data_get($merchant, 'name') . ' tidak mendukung pengiriman oleh seller', 404);
+                    }
+                    data_set($merchant, 'delivery_method', 'Pengiriman oleh Seller');
+                }
+                array_map(function ($item) {
+                    if (!$product = Product::find(data_get($item, 'product_id'))) {
+                        throw new Exception('Produk dengan id ' . data_get($item, 'product_id') . ' tidak ditemukan', 404);
+                    }
+                    if ($product->stock_active->amount < data_get($item, 'quantity')) {
+                        throw new Exception('Stok produk dengan id ' . $product->id . ' tidak mencukupi', 400);
+                    }
+                    if (data_get($item, 'quantity') < $product->minimum_purchase) {
+                        throw new Exception('Pembelian minimum untuk produk ' . $product->name . ' adalah ' . $product->minimum_purchase, 400);
+                    }
+                    if (data_get($item, 'variant_value_product_id') != null) {
+                        if (
+                            VariantStock::where('variant_value_product_id', data_get($item, 'variant_value_product_id'))
+                            ->where('status', 1)->pluck('amount')->first() < data_get($item, 'quantity')
+                        ) {
+                            throw new Exception('Stok variant produk dengan id ' . data_get($item, 'variant_value_product_id') . ' tidak mencukupi', 400);
+                        }
+                    }
+                }, data_get($merchant, 'products'));
+                return $merchant;
+            }, request()->get('merchants'));
+            $response = $this->transactionCommand->createOrderV2($request, $customer);
+
+            if ($response['success'] == true) {
+                array_map(function ($merchant) {
+                    array_map(function ($item) use ($merchant) {
+                        $productCommand = new ProductCommands();
+
+                        if (data_get($item, 'variant_value_product_id') != null) {
+                            $variant_stock = VariantStock::where('variant_value_product_id', data_get($item, 'variant_value_product_id'))
+                                ->where('status', 1)->first();
+
+                            $data['amount'] = $variant_stock['amount'] - data_get($item, 'quantity');
+                            $data['full_name'] = Auth::user()->full_name;
+
+                            $productCommand->updateStockVariantProduct(data_get($item, 'variant_value_product_id'), $data);
+                        }
+
+                        $stock = ProductStock::where('product_id', data_get($item, 'product_id'))
+                            ->where('merchant_id', data_get($merchant, 'merchant_id'))->where('status', 1)->first();
+
+                        $data['amount'] = $stock['amount'] - data_get($item, 'quantity');
+                        $data['uom'] = $stock['uom'];
+                        $data['full_name'] = Auth::user()->full_name;
+
+                        $productCommand->updateStockProduct(data_get($item, 'product_id'), data_get($merchant, 'merchant_id'), $data);
+                    }, data_get($merchant, 'products'));
+                }, $request['merchants']);
+            }
+
+            // return $response;
+            return response()->json($response, isset($response['status_code']) ? $response['status_code'] : 200);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -529,6 +637,60 @@ class TransactionController extends Controller
         }
     }
 
+    //Export order to excel
+    public function exportExcel(Request $request)
+    {
+        $validator = Validator::make(request()->all(), [
+            'status_code' => 'string',
+            'start_date' => 'date',
+            'end_date' => 'date',
+        ], [
+            'required' => ':attribute diperlukan.',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        $data = [];
+        try {
+
+            $transactions = $this->transactionQueries->getTransactionToExport('merchant_id', Auth::user()->merchant_id, $request->all());
+            // return $transactions;
+            foreach ($transactions as $transaction) {
+                $data[] = [
+                    'trx_no' => $transaction->trx_no,
+                    'buyer_name' => $transaction->buyer->full_name ?? '',
+                    'order_date' => $transaction->order_date,
+                    'total_amount' => $transaction->total_amount,
+                    'total_weight' => $transaction->total_weight,
+                    'payment_method' => $transaction->payment->payment_method ?? '',
+                    'status_name' => $transaction->progress_active->status_name,
+                    'related_pln_mobile_customer_id' => $transaction->related_pln_mobile_customer_id,
+                    'delivery_method' => $transaction->delivery->delivery_method ?? '',
+                    'delivery_fee' => $transaction->delivery->delivery_fee ?? '',
+                    'created_by' => $transaction->created_by,
+                    'updated_by' => $transaction->updated_by,
+                ];
+            }
+
+            // return $data;
+            $response = Excel::download(new TransactionExport($data), 'MKP-' . date('YmdHis') . '.xlsx');
+
+            return $response->deleteFileAfterSend(false);
+
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function sellerSearchTransaction(Request $request)
     {
         try {
@@ -750,7 +912,7 @@ class TransactionController extends Controller
                     $mailSender = new MailSenderManager();
                     $mailSender->mailAcceptOrder($order_id);
                 } else {
-                    return $this->respondWithResult(false, 'Pesanan '. $order_id .' tidak dalam status menunggu konfirmasi!', 400);
+                    return $this->respondWithResult(false, 'Pesanan ' . $order_id . ' tidak dalam status menunggu konfirmasi!', 400);
                 }
             }
 
@@ -967,7 +1129,7 @@ class TransactionController extends Controller
     {
         try {
             $data = $this->transactionQueries->getStatusOrder($id);
-            if (in_array($data->progress_active->status_code, ['03','08'])) {
+            if (in_array($data->progress_active->status_code, ['03', '08'])) {
                 if ($data->progress_active->status_code == '03') {
                     $notes = 'finish on delivery';
                     $this->transactionCommand->updateOrderStatus($id, '08', $notes);
@@ -1274,7 +1436,7 @@ class TransactionController extends Controller
     public function updatePaymentStatusForBOT()
     {
         $validator = Validator::make(request()->all(), [
-            'no_reference' => 'required'
+            'no_reference' => 'required',
         ], [
             'required' => ':attribute diperlukan.',
         ]);
@@ -1407,7 +1569,8 @@ class TransactionController extends Controller
         }
     }
 
-    public function retryVoucher($order_id){
+    public function retryVoucher($order_id)
+    {
         try {
             DB::beginTransaction();
             $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
@@ -1437,7 +1600,8 @@ class TransactionController extends Controller
         }
     }
 
-    public function resendEmailVoucher($order_id){
+    public function resendEmailVoucher($order_id)
+    {
         try {
             $mailSender = new MailSenderManager();
             $mailSender->mailResendVoucher($order_id);

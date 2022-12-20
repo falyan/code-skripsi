@@ -43,27 +43,33 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getProductByMerchantIdSeller($merchant_id, $filter = '', $sortby = null, $current_page = 1, $limit, $featured)
+    public function getProductByMerchantIdSeller($merchant_id, $filter = [], $sortby = null, $current_page = 1, $limit, $featured)
     {
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'varian_product' => function ($query) {
-            $query->with(['variant_stock'])->where('main_variant', true);
-        }])->where('merchant_id', $merchant_id)
-            ->when($featured == true, function ($q) {
-                $q->orderBy('is_featured_product', 'DESC');
-            })
-            ->when($filter != '', function ($q) use ($filter) {
-                $filters = explode(",", $filter);
-                if (define('status', $filters)) {
-                    $q->where('status', 1);
-                }
-            });
 
-        $immutable_data = $products->get()->map(function ($product) {
+        $products = $product
+            ->where(['merchant_id' => $merchant_id])
+            ->withCount(['order_details' => function ($order_details) {
+                $order_details->whereHas('order', function ($order) {
+                    $order->whereHas('progress_done');
+                });
+            }])
+            ->with(['product_photo', 'product_stock', 'is_wishlist', 'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            }])->when($featured == true, function ($query) {
+            $query->where('is_featured_product', true);
+        });
+        // ->when($filter != '', function ($q) use ($filter) {
+        //     $filters = explode(",", $filter);
+        //     if (define('status', $filters)) {
+        //         $q->where('status', 1);
+        //     }
+        // });
+
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $immutable_data = $sorted_data->get()->map(function ($product) {
             $product->reviews = null;
             // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
             // $product->avg_rating = 0.0;
@@ -641,6 +647,55 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function filterProductBySeller($merchant_id, $status, $limit, $filter = [], $sortby = null, $page = 1)
+    {
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo', 'is_wishlist'])
+            ->where('merchant_id', $merchant_id)
+            ->when(!empty($status), function ($query) use ($status) {
+                switch ($status) {
+                    case 'wait_approval':
+                        $query->where('status', 0);
+                        break;
+                    case 'available':
+                        $query->where('status', 1);
+                        break;
+                    case 'declined':
+                        $query->where('status', 2);
+                        break;
+                    case 'blocked':
+                        $query->where('status', 3);
+                        break;
+                    case 'archived':
+                        $query->where('status', 9);
+                        break;
+                    default:
+                        break;
+                }
+            });
+
+        $products = $this->filter($products, $filter);
+        $products = $this->sorting($products, $sortby);
+
+        $immutable_data = $products->get()->map(function ($product) {
+            $product->reviews = null;
+            //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            // $product->avg_rating = 0.0;
+            return $product;
+        });
+
+        $data = static::paginate($immutable_data->toArray(), $limit, $page);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
     public function getRecommendProductByCategory($category_key, $filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         $categories = MasterData::with(['child' => function ($j) {
@@ -875,6 +930,7 @@ class ProductQueries extends Service
         }])->where([
             'merchant_id' => $merchant_id,
             'etalase_id' => $etalase_id,
+            'status' => 1,
         ]);
 
         $filtered_data = static::filter($products, $filter);
@@ -956,6 +1012,8 @@ class ProductQueries extends Service
             $max_price = $filter['max_price'] ?? null;
             $min_rating = $filter['min_rating'] ?? null;
             $max_rating = $filter['max_rating'] ?? null;
+            $merchant_id = $filter['merchant_id'] ?? null;
+            $status = $filter['status'] ?? null;
 
             $data = $model->when(!empty($keyword), function ($query) use ($keyword) {
                 $query->where('name', 'ILIKE', "%{$keyword}%");
@@ -987,6 +1045,28 @@ class ProductQueries extends Service
                 $query->where('avg_rating', '>=', $min_rating);
             })->when(!empty($max_rating), function ($query) use ($max_rating) {
                 $query->where('avg_rating', '<=', $max_rating);
+            })->when(!empty($merchant_id), function ($query) use ($merchant_id) {
+                $query->where('merchant_id', $merchant_id);
+            })->when(!empty($status), function ($query) use ($status) {
+                switch ($status) {
+                    case 'wait_approval':
+                        $query->where('status', 0);
+                        break;
+                    case 'available':
+                        $query->where('status', 1);
+                        break;
+                    case 'declined':
+                        $query->where('status', 2);
+                        break;
+                    case 'blocked':
+                        $query->where('status', 3);
+                        break;
+                    case 'archived':
+                        $query->where('status', 9);
+                        break;
+                    default:
+                        break;
+                }
             });
 
             return $data;

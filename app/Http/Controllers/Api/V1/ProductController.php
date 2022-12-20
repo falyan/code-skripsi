@@ -122,6 +122,16 @@ class ProductController extends Controller
         }
     }
 
+    //Update Produk Archived
+    public function updateProductArchived($product_id, Request $request)
+    {
+        try {
+            return $this->productCommands->updateProductArchived($product_id, $request);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, $request);
+        }
+    }
+
     //Update Produk Featured
     public function updateProductFeatured(Request $request)
     {
@@ -186,7 +196,7 @@ class ProductController extends Controller
         try {
             $merchant_id = Auth::user()->merchant_id;
             $limit = $request->limit ?? 10;
-            $filter = $request->filter ?? '';
+            $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
             $featured = $request->is_featured_product ?? false;
             $page = $request->page ?? 1;
@@ -434,7 +444,7 @@ class ProductController extends Controller
                 'path_url' => "start.recommend",
                 'query' => [],
                 'body' => Carbon::now('Asia/Jakarta'),
-                'response' => 'Start'
+                'response' => 'Start',
             ]);
             $filter = $request->filter ?? [];
             $sortby = $request->sortby ?? null;
@@ -533,6 +543,22 @@ class ProductController extends Controller
         }
     }
 
+    //get product by filter (seller)
+    public function getProductByFilter(Request $request)
+    {
+        try {
+            $merchant_id = Auth::user()->merchant_id;
+            $status = $request->status;
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? null;
+            $page = $request->page ?? 1;
+            return $this->productQueries->filterProductBySeller($merchant_id, $status, $limit, $filter, $sorting, $page);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function getRecommendProductByCategory($category_key, Request $request)
     {
         try {
@@ -561,7 +587,7 @@ class ProductController extends Controller
         }
     }
 
-    public function getElectricVehicleWithCategoryById($category_key, $sub_category_key ,$id)
+    public function getElectricVehicleWithCategoryById($category_key, $sub_category_key, $id)
     {
         try {
             $data = $this->productQueries->getElectricVehicleWithCategoryById($category_key, $sub_category_key, $id);
@@ -635,7 +661,8 @@ class ProductController extends Controller
         }
     }
 
-    public function checkProductStock(Request $request){
+    public function checkProductStock(Request $request)
+    {
         try {
             $rules = [
                 'product_id' => 'array|required',
@@ -643,7 +670,7 @@ class ProductController extends Controller
 
             $validator = Validator::make($request->all(), $rules, [
                 'required' => ':attribute diperlukan.',
-                'numeric' => ':attribute harus berupa angka.'
+                'numeric' => ':attribute harus berupa angka.',
             ]);
 
             if ($validator->fails()) {
@@ -658,7 +685,7 @@ class ProductController extends Controller
             }
 
             return $this->productQueries->checkProductStock($request);
-        }catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
