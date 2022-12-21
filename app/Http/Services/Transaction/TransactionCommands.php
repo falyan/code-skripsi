@@ -61,7 +61,7 @@ class TransactionCommands extends Service
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(7))->timestamp);
 
             foreach ($datas['merchants'] as $m) {
-                if ($m['is_npwp_required'] === true) {
+                if (isset($m['is_npwp_required']) && $m['is_npwp_required'] === true) {
                     if (!isset($datas['npwp']) || empty($datas['npwp'])) {
                         return [
                             'success' => false,
@@ -277,7 +277,7 @@ class TransactionCommands extends Service
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(7))->timestamp);
 
             foreach ($datas['merchants'] as $m) {
-                if ($m['is_npwp_required'] === true) {
+                if (isset($m['is_npwp_required']) && $m['is_npwp_required'] === true) {
                     if (!isset($datas['npwp']) || empty($datas['npwp'])) {
                         return [
                             'success' => false,
