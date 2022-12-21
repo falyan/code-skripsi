@@ -148,7 +148,7 @@ class MailSenderManager
         });
 
         if (Mail::failures()) {
-            Log::error('Gagal mengirim email pesanan sampai untuk ke email: ' . $customer->email, );
+            Log::error('Gagal mengirim email pesanan sampai untuk ke email: ' . $customer->email,);
         } else {
             Log::info('Berhasil mengirim email pesanan sampai ke email: ' . $customer->email);
         }

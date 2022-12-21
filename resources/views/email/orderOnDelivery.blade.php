@@ -139,9 +139,9 @@
 
                                                 <p style="color: #666;">
                                                     {{ $order->delivery->address ?? '-' }},
-                                                    {{ $order->delivery->district->name }},
-                                                    {{ $order->delivery->city->name }},
-                                                    {{ $order->delivery->postal_code }}
+                                                    {{ $order->delivery->district_id != null ? $order->delivery->district->name : '-' }},
+                                                    {{ $order->delivery->city_id != null ? $order->delivery->city->name : '-' }},
+                                                    {{ $order->delivery->postal_code ?? '-' }}
                                                 </p>
 
                                                 <p style="color: #666;">+{{ $order->delivery->receiver_phone }}</p>

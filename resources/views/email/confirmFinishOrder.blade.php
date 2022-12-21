@@ -15,19 +15,19 @@
     </p>
     <span>Selanjutnya dana akan diteruskan secara otomatis ke saldo pendapatan Iconcash kamu.</span>
     <br>
-    <div style="margin-top: 10px"><strong>No. Invoice</strong></div> 
+    <div style="margin-top: 10px"><strong>No. Invoice</strong></div>
     <div>{{$order->trx_no}}</div>
 
     <div style="margin-top: 10px"><strong>Tanggal Pesanan</strong> </div>
     <div> {{$order->order_date}} WIB</div>
-    
-    <div style="margin-top: 10px"> <strong>Kurir</strong></div> 
+
+    <div style="margin-top: 10px"> <strong>Kurir</strong></div>
     <div>{{strtoupper($order->delivery->courier) . ' - ' . $order->delivery->shipping_type}}</div>
-    
+
     <div style="margin-top: 10px"><strong>Tujuan Pengiriman</strong></div>
     <div><strong>{{$order->delivery->receiver_name}} ({{$order->delivery->receiver_phone}})</strong></div>
     <div>{{$order->delivery->address,}}</div>
-    <div>{{$order->delivery->district->name}}, {{$order->delivery->city->name}}, {{$order->delivery->postal_code}}</div>
+    <div>{{$order->delivery->district_id != null ? $order->delivery->district->name : '-'}}, {{$order->delivery->city_id != null ? $order->delivery->city->name : '-'}}, {{ $order->delivery->postal_code ?? '-' }}</div>
 
     @php
         $total_discount_item = 0;

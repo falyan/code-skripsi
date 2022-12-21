@@ -687,7 +687,6 @@ class TransactionController extends Controller
             $response = Excel::download(new TransactionExport($data), 'MKP-' . date('YmdHis') . '.xlsx');
 
             return $response->deleteFileAfterSend(false);
-
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -1089,7 +1088,6 @@ class TransactionController extends Controller
             } else {
                 return $this->respondWithResult(false, 'Pesanan ' . $order_id . ' tidak dalam status siap dikirim!', 400);
             }
-
         } catch (Exception $e) {
             DB::rollBack();
             return $this->respondErrorException($e, request());
