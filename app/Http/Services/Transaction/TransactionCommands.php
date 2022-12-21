@@ -214,13 +214,14 @@ class TransactionCommands extends Service
             $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
             $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
 
+            DB::commit();
+
             $product_name = OrderDetail::with('product')->where('order_id', $this->order_id)->first()->product->name;
             //add order id to response
             $response->order_id = $this->order_id;
             //get product name from order detail
             $response->product_name = $product_name;
 
-            DB::commit();
             return [
                 'success' => true,
                 'message' => 'Berhasil create order',
@@ -429,6 +430,13 @@ class TransactionCommands extends Service
             $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
 
             DB::commit();
+
+            $product_name = OrderDetail::with('product')->where('order_id', $this->order_id)->first()->product->name;
+            //add order id to response
+            $response->order_id = $this->order_id;
+            //get product name from order detail
+            $response->product_name = $product_name;
+
             return [
                 'success' => true,
                 'status_code' => 200,
