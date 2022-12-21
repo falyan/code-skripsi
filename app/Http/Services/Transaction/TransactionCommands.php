@@ -60,6 +60,22 @@ class TransactionCommands extends Service
             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(7))->timestamp);
 
+            foreach ($datas['merchants'] as $m) {
+                if ($m['is_npwp_required'] === true) {
+                    if (!isset($datas['npwp']) || empty($datas['npwp'])) {
+                        return [
+                            'success' => false,
+                            'status' => "Bad request",
+                            'status_code' => 400,
+                            'message' => 'Validation Error!',
+                            'data' => [
+                                'npwp diperlukan',
+                            ],
+                        ];
+                    }
+                }
+            }
+
             array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
@@ -74,7 +90,15 @@ class TransactionCommands extends Service
                 $order->npwp = data_get($data, 'npwp');
                 $order->created_by = 'user';
                 $order->updated_by = 'user';
+                $order->npwp = data_get($datas, 'npwp');
                 $order->save();
+
+                if (isset($datas['save_npwp'])) {
+                    $datas['save_npwp'] = in_array($datas['save_npwp'], [1, true]) ? true : false;
+                }
+                if (isset($datas['save_npwp']) && $datas['save_npwp'] === true) {
+                    Customer::where('id', $customer_id)->update(['npwp' => $datas['npwp']]);
+                }
 
                 $this->order_id = $order->id;
                 $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");

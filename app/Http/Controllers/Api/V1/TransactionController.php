@@ -69,6 +69,8 @@ class TransactionController extends Controller
             'merchants.*.products.*.total_insurance_cost' => 'required',
             'merchants.*.products.*.total_amount' => 'required',
             'merchants.*.products.*.payment_note' => 'sometimes',
+            "npwp" => 'nullable|string',
+            'save_npwp' => 'nullable|boolean|required_with:npwp',
         ], [
             'required' => ':attribute diperlukan.',
         ]);
