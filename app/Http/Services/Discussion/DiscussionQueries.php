@@ -19,7 +19,7 @@ class DiscussionQueries
                     $product->with(['product_photo']);
                 }, 'discussion_response' => function ($response) {
                     $response->with(['customer', 'merchant'])->where('status', 1);
-                }])->where('status', 1)->where('customer_id', $customer_id)->orderBy('updated_at', 'desc')->paginate($limit);
+                }])->where('status', 1)->where('customer_id', $customer_id)->orderBy('updated_at', 'desc')->get();
             }
 
             if ($status == 'unread') {

@@ -43,6 +43,9 @@ $app->alias('mailer', Illuminate\Contracts\Mail\MailQueue::class);
 $app->configure('swagger-lume');
 $app->configure('credentials');
 
+if (!class_exists('LogService')) {
+    class_alias('App\Helpers\LogServiceFacade', 'LogService');
+}
 /*
 |--------------------------------------------------------------------------
 | Register Container Bindings
@@ -131,6 +134,7 @@ $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 $app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
 $app->register(SwaggerLume\ServiceProvider::class);
 // $app->register(App\Providers\LogServiceProvider::class);
+$app->register(App\Providers\LogServiceProvider::class);
 // $app->register(Anik\ElasticApm\Providers\ElasticApmServiceProvider::class);
 // $app->register(Fruitcake\Cors\CorsServiceProvider::class);
 $app->register(Maatwebsite\Excel\ExcelServiceProvider::class);

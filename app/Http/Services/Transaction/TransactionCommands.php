@@ -18,6 +18,7 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use LogService;
 
 class TransactionCommands extends Service
 {
@@ -59,6 +60,22 @@ class TransactionCommands extends Service
             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(7))->timestamp);
 
+            foreach ($datas['merchants'] as $m) {
+                if ($m['is_npwp_required'] === true) {
+                    if (!isset($datas['npwp']) || empty($datas['npwp'])) {
+                        return [
+                            'success' => false,
+                            'status' => "Bad request",
+                            'status_code' => 400,
+                            'message' => 'Validation Error!',
+                            'data' => [
+                                'npwp diperlukan',
+                            ],
+                        ];
+                    }
+                }
+            }
+
             array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
@@ -73,7 +90,15 @@ class TransactionCommands extends Service
                 $order->npwp = data_get($data, 'npwp');
                 $order->created_by = 'user';
                 $order->updated_by = 'user';
+                $order->npwp = data_get($datas, 'npwp');
                 $order->save();
+
+                if (isset($datas['save_npwp'])) {
+                    $datas['save_npwp'] = in_array($datas['save_npwp'], [1, true]) ? true : false;
+                }
+                if (isset($datas['save_npwp']) && $datas['save_npwp'] === true) {
+                    Customer::where('id', $customer_id)->update(['npwp' => $datas['npwp']]);
+                }
 
                 $this->order_id = $order->id;
                 $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
@@ -213,13 +238,14 @@ class TransactionCommands extends Service
             $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
             $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
 
+            DB::commit();
+
             $product_name = OrderDetail::with('product')->where('order_id', $this->order_id)->first()->product->name;
             //add order id to response
             $response->order_id = $this->order_id;
             //get product name from order detail
             $response->product_name = $product_name;
 
-            DB::commit();
             return [
                 'success' => true,
                 'message' => 'Berhasil create order',
@@ -428,6 +454,13 @@ class TransactionCommands extends Service
             $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
 
             DB::commit();
+
+            $product_name = OrderDetail::with('product')->where('order_id', $this->order_id)->first()->product->name;
+            //add order id to response
+            $response->order_id = $this->order_id;
+            //get product name from order detail
+            $response->product_name = $product_name;
+
             return [
                 'success' => true,
                 'status_code' => 200,
@@ -511,7 +544,6 @@ class TransactionCommands extends Service
 
             // $data[] = $product;
         }
-
     }
 
     public function triggerRatingProductSold($type)

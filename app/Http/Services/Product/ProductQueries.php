@@ -78,11 +78,6 @@ class ProductQueries extends Service
 
         $data = static::paginate($immutable_data->toArray(), $limit, $current_page);
 
-        //        if ($data->isEmpty()){
-        //            $response['success'] = false;
-        //            $response['message'] = 'Gagal mendapatkan data produk!';
-        //            return $response;
-        //        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -196,6 +191,47 @@ class ProductQueries extends Service
             ->orWhereHas('merchant', function ($query) use ($keyword) {
                 $query->where('name', 'ILIKE', '%' . $keyword . '%')->where('status', 1);
             });
+
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $data = $this->productPaginate($sorted_data, $limit);
+
+        $response['success'] = true;
+        $response['message'] = 'Produk berhasil didapatkan.';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function searchProductByNameV2($keyword, $limit, $filter = [], $sortby = null, $current_page = 1)
+    {
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where('status', 1)->with([
+            'product_stock:id,product_id,amount,uom', 'product_photo:id,product_id,url', 'is_wishlist',
+            'merchant' => function ($merchant) {
+                $merchant->with(['city:id,name'])->select('id', 'name', 'address', 'postal_code', 'city_id', 'photo_url', 'official_store');
+            }, 'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+        ])
+            ->whereHas('merchant', function ($merchant) use ($filter) {
+                $merchant->where('status', 1);
+                $location = $filter['location'] ?? null;
+                if (!empty($location)) {
+                    if (strpos($location, ',')) {
+                        $merchant->whereIn('city_id', explode(',', $location));
+                    } else {
+                        $merchant->where('city_id', 'LIKE', $location);
+                    }
+                }
+            })->where('product.name', 'ILIKE', '%' . $keyword . '%');
+        // ->orWhereHas('merchant', function ($query) use ($keyword) {
+        //     $query->where('name', 'ILIKE', '%' . $keyword . '%')->where('status', 1);
+        // });
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -621,6 +657,33 @@ class ProductQueries extends Service
     }
 
     public function searchProductBySeller($merchant_id, $keyword, $limit, $filter = [], $sortby = null, $page = 1)
+    {
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with(['product_stock', 'product_photo', 'is_wishlist'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']]);
+
+        $products = $this->filter($products, $filter);
+        $products = $this->sorting($products, $sortby);
+
+        $immutable_data = $products->get()->map(function ($product) {
+            $product->reviews = null;
+            //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            // $product->avg_rating = 0.0;
+            return $product;
+        });
+
+        $data = static::paginate($immutable_data->toArray(), $limit, $page);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function searchProductBySellerV2($merchant_id, $keyword, $limit, $filter = [], $sortby = null, $page = 1)
     {
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {

@@ -2,8 +2,6 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
-use Illuminate\Support\Facades\Hash;
-
 /*
 |--------------------------------------------------------------------------
 | Application Routes
@@ -106,6 +104,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('detail/{id}', 'ProductController@getProductByIdSeller');
                     $router->get('etalase/{etalase_id}', 'ProductController@getProductByEtalase');
                     $router->get('search', 'ProductController@searchProductSeller');
+                    $router->post('searchv2', 'ProductController@searchProductSellerV2');
                     $router->post('filter', 'ProductController@getProductByFilter');
                     $router->post('filter/count', 'ProductController@countProductByFilter');
                     $router->get('featured', 'ProductController@getProductFeatured');
@@ -213,6 +212,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('recommend', 'ProductController@getRecommendProduct');
                 $router->get('special', 'ProductController@getSpecialProduct');
                 $router->get('search', 'ProductController@searchProductByName');
+                $router->post('searchv2', 'ProductController@searchProductByNameV2');
                 $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchantBuyer');
                 $router->get('category/{category_id}', 'ProductController@getProductByCategory');
                 $router->get('ev/others', 'ProductController@getOtherEvProduct');
