@@ -23,25 +23,28 @@ class CustomerController extends Controller
         $this->customerCommands = new CustomerCommands();
     }
 
-    public function getListCustomerAddress(){
+    public function getListCustomerAddress()
+    {
         try {
             $customer_id = Auth::id();
             return $this->respondWithData($this->customerQueries->getListCustomerAddress($customer_id), 'Data berhasil didapatkan.');
-        }catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function getDefaultCustomerAddress(){
+    public function getDefaultCustomerAddress()
+    {
         try {
             $customer_id = Auth::id();
             return $this->respondWithData($this->customerQueries->getDefaultCustomerAddress($customer_id), 'Data berhasil didapatkan.');
-        }catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function createCustomerAddress(){
+    public function createCustomerAddress()
+    {
         $validator = Validator::make(request()->all(), [
             'address' => 'required',
             'district_id' => 'required',
@@ -51,9 +54,9 @@ class CustomerController extends Controller
             'receiver_name' => 'required',
             'receiver_phone' => 'required',
             'title' => 'required',
-            'is_default' => 'required|boolean'
+            'is_default' => 'required|boolean',
         ], [
-            'required' => ':attribute diperlukan.'
+            'required' => ':attribute diperlukan.',
         ]);
 
         if ($validator->fails()) {
@@ -70,12 +73,13 @@ class CustomerController extends Controller
         try {
             $customer_id = Auth::id();
             return $this->customerCommands->createCustomerAddress($customer_id, request()->all());
-        }catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function updateCustomerAddress($id){
+    public function updateCustomerAddress($id)
+    {
         $validator = Validator::make(request()->all(), [
             'address' => 'required',
             'district_id' => 'required',
@@ -85,9 +89,9 @@ class CustomerController extends Controller
             'receiver_name' => 'required',
             'receiver_phone' => 'required',
             'title' => 'required',
-            'is_default' => 'required|boolean'
+            'is_default' => 'required|boolean',
         ], [
-            'required' => ':attribute diperlukan.'
+            'required' => ':attribute diperlukan.',
         ]);
 
         if ($validator->fails()) {
@@ -103,17 +107,18 @@ class CustomerController extends Controller
 
         try {
             $customer_id = Auth::id();
-            return $this->customerCommands->updateCustomerAddress($id ,$customer_id, request()->all());
-        }catch (Exception $e){
+            return $this->customerCommands->updateCustomerAddress($id, $customer_id, request()->all());
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function setDefaultCustomerAddress($id){
+    public function setDefaultCustomerAddress($id)
+    {
         try {
             $customer_id = Auth::id();
-            return $this->customerCommands->setDefaultCustomerAddress($id ,$customer_id);
-        }catch (Exception $e){
+            return $this->customerCommands->setDefaultCustomerAddress($id, $customer_id);
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
@@ -122,20 +127,19 @@ class CustomerController extends Controller
     {
         try {
             $customer_id = Auth::id();
-            $response = $this->customerCommands->deleteCustomerAddress($id, $customer_id);
-
-            return $this->respondWithResult($response['success'], $response);
-        } catch (Exception $e){
+            return $this->customerCommands->deleteCustomerAddress($id, $customer_id);
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function updateCustomerProfile(Request $request){
+    public function updateCustomerProfile(Request $request)
+    {
         try {
-            if (Auth::check()){
+            if (Auth::check()) {
                 return $this->customerCommands->updateCustomerProfile(Auth::id(), $request);
             }
-        }catch (Exception $e){
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
