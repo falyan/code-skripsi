@@ -86,7 +86,7 @@ class CustomerCommands
     {
         $customer_address = CustomerAddress::findOrFail($id);
 
-        $change_isdefault = $this->changeIsDefaultToFalse($customer_id);
+        $change_isdefault = $this->changeIsDefaultToFalse($customer_id, $id);
         if ($change_isdefault == false) {
             $response['success'] = false;
             $response['message'] = 'Gagal merubah alamat utama';
