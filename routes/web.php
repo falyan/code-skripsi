@@ -214,6 +214,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('search', 'ProductController@searchProductByName');
                 $router->post('searchv2', 'ProductController@searchProductByNameV2');
                 $router->get('merchant/{merchant_id}', 'ProductController@getProductByMerchantBuyer');
+                $router->get('merchant/{merchant_id}/search', 'ProductController@getProductByMerchantIdBuyerAndSearch');
                 $router->get('category/{category_id}', 'ProductController@getProductByCategory');
                 $router->get('ev/others', 'ProductController@getOtherEvProduct');
                 $router->get('ev/others/{category_id}', 'ProductController@getOtherEvProductByCategory');
