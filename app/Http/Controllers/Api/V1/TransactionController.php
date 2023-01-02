@@ -905,9 +905,10 @@ class TransactionController extends Controller
                         $total_delivery_fee_trx += $o->delivery->delivery_fee;
                     }
 
-                    if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000) {
-                        $this->voucherCommand->generateVoucher($order);
-                    }
+                    // Generate Voucher Gamification
+                    // if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000) {
+                    //     $this->voucherCommand->generateVoucher($order);
+                    // }
 
                     DB::commit();
                     $mailSender = new MailSenderManager();
