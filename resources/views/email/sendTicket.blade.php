@@ -25,7 +25,7 @@
 
     <div style="width: 100%; padding: 32px 0">
         <span style="font-family: Nunito; font-size: 16px">
-            <span>Halo, Joshua Prima! 🖐🏻</span>
+            <span>Halo, {{ $destination_name }}! 🖐🏻</span>
             <br />
             <br />
             <span>
@@ -54,7 +54,7 @@
                 </td>
                 <td style="padding-bottom: 14px">
                     <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                        <strong>INVO/211003/MKP/00000000001</strong>
+                        <strong>{{ $order->trx_no }}</strong>
                     </span>
                 </td>
             </tr>
@@ -66,7 +66,7 @@
                 </td>
                 <td style="padding-bottom: 14px">
                     <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                        <strong>Joshua Prima</strong>
+                        <strong>{{ $destination_name }}</strong>
                     </span>
                 </td>
             </tr>
@@ -78,19 +78,19 @@
                 </td>
                 <td style="padding-bottom: 14px">
                     <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                        <strong>joshuaprima@iconpln.co.id</strong>
+                        <strong>{{ $order->buyer->email }}</strong>
                     </span>
                 </td>
             </tr>
             <tr>
                 <td style="padding-bottom: 14px">
                     <span style="font-family: Nunito; font-size: 16px; color: #595a5b">
-                        No. Handphone
+                        No. HP
                     </span>
                 </td>
                 <td style="padding-bottom: 14px">
                     <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                        <strong>082123456789</strong>
+                        <strong>{{ $order->buyer->phone }}</strong>
                     </span>
                 </td>
             </tr>
@@ -159,28 +159,30 @@
                     </span>
                 </td>
             </tr>
-            <tr>
-                <td style="padding-bottom: 14px">
-                    <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                        Reguler
-                    </span>
-                </td>
-                <td style="padding-bottom: 14px">
-                    <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                        Rp. 100.000
-                    </span>
-                </td>
-                <td style="padding-bottom: 14px">
-                    <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                        1
-                    </span>
-                </td>
-                <td style="padding-bottom: 14px">
-                    <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                        Rp. 100.000
-                    </span>
-                </td>
-            </tr>
+            @foreach ($order->detail as $item)
+                <tr>
+                    <td style="padding-bottom: 14px">
+                        <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
+                            {{ $item->product->name }}
+                        </span>
+                    </td>
+                    <td style="padding-bottom: 14px">
+                        <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
+                            Rp {{ number_format($item->price, 2, ',', '.') }}
+                        </span>
+                    </td>
+                    <td style="padding-bottom: 14px">
+                        <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
+                            {{ $item->quantity }}
+                        </span>
+                    </td>
+                    <td style="padding-bottom: 14px">
+                        <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
+                            Rp {{ number_format($item->quantity * $item->price, 2, ',', '.') }}
+                        </span>
+                    </td>
+                </tr>
+            @endforeach
 
             <!-- total bayar -->
             <tr>
@@ -193,7 +195,7 @@
                 </td>
                 <td style="padding-top: 16px">
                     <span style="font-family: Nunito; font-size: 16px; color: #595a5b">
-                        <strong>Rp. 100.000</strong>
+                        <strong>Rp {{ number_format($order->payment->payment_amount, 2, ',', '.') }}</strong>
                     </span>
                 </td>
             </tr>
