@@ -3,6 +3,7 @@
 namespace App\Http\Services\Manager;
 
 use App\Http\Services\Transaction\TransactionQueries;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -304,5 +305,43 @@ class MailSenderManager
         }
 
         return;
+    }
+
+    public function mailSendTicket($order_id, $date_arrived)
+    {
+        $transactionQueries = new TransactionQueries();
+        $order = $transactionQueries->getDetailTransaction($order_id);
+        $customer = $order->buyer;
+        $merchant = $order->merchant;
+
+        $data = [
+            'destination_name' => $customer->full_name ?? 'Pengguna Setia',
+            'order' => $order,
+            'date_arrived' => $date_arrived,
+        ];
+
+        Mail::send('email.sendTicket', $data, function ($mail) use ($customer) {
+            $mail->to($customer->email, 'no-reply')
+                ->subject("Pemesanan Tiket PLN Mobile Proliga 2023");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        $data = [
+            'destination_name' => $merchant->name ?? 'Toko Favorit',
+            'order' => $order,
+            'date_arrived' => $date_arrived,
+        ];
+
+        Mail::send('email.sendTicket', $data, function ($mail) use ($customer, $merchant) {
+            $mail->to($merchant->email, 'no-reply')
+                ->subject("Pemesanan Tiket PLN Mobile Proliga 2023 telah diterima oleh {$customer->name}");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        if (Mail::failures()) {
+            Log::error('Gagal mengirim email pesanan selesai untuk ke email: ' . $customer->email);
+        } else {
+            Log::info('Berhasil mengirim email pesanan selesai ke email: ' . $customer->email);
+        }
     }
 }
