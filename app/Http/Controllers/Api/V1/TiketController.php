@@ -56,16 +56,15 @@ class TiketController extends Controller
         }
 
         $tiket = $this->getTiket($request->get('qr'));
+        if ($tiket['status'] == 'error') {
+            return $this->respondBadRequest($tiket['message']);
+        }
 
         try {
             DB::beginTransaction();
 
             $tiket->status = 2;
             $tiket->save();
-
-            if ($tiket['status'] == 'error') {
-                return $this->respondBadRequest($tiket['message']);
-            }
 
             DB::commit();
             return [
@@ -85,7 +84,7 @@ class TiketController extends Controller
 
     private function getTiket($qr)
     {
-        $tiket = UserTiket::where('number_tiket', $qr)->first()->load('master_tiket');
+        $tiket = UserTiket::where('number_tiket', $qr)->first();
 
         if (!$tiket) {
             return [
@@ -93,6 +92,8 @@ class TiketController extends Controller
                 'message' => 'Tiket tidak ditemukan',
             ];
         }
+
+        $tiket->load('master_tiket');
 
         if ($tiket->master_tiket->status == 0) {
             return [
