@@ -1032,6 +1032,8 @@ class TransactionController extends Controller
 
     public function addAwbNumberAutoOrder($order_id)
     {
+        $mailSender = new MailSenderManager();
+
         try {
             if (!is_numeric($order_id)) {
                 $response = [
@@ -1058,6 +1060,8 @@ class TransactionController extends Controller
                     if ($tiket['success'] == false) {
                         return $tiket;
                     }
+
+                    $mailSender->mailSendTicket($order_id);
                 }
 
                 $response = $this->transactionCommand->addAwbNumberAuto($order_id);
@@ -1074,7 +1078,7 @@ class TransactionController extends Controller
                 $message = 'Pesanan anda sedang dalam pengiriman.';
                 $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
                 // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
-                $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+                // $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
                 // $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
                 // $total_amount_trx = $total_delivery_fee_trx = 0;
@@ -1089,7 +1093,6 @@ class TransactionController extends Controller
                 // }
                 DB::commit();
 
-                $mailSender = new MailSenderManager();
                 $mailSender->mailOrderOnDelivery($order_id);
 
                 return $response;

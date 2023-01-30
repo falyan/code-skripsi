@@ -16,7 +16,7 @@
         overflow: auto;
         align-items: center;
         justify-content: space-between;
-      ">
+        ">
         <img src="https://api-central.air.id/plnmp-sauron-staging/api/firebase/file/load/Marketplace~merchants~16750575780b256952-dad0-4d77-85dd-e35d2d9d5616.png"
             alt="image" style="width: 200px; height: 100px" />
         <img src="https://api-central.air.id/plnmp-sauron-staging/api/firebase/file/load/Marketplace~merchants~1675057641628ba014-956e-44f3-9e1e-78b6d935c615.png"
@@ -43,7 +43,7 @@
         padding: 48px;
         margin-top: 32px;
         width: auto;
-      ">
+        ">
         <!-- table in center without text-align-->
         <table style="width: 100%; border-collapse: collapse; margin: 0 auto">
             <tr>
@@ -127,7 +127,7 @@
         padding: 48px;
         margin-top: 32px;
         width: auto;
-      ">
+        ">
         <!-- title -->
         <div style="width: 100%; padding-bottom: 32px">
             <span style="font-family: Nunito; font-size: 24px; color: #595a5b">
@@ -210,7 +210,7 @@
         margin-top: 56px;
         margin-left: 56px;
         margin-right: 56px;
-      ">
+        ">
         <!-- footer text in center -->
         <div style="width: 100%; text-align: center">
             <span style="font-family: Nunito; font-size: 16px; color: #ffffff">

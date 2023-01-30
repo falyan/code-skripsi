@@ -307,7 +307,7 @@ class MailSenderManager
         return;
     }
 
-    public function mailSendTicket($order_id, $date_arrived)
+    public function mailSendTicket($order_id)
     {
         $transactionQueries = new TransactionQueries();
         $order = $transactionQueries->getDetailTransaction($order_id);
@@ -317,7 +317,6 @@ class MailSenderManager
         $data = [
             'destination_name' => $customer->full_name ?? 'Pengguna Setia',
             'order' => $order,
-            'date_arrived' => $date_arrived,
         ];
 
         Mail::send('email.sendTicket', $data, function ($mail) use ($customer) {
@@ -329,7 +328,6 @@ class MailSenderManager
         $data = [
             'destination_name' => $merchant->name ?? 'Toko Favorit',
             'order' => $order,
-            'date_arrived' => $date_arrived,
         ];
 
         Mail::send('email.sendTicket', $data, function ($mail) use ($customer, $merchant) {
