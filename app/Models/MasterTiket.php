@@ -13,6 +13,10 @@ class MasterTiket extends Model
     protected $table = 'master_tiket';
     protected $guarded = ['id'];
 
+    protected $casts = [
+        'tnc' => 'array',
+    ];
+
     public function user_tiket()
     {
         return $this->hasMany(UserTiket::class, 'master_tiket_id', 'id');
