@@ -33,7 +33,7 @@ class CreateMasterTiketsTable extends Migration
         Schema::create('user_tiket', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('master_tiket_id');
-            $table->string('number_ticket');
+            $table->string('number_tiket');
             $table->date('usage_date');
             $table->float('status');
             $table->timestamps();

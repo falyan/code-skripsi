@@ -7,12 +7,18 @@ use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Service;
 use App\Models\Customer;
 use App\Models\CustomerDiscount;
+use App\Models\MasterData;
+use App\Models\MasterTiket;
 use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\OrderDetail;
 use App\Models\OrderPayment;
 use App\Models\OrderProgress;
 use App\Models\Product;
+use App\Models\PromoLog;
+use App\Models\PromoMaster;
+use App\Models\PromoMerchant;
+use App\Models\UserTiket;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
@@ -739,5 +745,114 @@ class TransactionCommands extends Service
             return false;
         }
         return true;
+    }
+
+    public function generateResi($order_id)
+    {
+        try {
+            DB::beginTransaction();
+            $order = Order::where('id', $order_id)->first();
+            $delivery = OrderDelivery::where('order_id', $order->id)->first();
+
+            if ($delivery->delivery_method != 'Pengiriman oleh Seller') {
+                $resi = LogisticManager::preorder($order->id);
+
+                if (!isset($resi['data']) || !isset($resi['data']['awb_number']) || !isset($resi['data']['no_reference'])) {
+                    $response['success'] = false;
+                    $response['message'] = 'Gagal menambahkan nomor resi.';
+                    if (isset($resi['data'])) {
+                        $response['data'] = $resi['data'];
+                    }
+                    return $response;
+                }
+
+                $delivery->awb_number = $resi['data']['awb_number'];
+                $delivery->no_reference = $resi['data']['no_reference'];
+
+                if (!$delivery->save()) {
+                    $response['success'] = false;
+                    $response['message'] = 'Gagal menambahkan nomor resi';
+                    return $response;
+                }
+            } else {
+                Carbon::setLocale('id');
+                $date = Carbon::now('Asia/Jakarta')->isoFormat('YMMDD');
+                $id = str_pad($order_id, 4, '0', STR_PAD_LEFT);
+                $resi = "CLG/{$date}/{$id}";
+
+                $delivery->awb_number = $resi;
+                if (!$delivery->save()) {
+                    $response['success'] = false;
+                    $response['message'] = 'Gagal menambahkan nomor resi';
+                    return $response;
+                }
+            }
+
+            DB::commit();
+
+            $response['success'] = true;
+            $response['message'] = 'Berhasil menambahkan nomor resi';
+            return $response;
+        } catch (Exception $e) {
+            DB::rollBack();
+            if (in_array($e->getCode(), self::$error_codes)) {
+                throw new Exception($e->getMessage(), $e->getCode());
+            }
+            throw new Exception($e->getMessage(), 500);
+        }
+    }
+
+    public function generateTicket($order_id)
+    {
+        $categories = MasterData::with(['child' => function ($j) {
+            $j->with('child');
+        }])->where('key', 'prodcat_tiket')->get();
+
+        $cat_child = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    foreach ($child->child as $children) {
+                        array_push($cat_child, $children);
+                    }
+                }
+            }
+        }
+
+        $cat_ticket = [];
+        $order = Order::where('id', $order_id)->first()->load('detail.product');
+        foreach ($order->detail as $detail) {
+            if (in_array($detail->product->category_id, collect($cat_child)->pluck('id')->toArray())) {
+                array_push($cat_ticket, collect($cat_child)->where('id', $detail->product->category_id)->first());
+            }
+        }
+
+        $master_tikets = MasterTiket::whereIn('master_data_key', collect($cat_ticket)->pluck('key')->toArray())->get();
+
+        $user_tikets = [];
+        foreach ($master_tikets as $master_tiket) {
+            $id = str_pad($order_id, 5, '0', STR_PAD_LEFT);
+            $number_tiket = (string) time() . $id;
+
+            $user_tikets[] = [
+                'master_tiket_id' => $master_tiket->id,
+                'number_tiket' => $number_tiket,
+                'usage_date' => $master_tiket->usage_date,
+                'status' => 1,
+                'created_at' => Carbon::now('Asia/Jakarta'),
+            ];
+        }
+
+        $create_tiket = UserTiket::insert($user_tikets);
+
+        if ($create_tiket == 0) {
+            $response['success'] = false;
+            $response['message'] = 'Gagal menambahkan tiket';
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil menambahkan tiket';
+        return $response;
     }
 };

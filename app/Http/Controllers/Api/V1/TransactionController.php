@@ -1042,7 +1042,7 @@ class TransactionController extends Controller
             }
             DB::beginTransaction();
 
-            $data = $this->transactionQueries->getStatusOrder($order_id, true);
+            $data = $this->transactionQueries->getStatusOrder($order_id, true)->load('merchant');
 
             $status_codes = [];
             foreach ($data->progress as $item) {
@@ -1053,6 +1053,13 @@ class TransactionController extends Controller
 
             $status_code = collect($status_codes)->where('status_code', '02')->first();
             if (count($status_codes) == 2 && $status_code['status'] == 1) {
+                if($data->merchant->official_store_proliga) {
+                    $tiket = $this->transactionCommand->generateTicket($order_id);
+                    if ($tiket['success'] == false) {
+                        return $tiket;
+                    }
+                }
+
                 $response = $this->transactionCommand->addAwbNumberAuto($order_id);
                 if ($response['success'] == false) {
                     return $response;
