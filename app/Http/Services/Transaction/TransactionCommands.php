@@ -837,8 +837,8 @@ class TransactionCommands extends Service
             $ticket = collect($cat_ticket)->where('key', $master_tiket->master_data_key)->first();
 
             for ($i = 0; $i < $ticket['quantity']; $i++) {
-                $id = str_pad($order_id, 5, '0', STR_PAD_LEFT);
-                $number_tiket = (string) time() . $id;
+                $id = rand(10000, 99999);
+                $number_tiket = (string) time() . (string)$id;
 
                 $user_tikets[] = UserTiket::create([
                     'master_tiket_id' => $master_tiket->id,
