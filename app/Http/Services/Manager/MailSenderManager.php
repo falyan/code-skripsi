@@ -319,13 +319,25 @@ class MailSenderManager
         $transactionQueries = new TransactionQueries();
         $order = $transactionQueries->getDetailTransaction($order_id);
         $customer = $order->buyer;
-        // $order->load('detail.product.category', 'detail.product.category.parent');
+        $order->load('detail.product.category', 'detail.product.category.parent');
+
+        $master_data_tiket = [];
+        foreach ($order->detail as $detail) {
+            $master_data_tiket[] = $detail->product->category;
+        }
 
         $user_tikets = UserTiket::with('master_tiket')->whereIn('id', collect($user_tikets)->pluck('id')->toArray())->get();
 
         //generate ticket pdf and send to customer
         $attachments = [];
         foreach ($user_tikets as $user_tiket) {
+            $master_tiket = collect($master_data_tiket)->where('key', $user_tiket->master_tiket->master_data_key)->first();
+            if ($master_tiket['parent']['key'] == 'prodcat_vip_proliga_2023') {
+                $user_tiket['is_vip'] = true;
+            } else {
+                $user_tiket['is_vip'] = false;
+            }
+
             Pdf::loadView('pdf.ticket', [
                 'order' => $order,
                 'customer' => $customer,

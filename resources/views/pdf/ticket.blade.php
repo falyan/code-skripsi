@@ -30,14 +30,14 @@
         height: 210mm;
         font-size: 12;
         padding: 0.5cm;
-      ">
+        ">
         <div
             style="
-          width: 100%;
-          display: flex;
-          overflow: auto;
-          align-items: center;
-          justify-content: space-between;
+        width: 100%;
+        display: flex;
+        overflow: auto;
+        align-items: center;
+        justify-content: space-between;
         ">
             <img src="https://api-central.air.id/plnmp-sauron-staging/api/firebase/file/load/Marketplace~merchants~16750575780b256952-dad0-4d77-85dd-e35d2d9d5616.png"
                 alt="image" style="width: 150px;" />
@@ -50,15 +50,13 @@
         </div>
 
         <!-- Span text with background radius Red -->
-        @foreach ($order->detail as $detail)
-            @if ($detail->product->category->parent->key == 'prodcat_reguler_proliga_2023')
-                <span
-                    style="background-color: #831d641a;color: #831d64;padding: 8px 16px;border-radius: 8px;font-family: Nunito;font-size: 16px;">Reguler</span>
-            @elseif ($detail->product->category->parent->key == 'prodcat_vip_proliga_2023')
-                <span
-                    style=" background-color: #fcc71d33;color: #fcc71d;padding: 8px 16px; border-radius: 8px; font-family: Nunito; font-size: 16px;">VIP</span>
-            @endif
-        @endforeach
+        @if ($user_tiket['is_vip'])
+            <span
+                style=" background-color: #fcc71d33;color: #fcc71d;padding: 8px 16px; border-radius: 8px; font-family: Nunito; font-size: 16px;">VIP</span>
+        @else
+            <span
+                style="background-color: #831d641a;color: #831d64;padding: 8px 16px;border-radius: 8px;font-family: Nunito;font-size: 16px;">Reguler</span>
+        @endif
 
         <div style="margin-top: 64px; width: auto; margin-bottom: 100px">
             <table style="width: 100%">
@@ -134,17 +132,15 @@
                             Pro Liga 2023
                         </span>
                         <br>
-                        @foreach ($order->detail as $detail)
-                            @if ($detail->product->category->parent->key == 'prodcat_reguler_proliga_2023')
-                                <span style="font-family: Nunito; font-size: 12px; color: #595a5b">
-                                    Reguler
-                                </span>
-                            @elseif ($detail->product->category->parent->key == 'prodcat_vip_proliga_2023')
-                                <span style="font-family: Nunito; font-size: 12px; color: #595a5b">
-                                    VIP
-                                </span>
-                            @endif
-                        @endforeach
+                        @if ($user_tiket['is_vip'])
+                            <span style="font-family: Nunito; font-size: 12px; color: #595a5b">
+                                VIP
+                            </span>
+                        @else
+                            <span style="font-family: Nunito; font-size: 12px; color: #595a5b">
+                                Reguler
+                            </span>
+                        @endif
                         <br />
                         <span style="font-family: Nunito;font-size: 12px;color: #595a5b;font-weight: bold;">
                             Kode Tiket
