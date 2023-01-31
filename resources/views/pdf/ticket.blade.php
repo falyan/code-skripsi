@@ -24,23 +24,22 @@
 <body>
     <div
         style="
-        display: inline-block;
-        position: relative;
-        height: 297mm;
-        height: 210mm;
-        font-size: 12;
-        padding: 0.5cm;
+            display: inline-block;
+            position: relative;
+            height: 297mm;
+            height: 210mm;
+            font-size: 12;
+            padding: 0.5cm;
         ">
         <div
             style="
-        width: 100%;
-        display: flex;
-        overflow: auto;
-        align-items: center;
-        justify-content: space-between;
+            width: 100%;
+            display: flex;
+            overflow: auto;
+            align-items: center;
+            justify-content: space-between;
         ">
-            <img src="https://api-central.air.id/plnmp-sauron-staging/api/firebase/file/load/Marketplace~merchants~16750575780b256952-dad0-4d77-85dd-e35d2d9d5616.png"
-                alt="image" style="width: 150px;" />
+            <img src="{{ storage_path('assets/logo-tiket-proliga.png') }}" alt="image" style="width: 150px;" />
         </div>
 
         <div style="width: 100%; padding-top: 10px">
@@ -121,12 +120,8 @@
                         Tiket {{ $order->trx_no }}
                     </span>
                     <div style="margin-left: 48px; margin-bottom:10px">
-                        {{-- Generate QR with link --}}
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ $user_tiket->number_tiket }}"
-                            alt="image" style="width: 85px" />
-                        {{-- <img src="https://api-central.air.id/plnmp-sauron-staging/api/firebase/file/load/Marketplace~merchants~16750733608bb90133-7f7b-45dc-9da7-7bb1d3e2e2db.png"
-                            alt="image" style="width: 100px" /> <br> --}}
-                        <!-- title tiket -->
+                        <img src="{{ storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.png') }}"alt="image"
+                            style="width: 85px" />
                         <br>
                         <span style="font-family: Nunito;font-size: 14px;color: #595a5b;font-weight: bold;">
                             Pro Liga 2023
@@ -154,8 +149,8 @@
                 </td>
                 <td style="width: 70%">
                     <div style="float: right;">
-                        <img src="https://api-central.air.id/plnmp-sauron-staging/api/firebase/file/load/Marketplace~merchants~16750701543f99364b-df12-4ffb-9d54-76307808f338.png"
-                            alt="Ticket Image" style="border-radius: 14px; width: 95%" />
+                        <img src="{{ storage_path('assets/gambar-proliga-1.png') }}" alt="Ticket Image"
+                            style="border-radius: 14px; width: 95%" />
                 </td>
             </tr>
         </table>

@@ -9,6 +9,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class MailSenderManager
 {
@@ -339,21 +340,15 @@ class MailSenderManager
                 $user_tiket['is_vip'] = false;
             }
 
+            QrCode::format('png')->size(85)->generate($user_tiket->number_tiket, storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.png'));
+
             Pdf::loadView('pdf.ticket', [
                 'order' => $order,
                 'customer' => $customer,
                 'user_tiket' => $user_tiket,
             ])->save(storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.pdf'));
-            $attachments[] = [
-                'path' => storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.pdf'),
-            ];
+            $attachments[] = storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.pdf');
         }
-
-        // $pdf = Pdf::loadView('pdf.ticket', [
-        //     'order' => $order,
-        //     'customer' => $customer,
-        //     'user_tikets' => $user_tikets,
-        // ]);
 
         $data = [
             'destination_name' => $customer->full_name ?? 'Pengguna Setia',
@@ -365,16 +360,12 @@ class MailSenderManager
             $mail->to($customer->email, 'no-reply')
                 ->subject("Pemesanan Tiket PLN Mobile Proliga 2023");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
-            // $mail->attachData($pdf->output(), 'ticket-' . $order->trx_no . '.pdf', [
-            //     'mime' => 'application/pdf'
-            // ]);
-            foreach ($attachments as $attachment) {
-                $mail->attach($attachment['path']);
+            foreach ($attachments as $file_path) {
+                $mail->attach($file_path);
             }
         });
 
         if (file_exists(storage_path('app/public/ticket'))) {
-            // delete folder
             File::deleteDirectory(storage_path('app/public/ticket'));
         }
 
