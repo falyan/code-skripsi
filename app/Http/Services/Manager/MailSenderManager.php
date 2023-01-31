@@ -9,7 +9,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelHigh;
@@ -346,8 +345,6 @@ class MailSenderManager
             } else {
                 $user_tiket['is_vip'] = false;
             }
-
-            QrCode::format('png')->size(85)->generate($user_tiket->number_tiket, storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.png'));
 
             //Generate QR Code using Endroid/QRCode and builder
             $result = Builder::create()
