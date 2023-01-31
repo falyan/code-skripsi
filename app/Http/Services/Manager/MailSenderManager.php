@@ -6,6 +6,7 @@ use App\Http\Services\Transaction\TransactionQueries;
 use App\Models\Order;
 use App\Models\UserTiket;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -372,16 +373,10 @@ class MailSenderManager
             }
         });
 
-        // $data = [
-        //     'destination_name' => $merchant->name ?? 'Toko Favorit',
-        //     'order' => $order,
-        // ];
-
-        // Mail::send('email.sendTicket', $data, function ($mail) use ($customer, $merchant) {
-        //     $mail->to($merchant->email, 'no-reply')
-        //         ->subject("Pemesanan Tiket PLN Mobile Proliga 2023 telah diterima oleh {$customer->name}");
-        //     $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
-        // });
+        if (file_exists(storage_path('app/public/ticket'))) {
+            // delete folder
+            File::deleteDirectory(storage_path('app/public/ticket'));
+        }
 
         if (Mail::failures()) {
             Log::error('Gagal mengirim email pesanan selesai untuk ke email: ' . $customer->email);

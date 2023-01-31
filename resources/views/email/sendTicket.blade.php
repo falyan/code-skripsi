@@ -114,11 +114,10 @@
                     </span>
                 </td>
                 <td style="padding-bottom: 14px">
-                    @foreach ($user_tikets as $user_tiket)
-                        <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                            <strong>{{ $user_tiket->master_tiket->event_address }}</strong>
-                        </span>
-                    @endforeach
+                    <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
+                        <strong>{{ $user_tikets[0]->master_tiket->event_address }}</strong>
+                    </span>
+
                 </td>
             </tr>
         </table>
