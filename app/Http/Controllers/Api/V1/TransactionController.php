@@ -1076,11 +1076,15 @@ class TransactionController extends Controller
                 if ($status['success'] == false) {
                     return $status;
                 }
+                $status = $this->transactionCommand->updateOrderStatus($order_id, '03');
+                if ($status['success'] == false) {
+                    return $status;
+                }
 
                 $title = 'Pesanan Dikirim';
                 $message = 'Pesanan anda sedang dalam pengiriman.';
                 $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-                // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+                $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
                 // $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
                 // $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();

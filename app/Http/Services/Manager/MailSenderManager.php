@@ -346,7 +346,7 @@ class MailSenderManager
                 $user_tiket['is_vip'] = false;
             }
 
-            //Generate QR Code using Endroid/QRCode and builder
+            // Generate QR Code using Endroid/QRCode and builder
             $result = Builder::create()
                 ->writer(new PngWriter())
                 ->writerOptions([])
