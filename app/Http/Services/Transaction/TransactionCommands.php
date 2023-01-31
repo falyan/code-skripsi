@@ -823,7 +823,10 @@ class TransactionCommands extends Service
         $order = Order::where('id', $order_id)->first()->load('detail.product');
         foreach ($order->detail as $detail) {
             if (in_array($detail->product->category_id, collect($cat_child)->pluck('id')->toArray())) {
-                array_push($cat_ticket, collect($cat_child)->where('id', $detail->product->category_id)->first());
+                $ticket = collect($cat_child)->where('id', $detail->product->category_id)->first();
+                $ticket['quantity'] = $detail->quantity;
+
+                $cat_ticket[] = $ticket;
             }
         }
 
@@ -831,21 +834,22 @@ class TransactionCommands extends Service
 
         $user_tikets = [];
         foreach ($master_tikets as $master_tiket) {
-            $id = str_pad($order_id, 5, '0', STR_PAD_LEFT);
-            $number_tiket = (string) time() . $id;
+            $ticket = collect($cat_ticket)->where('key', $master_tiket->master_data_key)->first();
 
-            $user_tikets[] = [
-                'master_tiket_id' => $master_tiket->id,
-                'number_tiket' => $number_tiket,
-                'usage_date' => $master_tiket->usage_date,
-                'status' => 1,
-                'created_at' => Carbon::now('Asia/Jakarta'),
-            ];
+            for ($i = 0; $i < $ticket['quantity']; $i++) {
+                $id = str_pad($order_id, 5, '0', STR_PAD_LEFT);
+                $number_tiket = (string) time() . $id;
+
+                $user_tikets[] = UserTiket::create([
+                    'master_tiket_id' => $master_tiket->id,
+                    'number_tiket' => $number_tiket,
+                    'usage_date' => $master_tiket->usage_date,
+                    'status' => 1,
+                ]);
+            }
         }
 
-        $create_tiket = UserTiket::insert($user_tikets);
-
-        if ($create_tiket == 0) {
+        if (count($user_tikets) == 0) {
             $response['success'] = false;
             $response['message'] = 'Gagal menambahkan tiket';
             return $response;
@@ -853,6 +857,7 @@ class TransactionCommands extends Service
 
         $response['success'] = true;
         $response['message'] = 'Berhasil menambahkan tiket';
+        $response['data'] = $user_tikets;
         return $response;
     }
 };

@@ -1055,13 +1055,16 @@ class TransactionController extends Controller
 
             $status_code = collect($status_codes)->where('status_code', '02')->first();
             if (count($status_codes) == 2 && $status_code['status'] == 1) {
-                if($data->merchant->official_store_proliga) {
+                $mailSender = new MailSenderManager();
+                if ($data->merchant->official_store_proliga) {
                     $tiket = $this->transactionCommand->generateTicket($order_id);
                     if ($tiket['success'] == false) {
                         return $tiket;
                     }
 
-                    $mailSender->mailSendTicket($order_id);
+                    $mailSender->mailSendTicket($order_id, $tiket['data']);
+                } else {
+                    $mailSender->mailOrderOnDelivery($order_id);
                 }
 
                 $response = $this->transactionCommand->addAwbNumberAuto($order_id);

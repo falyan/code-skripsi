@@ -3,6 +3,8 @@
 namespace App\Http\Services\Manager;
 
 use App\Http\Services\Transaction\TransactionQueries;
+use App\Models\Order;
+use App\Models\UserTiket;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -307,34 +309,67 @@ class MailSenderManager
         return;
     }
 
-    public function mailSendTicket($order_id)
+    public function mailSendTicket($order_id, $user_tikets)
     {
+        // check if file exist
+        if (!file_exists(storage_path('app/public/ticket'))) {
+            mkdir(storage_path('app/public/ticket'), 0777, true);
+        }
+
         $transactionQueries = new TransactionQueries();
         $order = $transactionQueries->getDetailTransaction($order_id);
         $customer = $order->buyer;
-        $merchant = $order->merchant;
+        // $order->load('detail.product.category', 'detail.product.category.parent');
+
+        $user_tikets = UserTiket::with('master_tiket')->whereIn('id', collect($user_tikets)->pluck('id')->toArray())->get();
+
+        //generate ticket pdf and send to customer
+        $attachments = [];
+        foreach ($user_tikets as $user_tiket) {
+            Pdf::loadView('pdf.ticket', [
+                'order' => $order,
+                'customer' => $customer,
+                'user_tiket' => $user_tiket,
+            ])->save(storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.pdf'));
+            $attachments[] = [
+                'path' => storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.pdf'),
+            ];
+        }
+
+        // $pdf = Pdf::loadView('pdf.ticket', [
+        //     'order' => $order,
+        //     'customer' => $customer,
+        //     'user_tikets' => $user_tikets,
+        // ]);
 
         $data = [
             'destination_name' => $customer->full_name ?? 'Pengguna Setia',
             'order' => $order,
+            'user_tikets' => $user_tikets,
         ];
 
-        Mail::send('email.sendTicket', $data, function ($mail) use ($customer) {
+        Mail::send('email.sendTicket', $data, function ($mail) use ($customer, $attachments, $order) {
             $mail->to($customer->email, 'no-reply')
                 ->subject("Pemesanan Tiket PLN Mobile Proliga 2023");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+            // $mail->attachData($pdf->output(), 'ticket-' . $order->trx_no . '.pdf', [
+            //     'mime' => 'application/pdf'
+            // ]);
+            foreach ($attachments as $attachment) {
+                $mail->attach($attachment['path']);
+            }
         });
 
-        $data = [
-            'destination_name' => $merchant->name ?? 'Toko Favorit',
-            'order' => $order,
-        ];
+        // $data = [
+        //     'destination_name' => $merchant->name ?? 'Toko Favorit',
+        //     'order' => $order,
+        // ];
 
-        Mail::send('email.sendTicket', $data, function ($mail) use ($customer, $merchant) {
-            $mail->to($merchant->email, 'no-reply')
-                ->subject("Pemesanan Tiket PLN Mobile Proliga 2023 telah diterima oleh {$customer->name}");
-            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
-        });
+        // Mail::send('email.sendTicket', $data, function ($mail) use ($customer, $merchant) {
+        //     $mail->to($merchant->email, 'no-reply')
+        //         ->subject("Pemesanan Tiket PLN Mobile Proliga 2023 telah diterima oleh {$customer->name}");
+        //     $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        // });
 
         if (Mail::failures()) {
             Log::error('Gagal mengirim email pesanan selesai untuk ke email: ' . $customer->email);

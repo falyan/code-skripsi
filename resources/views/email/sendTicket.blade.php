@@ -102,7 +102,8 @@
                 </td>
                 <td style="padding-bottom: 14px">
                     <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                        <strong>05 Feb 2023, 13:00-23:00 WIB</strong>
+                        {{-- Carbon now --}}
+                        <strong>{{ \Carbon\Carbon::now()->format('d M Y H:m') }}</strong>
                     </span>
                 </td>
             </tr>
@@ -113,9 +114,11 @@
                     </span>
                 </td>
                 <td style="padding-bottom: 14px">
-                    <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                        <strong>Volley indoor Si Jalak Harupat</strong>
-                    </span>
+                    @foreach ($user_tikets as $user_tiket)
+                        <span style="font-family: Nunito; font-size: 14px; color: #595a5b">
+                            <strong>{{ $user_tiket->master_tiket->event_address }}</strong>
+                        </span>
+                    @endforeach
                 </td>
             </tr>
         </table>
