@@ -10,6 +10,13 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelHigh;
+use Endroid\QrCode\Label\Alignment\LabelAlignmentCenter;
+use Endroid\QrCode\Label\Font\NotoSans;
+use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
+use Endroid\QrCode\Writer\PngWriter;
 
 class MailSenderManager
 {
@@ -341,6 +348,21 @@ class MailSenderManager
             }
 
             QrCode::format('png')->size(85)->generate($user_tiket->number_tiket, storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.png'));
+
+            //Generate QR Code using Endroid/QRCode and builder
+            $result = Builder::create()
+                ->writer(new PngWriter())
+                ->writerOptions([])
+                ->data($user_tiket->number_tiket)
+                ->encoding(new Encoding('UTF-8'))
+                ->errorCorrectionLevel(new ErrorCorrectionLevelHigh())
+                ->size(85)
+                ->roundBlockSizeMode(new RoundBlockSizeModeMargin())
+                ->validateResult(false)
+                ->build();
+
+            $result->saveToFile(storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.png'));
+
 
             Pdf::loadView('pdf.ticket', [
                 'order' => $order,
