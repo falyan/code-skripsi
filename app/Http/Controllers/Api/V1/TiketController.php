@@ -122,16 +122,18 @@ class TiketController extends Controller
             ];
         }
 
-        $start_time_usage = Carbon::parse($tiket->usage_date . ' ' . $tiket->start_time_usage)->format('Y-m-d H:i:s');
-        $end_time_usage = Carbon::parse($tiket->usage_date . ' ' . $tiket->end_time_usage)->format('Y-m-d H:i:s');
-        $now = Carbon::now()->format('Y-m-d H:i:s');
+        if ($tiket->start_time_usage != null || $tiket->end_time_usage != null) {
+            $start_time_usage = Carbon::parse($tiket->usage_date . ' ' . $tiket->start_time_usage)->format('Y-m-d H:i:s');
+            $end_time_usage = Carbon::parse($tiket->usage_date . ' ' . $tiket->end_time_usage)->format('Y-m-d H:i:s');
+            $now = Carbon::now()->format('Y-m-d H:i:s');
 
-        if (!Carbon::parse($now)->between($start_time_usage, $end_time_usage)) {
-            return [
-                'error_code' => static::$TICKET_TIME_NOT_VALID,
-                'status' => 'error',
-                'message' => 'Tiket hanya bisa digunakan pada jam ' . Carbon::parse($tiket->start_usage_date)->format('H:i') . ' - ' . Carbon::parse($tiket->end_usage_date)->format('H:i'),
-            ];
+            if (!Carbon::parse($now)->between($start_time_usage, $end_time_usage)) {
+                return [
+                    'error_code' => static::$TICKET_TIME_NOT_VALID,
+                    'status' => 'error',
+                    'message' => 'Tiket hanya bisa digunakan pada jam ' . Carbon::parse($tiket->start_usage_date)->format('H:i') . ' - ' . Carbon::parse($tiket->end_usage_date)->format('H:i'),
+                ];
+            }
         }
 
         return $tiket;
