@@ -94,7 +94,11 @@
                         {{ $customer->full_name }}
                     </td>
                     <td style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                        {{ \Carbon\Carbon::parse($user_tiket->usage_date)->format('d M Y') . ' ' . \Carbon\Carbon::parse($user_tiket->start_time_usage)->format('H:i') . ' - ' . \Carbon\Carbon::parse($user_tiket->end_time_usage)->format('H:i') . ' WIB' }}
+                        @if ($user_tiket->start_time_usage == null && $user_tiket->end_time_usage == null)
+                            {{ \Carbon\Carbon::parse($user_tiket->usage_date)->format('d M Y') }}
+                        @else
+                            {{ \Carbon\Carbon::parse($user_tiket->usage_date)->format('d M Y') . ' ' . \Carbon\Carbon::parse($user_tiket->start_time_usage)->format('H:i') . ' - ' . \Carbon\Carbon::parse($user_tiket->end_time_usage)->format('H:i') . ' WIB' }}
+                        @endif
                     </td>
                 </tr>
                 <tr>
