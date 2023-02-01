@@ -1744,11 +1744,11 @@ class TransactionController extends Controller
                             }
 
                             // dikomen untuk SIT
-                            // $title = 'Pesanan Dikirim';
-                            // $message = 'Pesanan anda sedang dalam pengiriman.';
-                            // $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-                            // // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
-                            // $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+                            $title = 'Pesanan Dikirim';
+                            $message = 'Pesanan anda sedang dalam pengiriman.';
+                            $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
+                            // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+                            $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
                             // // $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
                             // // $total_amount_trx = $total_delivery_fee_trx = 0;
