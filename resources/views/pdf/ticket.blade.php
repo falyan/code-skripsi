@@ -57,6 +57,12 @@
                 style="background-color: #831d641a;color: #831d64;padding: 8px 16px;border-radius: 8px;font-family: Nunito;font-size: 16px;">Reguler</span>
         @endif
 
+        <div style="width: 100%; padding-top: 10px">
+            <span style="font-family: Nunito; font-size: 20px; font-weight: bold">
+                <p>{{ $user_tiket->master_tiket->name }}</p>
+            </span>
+        </div>
+
         <div style="margin-top: 64px; width: auto; margin-bottom: 100px">
             <table style="width: 100%">
                 <tr>
@@ -88,7 +94,7 @@
                         {{ $customer->full_name }}
                     </td>
                     <td style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                        {{ \Carbon\Carbon::parse($user_tiket->usage_date)->format('d M Y') }}
+                        {{ \Carbon\Carbon::parse($user_tiket->usage_date)->format('d m Y') . \Carbon\Carbon::parse($user_tiket->start_time_usage)->format('H:i') . ' - ' . \Carbon\Carbon::parse($user_tiket->end_time_usage)->format('H:i') . ' WIB' }}
                     </td>
                 </tr>
                 <tr>
