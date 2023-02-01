@@ -844,6 +844,8 @@ class TransactionCommands extends Service
                     'master_tiket_id' => $master_tiket->id,
                     'number_tiket' => $number_tiket,
                     'usage_date' => $master_tiket->usage_date,
+                    'start_time_usage' => $master_tiket->start_time_usage,
+                    'end_time_usage' => $master_tiket->end_time_usage,
                     'status' => 1,
                 ]);
             }

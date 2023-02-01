@@ -24,6 +24,8 @@ class CreateMasterTiketsTable extends Migration
             $table->date('start_bill_date');
             $table->date('end_bill_date');
             $table->date('usage_date');
+            $table->time('start_time_usage');
+            $table->time('end_time_usage');
             $table->float('status');
             $table->json('tnc')->nullable();
             $table->timestamps();
@@ -35,6 +37,8 @@ class CreateMasterTiketsTable extends Migration
             $table->bigInteger('master_tiket_id');
             $table->string('number_tiket');
             $table->date('usage_date');
+            $table->time('start_time_usage');
+            $table->time('end_time_usage');
             $table->float('status');
             $table->timestamps();
             $table->softDeletes();

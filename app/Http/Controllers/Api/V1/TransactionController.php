@@ -1774,7 +1774,7 @@ class TransactionController extends Controller
                                 // dispatch(new SendEmailTiketJob($order_id, $tiket['data']));
                                 $mailSender->mailSendTicket($order_id, $tiket['data']);
                             } else {
-                                // $mailSender->mailOrderOnDelivery($order_id);
+                                $mailSender->mailOrderOnDelivery($order_id);
                             }
 
                             $delivery = OrderDelivery::where('order_id', $order_id)->first();
