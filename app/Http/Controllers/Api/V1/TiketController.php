@@ -20,7 +20,7 @@ class TiketController extends Controller
             'terms_and_conditions' => $data->master_tiket->tnc,
             'event_address' => $data->master_tiket->event_address,
             'usage_date' => $data->usage_date,
-            'usage_time' => $data->start_time_usage . ' - ' . $data->end_time_usage,
+            'usage_time' => ($data->start_time_usage != null && $data->end_time_usage != null) ? $data->start_time_usage . ' - ' . $data->end_time_usage : null,
             'status' => $data->status,
             'created_at' => Carbon::parse($data->created_at)->format('d M Y H:i:s'),
             'updated_at' => Carbon::parse($data->updated_at)->format('d M Y H:i:s'),
