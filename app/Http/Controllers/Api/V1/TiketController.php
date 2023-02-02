@@ -37,9 +37,11 @@ class TiketController extends Controller
             return $this->respondBadRequest('Key-Access tidak valid', static::$HEADER_KEY_ACCESS_INVALID);
         }
 
-        $validator = Validator::make($request->all(), [
-            'qr' => 'required',
-        ],
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'qr' => 'required',
+            ],
             [
                 'exists' => 'kode :attribute tidak ditemukan.',
                 'required' => ':attribute diperlukan.',
@@ -74,7 +76,7 @@ class TiketController extends Controller
                 'message' => 'Tiket ditemukan',
                 'data' => $this->respondDataMaping($tiket),
             ];
-        } catch (\Exception$e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return [
                 'status' => 'error',
@@ -131,7 +133,7 @@ class TiketController extends Controller
                 return [
                     'error_code' => static::$TICKET_TIME_NOT_VALID,
                     'status' => 'error',
-                    'message' => 'Tiket hanya bisa digunakan pada jam ' . Carbon::parse($tiket->start_usage_date)->format('H:i') . ' - ' . Carbon::parse($tiket->end_usage_date)->format('H:i'),
+                    'message' => 'Tiket hanya bisa digunakan pada jam ' . Carbon::parse($tiket->start_time_usage)->format('H:i') . ' - ' . Carbon::parse($tiket->end_time_usage)->format('H:i'),
                 ];
             }
         }
