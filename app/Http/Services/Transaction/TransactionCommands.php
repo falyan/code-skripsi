@@ -806,7 +806,7 @@ class TransactionCommands extends Service
     {
         $user_tikets = UserTiket::where('order_id', $order_id)->get();
 
-        if (!empty($user_tikets)) {
+        if (collect($user_tikets)->isNotEmpty()) {
             $response['success'] = true;
             $response['message'] = 'Berhasil menambahkan tiket';
             $response['data'] = $user_tikets;
