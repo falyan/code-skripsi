@@ -804,6 +804,16 @@ class TransactionCommands extends Service
 
     public function generateTicket($order_id)
     {
+        $user_tikets = UserTiket::where('order_id', $order_id)->get();
+
+        if (!empty($user_tikets)) {
+            $response['success'] = true;
+            $response['message'] = 'Berhasil menambahkan tiket';
+            $response['data'] = $user_tikets;
+
+            return $response;
+        }
+
         $categories = MasterData::with(['child' => function ($j) {
             $j->with('child');
         }])->where('key', 'prodcat_tiket')->get();
@@ -832,7 +842,6 @@ class TransactionCommands extends Service
 
         $master_tikets = MasterTiket::whereIn('master_data_key', collect($cat_ticket)->pluck('key')->toArray())->get();
 
-        $user_tikets = [];
         foreach ($master_tikets as $master_tiket) {
             $ticket = collect($cat_ticket)->where('key', $master_tiket->master_data_key)->first();
 
@@ -841,6 +850,7 @@ class TransactionCommands extends Service
                 $number_tiket = (string) time() . (string)$id;
 
                 $user_tikets[] = UserTiket::create([
+                    'order_id' => $order_id,
                     'master_tiket_id' => $master_tiket->id,
                     'number_tiket' => $number_tiket,
                     'usage_date' => $master_tiket->usage_date,

@@ -35,6 +35,7 @@ class CreateMasterTiketsTable extends Migration
         Schema::create('user_tiket', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('master_tiket_id');
+            $table->unsignedBigInteger('order_id');
             $table->string('number_tiket');
             $table->date('usage_date');
             $table->time('start_time_usage')->nullable();
@@ -45,6 +46,7 @@ class CreateMasterTiketsTable extends Migration
             $table->softDeletes();
 
             $table->foreign('master_tiket_id')->references('id')->on('master_tiket');
+            $table->foreign('order_id')->references('id')->on('order')->onDelete('cascade');
         });
 
         Schema::table('merchant', function (Blueprint $table) {
