@@ -79,6 +79,16 @@ class TiketQueries extends Service
     public function getTiketByOrder($trx_no)
     {
         $order = Order::where('trx_no', $trx_no)->first();
+        $order->load(
+            'detail.product.category',
+            'detail.product.category.parent',
+            'buyer',
+        );
+
+        $master_data_tiket = [];
+        foreach ($order->detail as $detail) {
+            $master_data_tiket[] = $detail->product->category;
+        }
 
         if (!$order) {
             return [
@@ -88,9 +98,22 @@ class TiketQueries extends Service
             ];
         }
 
-        $tiket = UserTiket::with('master_tiket')->where('order_id', $order->id)->get();
+        $user_tikets = UserTiket::with('master_tiket')->where('order_id', $order->id)->get();
 
-        if (!$tiket) {
+        $tikets = [];
+        foreach ($user_tikets as $user_tiket) {
+            $master_tiket = collect($master_data_tiket)->where('key', $user_tiket->master_tiket->master_data_key)->first();
+            if ($master_tiket['parent']['key'] == 'prodcat_vip_proliga_2023') {
+                $user_tiket['is_vip'] = true;
+            } else {
+                $user_tiket['is_vip'] = false;
+            }
+
+            $user_tiket['user_name'] = $order->buyer->full_name;
+            $user_tiket['user_email'] = $order->buyer->email;
+            $tikets[] = $user_tiket;
+        }
+        if (!$tikets) {
             return [
                 'error_code' => static::$TICKET_NOT_FOUND,
                 'status' => 'error',
@@ -98,6 +121,6 @@ class TiketQueries extends Service
             ];
         }
 
-        return $tiket;
+        return $tikets;
     }
 }
