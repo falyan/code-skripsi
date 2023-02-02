@@ -67,6 +67,7 @@ class TiketController extends Controller
             DB::beginTransaction();
 
             $tiket->status = 2;
+            $tiket->event_info = $request->get('event_info') ?? null;
             $tiket->save();
 
             DB::commit();

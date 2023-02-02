@@ -39,6 +39,7 @@ class CreateMasterTiketsTable extends Migration
             $table->date('usage_date');
             $table->time('start_time_usage')->nullable();
             $table->time('end_time_usage')->nullable();
+            $table->string('event_info')->nullable();
             $table->float('status');
             $table->timestamps();
             $table->softDeletes();
