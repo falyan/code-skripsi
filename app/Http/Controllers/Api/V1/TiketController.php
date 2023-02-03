@@ -74,7 +74,7 @@ class TiketController extends Controller
                 'user_name' => $tiket[0]->user_name,
                 'user_email' => $tiket[0]->user_email,
                 'tikets' => array_map(function ($item) {
-                    return $this->respondDataMapingOrder($item);
+                    return $this->respondDataMaping($item);
                 }, $tiket),
             ],
         ];
@@ -119,9 +119,9 @@ class TiketController extends Controller
         try {
             DB::beginTransaction();
 
-            $tiket->status = 2;
-            $tiket->event_info = $request->get('event_info') ?? null;
-            $tiket->save();
+            // $tiket->status = 2;
+            // $tiket->event_info = $request->get('event_info') ?? null;
+            // $tiket->save();
 
             DB::commit();
             return [
@@ -130,7 +130,7 @@ class TiketController extends Controller
                 'message' => 'Tiket ditemukan',
                 'data' => $this->respondDataMaping($tiket),
             ];
-        } catch (\Exception$e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return [
                 'status' => 'error',
@@ -150,22 +150,6 @@ class TiketController extends Controller
     }
 
     private function respondDataMaping($data)
-    {
-        return [
-            'number_tiket' => $data['number_tiket'],
-            'name' => $data['master_tiket']['name'],
-            'description' => $data['master_tiket']['description'],
-            'terms_and_conditions' => $data['master_tiket']['tnc'],
-            'event_address' => $data['master_tiket']['event_address'],
-            'usage_date' => $data['usage_date'],
-            'usage_time' => ($data['start_time_usage'] != null && $data['end_time_usage'] != null) ? $data['start_time_usage'] . ' - ' . $data['end_time_usage'] : null,
-            'status' => $data['status'],
-            'created_at' => Carbon::parse($data['created_at'])->format('d M Y H:i:s'),
-            'updated_at' => Carbon::parse($data['updated_at'])->format('d M Y H:i:s'),
-        ];
-    }
-
-    private function respondDataMapingOrder($data)
     {
         return [
             'number_tiket' => $data['number_tiket'],

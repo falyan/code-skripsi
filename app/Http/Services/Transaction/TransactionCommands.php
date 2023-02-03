@@ -747,61 +747,6 @@ class TransactionCommands extends Service
         return true;
     }
 
-    public function generateResi($order_id)
-    {
-        try {
-            DB::beginTransaction();
-            $order = Order::where('id', $order_id)->first();
-            $delivery = OrderDelivery::where('order_id', $order->id)->first();
-
-            if ($delivery->delivery_method != 'Pengiriman oleh Seller') {
-                $resi = LogisticManager::preorder($order->id);
-
-                if (!isset($resi['data']) || !isset($resi['data']['awb_number']) || !isset($resi['data']['no_reference'])) {
-                    $response['success'] = false;
-                    $response['message'] = 'Gagal menambahkan nomor resi.';
-                    if (isset($resi['data'])) {
-                        $response['data'] = $resi['data'];
-                    }
-                    return $response;
-                }
-
-                $delivery->awb_number = $resi['data']['awb_number'];
-                $delivery->no_reference = $resi['data']['no_reference'];
-
-                if (!$delivery->save()) {
-                    $response['success'] = false;
-                    $response['message'] = 'Gagal menambahkan nomor resi';
-                    return $response;
-                }
-            } else {
-                Carbon::setLocale('id');
-                $date = Carbon::now('Asia/Jakarta')->isoFormat('YMMDD');
-                $id = str_pad($order_id, 4, '0', STR_PAD_LEFT);
-                $resi = "CLG/{$date}/{$id}";
-
-                $delivery->awb_number = $resi;
-                if (!$delivery->save()) {
-                    $response['success'] = false;
-                    $response['message'] = 'Gagal menambahkan nomor resi';
-                    return $response;
-                }
-            }
-
-            DB::commit();
-
-            $response['success'] = true;
-            $response['message'] = 'Berhasil menambahkan nomor resi';
-            return $response;
-        } catch (Exception $e) {
-            DB::rollBack();
-            if (in_array($e->getCode(), self::$error_codes)) {
-                throw new Exception($e->getMessage(), $e->getCode());
-            }
-            throw new Exception($e->getMessage(), 500);
-        }
-    }
-
     public function generateTicket($order_id)
     {
         $user_tikets = UserTiket::where('order_id', $order_id)->get();

@@ -3,6 +3,7 @@
 namespace App\Http\Services\Tiket;
 
 use App\Http\Services\Service;
+use App\Models\MasterData;
 use App\Models\Order;
 use App\Models\UserTiket;
 use Carbon\Carbon;
@@ -72,6 +73,15 @@ class TiketQueries extends Service
                 ];
             }
         }
+
+        $master_data = MasterData::where('key', $tiket->master_tiket->master_data_key)->first();
+        $master_data->load('parent');
+        if ($master_data->parent->key == 'prodcat_vip_proliga_2023') {
+            $tiket->is_vip = true;
+        } else {
+            $tiket->is_vip = false;
+        }
+
 
         return $tiket;
     }
