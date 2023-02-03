@@ -89,6 +89,7 @@ $app->singleton(
 $app->configure('app');
 $app->configure('auth');
 $app->configure('swagger-lume');
+$app->configure('dompdf');
 //$app->configure('elastic-apm');
 
 /*
@@ -138,6 +139,7 @@ $app->register(App\Providers\LogServiceProvider::class);
 // $app->register(Anik\ElasticApm\Providers\ElasticApmServiceProvider::class);
 // $app->register(Fruitcake\Cors\CorsServiceProvider::class);
 $app->register(Maatwebsite\Excel\ExcelServiceProvider::class);
+$app->register(Barryvdh\DomPDF\ServiceProvider::class);
 
 class_alias(Maatwebsite\Excel\Facades\Excel::class, 'Excel');
 

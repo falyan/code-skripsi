@@ -119,4 +119,8 @@ class MasterData extends Model
     public function mdr_merchant_active(){
         return $this->hasOne(MdrMerchant::class)->where('status', 1);
     }
+
+    public function master_ticket(){
+        return $this->hasOne(MasterTiket::class, 'master_data_key', 'key');
+    }
 }

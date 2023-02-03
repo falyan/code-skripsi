@@ -485,4 +485,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('retry/{order_id}', 'TransactionController@retryVoucher');
         $router->post('email/{order_id}', 'TransactionController@resendEmailVoucher');
     });
+
+    $router->group(['prefix' => 'tiket'], static function () use ($router) {
+        $router->post('scan-qr', 'TiketController@scanQr');
+        $router->post('cek-order', 'TiketController@cekOrder');
+    });
+
 });

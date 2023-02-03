@@ -7,12 +7,18 @@ use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Service;
 use App\Models\Customer;
 use App\Models\CustomerDiscount;
+use App\Models\MasterData;
+use App\Models\MasterTiket;
 use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\OrderDetail;
 use App\Models\OrderPayment;
 use App\Models\OrderProgress;
 use App\Models\Product;
+use App\Models\PromoLog;
+use App\Models\PromoMaster;
+use App\Models\PromoMerchant;
+use App\Models\UserTiket;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
@@ -739,5 +745,76 @@ class TransactionCommands extends Service
             return false;
         }
         return true;
+    }
+
+    public function generateTicket($order_id)
+    {
+        $user_tikets = UserTiket::where('order_id', $order_id)->get();
+
+        if (collect($user_tikets)->isNotEmpty()) {
+            $response['success'] = true;
+            $response['message'] = 'Berhasil menambahkan tiket';
+            $response['data'] = $user_tikets;
+
+            return $response;
+        }
+
+        $categories = MasterData::with(['child' => function ($j) {
+            $j->with('child');
+        }])->where('key', 'prodcat_tiket')->get();
+
+        $cat_child = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    foreach ($child->child as $children) {
+                        array_push($cat_child, $children);
+                    }
+                }
+            }
+        }
+
+        $cat_ticket = [];
+        $order = Order::where('id', $order_id)->first()->load('detail.product');
+        foreach ($order->detail as $detail) {
+            if (in_array($detail->product->category_id, collect($cat_child)->pluck('id')->toArray())) {
+                $ticket = collect($cat_child)->where('id', $detail->product->category_id)->first();
+                $ticket['quantity'] = $detail->quantity;
+
+                $cat_ticket[] = $ticket;
+            }
+        }
+
+        $master_tikets = MasterTiket::whereIn('master_data_key', collect($cat_ticket)->pluck('key')->toArray())->get();
+
+        foreach ($master_tikets as $master_tiket) {
+            $ticket = collect($cat_ticket)->where('key', $master_tiket->master_data_key)->first();
+
+            for ($i = 0; $i < $ticket['quantity']; $i++) {
+                $id = rand(10000, 99999);
+                $number_tiket = (string) time() . (string)$id;
+
+                $user_tikets[] = UserTiket::create([
+                    'order_id' => $order_id,
+                    'master_tiket_id' => $master_tiket->id,
+                    'number_tiket' => $number_tiket,
+                    'usage_date' => $master_tiket->usage_date,
+                    'start_time_usage' => $master_tiket->start_time_usage,
+                    'end_time_usage' => $master_tiket->end_time_usage,
+                    'status' => 1,
+                ]);
+            }
+        }
+
+        if (count($user_tikets) == 0) {
+            $response['success'] = false;
+            $response['message'] = 'Gagal menambahkan tiket';
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil menambahkan tiket';
+        $response['data'] = $user_tikets;
+        return $response;
     }
 };

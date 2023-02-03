@@ -33,6 +33,33 @@ return [
         'key_name' => 'pln_ubah_daya'
     ],
     'plnmobile' => [
-        'endpoint' => env('PLNMOBILE_ENDPOINT')
-    ]
+        'endpoint' => env('PLNMOBILE_ENDPOINT'),
+    ],
+    'digital-product' => [
+        'endpoint' => env('DIGITAL_PRODUCT_CREDENTIAL_ENDPOINT'),
+        'api_key' => env('DIGITAL_PRODUCT_CREDENTIAL_APIKEY'),
+        'secret_key' => env('DIGITAL_PRODUCT_CREDENTIAL_SECRETKEY'),
+    ],
+    'hedwig' => [
+        'endpoint' => env('HEDWIG_LOGISTIC_ENDPOINT'),
+        'key' => env('HEDWIG_LOGISTIC_KEY'),
+    ],
+    'agent' => [
+        'v2' => [
+            'endpoint' => env('ICONPAY_AGENT_CREDENTIAL_ENDPOINT'),
+            'username' => env('ICONPAY_AGENT_USERNAME'),
+            'password' => env('ICONPAY_AGENT_PASSWORD'),
+            'api_key' => env('ICONPAY_AGENT_APIKEY'),
+        ],
+        'v3' => [
+            'endpoint' => env('ICONPAY_V3_AGENT_CREDENTIAL_ENDOPOINT'),
+            'partner_id' => env('ICONPAY_V3_AGENT_PARTNER_ID'),
+            'client_id' => env('ICONPAY_V3_AGENT_CLIENT_ID'),
+            'client_secret' => env('ICONPAY_V3_AGENT_CLIENT_SECRET'),
+            'channel_id' => env('ICONPAY_V3_AGENT_CHANNEL_ID'),
+        ]
+    ],
+    'tiket' => [
+        'api_hash' => env('TIKET_EVENT_HASH'),
+    ],
 ];

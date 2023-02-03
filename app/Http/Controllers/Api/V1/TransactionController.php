@@ -14,6 +14,7 @@ use App\Http\Services\Voucher\VoucherCommands;
 use App\Models\Customer;
 use App\Models\IconcashInquiry;
 use App\Models\Order;
+use App\Models\OrderDelivery;
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\User;
@@ -35,7 +36,7 @@ class TransactionController extends Controller
      *
      * @return void
      */
-    protected $transactionQueries, $transactionCommand, $mailSenderManager, $voucherCommand;
+    protected $transactionQueries, $transactionCommand, $mailSenderManager, $voucherCommand, $notificationCommand;
     public function __construct()
     {
         $this->transactionQueries = new TransactionQueries();
@@ -1042,7 +1043,7 @@ class TransactionController extends Controller
             }
             DB::beginTransaction();
 
-            $data = $this->transactionQueries->getStatusOrder($order_id, true);
+            $data = $this->transactionQueries->getStatusOrder($order_id, true)->load('merchant');
 
             $status_codes = [];
             foreach ($data->progress as $item) {
@@ -1053,6 +1054,14 @@ class TransactionController extends Controller
 
             $status_code = collect($status_codes)->where('status_code', '02')->first();
             if (count($status_codes) == 2 && $status_code['status'] == 1) {
+                $mailSender = new MailSenderManager();
+                if ($data->merchant->official_store_proliga) {
+                    $tiket = $this->transactionCommand->generateTicket($order_id);
+                    if ($tiket['success'] == false) {
+                        return $tiket;
+                    }
+                }
+
                 $response = $this->transactionCommand->addAwbNumberAuto($order_id);
                 if ($response['success'] == false) {
                     return $response;
@@ -1066,8 +1075,8 @@ class TransactionController extends Controller
                 $title = 'Pesanan Dikirim';
                 $message = 'Pesanan anda sedang dalam pengiriman.';
                 $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-                // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
-                $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+                $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+                // $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
                 // $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
                 // $total_amount_trx = $total_delivery_fee_trx = 0;
@@ -1083,7 +1092,12 @@ class TransactionController extends Controller
                 DB::commit();
 
                 $mailSender = new MailSenderManager();
-                $mailSender->mailOrderOnDelivery($order_id);
+                if ($data->merchant->official_store_proliga) {
+                    // dispatch(new SendEmailTiketJob($order_id, $tiket['data']));
+                    $mailSender->mailSendTicket($order_id, $tiket['data']);
+                } else {
+                    $mailSender->mailOrderOnDelivery($order_id);
+                }
 
                 return $response;
             } else {

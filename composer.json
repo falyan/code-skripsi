@@ -10,8 +10,10 @@
     "type": "project",
     "require": {
         "php": "^7.3",
+        "barryvdh/laravel-dompdf": "^2.0",
         "darkaonline/swagger-lume": "^8.0",
         "doctrine/dbal": "^3.1",
+        "endroid/qr-code": "^4.6",
         "firebase/php-jwt": "^5.4",
         "guzzlehttp/guzzle": "^7.3",
         "illuminate/mail": "^8.61",
@@ -22,6 +24,7 @@
         "maatwebsite/excel": "^3.1",
         "netflie/monolog-stackdriver-handler": "^0.0.1",
         "phpseclib/phpseclib": "^3.0",
+        "simplesoftwareio/simple-qrcode": "~4",
         "tymon/jwt-auth": "^1.0",
         "zircote/swagger-php": "3.*"
     },
