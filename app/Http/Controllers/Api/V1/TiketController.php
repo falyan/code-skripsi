@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Services\Tiket\TiketQueries;
+use App\Models\UserTiket;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -119,9 +120,12 @@ class TiketController extends Controller
         try {
             DB::beginTransaction();
 
+            UserTiket::find($tiket->id)->update([
+                'status' => 2,
+                'event_info' => $request->get('event_info') ?? null,
+            ]);
+
             $tiket->status = 2;
-            $tiket->event_info = $request->get('event_info') ?? null;
-            $tiket->save();
 
             DB::commit();
             return [
