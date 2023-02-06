@@ -114,7 +114,7 @@ class TiketController extends Controller
 
         $tiket = $this->tiketQueries->getTiket($request->get('qr'));
         if (isset($tiket['status']) && $tiket['status'] == 'error') {
-            return $this->respondBadRequest($tiket['message'], $tiket['error_code']);
+            return $this->respondBadRequest($tiket['message'], $tiket['error_code'], isset($tiket['data']) ? $tiket['data'] : null);
         }
 
         try {
@@ -144,8 +144,17 @@ class TiketController extends Controller
         }
     }
 
-    private function respondBadRequest($message, $error_code)
+    private function respondBadRequest($message, $error_code, $data = null)
     {
+        if ($data != null) {
+            return response()->json([
+                'status_code' => $error_code,
+                'status' => 'error',
+                'message' => $message,
+                'data' => $data,
+            ], 400);
+        }
+
         return response()->json([
             'status_code' => $error_code,
             'status' => 'error',

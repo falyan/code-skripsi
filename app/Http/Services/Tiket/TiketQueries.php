@@ -49,6 +49,9 @@ class TiketQueries extends Service
                 'error_code' => static::$TICKET_HAS_USED,
                 'status' => 'error',
                 'message' => 'Tiket telah digunakan',
+                'data' => [
+                    'used_at' => Carbon::parse($tiket->updated_at)->format('Y-m-d H:i:s'),
+                ],
             ];
         }
 
@@ -89,6 +92,15 @@ class TiketQueries extends Service
     public function getTiketByOrder($trx_no)
     {
         $order = Order::where('trx_no', $trx_no)->first();
+
+        if (!$order) {
+            return [
+                'error_code' => static::$ORDER_NOT_FOUND,
+                'status' => 'error',
+                'message' => 'Order tidak ditemukan',
+            ];
+        }
+
         $order->load(
             'detail.product.category',
             'detail.product.category.parent',
@@ -98,14 +110,6 @@ class TiketQueries extends Service
         $master_data_tiket = [];
         foreach ($order->detail as $detail) {
             $master_data_tiket[] = $detail->product->category;
-        }
-
-        if (!$order) {
-            return [
-                'error_code' => static::$ORDER_NOT_FOUND,
-                'status' => 'error',
-                'message' => 'Order tidak ditemukan',
-            ];
         }
 
         $user_tikets = UserTiket::with('master_tiket')->where('order_id', $order->id)->get();
