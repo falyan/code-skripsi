@@ -394,4 +394,82 @@ class MailSenderManager
             Log::info('Berhasil mengirim email pesanan selesai ke email: ' . $customer->email);
         }
     }
+
+    public function mailResendTicket($order_id, $user_tikets)
+    {
+        // check if file exist
+        if (!file_exists(storage_path('app/public/ticket'))) {
+            mkdir(storage_path('app/public/ticket'), 0777, true);
+        }
+
+        $transactionQueries = new TransactionQueries();
+        $order = $transactionQueries->getDetailTransaction($order_id);
+        $customer = $order->buyer;
+        $order->load('detail.product.category', 'detail.product.category.parent');
+
+        $master_data_tiket = [];
+        foreach ($order->detail as $detail) {
+            $master_data_tiket[] = $detail->product->category;
+        }
+
+        $user_tikets = UserTiket::with('master_tiket')->whereIn('id', collect($user_tikets)->pluck('id')->toArray())->get();
+
+        //generate ticket pdf and send to customer
+        $attachments = [];
+        foreach ($user_tikets as $user_tiket) {
+            $master_tiket = collect($master_data_tiket)->where('key', $user_tiket->master_tiket->master_data_key)->first();
+            if ($master_tiket['parent']['key'] == 'prodcat_vip_proliga_2023') {
+                $user_tiket['is_vip'] = true;
+            } else {
+                $user_tiket['is_vip'] = false;
+            }
+
+            // Generate QR Code using Endroid/QRCode and builder
+            $result = Builder::create()
+                ->writer(new PngWriter())
+                ->writerOptions([])
+                ->data($user_tiket->number_tiket)
+                ->encoding(new Encoding('UTF-8'))
+                ->errorCorrectionLevel(new ErrorCorrectionLevelHigh())
+                ->size(85)
+                ->roundBlockSizeMode(new RoundBlockSizeModeMargin())
+                ->validateResult(false)
+                ->build();
+
+            $result->saveToFile(storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.png'));
+
+
+            Pdf::loadView('pdf.ticket', [
+                'order' => $order,
+                'customer' => $customer,
+                'user_tiket' => $user_tiket,
+            ])->save(storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.pdf'));
+            $attachments[] = storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.pdf');
+        }
+
+        $data = [
+            'destination_name' => $customer->full_name ?? 'Pengguna Setia',
+            'order' => $order,
+            'user_tikets' => $user_tikets,
+        ];
+
+        Mail::send('email.sendTicket', $data, function ($mail) use ($customer, $attachments, $order) {
+            $mail->to($customer->email, 'no-reply')
+                ->subject("[Pengiriman Ulang] Tiket PLN Mobile Proliga 2023");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+            foreach ($attachments as $file_path) {
+                $mail->attach($file_path);
+            }
+        });
+
+        if (file_exists(storage_path('app/public/ticket'))) {
+            File::deleteDirectory(storage_path('app/public/ticket'));
+        }
+
+        if (Mail::failures()) {
+            Log::error('Gagal mengirim email pesanan selesai untuk ke email: ' . $customer->email);
+        } else {
+            Log::info('Berhasil mengirim email pesanan selesai ke email: ' . $customer->email);
+        }
+    }
 }
