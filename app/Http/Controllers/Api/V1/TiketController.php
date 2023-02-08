@@ -3,16 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Tiket\TiketQueries;
-use App\Http\Services\Transaction\TransactionCommands;
-use App\Http\Services\Transaction\TransactionQueries;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Exception;
-use App\Http\Services\Manager\MailSenderManager;
-use App\Models\Order;
 
 class TiketController extends Controller
 {
@@ -28,13 +25,11 @@ class TiketController extends Controller
 
     static $ORDER_NOT_FOUND = '09';
 
-    protected $tiketQueries, $transactionQueries, $transactionCommand;
+    protected $tiketQueries;
 
     public function __construct()
     {
         $this->tiketQueries = new TiketQueries();
-        $this->transactionQueries = new TransactionQueries();
-        $this->transactionCommand = new TransactionCommands();
     }
 
     public function cekOrder(Request $request)
@@ -68,7 +63,7 @@ class TiketController extends Controller
             return $this->respondValidationError($errors);
         }
 
-        $tiket = $this->tiketQueries->getTiketByOrder($request->all());
+        $tiket = $this->tiketQueries->getTiketByOrder($request->get('trx_id'));
         if (isset($tiket['status']) && $tiket['status'] == 'error') {
             return $this->respondBadRequest($tiket['message'], $tiket['error_code']);
         }
@@ -140,7 +135,7 @@ class TiketController extends Controller
                 'message' => 'Tiket ditemukan',
                 'data' => $this->respondDataMaping($tiket),
             ];
-        } catch (\Exception $e) {
+        } catch (\Exception$e) {
             DB::rollBack();
             return [
                 'status' => 'error',
@@ -152,49 +147,46 @@ class TiketController extends Controller
 
     public function resendTicket(Request $request)
     {
-        try {
-            if (!is_numeric($request['order_id'])) {
-                $response = [
-                    'success' => false,
-                    'message' => 'order id harus berupa angka',
-                ];
-                return $response;
-            }
-            DB::beginTransaction();
+        if (!$keyAccess = $request->header('Key-Access')) {
+            return $this->respondBadRequest('Header Key-Access diperlukan', static::$HEADER_KEY_ACCESS_REQUIRED);
+        }
 
-            // $data = $this->transactionQueries->getStatusOrder($request['order_id'], true)->load('merchant');
-            $data = Order::where('id', $request['order_id'])->with('merchant')->first();
-            // $status_codes = [];
-            // foreach ($data->progress as $item) {
-            //     if (in_array($item->status_code, ['01', '02'])) {
-            //         $status_codes[] = $item;
-            //     }
-            // }
+        if (config('credentials.tiket.api_hash') != md5($keyAccess)) {
+            return $this->respondBadRequest('Key-Access tidak valid', static::$HEADER_KEY_ACCESS_INVALID);
+        }
 
-            $tiket = null;
-            // $status_code = collect($status_codes)->where('status_code', '02')->first();
-            // if (count($status_codes) == 2 && $status_code['status'] == 1) {
-            if ($data->merchant->official_store_proliga) {
-                $tiket = $this->transactionCommand->generateTicket($request['order_id']);
-                if ($tiket['success'] == false) {
-                    return $tiket;
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'order_id' => 'required|numeric',
+            ],
+            [
+                'exists' => 'kode :attribute tidak ditemukan.',
+                'required' => ':attribute diperlukan.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
                 }
             }
+            return $this->respondValidationError($errors);
+        }
 
-            DB::commit();
-
-            $mailSender = new MailSenderManager();
-            if ($data->merchant->official_store_proliga) {
-                // dispatch(new SendEmailTiketJob($request['order_id'], $tiket['data']));
-                $mailSender->mailResendTicket($request['order_id'], $tiket['data']);
+        try {
+            $tiket = $this->tiketQueries->getTiketByOrder($request->get('order_id'), true);
+            if (isset($tiket['status']) && $tiket['status'] == 'error') {
+                return $this->respondBadRequest($tiket['message'], $tiket['error_code']);
             }
 
+            $mailSender = new MailSenderManager();
+            $mailSender->mailResendTicket($request->get('order_id'), $tiket);
+
             return $this->respondWithResult(true, 'Berhasil mengirim ulang tiket', 200);
-            // } else {
-            //     return $this->respondWithResult(false, 'Pesanan ' . $request['order_id'] . ' tidak dalam status siap dikirim!', 400);
-            // }
         } catch (Exception $e) {
-            DB::rollBack();
             return $this->respondErrorException($e, request());
         }
     }

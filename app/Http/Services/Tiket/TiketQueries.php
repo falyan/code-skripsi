@@ -89,9 +89,13 @@ class TiketQueries extends Service
         return $tiket;
     }
 
-    public function getTiketByOrder($trx_no)
+    public function getTiketByOrder($trx_no, $withId = false)
     {
-        $order = Order::where('trx_no', $trx_no)->first();
+        if ($withId) {
+            $order = Order::find($trx_no);
+        } else {
+            $order = Order::where('trx_no', $trx_no)->first();
+        }
 
         if (!$order) {
             return [
