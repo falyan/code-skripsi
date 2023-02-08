@@ -49,6 +49,9 @@ class TiketQueries extends Service
                 'error_code' => static::$TICKET_HAS_USED,
                 'status' => 'error',
                 'message' => 'Tiket telah digunakan',
+                'data' => [
+                    'used_at' => Carbon::parse($tiket->updated_at)->format('Y-m-d H:i:s'),
+                ],
             ];
         }
 
@@ -86,9 +89,22 @@ class TiketQueries extends Service
         return $tiket;
     }
 
-    public function getTiketByOrder($trx_no)
+    public function getTiketByOrder($trx_no, $withId = false)
     {
-        $order = Order::where('trx_no', $trx_no)->first();
+        if ($withId) {
+            $order = Order::find($trx_no);
+        } else {
+            $order = Order::where('trx_no', $trx_no)->first();
+        }
+
+        if (!$order) {
+            return [
+                'error_code' => static::$ORDER_NOT_FOUND,
+                'status' => 'error',
+                'message' => 'Order tidak ditemukan',
+            ];
+        }
+
         $order->load(
             'detail.product.category',
             'detail.product.category.parent',
@@ -100,20 +116,12 @@ class TiketQueries extends Service
             $master_data_tiket[] = $detail->product->category;
         }
 
-        if (!$order) {
-            return [
-                'error_code' => static::$ORDER_NOT_FOUND,
-                'status' => 'error',
-                'message' => 'Order tidak ditemukan',
-            ];
-        }
-
         $user_tikets = UserTiket::with('master_tiket')->where('order_id', $order->id)->get();
 
         $tikets = [];
         foreach ($user_tikets as $user_tiket) {
             $master_tiket = collect($master_data_tiket)->where('key', $user_tiket->master_tiket->master_data_key)->first();
-            if ($master_tiket['parent']['key'] == 'prodcat_vip_proliga_2023') {
+            if (isset($master_tiket['parent']['key']) && $master_tiket['parent']['key'] == 'prodcat_vip_proliga_2023') {
                 $user_tiket['is_vip'] = true;
             } else {
                 $user_tiket['is_vip'] = false;

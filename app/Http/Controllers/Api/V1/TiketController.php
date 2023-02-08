@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Tiket\TiketQueries;
 use App\Models\UserTiket;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -62,7 +64,7 @@ class TiketController extends Controller
             return $this->respondValidationError($errors);
         }
 
-        $tiket = $this->tiketQueries->getTiketByOrder($request->all());
+        $tiket = $this->tiketQueries->getTiketByOrder($request->get('trx_id'));
         if (isset($tiket['status']) && $tiket['status'] == 'error') {
             return $this->respondBadRequest($tiket['message'], $tiket['error_code']);
         }
@@ -114,7 +116,7 @@ class TiketController extends Controller
 
         $tiket = $this->tiketQueries->getTiket($request->get('qr'));
         if (isset($tiket['status']) && $tiket['status'] == 'error') {
-            return $this->respondBadRequest($tiket['message'], $tiket['error_code']);
+            return $this->respondBadRequest($tiket['message'], $tiket['error_code'], isset($tiket['data']) ? $tiket['data'] : null);
         }
 
         try {
@@ -134,7 +136,7 @@ class TiketController extends Controller
                 'message' => 'Tiket ditemukan',
                 'data' => $this->respondDataMaping($tiket),
             ];
-        } catch (\Exception $e) {
+        } catch (\Exception$e) {
             DB::rollBack();
             return [
                 'status' => 'error',
@@ -144,8 +146,63 @@ class TiketController extends Controller
         }
     }
 
-    private function respondBadRequest($message, $error_code)
+    public function resendTicket(Request $request)
     {
+        if (!$keyAccess = $request->header('Key-Access')) {
+            return $this->respondBadRequest('Header Key-Access diperlukan', static::$HEADER_KEY_ACCESS_REQUIRED);
+        }
+
+        if (config('credentials.tiket.api_hash') != md5($keyAccess)) {
+            return $this->respondBadRequest('Key-Access tidak valid', static::$HEADER_KEY_ACCESS_INVALID);
+        }
+
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'order_id' => 'required|numeric',
+            ],
+            [
+                'exists' => 'kode :attribute tidak ditemukan.',
+                'required' => ':attribute diperlukan.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors);
+        }
+
+        try {
+            $tiket = $this->tiketQueries->getTiketByOrder($request->get('order_id'), true);
+            if (isset($tiket['status']) && $tiket['status'] == 'error') {
+                return $this->respondBadRequest($tiket['message'], $tiket['error_code']);
+            }
+
+            $mailSender = new MailSenderManager();
+            $mailSender->mailResendTicket($request->get('order_id'), $tiket);
+
+            return $this->respondWithResult(true, 'Berhasil mengirim ulang tiket', 200);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    private function respondBadRequest($message, $error_code, $data = null)
+    {
+        if ($data != null) {
+            return response()->json([
+                'status_code' => $error_code,
+                'status' => 'error',
+                'message' => $message,
+                'data' => $data,
+            ], 400);
+        }
+
         return response()->json([
             'status_code' => $error_code,
             'status' => 'error',
