@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Tiket\TiketQueries;
+use App\Models\UserTiket;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
