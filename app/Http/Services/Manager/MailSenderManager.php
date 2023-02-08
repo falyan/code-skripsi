@@ -340,7 +340,7 @@ class MailSenderManager
         $attachments = [];
         foreach ($user_tikets as $user_tiket) {
             $master_tiket = collect($master_data_tiket)->where('key', $user_tiket->master_tiket->master_data_key)->first();
-            if ($master_tiket['parent']['key'] == 'prodcat_vip_proliga_2023') {
+            if (isset($master_tiket['parent']['key']) && $master_tiket['parent']['key'] == 'prodcat_vip_proliga_2023') {
                 $user_tiket['is_vip'] = true;
             } else {
                 $user_tiket['is_vip'] = false;
