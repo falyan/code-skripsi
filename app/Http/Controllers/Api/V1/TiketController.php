@@ -46,7 +46,7 @@ class TiketController extends Controller
         $validator = Validator::make(
             $request->all(),
             [
-                'trx_id' => 'required',
+                'trx_id' => 'required|min:3',
             ],
             [
                 'exists' => 'kode :attribute tidak ditemukan.',

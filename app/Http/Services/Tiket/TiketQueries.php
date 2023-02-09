@@ -55,27 +55,27 @@ class TiketQueries extends Service
             ];
         }
 
-        if ($tiket->usage_date != Carbon::now()->format('Y-m-d')) {
-            return [
-                'error_code' => static::$TICKET_DATE_NOT_VALID,
-                'status' => 'error',
-                'message' => 'Tiket hanya bisa digunakan pada tanggal ' . Carbon::parse($tiket->usage_date)->format('d M Y'),
-            ];
-        }
+        // if ($tiket->usage_date != Carbon::now()->format('Y-m-d')) {
+        //     return [
+        //         'error_code' => static::$TICKET_DATE_NOT_VALID,
+        //         'status' => 'error',
+        //         'message' => 'Tiket hanya bisa digunakan pada tanggal ' . Carbon::parse($tiket->usage_date)->format('d M Y'),
+        //     ];
+        // }
 
-        if ($tiket->start_time_usage != null || $tiket->end_time_usage != null) {
-            $start_time_usage = Carbon::parse($tiket->usage_date . ' ' . $tiket->start_time_usage)->format('Y-m-d H:i:s');
-            $end_time_usage = Carbon::parse($tiket->usage_date . ' ' . $tiket->end_time_usage)->format('Y-m-d H:i:s');
-            $now = Carbon::now()->format('Y-m-d H:i:s');
+        // if ($tiket->start_time_usage != null || $tiket->end_time_usage != null) {
+        //     $start_time_usage = Carbon::parse($tiket->usage_date . ' ' . $tiket->start_time_usage)->format('Y-m-d H:i:s');
+        //     $end_time_usage = Carbon::parse($tiket->usage_date . ' ' . $tiket->end_time_usage)->format('Y-m-d H:i:s');
+        //     $now = Carbon::now()->format('Y-m-d H:i:s');
 
-            if (!Carbon::parse($now)->between($start_time_usage, $end_time_usage)) {
-                return [
-                    'error_code' => static::$TICKET_TIME_NOT_VALID,
-                    'status' => 'error',
-                    'message' => 'Tiket hanya bisa digunakan pada jam ' . Carbon::parse($tiket->start_time_usage)->format('H:i') . ' - ' . Carbon::parse($tiket->end_time_usage)->format('H:i'),
-                ];
-            }
-        }
+        //     if (!Carbon::parse($now)->between($start_time_usage, $end_time_usage)) {
+        //         return [
+        //             'error_code' => static::$TICKET_TIME_NOT_VALID,
+        //             'status' => 'error',
+        //             'message' => 'Tiket hanya bisa digunakan pada jam ' . Carbon::parse($tiket->start_time_usage)->format('H:i') . ' - ' . Carbon::parse($tiket->end_time_usage)->format('H:i'),
+        //         ];
+        //     }
+        // }
 
         $master_data = MasterData::where('key', $tiket->master_tiket->master_data_key)->first();
         $master_data->load('parent');
@@ -94,7 +94,7 @@ class TiketQueries extends Service
         if ($withId) {
             $order = Order::find($trx_no);
         } else {
-            $order = Order::where('trx_no', $trx_no)->first();
+            $order = Order::where('trx_no', 'ILIKE', '%' . $trx_no)->first();
         }
 
         if (!$order) {
