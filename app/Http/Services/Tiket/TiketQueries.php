@@ -94,7 +94,7 @@ class TiketQueries extends Service
         if ($withId) {
             $order = Order::find($trx_no);
         } else {
-            $order = Order::where('trx_no', $trx_no)->first();
+            $order = Order::where('trx_no', 'ILIKE', '%' . $trx_no)->first();
         }
 
         if (!$order) {
