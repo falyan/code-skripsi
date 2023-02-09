@@ -55,6 +55,14 @@ class TiketQueries extends Service
             ];
         }
 
+        if (Carbon::now()->format('Y-m-d') > $tiket->usage_date) {
+            return [
+                'error_code' => static::$TICKET_DATE_NOT_VALID,
+                'status' => 'error',
+                'message' => 'Tiket telah hangus pada ' . Carbon::parse($tiket->usage_date)->format('d M Y'),
+            ];
+        }
+
         // if ($tiket->usage_date != Carbon::now()->format('Y-m-d')) {
         //     return [
         //         'error_code' => static::$TICKET_DATE_NOT_VALID,
