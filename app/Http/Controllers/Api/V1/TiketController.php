@@ -76,6 +76,8 @@ class TiketController extends Controller
             'data' => [
                 'user_name' => $tiket[0]->user_name,
                 'user_email' => $tiket[0]->user_email,
+                'trx_no' => $tiket[0]->trx_no,
+                'order_date' => $tiket[0]->order_date,
                 'tikets' => array_map(function ($item) {
                     return $this->respondDataMaping($item);
                 }, $tiket),
