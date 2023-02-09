@@ -129,6 +129,8 @@ class TiketQueries extends Service
 
             $user_tiket['user_name'] = $order->buyer->full_name;
             $user_tiket['user_email'] = $order->buyer->email;
+            $user_tiket['trx_no'] = $order->trx_no;
+            $user_tiket['order_date'] = Carbon::parse($order->created_at)->format('Y-m-d H:i:s');
             $tikets[] = $user_tiket;
         }
         if (!$tikets) {
