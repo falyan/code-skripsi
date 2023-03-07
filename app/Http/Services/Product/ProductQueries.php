@@ -559,13 +559,10 @@ class ProductQueries extends Service
             $merchant->where('status', 1);
         })->whereIn('category_id', $cat_child_id);
 
-        $data = $this->productPaginate($products, $limit);
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
 
-        if ($data->isEmpty()) {
-            $response['success'] = false;
-            $response['message'] = 'Produk tidak tersedia!';
-            return $response;
-        }
+        $data = $this->productPaginate($sorted_data, $limit);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
@@ -782,13 +779,10 @@ class ProductQueries extends Service
             $merchant->where('status', 1);
         })->whereIn('category_id', $cat_child_id);
 
-        $data = $this->productPaginate($products, $limit);
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
 
-        if ($data->isEmpty()) {
-            $response['success'] = false;
-            $response['message'] = 'Produk tidak tersedia!';
-            return $response;
-        }
+        $data = $this->productPaginate($sorted_data, $limit);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
