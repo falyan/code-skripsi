@@ -473,7 +473,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getRecommendProduct($filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    public function getRecommendProductOld($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         Log::info("T00001", [
             'path_url' => "product.recommend",
@@ -510,6 +510,62 @@ class ProductQueries extends Service
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
         $data = $this->productPaginate($sorted_data, $limit);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function getRecommendProduct($filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    {
+        Log::info("T00001", [
+            'path_url' => "product.recommend",
+            'query' => [],
+            'body' => Carbon::now('Asia/Jakarta'),
+            'response' => '',
+        ]);
+
+        $categories = MasterData::with(['child','child.child'])->where([
+            'type' => 'product_category',
+            'key' => 'prodcat_electric_vehicle',
+        ])->get();
+
+        $cat_child_id = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    foreach ($child->child as $children) {
+                        array_push($cat_child_id, $children->id);
+                    }
+                }
+            }
+        }
+
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where('status', 1)->with([
+            'product_stock', 'product_photo', 'is_wishlist',
+            'merchant' => function ($merchant) {
+                $merchant->with(['city:id,name']);
+            },
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+        ])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereIn('category_id', $cat_child_id);
+
+        $data = $this->productPaginate($products, $limit);
+
+        if ($data->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Produk tidak tersedia!';
+            return $response;
+        }
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
@@ -646,7 +702,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getSpecialProduct($filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    public function getSpecialProductOld($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         Log::info("T00001", [
             'path_url' => "product.special",
@@ -677,6 +733,62 @@ class ProductQueries extends Service
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
         $data = $this->productPaginate($sorted_data, $limit);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function getSpecialProduct($filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    {
+        Log::info("T00001", [
+            'path_url' => "product.recommend",
+            'query' => [],
+            'body' => Carbon::now('Asia/Jakarta'),
+            'response' => '',
+        ]);
+
+        $categories = MasterData::with(['child','child.child'])->where([
+            'type' => 'product_category',
+            'key' => 'prodcat_electric_vehicle',
+        ])->get();
+
+        $cat_child_id = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    foreach ($child->child as $children) {
+                        array_push($cat_child_id, $children->id);
+                    }
+                }
+            }
+        }
+
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where('status', 1)->with([
+            'product_stock', 'product_photo', 'is_wishlist',
+            'merchant' => function ($merchant) {
+                $merchant->with(['city:id,name']);
+            },
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+        ])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereIn('category_id', $cat_child_id);
+
+        $data = $this->productPaginate($products, $limit);
+
+        if ($data->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Produk tidak tersedia!';
+            return $response;
+        }
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
