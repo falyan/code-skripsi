@@ -526,10 +526,7 @@ class ProductQueries extends Service
             'response' => '',
         ]);
 
-        $categories = MasterData::with([
-            'child' => fn($j) => $j->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeda_listrik']),
-            'child.child' => fn($q) => $q->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_mobil_listrik_', 'prodcat_sepeda_listrik_']),
-        ])->where([
+        $categories = MasterData::with(['child','child.child'])->where([
             'type' => 'product_category',
             'key' => 'prodcat_electric_vehicle',
         ])->get();
@@ -752,10 +749,7 @@ class ProductQueries extends Service
             'response' => '',
         ]);
 
-        $categories = MasterData::with([
-            'child' => fn($j) => $j->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeda_listrik']),
-            'child.child' => fn($q) => $q->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_mobil_listrik_', 'prodcat_sepeda_listrik_']),
-        ])->where([
+        $categories = MasterData::with(['child','child.child'])->where([
             'type' => 'product_category',
             'key' => 'prodcat_electric_vehicle',
         ])->get();
