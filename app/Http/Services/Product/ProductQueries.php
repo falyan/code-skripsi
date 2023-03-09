@@ -7,6 +7,7 @@ use App\Models\MasterData;
 use App\Models\MasterVariant;
 use App\Models\Merchant;
 use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\Review;
 use App\Models\VariantValueProduct;
 use Carbon\Carbon;
@@ -557,7 +558,12 @@ class ProductQueries extends Service
             },
         ])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
-        })->whereIn('category_id', $cat_child_id);
+        })->whereIn('category_id', $cat_child_id)
+            ->orderByDesc(ProductStock::select('amount')
+                ->whereColumn('product_stock.product_id', 'product.id')
+                ->latest()
+                ->take(1)
+            );
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -777,7 +783,12 @@ class ProductQueries extends Service
             },
         ])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
-        })->whereIn('category_id', $cat_child_id);
+        })->whereIn('category_id', $cat_child_id)
+            ->orderByDesc(ProductStock::select('amount')
+                ->whereColumn('product_stock.product_id', 'product.id')
+                ->latest()
+                ->take(1)
+            );
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
