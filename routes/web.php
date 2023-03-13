@@ -41,6 +41,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('archived/{product_id}', 'ProductController@updateProductArchived');
                 });
 
+                $router->group(['prefix' => 'ev-subsidy'], static function () use ($router) {
+                    $router->post('create', 'EvSubsidyController@create');
+                    $router->post('update/{id}', 'EvSubsidyController@update');
+                    $router->post('delete', 'EvSubsidyController@delete');
+                });
+
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {
                     $router->post('atur-toko', 'MerchantController@aturToko');
                     $router->post('set-expedition', 'MerchantController@setExpedition');
@@ -108,6 +114,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('filter', 'ProductController@getProductByFilter');
                     $router->post('filter/count', 'ProductController@countProductByFilter');
                     $router->get('featured', 'ProductController@getProductFeatured');
+                });
+
+                $router->group(['prefix' => 'ev-subsidy'], static function () use ($router) {
+                    $router->get('list', 'EvSubsidyController@list');
                 });
 
                 $router->group(['prefix' => 'category'], static function () use ($router) {
