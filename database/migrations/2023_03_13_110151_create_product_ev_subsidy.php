@@ -26,6 +26,21 @@ class CreateProductEvSubsidy extends Migration
             $table->softDeletes();
         });
 
+        Schema::create('customer_ev_subsidy', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('customer_id');
+            $table->unsignedBigInteger('order_id');
+            $table->string('customer_nik', 100);
+            $table->string('customer_id_pel', 100);
+            $table->string('umkm_url')->nullable();
+            $table->string('kur_url')->nullable();
+            $table->string('bpum_url')->nullable();
+            $table->string('created_by', 50)->nullable();
+            $table->string('updated_by', 50)->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
         // merchant update
         Schema::table('merchant', function (Blueprint $table) {
             $table->boolean('is_subsidy_ev')->default(0);
@@ -40,6 +55,7 @@ class CreateProductEvSubsidy extends Migration
     public function down()
     {
         Schema::dropIfExists('product_ev_subsidy');
+        Schema::dropIfExists('customer_ev_subsidy');
         Schema::table('merchant', function (Blueprint $table) {
             $table->dropColumn('is_subsidy_ev');
         });

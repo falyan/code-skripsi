@@ -374,6 +374,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->post('create/response', 'DiscussionController@createDiscussionResponseByBuyer');
                 $router->post('read/{id}', 'DiscussionController@buyerReadDiscussion');
             });
+
+            $router->group(['prefix' => 'ev-subsidy'], static function () use ($router) {
+                $router->post('check', 'EvSubsidyController@checkIdentity');
+            });
         });
     });
 

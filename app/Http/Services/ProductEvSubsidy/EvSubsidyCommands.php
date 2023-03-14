@@ -8,7 +8,7 @@ use App\Models\ProductEvSubsidy;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-class ProductEvSubsidyCommands extends Service
+class EvSubsidyCommands extends Service
 {
     public function create($request)
     {
@@ -118,5 +118,12 @@ class ProductEvSubsidyCommands extends Service
                 'errors' => $e->getMessage(),
             ];
         }
+    }
+
+    // createCustomer
+    public function createCustomer($request)
+    {
+        $nik = $request['nik'];
+        $id_pel = $request['id_pel'];
     }
 }
