@@ -35,6 +35,7 @@ class CreateProductEvSubsidy extends Migration
             $table->string('umkm_url')->nullable();
             $table->string('kur_url')->nullable();
             $table->string('bpum_url')->nullable();
+            $table->float('status_approval')->nullable();
             $table->string('created_by', 50)->nullable();
             $table->string('updated_by', 50)->nullable();
             $table->timestamps();
