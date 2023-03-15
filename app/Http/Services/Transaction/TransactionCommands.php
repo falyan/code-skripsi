@@ -411,14 +411,16 @@ class TransactionCommands extends Service
             }
 
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
-                $customer = new CustomerEVSubsidy();
-                $customer->customer_id = $customer_id;
-                $customer->customer_nik = data_get($datas, 'customer.customer_nik');
-                $customer->customer_id_pel = data_get($datas, 'customer.customer_id_pel');
-                $customer->umkm_url = data_get($datas, 'customer.umkm_url');
-                $customer->umkm_kur = data_get($datas, 'customer.umkm_kur');
-                $customer->umkm_bpum = data_get($datas, 'customer.umkm_bpum');
-                $customer->save();
+                $customerEv = new CustomerEVSubsidy();
+                $customerEv->customer_id = $customer_id;
+                $customerEv->order_id = $order->id;
+                $customerEv->customer_nik = data_get($datas, 'customer.nik');
+                $customerEv->customer_id_pel = data_get($datas, 'customer.id_pel');
+                $customerEv->umkm_url = data_get($datas, 'customer.umkm_url');
+                $customerEv->kur_url = data_get($datas, 'customer.umkm_kur');
+                $customerEv->bpum_url = data_get($datas, 'customer.umkm_bpum');
+                $customerEv->created_by = auth()->user()->full_name;
+                $customerEv->save();
             }
 
             $mailSender = new MailSenderManager();
