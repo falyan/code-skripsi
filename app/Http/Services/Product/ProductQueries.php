@@ -1262,6 +1262,61 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function getProductEvSubsidy($limit, $filter = [], $sortby = null, $current_page = 1)
+    {
+        $categories = MasterData::with(['child', 'child.child'])->where([
+            'type' => 'product_category',
+            'key' => 'prodcat_electric_vehicle',
+        ])->get();
+
+        $cat_child_id = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    foreach ($child->child as $children) {
+                        array_push($cat_child_id, $children->id);
+                    }
+                }
+            }
+        }
+
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where([
+            'status' => 1,
+            'merchant_id' => auth()->user()->merchant_id,
+        ])->with([
+            'product_stock', 'product_photo', 'is_wishlist',
+            'merchant' => function ($merchant) {
+                $merchant->with(['city:id,name', 'promo_merchant.promo_master']);
+            },
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+        ])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereIn('category_id', $cat_child_id);
+
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $data = $this->productPaginate($sorted_data, $limit);
+
+        if ($data->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Produk tidak tersedia!';
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
     public function getReviewByProduct($product_id, $limit = 10)
     {
         $review = Review::with(['review_photo', 'merchant', 'customer', 'product' => function ($product) {
