@@ -39,6 +39,7 @@ class EvSubsidyQueries extends Service
         if ($customer) {
             return [
                 'status' => false,
+                'status_code' => '01',
                 'message' => 'Customer Subsidi sudah ada',
                 'errors' => $customer,
             ];
@@ -50,6 +51,7 @@ class EvSubsidyQueries extends Service
         if (!isset($checkNik['data']) || !isset($checkIdPel['data'])) {
             return [
                 'status' => false,
+                'status_code' => '02',
                 'message' => 'Customer Subsidi tidak ditemukan',
                 'errors' => [
                     'nik' => isset($checkNik['data']) ? '' : 'Nik tidak ditemukan',
@@ -61,7 +63,8 @@ class EvSubsidyQueries extends Service
         if ($checkIdPel['data']['energy'] < 450 || $checkIdPel['data']['energy'] > 900) {
             return [
                 'status' => false,
-                'message' => 'Customer Subsidi tidak ditemukan',
+                'status_code' => '03',
+                'message' => 'Id Pelanggan tidak sesuai',
                 'errors' => [
                     'id_pel' => 'Id Pelanggan di bawah 450 atau di atas 900',
                 ],
@@ -70,6 +73,7 @@ class EvSubsidyQueries extends Service
 
         return [
             'status' => true,
+            'status_code' => '00',
             'message' => 'Customer Subsidi ditemukan',
             'data' => [
                 'nik' => $nik,

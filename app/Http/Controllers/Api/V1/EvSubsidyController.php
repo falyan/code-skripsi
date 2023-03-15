@@ -129,6 +129,8 @@ class EvSubsidyController extends Controller
 
         if ($validate->fails()) {
             return response()->json([
+                'status' => false,
+                'status_code' => '99',
                 'message' => 'Invalid request',
                 'errors' => $validate->errors(),
             ], 400);
@@ -138,6 +140,7 @@ class EvSubsidyController extends Controller
         if (is_null($key_pln) || $key_pln == '') {
             return response()->json([
                 'status' => false,
+                'status_code' => '99',
                 'message' => 'Key-PLN tidak boleh kosong',
             ], 400);
         }
@@ -147,6 +150,7 @@ class EvSubsidyController extends Controller
         if (isset($data['status']) && $data['status'] == false) {
             return response()->json([
                 'status' => false,
+                'status_code' => $data['status_code'],
                 'message' => $data['message'],
                 'errors' => $data['errors'],
             ], 400);
@@ -154,6 +158,7 @@ class EvSubsidyController extends Controller
 
         return response()->json([
             'status' => true,
+            'status_code' => $data['status_code'],
             'message' => 'Berhasil melakukan pengecekan identitas',
             'data' => $data['data'],
         ]);

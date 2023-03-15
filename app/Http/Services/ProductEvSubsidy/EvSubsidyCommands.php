@@ -119,11 +119,4 @@ class EvSubsidyCommands extends Service
             ];
         }
     }
-
-    // createCustomer
-    public function createCustomer($request)
-    {
-        $nik = $request['nik'];
-        $id_pel = $request['id_pel'];
-    }
 }

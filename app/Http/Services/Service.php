@@ -62,6 +62,13 @@ class Service
     '3' => 'Partner Fee',
   ];
 
+  static $status_ev_subsidy = [
+    '00' => 'verifed',
+    '01' => 'sudah dapet subsidi',
+    '02' => 'nik / id_pel tidak ditemukan',
+    '03' => 'daya tidak memenuhi persyaratan',
+];
+
   static function paginate(array $items, $perPage = 10, $page = 1, $options = [])
   {
     $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
