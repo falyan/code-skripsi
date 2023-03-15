@@ -30,6 +30,7 @@ class CreateProductEvSubsidy extends Migration
             $table->id();
             $table->unsignedBigInteger('customer_id');
             $table->unsignedBigInteger('order_id');
+            $table->unsignedBigInteger('product_id');
             $table->string('customer_nik', 100);
             $table->string('customer_id_pel', 100);
             $table->string('umkm_url')->nullable();

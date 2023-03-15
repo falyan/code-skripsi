@@ -411,9 +411,29 @@ class TransactionCommands extends Service
             }
 
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
+                $product_ids = [];
+                foreach ($datas['merchants'] as $merchants) {
+                    foreach ($merchants['products'] as $product) {
+                        $product_ids[] = $product['product_id'];
+                    }
+                }
+
+                $ev_subsidy = null;
+                $products = Product::with('ev_subsidy')->whereIn('id', $product_ids)->get();
+                foreach ($products as $product) {
+                    if ($ev_subsidy == null) {
+                        $ev_subsidy = $product->ev_subsidy;
+                    } else {
+                        if ($product->ev_subsidy->subsidy_amount > $ev_subsidy->subsidy_amount) {
+                            $ev_subsidy = $product->ev_subsidy;
+                        }
+                    }
+                }
+
                 $customerEv = new CustomerEVSubsidy();
                 $customerEv->customer_id = $customer_id;
                 $customerEv->order_id = $order->id;
+                $customerEv->product_id = $ev_subsidy->product_id;
                 $customerEv->customer_nik = data_get($datas, 'customer.nik');
                 $customerEv->customer_id_pel = data_get($datas, 'customer.id_pel');
                 $customerEv->umkm_url = data_get($datas, 'customer.umkm_url');
