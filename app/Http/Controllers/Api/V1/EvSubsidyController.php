@@ -18,8 +18,11 @@ class EvSubsidyController extends Controller
         $this->EvSubsidyCommands = new EvSubsidyCommands();
     }
 
-    function list() {
-        $data = $this->EvSubsidyQueries->getData();
+    public function list() {
+        $keyword = request()->get('keyword');
+        $limit = request()->get('limit', 10);
+
+        $data = $this->EvSubsidyQueries->getData($keyword, $limit);
 
         return response()->json([
             'status' => true,

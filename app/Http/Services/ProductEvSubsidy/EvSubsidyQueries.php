@@ -17,11 +17,19 @@ class EvSubsidyQueries extends Service
         $this->EvSubsidyManager = new EvSubsidyManager();
     }
 
-    public function getData()
+    public function getData($keyword = null, $limit = 10)
     {
         $ev_products = ProductEvSubsidy::where([
             'merchant_id' => auth()->user()->merchant_id,
-        ])->with('product')->get();
+        ])->with('product');
+
+        if ($keyword) {
+            $ev_products->whereHas('product', function ($query) use ($keyword) {
+                $query->where('name', 'ilike', '%' . $keyword . '%');
+            });
+        }
+
+        $ev_products = $ev_products->paginate($limit);
 
         return $ev_products;
     }
@@ -32,17 +40,23 @@ class EvSubsidyQueries extends Service
         $nik = $request['nik'];
         $id_pel = $request['id_pel'];
 
-        $customer = CustomerEVSubsidy::where([
+        $customers = CustomerEVSubsidy::where([
             'customer_nik' => $nik,
-        ])->first();
+        ])->get();
 
-        if ($customer) {
-            return [
-                'status' => false,
-                'status_code' => '01',
-                'message' => 'Customer Subsidi sudah ada',
-                'errors' => $customer,
-            ];
+        if ($customers) {
+            foreach ($customers as $customer) {
+                if ($customer->status_approval == 1) {
+                    return [
+                        'status' => false,
+                        'status_code' => '01',
+                        'message' => 'Customer Subsidi sudah terdaftar',
+                        'errors' => [
+                            'nik' => 'Nik sudah terdaftar',
+                        ],
+                    ];
+                }
+            }
         }
 
         $checkNik = $this->EvSubsidyManager->checkNik($nik, $token);
