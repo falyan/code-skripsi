@@ -174,13 +174,13 @@ class TransactionQueries extends Service
         $data = Order::with([
             'detail' => function ($product) {
                 $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
+                    $j->with(['product_photo', 'ev_subsidy']);
                 }, 'variant_value_product']);
             }, 'progress', 'merchant' => function ($merchant) {
                 $merchant->with(['province', 'city', 'district']);
             }, 'delivery' => function ($region) {
                 $region->with(['city', 'district']);
-            }, 'buyer', 'payment', 'review' => function ($review) {
+            }, 'buyer', 'ev_subsidy', 'payment', 'review' => function ($review) {
                 $review->with(['review_photo']);
             },
         ])->find($id);

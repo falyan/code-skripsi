@@ -64,4 +64,19 @@ class Order extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    public function promo_log_order()
+    {
+        return $this->hasOne(PromoLog::class)->where('type', 'sub');
+    }
+
+    public function promo_log_orders()
+    {
+        return $this->hasMany(PromoLog::class)->where('type', 'sub');
+    }
+
+    public function ev_subsidy()
+    {
+        return $this->hasMany(CustomerEVSubsidy::class, 'order_id');
+    }
 }
