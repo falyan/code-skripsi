@@ -132,7 +132,7 @@ class Customer extends Model
 
     public function ev_subsidy()
     {
-        return $this->hasMany(CustomerEVSubsidy::class, 'customer_id');
+        return $this->hasOne(CustomerEVSubsidy::class, 'customer_id');
     }
 
     /**

@@ -77,6 +77,6 @@ class Order extends Model
 
     public function ev_subsidy()
     {
-        return $this->hasMany(CustomerEVSubsidy::class, 'order_id');
+        return $this->hasOne(CustomerEVSubsidy::class, 'order_id');
     }
 }
