@@ -166,4 +166,9 @@ class Product extends Model
     {
         return $this->hasOne(VariantValueProduct::class, 'product_id');
     }
+
+    public function ev_subsidy()
+    {
+        return $this->hasOne(ProductEvSubsidy::class, 'product_id');
+    }
 }

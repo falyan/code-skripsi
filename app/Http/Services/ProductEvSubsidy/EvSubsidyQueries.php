@@ -40,7 +40,7 @@ class EvSubsidyQueries extends Service
             return [
                 'status' => false,
                 'message' => 'Customer Subsidi sudah ada',
-                'data' => $customer,
+                'errors' => $customer,
             ];
         }
 

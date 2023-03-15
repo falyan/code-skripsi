@@ -17,7 +17,7 @@ class CreateProductEvSubsidy extends Migration
             $table->id();
             $table->unsignedBigInteger('merchant_id');
             $table->unsignedBigInteger('product_id');
-            $table->float('subsidy_amount', 8, 2);
+            $table->integer('subsidy_amount');
             $table->string('subsidy_type', 50)->nullable();
             $table->integer('status')->default(1);
             $table->string('created_by', 50)->nullable();
@@ -35,7 +35,7 @@ class CreateProductEvSubsidy extends Migration
             $table->string('umkm_url')->nullable();
             $table->string('kur_url')->nullable();
             $table->string('bpum_url')->nullable();
-            $table->float('status_approval')->nullable();
+            $table->integer('status_approval')->nullable();
             $table->string('created_by', 50)->nullable();
             $table->string('updated_by', 50)->nullable();
             $table->timestamps();

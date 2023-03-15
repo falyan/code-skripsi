@@ -156,13 +156,12 @@ class TransactionController extends Controller
     // Checkout V2
     public function checkoutV2()
     {
-        $validator = Validator::make(request()->all(), [
+        $rules = [
             'destination_info.receiver_name' => 'required',
             'merchants' => 'required|array',
             'merchants.*.merchant_id' => 'required',
             'merchants.*.total_weight' => 'required',
             'merchants.*.delivery_method' => 'required',
-            // 'merchants.*.image_logistic' => 'required',
             'merchants.*.total_amount' => 'required',
             'merchants.*.total_payment' => 'required',
             'merchants.*.products' => 'required',
@@ -178,9 +177,19 @@ class TransactionController extends Controller
             'merchants.*.products.*.total_insurance_cost' => 'required',
             'merchants.*.products.*.total_amount' => 'required',
             'merchants.*.products.*.payment_note' => 'sometimes',
-            "npwp" => 'nullable|string',
-            'save_npwp' => 'nullable|boolean|required_with:npwp',
-        ], [
+            // "npwp" => 'nullable|string',
+            // 'save_npwp' => 'nullable|boolean|required_with:npwp',
+        ];
+
+        if (isset(request()->all()['customer'])) {
+            $rules['customer.nik'] = 'required';
+            $rules['customer.id_pel'] = 'required';
+            $rules['customer.umkm_url'] = 'required';
+            $rules['customer.kur_url'] = 'required';
+            $rules['customer.bpum_url'] = 'required';
+        }
+
+        $validator = Validator::make(request()->all(), $rules, [
             'required' => ':attribute diperlukan.',
         ]);
 
@@ -255,8 +264,7 @@ class TransactionController extends Controller
                 }, $request['merchants']);
             }
 
-            // return $response;
-            return response()->json($response, isset($response['status_code']) ? $response['status_code'] : 200);
+            return $response;
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -1577,6 +1585,82 @@ class TransactionController extends Controller
         try {
             $customer = Auth::user();
             return $this->transactionQueries->countCheckoutPrice($customer, request()->all());
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function countCheckoutPriceV2()
+    {
+        $validator = Validator::make(request()->all(), [
+            'merchants' => 'required|array',
+            'merchants.*.merchant_id' => 'required',
+            // 'merchants.*.delivery_method' => 'required',
+            'merchants.*.delivery_fee' => 'required',
+            'merchants.*.delivery_discount' => 'required',
+            'merchants.*.products' => 'required|array',
+            'merchants.*.products.*.product_id' => 'required',
+            'merchants.*.products.*.quantity' => 'required',
+            'merchants.*.products.*.payment_note' => 'sometimes',
+        ], [
+            'required' => ':attribute diperlukan.',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            $customer = Auth::user();
+            return $this->transactionQueries->countCheckoutPriceV2($customer, request()->all());
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function countCheckoutPriceV3()
+    {
+        $validator = Validator::make(request()->all(), [
+            'merchants' => 'required|array',
+            'merchants.*.merchant_id' => 'required',
+            // 'merchants.*.delivery_method' => 'required',
+            'merchants.*.delivery_fee' => 'required',
+            'merchants.*.delivery_discount' => 'required',
+            'merchants.*.products' => 'required|array',
+            'merchants.*.products.*.product_id' => 'required',
+            'merchants.*.products.*.quantity' => 'required',
+            'merchants.*.products.*.payment_note' => 'sometimes',
+            // 'destination_info.province_id' => 'required'
+        ], [
+            'required' => ':attribute diperlukan.',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            $customer = Auth::user();
+
+            // $response['success'] = true;
+            // $response['message'] = 'Berhasil resend email';
+            // $response['data'] = $this->transactionQueries->countCheckoutPriceV3($customer, request()->all());
+
+            return $this->transactionQueries->countCheckoutPriceV3($customer, request()->all());
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

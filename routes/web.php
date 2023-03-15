@@ -268,6 +268,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'checkout', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('/count', 'TransactionController@countCheckoutPrice');
+                $router->post('/countv2', 'TransactionController@countCheckoutPriceV2');
             });
 
             $router->group(['prefix' => 'transaction', 'middleware' => 'auth'], static function () use ($router) {
@@ -342,6 +343,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('checkout', 'TransactionController@checkout');
+                $router->post('checkoutv2', 'TransactionController@checkoutV2');
             });
 
             $router->group(['prefix' => 'cart', 'middleware' => 'auth'], static function () use ($router) {

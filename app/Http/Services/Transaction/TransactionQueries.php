@@ -385,6 +385,485 @@ class TransactionQueries extends Service
         return $datas;
     }
 
+    public function countCheckoutPriceV2($customer, $datas)
+    {
+        $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = 0;
+
+        $new_merchant = [];
+        foreach (data_get($datas, 'merchants') as $merchant) {
+            $total_weight = 0;
+            $merchant_total_price = 0;
+            $data_merchant = Merchant::with(['city', 'district'])->findOrFail($merchant['merchant_id']);
+
+            $new_product = [];
+            $ev_subsidies = [];
+            foreach (data_get($merchant, 'products') as $product) {
+                $data_product = Product::with(['product_photo', 'stock_active', 'ev_subsidy' => function($es) use ($merchant) {
+                    $es->where('merchant_id', $merchant['merchant_id']);
+                }])->find($product['product_id']);
+                if (!$data_product) {
+                    throw new Exception('Produk dengan id ' . $product['product_id'] . ' tidak ditemukan', 404);
+                }
+
+                if ($data_product->ev_subsidy != null) {
+                    $ev_subsidies[] = $data_product->ev_subsidy;
+                }
+
+                $variant_data = null;
+                if (isset($product['variant_value_product_id']) && $product['variant_value_product_id'] != null) {
+                    if (!$variant_data = VariantValueProduct::with('variant_stock')->where('id', $product['variant_value_product_id'])
+                        ->where('product_id', $product['product_id'])->first()) {
+                        throw new Exception('Variant produk dengan id ' . $product['variant_value_product_id'] . ' tidak ditemukan', 404);
+                    }
+                    $product['total_price'] = $product['total_amount'] = $total_item_price = $variant_data['price'] * $product['quantity'];
+                } else {
+                    $product['total_price'] = $product['total_amount'] = $total_item_price = $data_product['price'] * $product['quantity'];
+                }
+
+                $product['total_weight'] = $product_total_weight = $data_product['weight'] * $product['quantity'];
+                $product['insurance_cost'] = $product['discount'] = $product['total_discount'] = $product['total_insurance_cost'] = 0;
+                $product['variant_data'] = $variant_data;
+
+                $total_weight += $product_total_weight;
+                $merchant_total_price += $total_item_price;
+
+                $new_product[] = array_merge($product, $data_product->toArray());
+            }
+
+            $merchant['products'] = $new_product;
+            $merchant['total_weight'] = $total_weight;
+            if ($merchant['delivery_discount'] > $merchant['delivery_fee']) {
+                $merchant['delivery_discount'] = $merchant['delivery_fee'];
+            }
+            $merchant['total_amount'] = $merchant_total_price_with_delivery = $merchant_total_price + $merchant['delivery_fee'];
+            $merchant['total_payment'] = $merchant_total_payment = $merchant_total_price_with_delivery - $merchant['delivery_discount'];
+
+            $total_price += $merchant_total_price_with_delivery;
+            $total_payment += $merchant_total_payment;
+            $total_delivery_fee += $merchant['delivery_fee'];
+            $total_delivery_discount += $merchant['delivery_discount'];
+
+            $new_merchant[] = array_merge($merchant, $data_merchant->toArray());
+        }
+
+        $datas['merchants'] = $new_merchant;
+        $datas['total_amount'] = $total_price;
+        $datas['total_amount_without_delivery'] = $total_price - $total_delivery_fee;
+        $datas['total_delivery_fee'] = $total_delivery_fee;
+        $datas['total_delivery_discount'] = $total_delivery_discount;
+        $datas['total_payment'] = $total_payment;
+
+        $total_discount = $total_price_discount = 0;
+        $percent_discount = 50;
+        $max_percent_discount = 500000;
+        $is_percent_discount = false;
+        $discount = $this->getCustomerDiscount($customer->id, $customer->email);
+
+        if ($discount == 0 && $is_percent_discount == true) {
+            $total_item_price = 0;
+            array_map(function ($merchant) use (&$total_item_price) {
+                array_map(function ($product) use (&$total_item_price) {
+                    $total_item_price += $product['total_price'];
+                }, data_get($merchant, 'products'));
+            }, data_get($datas, 'merchants'));
+
+            $discount = ($percent_discount / 100) * $total_item_price;
+            if ($discount > $max_percent_discount) {
+                $discount = $max_percent_discount;
+            }
+        }
+
+        $ev_subsidy = null;
+        foreach ($ev_subsidies as $subsidy) {
+            if ($ev_subsidy == null) {
+                $ev_subsidy = $subsidy;
+            } else {
+                if ($subsidy->subsidy_amount > $ev_subsidy->subsidy_amount) {
+                    $ev_subsidy = $subsidy;
+                }
+            }
+        }
+
+        $subsidy = false;
+        foreach ($new_product as $key => $product) {
+            if ($ev_subsidy != null && $subsidy == false) {
+                if ($ev_subsidy->merchant_id == $product['merchant_id'] && $ev_subsidy->product_id == $product['id']) {
+                    $product['discount'] += $ev_subsidy->subsidy_amount;
+                    $product['total_discount'] += $ev_subsidy->subsidy_amount;
+
+                    $new_product[$key] = $product;
+                    $subsidy = true;
+                }
+            }
+        }
+
+        $new_merchant = [];
+        foreach (data_get($datas, 'merchants') as $merchant) {
+            $product_discount = 0;
+            foreach ($merchant['products'] as $key => $product) {
+                foreach ($new_product as $new_product_value) {
+                    if ($product['id'] == $new_product_value['id']) {
+                        $merchant['products'][$key]['discount'] = $new_product_value['discount'];
+                        $merchant['products'][$key]['total_discount'] = $new_product_value['total_discount'];
+
+                        $product_discount = $merchant['products'][$key]['total_discount'];
+                    }
+                }
+            }
+
+            $discount += $product_discount;
+            $count_discount = $discount;
+
+            if (data_get($merchant, 'total_payment') != null && data_get($merchant, 'total_payment') <= $discount) {
+                $count_discount = data_get($merchant, 'total_payment');
+            }
+
+            data_set($merchant, 'total_payment', data_get($merchant, 'total_payment') - $count_discount);
+            $discount = $discount - $count_discount;
+            $total_discount += $count_discount;
+            $total_price_discount += data_get($merchant, 'total_payment');
+            $merchant['product_discount'] = $count_discount;
+
+            $new_merchant[] = $merchant;
+        }
+        $datas['buyer_npwp'] = auth()->user()->npwp;
+        $datas['merchants'] = $new_merchant;
+        $datas['total_discount'] = $total_discount;
+        $datas['total_payment'] -= $total_discount;
+
+        return $datas;
+    }
+
+    public function countCheckoutPriceV3($customer, $datas)
+    {
+        $city_id = data_get($datas, 'destination_info.city_id');
+        $province_id = City::where('id', $city_id)->first()->province_id;
+        $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = 0;
+        $total_discount = $total_price_discount = $discount = 0;
+
+        $new_merchant = [];
+        $promo_masters = [];
+        foreach (data_get($datas, 'merchants') as $merchant) {
+            $total_weight = 0;
+            $merchant_total_price = 0;
+
+            $data_merchant = Merchant::with([
+                'city',
+                'district',
+                'promo_merchant' => function ($pd) {
+                    $pd->where('status', 1);
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                    $pd->whereHas('promo_master', function ($pm) {
+                        $pm->where('status', 1);
+                    });
+                },
+                'promo_merchant.promo_master' => function ($pm) {
+                    $pm->where('status', 1);
+                },
+                'promo_merchant.promo_master.promo_regions',
+                'promo_merchant.promo_master.promo_values',
+            ])->findOrFail($merchant['merchant_id']);
+
+            $new_product = array_map(function ($product) use (&$total_weight, &$merchant_total_price) {
+                if (!$data_product = Product::with(['product_photo', 'stock_active'])->find($product['product_id'])) {
+                    throw new Exception('Produk dengan id ' . $product['product_id'] . ' tidak ditemukan', 404);
+                }
+
+                $variant_data = null;
+                if (isset($product['variant_value_product_id']) && $product['variant_value_product_id'] != null) {
+                    if (!$variant_data = VariantValueProduct::with('variant_stock')->where('id', $product['variant_value_product_id'])
+                        ->where('product_id', $product['product_id'])->first()) {
+                        throw new Exception('Variant produk dengan id ' . $product['variant_value_product_id'] . ' tidak ditemukan', 404);
+                    }
+                    $product['total_price'] = $product['total_amount'] = $total_item_price = $variant_data['price'] * $product['quantity'];
+                } else {
+                    $product['total_price'] = $product['total_amount'] = $total_item_price = $data_product['price'] * $product['quantity'];
+                }
+
+                $product['total_weight'] = $product_total_weight = $data_product['weight'] * $product['quantity'];
+                $product['insurance_cost'] = $product['discount'] = $product['total_discount'] = $product['total_insurance_cost'] = 0;
+                $product['variant_data'] = $variant_data;
+
+                $total_weight += $product_total_weight;
+                $merchant_total_price += $total_item_price;
+
+                return array_merge($product, $data_product->toArray());
+            }, data_get($merchant, 'products'));
+
+            // shipping discount
+            $promo_merchant_ongkir = null;
+            if ($data_merchant->can_shipping_discount == true) {
+                foreach ($data_merchant->promo_merchant as $promo) {
+                    if ($promo->promo_master->event_type == 'ongkir') {
+                        foreach ($promo->promo_master->promo_regions as $region) {
+                            $region_ids = collect($region->province_ids)->toArray();
+                            if (in_array($province_id, $region_ids)) {
+                                $promo_merchant_ongkir = $promo;
+
+                                if ($promo_masters == []) {
+                                    $promo_masters[] = $promo->promo_master;
+                                } else {
+                                    foreach ($promo_masters as $promo_master) {
+                                        if ($promo_master->id == $promo->promo_master->id) {
+                                            $promo_merchant_ongkir->promo_master = $promo_master;
+                                            break;
+                                        } else {
+                                            $promo_masters[] = $promo->promo_master;
+                                        }
+                                    }
+                                }
+
+                                if ($region->value_type == 'value_2') {
+                                    $value_ongkir = $promo->promo_master->value_2;
+                                } else {
+                                    $value_ongkir = $promo->promo_master->value_1;
+                                }
+
+                                $max_merchant = ($promo->usage_value + $value_ongkir) > $promo->max_value;
+                                $max_master = ($promo->promo_master->usage_value + $value_ongkir) > $promo->promo_master->max_value;
+
+                                if ($max_merchant && !$max_master) {
+                                    $merchant['delivery_discount'] = $value_ongkir;
+                                    break;
+                                }
+
+                                if (!$max_merchant && $max_master) {
+                                    $merchant['delivery_discount'] = $value_ongkir;
+                                    break;
+                                }
+
+                                if (!$max_merchant && !$max_master) {
+                                    $merchant['delivery_discount'] = $value_ongkir;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            $merchant['products'] = $new_product;
+            $merchant['total_weight'] = $total_weight;
+            if ($merchant['delivery_discount'] > $merchant['delivery_fee']) {
+                $merchant['delivery_discount'] = $merchant['delivery_fee'];
+            }
+
+            $merchant['total_amount'] = $merchant_total_price_with_delivery = $merchant_total_price + $merchant['delivery_fee'];
+            $merchant['total_payment'] = $merchant_total_payment = $merchant_total_price_with_delivery - $merchant['delivery_discount'];
+
+            if ($promo_merchant_ongkir != null) {
+                if ($promo_merchant_ongkir->promo_master->min_order_value > $merchant_total_price) {
+                    $merchant['delivery_discount'] = 0;
+                }
+
+                $promo_merchant_ongkir->promo_master->usage_value += $merchant['delivery_discount'];
+                foreach ($promo_masters as $key => $promo_master) {
+                    if ($promo_master->id == $promo_merchant_ongkir->promo_master->id) {
+                        $promo_masters[$key] = $promo_merchant_ongkir->promo_master;
+                        break;
+                    }
+                }
+            }
+
+            // flash sale discount
+            $promo_merchant_flash_sale = null;
+            $merchant['product_discount'] = 0;
+            if ($data_merchant->can_flash_sale_discount == true) {
+                foreach ($data_merchant->promo_merchant as $promo) {
+                    if ($promo->promo_master->event_type == 'flash_sale') {
+                        $value_flash_sale = 0;
+                        $promo_merchant_flash_sale = $promo;
+
+                        if ($promo_masters == []) {
+                            $promo_masters[] = $promo->promo_master;
+                        } else {
+                            foreach ($promo_masters as $promo_master) {
+                                if ($promo_master->id == $promo->promo_master->id) {
+                                    $promo_merchant_flash_sale->promo_master = $promo_master;
+                                    break;
+                                } else {
+                                    $promo_masters[] = $promo->promo_master;
+                                }
+                            }
+                        }
+
+                        $value_flash_sale = $promo->promo_master->value_1;
+                        if ($promo->promo_master->promo_value_type == 'percentage') {
+                            $value_flash_sale = $merchant_total_price * ($promo_merchant_flash_sale->promo_master->value_1 / 100);
+
+                            if ($value_flash_sale >= $promo->promo_master->max_discount_value) {
+                                $value_flash_sale = $promo->promo_master->max_discount_value;
+                            }
+                        }
+
+                        if ($promo->promo_master->promo_values != null) {
+                            foreach ($promo->promo_master->promo_values as $promo_value) {
+                                if ($merchant_total_price > $promo_value->min_value && $merchant_total_price < $promo_value->max_value) {
+                                    if ($value_flash_sale >= $promo_value->max_discount_value) {
+                                        $value_flash_sale = $promo_value->max_discount_value;
+                                    }
+                                }
+                            }
+                        }
+
+                        $max_merchant = ($promo->usage_value + $value_flash_sale) > $promo->max_value;
+                        $max_master = ($promo->promo_master->usage_value + $value_flash_sale) > $promo->promo_master->max_value;
+
+                        if ($max_merchant && !$max_master) {
+                            $merchant['product_discount'] = $value_flash_sale;
+                            break;
+                        }
+
+                        if (!$max_merchant && $max_master) {
+                            $merchant['product_discount'] = $value_flash_sale;
+                            break;
+                        }
+
+                        if (!$max_merchant && !$max_master) {
+                            $merchant['product_discount'] = $value_flash_sale;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($promo_merchant_flash_sale != null) {
+                if ($promo_merchant_flash_sale->promo_master->min_order_value > $merchant_total_price) {
+                    $merchant['product_discount'] = 0;
+                }
+
+                $promo_merchant_flash_sale->promo_master->usage_value += $merchant['product_discount'];
+                foreach ($promo_masters as $key => $promo_master) {
+                    if ($promo_master->id == $promo_merchant_flash_sale->promo_master->id) {
+                        $promo_masters[$key] = $promo_merchant_flash_sale->promo_master;
+                        break;
+                    }
+                }
+            }
+
+            $total_price += $merchant_total_price_with_delivery;
+            $total_payment += $merchant_total_payment;
+            $total_delivery_fee += $merchant['delivery_fee'];
+            $total_delivery_discount += $merchant['delivery_discount'];
+            $total_price_discount += $merchant['product_discount'];
+
+            unset($data_merchant->promo_merchant);
+            unset($merchant['promo_merchant']);
+
+            array_push($new_merchant, array_merge($merchant, $data_merchant->toArray()));
+        }
+
+        $datas['merchants'] = $new_merchant;
+        $datas['total_amount'] = $total_price;
+        $datas['total_amount_without_delivery'] = $total_price - $total_delivery_fee;
+        $datas['total_delivery_fee'] = $total_delivery_fee;
+        $datas['total_delivery_discount'] = $total_delivery_discount;
+        $datas['total_payment'] = $total_payment;
+
+        // $total_discount = $total_price_discount = 0;
+        // $percent_discount = 50;
+        // $max_percent_discount = 500000;
+        // $is_percent_discount = false;
+        // $discount = $this->getCustomerDiscount($customer->id, $customer->email);
+        // $discount = 0;
+
+        // if ($discount == 0 && $is_percent_discount == true) {
+        //     $total_item_price = 0;
+        //     array_map(function ($merchant) use (&$total_item_price) {
+        //         array_map(function ($product) use (&$total_item_price) {
+        //             $total_item_price += $product['total_price'];
+        //         }, data_get($merchant, 'products'));
+        //     }, data_get($datas, 'merchants'));
+
+        //     $discount = ($percent_discount / 100) * $total_item_price;
+        //     if ($discount > $max_percent_discount) {
+        //         $discount = $max_percent_discount;
+        //     }
+        // }
+
+        // foreach (data_get($datas, 'merchants') as $key => $merchant) {
+            // $count_discount = $discount;
+
+            // if (data_get($merchant, 'total_payment') != null && data_get($merchant, 'total_payment') <= $discount) {
+            //     $count_discount = data_get($merchant, 'total_payment');
+            // }
+
+            // data_set($merchant, 'total_payment', data_get($merchant, 'total_payment') - $count_discount);
+            // $discount = $discount - $count_discount;
+            // $total_discount += $count_discount;
+            // $total_price_discount += data_get($merchant, 'total_payment');
+        //     $merchant['product_discount'] = $count_discount;
+
+        //     $new_merchant[$key] = $merchant;
+        // }
+
+        $datas['merchants'] = $new_merchant;
+        $datas['total_discount'] = $total_price_discount;
+        $datas['total_payment'] -= $total_price_discount;
+        $datas['buyer_npwp'] = auth()->user()->npwp;
+
+        return $datas;
+    }
+
+    public function createOrderV3($request)
+    {
+        $merchants = [];
+        foreach(data_get($request, 'merchants') as $merchant) {
+            $get_merchant = Merchant::find(data_get($merchant, 'merchant_id'));
+
+            if (data_get($merchant, 'delivery_method') == 'custom') {
+                if (data_get($merchant, 'has_custom_logistic') == false || null) {
+                    throw new Exception('Merchant ' . data_get($merchant, 'name') . ' tidak mendukung pengiriman oleh seller', 404);
+                }
+                data_set($merchant, 'delivery_method', 'Pengiriman oleh Seller');
+            }
+
+            foreach(data_get($merchant, 'products') as $item) {
+                if (!$product = Product::find(data_get($item, 'product_id'))) {
+                    throw new Exception('Produk dengan id ' . data_get($item, 'product_id') . ' tidak ditemukan', 404);
+                }
+                if ($product->stock_active->amount < data_get($item, 'quantity')) {
+                    throw new Exception('Stok produk dengan id ' . $product->id . ' tidak mencukupi', 400);
+                }
+                if (data_get($item, 'quantity') < $product->minimum_purchase) {
+                    throw new Exception('Pembelian minimum untuk produk ' . $product->name . ' adalah ' . $product->minimum_purchase, 400);
+                }
+                if (data_get($item, 'variant_value_product_id') != null) {
+                    if (
+                        VariantStock::where('variant_value_product_id', data_get($item, 'variant_value_product_id'))
+                        ->where('status', 1)->pluck('amount')->first() < data_get($item, 'quantity')
+                    ) {
+                        throw new Exception('Stok variant produk dengan id ' . data_get($item, 'variant_value_product_id') . ' tidak mencukupi', 400);
+                    }
+                }
+            }
+
+            // $promo_merchant = PromoMerchant::with(['promo_master', 'promo_master.promo_regions', 'promo_master.promo_values'])
+            //     ->where([
+            //         'merchant_id' => data_get($merchant, 'id'),
+            //         'status' => 1,
+            //     ])
+            //     ->where('start_date', '<=', date('Y-m-d'))
+            //     ->where('end_date', '>=', date('Y-m-d'))
+            //     ->whereHas('promo_master', function ($query) {
+            //         $query->where('status', 1);
+            //     })
+            //     ->get();
+
+            // $merchant['promo_merchant'] = $promo_merchant;
+            $merchant['can_shipping_discount'] = $get_merchant->can_shipping_discount;
+            $merchant['can_flash_sale_discount'] = $get_merchant->can_flash_sale_discount;
+            $merchant['is_shipping_discount'] = $get_merchant->is_shipping_discount;
+
+            $merchants[] = $merchant;
+        }
+
+        return $merchants;
+    }
+
     public function filter($model, $filter)
     {
         if (count($filter) > 0) {

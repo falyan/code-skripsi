@@ -298,7 +298,7 @@ class TransactionCommands extends Service
                 }
             }
 
-            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date) {
+            foreach (data_get($datas, 'merchants') as $data) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
                 $order->buyer_id = $customer_id;
@@ -309,6 +309,7 @@ class TransactionCommands extends Service
                 $order->related_pln_mobile_customer_id = null;
                 $order->no_reference = $no_reference;
                 $order->discount = data_get($data, 'product_discount');
+                $order->npwp = data_get($data, 'npwp');
                 $order->created_by = 'user';
                 $order->updated_by = 'user';
                 $order->npwp = data_get($datas, 'npwp');
@@ -325,7 +326,7 @@ class TransactionCommands extends Service
                 $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
                 $order->save();
 
-                array_map(function ($product) use ($order) {
+                foreach (data_get($data, 'products') as $product) {
                     $order_detail = new OrderDetail();
                     $order_detail->order_id = $order->id;
                     $order_detail->detail_type = 1;
@@ -343,7 +344,7 @@ class TransactionCommands extends Service
                     $order_detail->notes = data_get($product, 'note');
                     $order_detail->variant_value_product_id = data_get($product, 'variant_value_product_id');
                     $order_detail->save();
-                }, data_get($data, 'products'));
+                }
 
                 $order_progress = new OrderProgress();
                 $order_progress->order_id = $order->id;
@@ -363,8 +364,6 @@ class TransactionCommands extends Service
                 $order_delivery->city_id = data_get($datas, 'destination_info.city_id');
                 $order_delivery->district_id = data_get($datas, 'destination_info.district_id');
                 $order_delivery->postal_code = data_get($datas, 'destination_info.postal_code');
-                $order_delivery->district_code = data_get($datas, 'destination_info.district_code');
-                $order_delivery->image_logistic = data_get($data, 'image_logistic');
                 $order_delivery->latitude = data_get($datas, 'destination_info.latitude');
                 $order_delivery->longitude = data_get($datas, 'destination_info.longitude');
                 $order_delivery->shipping_type = data_get($data, 'delivery_service');
@@ -404,7 +403,7 @@ class TransactionCommands extends Service
                     $notificationCommand = new NotificationCommands();
                     $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
                 }
-            }, data_get($datas, 'merchants'));
+            }
 
             if ($datas['total_payment'] < 1) {
                 throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
@@ -469,7 +468,6 @@ class TransactionCommands extends Service
 
             return [
                 'success' => true,
-                'status_code' => 200,
                 'message' => 'Berhasil create order',
                 'data' => $response,
             ];
