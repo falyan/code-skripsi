@@ -417,8 +417,8 @@ class TransactionCommands extends Service
                 $customerEv->customer_nik = data_get($datas, 'customer.nik');
                 $customerEv->customer_id_pel = data_get($datas, 'customer.id_pel');
                 $customerEv->umkm_url = data_get($datas, 'customer.umkm_url');
-                $customerEv->kur_url = data_get($datas, 'customer.umkm_kur');
-                $customerEv->bpum_url = data_get($datas, 'customer.umkm_bpum');
+                $customerEv->kur_url = data_get($datas, 'customer.kur_url');
+                $customerEv->bpum_url = data_get($datas, 'customer.bpum_url');
                 $customerEv->created_by = auth()->user()->full_name;
                 $customerEv->save();
             }
