@@ -7,6 +7,7 @@ use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Service;
 use App\Models\Customer;
 use App\Models\CustomerDiscount;
+use App\Models\CustomerEVSubsidy;
 use App\Models\MasterData;
 use App\Models\MasterTiket;
 use App\Models\Order;
@@ -407,6 +408,17 @@ class TransactionCommands extends Service
 
             if ($datas['total_payment'] < 1) {
                 throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
+            }
+
+            if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
+                $customer = new CustomerEVSubsidy();
+                $customer->customer_id = $customer_id;
+                $customer->customer_nik = data_get($datas, 'customer.customer_nik');
+                $customer->customer_id_pel = data_get($datas, 'customer.customer_id_pel');
+                $customer->umkm_url = data_get($datas, 'customer.umkm_url');
+                $customer->umkm_kur = data_get($datas, 'customer.umkm_kur');
+                $customer->umkm_bpum = data_get($datas, 'customer.umkm_bpum');
+                $customer->save();
             }
 
             $mailSender = new MailSenderManager();
