@@ -42,6 +42,8 @@ class TransactionQueries extends Service
 
     public function sellerSubsidyEv($merchant_id, $limit = 10, $filter = [], $page = 1)
     {
+        $keyword = $filter['keyword'] ?? null;
+
         $order = Order::with([
             'detail' => function ($product) {
                 $product->with(['product' => function ($j) {
@@ -57,6 +59,9 @@ class TransactionQueries extends Service
                 });
             })
             ->where('merchant_id',$merchant_id)
+            ->when($keyword != null, function ($query) use ($keyword) {
+                $query->where('trx_no', 'ILIKE', "%{$keyword}%");
+            })
             ->orderBy('created_at', 'desc');
 
         $order = $this->filter($order, $filter);
