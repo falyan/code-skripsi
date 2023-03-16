@@ -12,16 +12,14 @@ class EvSubsidyCommands extends Service
 {
     public function create($request)
     {
-        $productIds = $request['product_ids'];
-
-        $products = Product::whereIn('id', $productIds)->get();
+        $products = $request['products'];
 
         $ev_products = [];
         foreach ($products as $product) {
             $ev_products[] = [
-                'product_id' => $product->id,
+                'product_id' => $product['product_id'],
                 'merchant_id' => auth()->user()->merchant_id,
-                'subsidy_amount' => 0,
+                'subsidy_amount' => $product['subsidy_amount'],
                 'created_by' => auth()->user()->full_name,
                 'created_at' => Carbon::now(),
             ];

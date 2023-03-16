@@ -35,10 +35,11 @@ class EvSubsidyQueries extends Service
     }
 
     // checkIdentity
-    public function checkIdentity($request, $token)
+    public function checkIdentity($request)
     {
         $nik = $request['nik'];
         $id_pel = $request['id_pel'];
+        $token = $request['key_pln'];
 
         $customers = CustomerEVSubsidy::where([
             'customer_nik' => $nik,

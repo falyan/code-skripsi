@@ -34,8 +34,9 @@ class EvSubsidyController extends Controller
     public function create(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            'product_ids' => 'required|array',
-            'product_ids.*' => 'required|integer',
+            'products' => 'required|array',
+            'products.*.product_id' => 'required|exists:product,id',
+            'products.*.subsidy_amount' => 'required|numeric',
         ]);
 
         if ($validate->fails()) {
@@ -128,6 +129,7 @@ class EvSubsidyController extends Controller
         $validate = Validator::make($request->all(), [
             "nik" => "required|string",
             "id_pel" => "required|string",
+            'key_pln' => 'required|string',
         ]);
 
         if ($validate->fails()) {
@@ -139,16 +141,7 @@ class EvSubsidyController extends Controller
             ], 400);
         }
 
-        $key_pln = $request->header('Key-PLN');
-        if (is_null($key_pln) || $key_pln == '') {
-            return response()->json([
-                'status' => false,
-                'status_code' => '99',
-                'message' => 'Key-PLN tidak boleh kosong',
-            ], 400);
-        }
-
-        $data = $this->EvSubsidyQueries->checkIdentity($validate->validated(), $key_pln);
+        $data = $this->EvSubsidyQueries->checkIdentity($validate->validated());
 
         if (isset($data['status']) && $data['status'] == false) {
             return response()->json([
