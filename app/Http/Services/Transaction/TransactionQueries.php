@@ -52,7 +52,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'ev_subsidy', 'review' => function ($r) {
                 $r->with(['review_photo'])->where('status', 1);
             },
         ])
