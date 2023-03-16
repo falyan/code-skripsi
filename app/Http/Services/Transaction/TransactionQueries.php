@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\Product;
 use App\Models\VariantValueProduct;
+use App\Models\CustomerEvSubsidy;
 use Carbon\Carbon;
 use Exception;
 
@@ -38,6 +39,30 @@ class TransactionQueries extends Service
         $data = static::paginate($data->toArray(), $limit, $page);
 
         return $data;
+    }
+
+    public function sellerSubsidyEv($merchant_id, $limit = 10, $filter = [], $page = 1)
+    {
+        $ev_subsidy = CustomerEvSubsidy::whereHas('order', function ($o) use ($merchant_id) {
+            $o->where('merchant_id', $merchant_id);
+        })->get();
+
+        $order = Order::with([
+            'detail' => function ($product) {
+                $product->with(['product' => function ($j) {
+                    $j->with(['product_photo']);
+                }]);
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
+                $r->with(['review_photo'])->where('status', 1);
+            },
+        ])
+            ->whereIn('id', collect($ev_subsidy)->pluck('order_id'))
+            ->orderBy('created_at', 'desc');
+
+        $order = $this->filter($order, $filter);
+        $order = collect($order->paginate($limit));
+
+        return $order;
     }
 
     public function getTransactionByCategoryKey($column_name, $column_value, $category_key, $limit = 3, $filter = [], $page = 1)

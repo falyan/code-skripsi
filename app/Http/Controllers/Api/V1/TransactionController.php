@@ -811,6 +811,25 @@ class TransactionController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function sellerSubsidyEv(Request $request)
+    {
+        try {
+            $filter = $request->filter ?? [];
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 1;
+
+            $data = $this->transactionQueries->sellerSubsidyEv(Auth::user()->merchant_id, $limit, $filter, $page);
+
+            if ($data['total'] > 0) {
+                return $this->respondWithData($data, 'sukses get data transaksi subsidi');
+            } else {
+                return $this->respondWithData($data, 'belum ada transaksi subsidi');
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
     #End Region
 
     public function detailTransaction($id)

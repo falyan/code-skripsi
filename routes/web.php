@@ -145,6 +145,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('/search/count', 'TransactionController@sellerCountSearchTransaction');
                     $router->get('/detail/{id}', 'TransactionController@detailTransaction');
                     $router->get('/export/excel', 'TransactionController@exportExcel');
+                    $router->get('/subsidy-ev', 'TransactionController@sellerSubsidyEv');
                 });
 
                 $router->group(['prefix' => 'notification'], static function () use ($router) {
