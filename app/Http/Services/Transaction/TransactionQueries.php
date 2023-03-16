@@ -11,7 +11,6 @@ use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\Product;
 use App\Models\VariantValueProduct;
-use App\Models\CustomerEvSubsidy;
 use Carbon\Carbon;
 use Exception;
 
@@ -43,10 +42,6 @@ class TransactionQueries extends Service
 
     public function sellerSubsidyEv($merchant_id, $limit = 10, $filter = [], $page = 1)
     {
-        $ev_subsidy = CustomerEvSubsidy::whereHas('order', function ($o) use ($merchant_id) {
-            $o->where('merchant_id', $merchant_id);
-        })->get();
-
         $order = Order::with([
             'detail' => function ($product) {
                 $product->with(['product' => function ($j) {
@@ -56,7 +51,12 @@ class TransactionQueries extends Service
                 $r->with(['review_photo'])->where('status', 1);
             },
         ])
-            ->whereIn('id', collect($ev_subsidy)->pluck('order_id'))
+            ->whereHas('ev_subsidy', function ($q) use ($merchant_id) {
+                $q->whereHas('order', function ($o) use ($merchant_id) {
+                    $o->where('merchant_id', $merchant_id);
+                });
+            })
+            ->where('merchant_id',$merchant_id)
             ->orderBy('created_at', 'desc');
 
         $order = $this->filter($order, $filter);
