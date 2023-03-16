@@ -1305,12 +1305,6 @@ class ProductQueries extends Service
 
         $data = $this->productPaginate($sorted_data, $limit);
 
-        if ($data->isEmpty()) {
-            $response['success'] = false;
-            $response['message'] = 'Produk tidak tersedia!';
-            return $response;
-        }
-
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
