@@ -123,7 +123,38 @@ class EvSubsidyController extends Controller
         ]);
     }
 
-    // checkIdentity
+    public function approve(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'ev_subsidy_id' => 'required|exists:customer_ev_subsidy,id',
+            'status' => 'required|in:1,0',
+        ]);
+
+        if ($validate->fails()) {
+            return response()->json([
+                'message' => 'Invalid request',
+                'errors' => $validate->errors(),
+            ], 400);
+        }
+
+        $data = $this->EvSubsidyCommands->updateStatus($validate->validated());
+
+        if (isset($data['status']) && $data['status'] == false) {
+            return response()->json([
+                'status' => false,
+                'message' => $data['message'],
+                'errors' => $data['errors'],
+            ], 400);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Berhasil mengupdate status EV Subsidi',
+            'data' => $data['data'],
+        ]);
+    }
+
+    // ================== Buyer
     public function checkIdentity(Request $request)
     {
         $validate = Validator::make($request->all(), [

@@ -45,6 +45,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('create', 'EvSubsidyController@create');
                     $router->post('update/{id}', 'EvSubsidyController@update');
                     $router->post('delete', 'EvSubsidyController@delete');
+                    $router->post('approve', 'EvSubsidyController@approve');
                 });
 
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {
