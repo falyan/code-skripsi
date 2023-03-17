@@ -1611,7 +1611,7 @@ class TransactionController extends Controller
 
     public function countCheckoutPriceV2()
     {
-        $validator = Validator::make(request()->all(), [
+        $rules = [
             'merchants' => 'required|array',
             'merchants.*.merchant_id' => 'required',
             // 'merchants.*.delivery_method' => 'required',
@@ -1621,7 +1621,17 @@ class TransactionController extends Controller
             'merchants.*.products.*.product_id' => 'required',
             'merchants.*.products.*.quantity' => 'required',
             'merchants.*.products.*.payment_note' => 'sometimes',
-        ], [
+        ];
+
+        if (isset(request()->all()['customer'])) {
+            $rules['customer.nik'] = 'required';
+            $rules['customer.id_pel'] = 'required';
+            $rules['customer.umkm_url'] = 'required';
+            $rules['customer.kur_url'] = 'required';
+            $rules['customer.bpum_url'] = 'required';
+        }
+
+        $validator = Validator::make(request()->all(), $rules, [
             'required' => ':attribute diperlukan.',
         ]);
 

@@ -503,45 +503,49 @@ class TransactionQueries extends Service
             }
         }
 
-        $ev_subsidy = null;
-        foreach ($ev_subsidies as $subsidy) {
-            if ($ev_subsidy == null) {
-                $ev_subsidy = $subsidy;
-            } else {
-                if ($subsidy->subsidy_amount > $ev_subsidy->subsidy_amount) {
+        if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
+            $ev_subsidy = null;
+            foreach ($ev_subsidies as $subsidy) {
+                if ($ev_subsidy == null) {
                     $ev_subsidy = $subsidy;
+                } else {
+                    if ($subsidy->subsidy_amount > $ev_subsidy->subsidy_amount) {
+                        $ev_subsidy = $subsidy;
+                    }
                 }
             }
-        }
 
-        $subsidy = false;
-        foreach ($new_product as $key => $product) {
-            if ($ev_subsidy != null && $subsidy == false) {
-                if ($ev_subsidy->merchant_id == $product['merchant_id'] && $ev_subsidy->product_id == $product['id']) {
-                    $product['discount'] += $ev_subsidy->subsidy_amount;
-                    $product['total_discount'] += $ev_subsidy->subsidy_amount;
+            $subsidy = false;
+            foreach ($new_product as $key => $product) {
+                if ($ev_subsidy != null && $subsidy == false) {
+                    if ($ev_subsidy->merchant_id == $product['merchant_id'] && $ev_subsidy->product_id == $product['id']) {
+                        $product['discount'] += $ev_subsidy->subsidy_amount;
+                        $product['total_discount'] += $ev_subsidy->subsidy_amount;
 
-                    $new_product[$key] = $product;
-                    $subsidy = true;
+                        $new_product[$key] = $product;
+                        $subsidy = true;
+                    }
                 }
             }
         }
 
         $new_merchant = [];
         foreach (data_get($datas, 'merchants') as $merchant) {
-            $product_discount = 0;
-            foreach ($merchant['products'] as $key => $product) {
-                foreach ($new_product as $new_product_value) {
-                    if ($product['id'] == $new_product_value['id']) {
-                        $merchant['products'][$key]['discount'] = $new_product_value['discount'];
-                        $merchant['products'][$key]['total_discount'] = $new_product_value['total_discount'];
+            if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
+                $product_discount = 0;
+                foreach ($merchant['products'] as $key => $product) {
+                    foreach ($new_product as $new_product_value) {
+                        if ($product['id'] == $new_product_value['id']) {
+                            $merchant['products'][$key]['discount'] = $new_product_value['discount'];
+                            $merchant['products'][$key]['total_discount'] = $new_product_value['total_discount'];
 
-                        $product_discount = $merchant['products'][$key]['total_discount'];
+                            $product_discount = $merchant['products'][$key]['total_discount'];
+                        }
                     }
                 }
-            }
 
-            $discount += $product_discount;
+                $discount += $product_discount;
+            }
             $count_discount = $discount;
 
             if (data_get($merchant, 'total_payment') != null && data_get($merchant, 'total_payment') <= $discount) {

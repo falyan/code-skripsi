@@ -21,7 +21,7 @@ class EvSubsidyQueries extends Service
     {
         $ev_products = ProductEvSubsidy::where([
             'merchant_id' => auth()->user()->merchant_id,
-        ])->with('product');
+        ])->with(['product', 'product.product_photo']);
 
         if ($keyword) {
             $ev_products->whereHas('product', function ($query) use ($keyword) {
