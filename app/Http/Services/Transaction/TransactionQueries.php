@@ -560,6 +560,8 @@ class TransactionQueries extends Service
             $total_price_discount += data_get($merchant, 'total_payment');
             $merchant['product_discount'] = $count_discount;
             $merchant['product_insentif'] = $product_insentif;
+            $merchant['total_payment'] -= $product_insentif;
+
             $total_insentif += $product_insentif;
 
             $new_merchant[] = $merchant;
