@@ -417,7 +417,7 @@ class TransactionQueries extends Service
 
     public function countCheckoutPriceV2($customer, $datas)
     {
-        $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = 0;
+        $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = 0;
 
         $new_merchant = [];
         foreach (data_get($datas, 'merchants') as $merchant) {
@@ -453,6 +453,7 @@ class TransactionQueries extends Service
                 $product['total_weight'] = $product_total_weight = $data_product['weight'] * $product['quantity'];
                 $product['insurance_cost'] = $product['discount'] = $product['total_discount'] = $product['total_insurance_cost'] = 0;
                 $product['variant_data'] = $variant_data;
+                $product['total_insentif'] = $product['insentif'] = 0;
 
                 $total_weight += $product_total_weight;
                 $merchant_total_price += $total_item_price;
@@ -519,8 +520,8 @@ class TransactionQueries extends Service
             foreach ($new_product as $key => $product) {
                 if ($ev_subsidy != null && $subsidy == false) {
                     if ($ev_subsidy->merchant_id == $product['merchant_id'] && $ev_subsidy->product_id == $product['id']) {
-                        $product['discount'] += $ev_subsidy->subsidy_amount;
-                        $product['total_discount'] += $ev_subsidy->subsidy_amount;
+                        $product['insentif'] += $ev_subsidy->subsidy_amount;
+                        $product['total_insentif'] += $ev_subsidy->subsidy_amount;
 
                         $new_product[$key] = $product;
                         $subsidy = true;
@@ -531,20 +532,21 @@ class TransactionQueries extends Service
 
         $new_merchant = [];
         foreach (data_get($datas, 'merchants') as $merchant) {
+            $product_insentif = 0;
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
-                $product_discount = 0;
+                $insentif = 0;
                 foreach ($merchant['products'] as $key => $product) {
                     foreach ($new_product as $new_product_value) {
                         if ($product['id'] == $new_product_value['id']) {
-                            $merchant['products'][$key]['discount'] = $new_product_value['discount'];
-                            $merchant['products'][$key]['total_discount'] = $new_product_value['total_discount'];
+                            $merchant['products'][$key]['insentif'] = $new_product_value['insentif'];
+                            $merchant['products'][$key]['total_insentif'] = $new_product_value['total_insentif'];
 
-                            $product_discount = $merchant['products'][$key]['total_discount'];
+                            $insentif = $merchant['products'][$key]['total_insentif'];
                         }
                     }
                 }
 
-                $discount += $product_discount;
+                $product_insentif += $insentif;
             }
             $count_discount = $discount;
 
@@ -557,6 +559,8 @@ class TransactionQueries extends Service
             $total_discount += $count_discount;
             $total_price_discount += data_get($merchant, 'total_payment');
             $merchant['product_discount'] = $count_discount;
+            $merchant['product_insentif'] = $product_insentif;
+            $total_insentif += $product_insentif;
 
             $new_merchant[] = $merchant;
         }
@@ -564,6 +568,7 @@ class TransactionQueries extends Service
         $datas['merchants'] = $new_merchant;
         $datas['total_discount'] = $total_discount;
         $datas['total_payment'] -= $total_discount;
+        $datas['total_insentif'] = $total_insentif;
 
         return $datas;
     }
