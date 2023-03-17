@@ -47,6 +47,12 @@ class CreateProductEvSubsidy extends Migration
         Schema::table('merchant', function (Blueprint $table) {
             $table->boolean('is_subsidy_ev')->default(0);
         });
+
+        // order detail update
+        Schema::table('order_detail', function (Blueprint $table) {
+            $table->float('insentif')->default(0);
+            $table->float('total_insentif')->default(0);
+        });
     }
 
     /**
@@ -60,6 +66,10 @@ class CreateProductEvSubsidy extends Migration
         Schema::dropIfExists('customer_ev_subsidy');
         Schema::table('merchant', function (Blueprint $table) {
             $table->dropColumn('is_subsidy_ev');
+        });
+        Schema::table('order_detail', function (Blueprint $table) {
+            $table->dropColumn('insentif');
+            $table->dropColumn('total_insentif');
         });
     }
 }
