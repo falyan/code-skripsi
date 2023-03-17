@@ -337,9 +337,11 @@ class TransactionCommands extends Service
                     $order_detail->weight = data_get($product, 'weight');
                     $order_detail->insurance_cost = data_get($product, 'insurance_cost');
                     $order_detail->discount = data_get($product, 'discount');
+                    $order_detail->insentif = data_get($product, 'insentif');
                     $order_detail->total_price = data_get($product, 'total_price');
                     $order_detail->total_weight = data_get($product, 'total_weight');
                     $order_detail->total_discount = data_get($product, 'total_discount');
+                    $order_detail->total_insentif = data_get($product, 'total_insentif');
                     $order_detail->total_insurance_cost = data_get($product, 'total_insurance_cost');
                     $order_detail->total_amount = data_get($product, 'total_amount');
                     $order_detail->notes = data_get($product, 'note');
