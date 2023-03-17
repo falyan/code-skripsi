@@ -510,4 +510,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('cek-order', 'TiketController@cekOrder');
         $router->post('resend-mail', 'TiketController@resendTicket');
     });
+
+    $router->group(['prefix' => 'ev-subsidy'], static function () use ($router) {
+        $router->get('get-webview', 'EvSubsidyController@webview');
+    });
 });

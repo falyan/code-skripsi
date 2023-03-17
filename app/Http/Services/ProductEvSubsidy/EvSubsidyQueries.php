@@ -5,6 +5,7 @@ namespace App\Http\Services\ProductEvSubsidy;
 use App\Http\Services\Manager\EvSubsidyManager;
 use App\Http\Services\Service;
 use App\Models\CustomerEVSubsidy;
+use App\Models\MasterData;
 use App\Models\ProductEvSubsidy;
 
 class EvSubsidyQueries extends Service
@@ -96,5 +97,16 @@ class EvSubsidyQueries extends Service
                 'daya' => $checkIdPel['data']['energy'],
             ],
         ];
+    }
+
+    public function getWebviewData()
+    {
+        $master_data = MasterData::select('type', 'key', 'value_type', 'value', 'photo_url')
+            ->where([
+                'key' => 'ev_subsidy_webview',
+            ])
+            ->first();
+
+        return $master_data;
     }
 }

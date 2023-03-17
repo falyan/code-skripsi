@@ -190,4 +190,14 @@ class EvSubsidyController extends Controller
             'data' => $data['data'],
         ]);
     }
+
+    // webview
+    public function webview()
+    {
+        return response()->json([
+            'status' => true,
+            'message' => 'Berhasil mengambil data',
+            'data' => $this->EvSubsidyQueries->getWebviewData(),
+        ]);
+    }
 }
