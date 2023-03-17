@@ -4,6 +4,7 @@ namespace App\Http\Services\Product;
 
 use App\Http\Services\Service;
 use App\Models\MasterData;
+use App\Models\MasterEvStore;
 use App\Models\MasterVariant;
 use App\Models\Merchant;
 use App\Models\Product;
@@ -1294,7 +1295,7 @@ class ProductQueries extends Service
         ])->with([
             'product_stock', 'product_photo', 'is_wishlist',
             'merchant' => function ($merchant) {
-                $merchant->with(['city:id,name', 'promo_merchant.promo_master']);
+                $merchant->with(['city:id,name']);
             },
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
