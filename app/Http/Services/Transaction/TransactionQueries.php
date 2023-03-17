@@ -567,8 +567,9 @@ class TransactionQueries extends Service
         $datas['buyer_npwp'] = auth()->user()->npwp;
         $datas['merchants'] = $new_merchant;
         $datas['total_discount'] = $total_discount;
-        $datas['total_payment'] -= $total_discount;
         $datas['total_insentif'] = $total_insentif;
+        $datas['total_payment'] -= $total_discount;
+        $datas['total_payment'] -= $total_insentif;
 
         return $datas;
     }
