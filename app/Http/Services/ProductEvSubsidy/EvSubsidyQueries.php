@@ -42,19 +42,23 @@ class EvSubsidyQueries extends Service
         $id_pel = $request['id_pel'];
         $token = $request['key_pln'];
 
-        $customers = CustomerEVSubsidy::where('customer_nik', $nik)
-            ->where('status_approval', '!=', 0)
-            ->get();
+        $customers = CustomerEVSubsidy::where([
+            'customer_nik' => $nik,
+        ])->get();
 
-        if ($customers) {
-            return [
-                'status' => false,
-                'status_code' => '01',
-                'message' => 'Customer Subsidi sudah terdaftar',
-                'errors' => [
-                    'nik' => 'Nik sudah terdaftar',
-                ],
-            ];
+        if (count($customers) > 0) {
+            foreach ($customers as $customer) {
+                if ($customer->status_approval == 1 || is_null($customer->status_approval)) {
+                    return [
+                        'status' => false,
+                        'status_code' => '01',
+                        'message' => 'Customer Subsidi sudah terdaftar',
+                        'errors' => [
+                            'nik' => 'Nik sudah terdaftar',
+                        ],
+                    ];
+                }
+            }
         }
 
         $checkNik = $this->EvSubsidyManager->checkNik($nik, $token);
