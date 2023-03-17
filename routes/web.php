@@ -41,6 +41,13 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('archived/{product_id}', 'ProductController@updateProductArchived');
                 });
 
+                $router->group(['prefix' => 'ev-subsidy'], static function () use ($router) {
+                    $router->post('create', 'EvSubsidyController@create');
+                    $router->post('update/{id}', 'EvSubsidyController@update');
+                    $router->post('delete', 'EvSubsidyController@delete');
+                    $router->post('approve', 'EvSubsidyController@approve');
+                });
+
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {
                     $router->post('atur-toko', 'MerchantController@aturToko');
                     $router->post('set-expedition', 'MerchantController@setExpedition');
@@ -108,6 +115,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('filter', 'ProductController@getProductByFilter');
                     $router->post('filter/count', 'ProductController@countProductByFilter');
                     $router->get('featured', 'ProductController@getProductFeatured');
+                    $router->get('ev-product', 'ProductController@getProductEvSubsidy');
+                });
+
+                $router->group(['prefix' => 'ev-subsidy'], static function () use ($router) {
+                    $router->get('list', 'EvSubsidyController@list');
                 });
 
                 $router->group(['prefix' => 'category'], static function () use ($router) {
@@ -133,6 +145,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->get('/search/count', 'TransactionController@sellerCountSearchTransaction');
                     $router->get('/detail/{id}', 'TransactionController@detailTransaction');
                     $router->get('/export/excel', 'TransactionController@exportExcel');
+                    $router->get('/subsidy-ev', 'TransactionController@sellerSubsidyEv');
                 });
 
                 $router->group(['prefix' => 'notification'], static function () use ($router) {
@@ -258,6 +271,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'checkout', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('/count', 'TransactionController@countCheckoutPrice');
+                $router->post('/countv2', 'TransactionController@countCheckoutPriceV2');
             });
 
             $router->group(['prefix' => 'transaction', 'middleware' => 'auth'], static function () use ($router) {
@@ -332,6 +346,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('checkout', 'TransactionController@checkout');
+                $router->post('checkoutv2', 'TransactionController@checkoutV2');
             });
 
             $router->group(['prefix' => 'cart', 'middleware' => 'auth'], static function () use ($router) {
@@ -363,6 +378,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->post('create/master', 'DiscussionController@createDiscussionMaster');
                 $router->post('create/response', 'DiscussionController@createDiscussionResponseByBuyer');
                 $router->post('read/{id}', 'DiscussionController@buyerReadDiscussion');
+            });
+
+            $router->group(['prefix' => 'ev-subsidy'], static function () use ($router) {
+                $router->post('check', 'EvSubsidyController@checkIdentity');
             });
         });
     });
@@ -490,5 +509,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('scan-qr', 'TiketController@scanQr');
         $router->post('cek-order', 'TiketController@cekOrder');
         $router->post('resend-mail', 'TiketController@resendTicket');
+    });
+
+    $router->group(['prefix' => 'ev-subsidy'], static function () use ($router) {
+        $router->get('get-webview', 'EvSubsidyController@webview');
     });
 });

@@ -125,6 +125,16 @@ class Customer extends Model
         return $this->hasMany(DiscussionResponse::class, 'customer_id');
     }
 
+    public function payment()
+    {
+        return $this->hasOne(OrderPayment::class, 'customer_id');
+    }
+
+    public function ev_subsidy()
+    {
+        return $this->hasOne(CustomerEVSubsidy::class, 'customer_id');
+    }
+
     /**
      * @var void Custom Static Functions
      */

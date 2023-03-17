@@ -7,6 +7,7 @@ use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Service;
 use App\Models\Customer;
 use App\Models\CustomerDiscount;
+use App\Models\CustomerEVSubsidy;
 use App\Models\MasterData;
 use App\Models\MasterTiket;
 use App\Models\Order;
@@ -298,7 +299,7 @@ class TransactionCommands extends Service
                 }
             }
 
-            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date) {
+            foreach (data_get($datas, 'merchants') as $data) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
                 $order->buyer_id = $customer_id;
@@ -309,6 +310,7 @@ class TransactionCommands extends Service
                 $order->related_pln_mobile_customer_id = null;
                 $order->no_reference = $no_reference;
                 $order->discount = data_get($data, 'product_discount');
+                $order->npwp = data_get($data, 'npwp');
                 $order->created_by = 'user';
                 $order->updated_by = 'user';
                 $order->npwp = data_get($datas, 'npwp');
@@ -325,7 +327,7 @@ class TransactionCommands extends Service
                 $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
                 $order->save();
 
-                array_map(function ($product) use ($order) {
+                foreach (data_get($data, 'products') as $product) {
                     $order_detail = new OrderDetail();
                     $order_detail->order_id = $order->id;
                     $order_detail->detail_type = 1;
@@ -335,15 +337,17 @@ class TransactionCommands extends Service
                     $order_detail->weight = data_get($product, 'weight');
                     $order_detail->insurance_cost = data_get($product, 'insurance_cost');
                     $order_detail->discount = data_get($product, 'discount');
+                    $order_detail->insentif = data_get($product, 'insentif');
                     $order_detail->total_price = data_get($product, 'total_price');
                     $order_detail->total_weight = data_get($product, 'total_weight');
                     $order_detail->total_discount = data_get($product, 'total_discount');
+                    $order_detail->total_insentif = data_get($product, 'total_insentif');
                     $order_detail->total_insurance_cost = data_get($product, 'total_insurance_cost');
                     $order_detail->total_amount = data_get($product, 'total_amount');
                     $order_detail->notes = data_get($product, 'note');
                     $order_detail->variant_value_product_id = data_get($product, 'variant_value_product_id');
                     $order_detail->save();
-                }, data_get($data, 'products'));
+                }
 
                 $order_progress = new OrderProgress();
                 $order_progress->order_id = $order->id;
@@ -363,8 +367,6 @@ class TransactionCommands extends Service
                 $order_delivery->city_id = data_get($datas, 'destination_info.city_id');
                 $order_delivery->district_id = data_get($datas, 'destination_info.district_id');
                 $order_delivery->postal_code = data_get($datas, 'destination_info.postal_code');
-                $order_delivery->district_code = data_get($datas, 'destination_info.district_code');
-                $order_delivery->image_logistic = data_get($data, 'image_logistic');
                 $order_delivery->latitude = data_get($datas, 'destination_info.latitude');
                 $order_delivery->longitude = data_get($datas, 'destination_info.longitude');
                 $order_delivery->shipping_type = data_get($data, 'delivery_service');
@@ -404,10 +406,43 @@ class TransactionCommands extends Service
                     $notificationCommand = new NotificationCommands();
                     $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
                 }
-            }, data_get($datas, 'merchants'));
+            }
 
             if ($datas['total_payment'] < 1) {
                 throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
+            }
+
+            if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
+                $product_ids = [];
+                foreach ($datas['merchants'] as $merchants) {
+                    foreach ($merchants['products'] as $product) {
+                        $product_ids[] = $product['product_id'];
+                    }
+                }
+
+                $ev_subsidy = null;
+                $products = Product::with('ev_subsidy')->whereIn('id', $product_ids)->get();
+                foreach ($products as $product) {
+                    if ($ev_subsidy == null) {
+                        $ev_subsidy = $product->ev_subsidy;
+                    } else {
+                        if ($product->ev_subsidy->subsidy_amount > $ev_subsidy->subsidy_amount) {
+                            $ev_subsidy = $product->ev_subsidy;
+                        }
+                    }
+                }
+
+                $customerEv = new CustomerEVSubsidy();
+                $customerEv->customer_id = $customer_id;
+                $customerEv->order_id = $order->id;
+                $customerEv->product_id = $ev_subsidy->product_id;
+                $customerEv->customer_nik = data_get($datas, 'customer.nik');
+                $customerEv->customer_id_pel = data_get($datas, 'customer.id_pel');
+                $customerEv->umkm_url = data_get($datas, 'customer.umkm_url');
+                $customerEv->kur_url = data_get($datas, 'customer.kur_url');
+                $customerEv->bpum_url = data_get($datas, 'customer.bpum_url');
+                $customerEv->created_by = auth()->user()->full_name;
+                $customerEv->save();
             }
 
             $mailSender = new MailSenderManager();
@@ -469,7 +504,6 @@ class TransactionCommands extends Service
 
             return [
                 'success' => true,
-                'status_code' => 200,
                 'message' => 'Berhasil create order',
                 'data' => $response,
             ];

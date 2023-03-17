@@ -4,12 +4,14 @@ namespace App\Http\Services\Product;
 
 use App\Http\Services\Service;
 use App\Models\MasterData;
+use App\Models\MasterEvStore;
 use App\Models\MasterVariant;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\Review;
 use App\Models\VariantValueProduct;
+use App\Models\ProductEvSubsidy;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -1255,6 +1257,58 @@ class ProductQueries extends Service
         $sorted_data = static::sorting($filtered_data, $sortby);
 
         $data = static::productPaginate($sorted_data, $limit);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function getProductEvSubsidy($limit, $filter = [], $sortby = null, $current_page = 1)
+    {
+        $categories = MasterData::with(['child', 'child.child'])->where([
+            'type' => 'product_category',
+            'key' => 'prodcat_electric_vehicle',
+        ])->get();
+
+        $cat_child_id = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    foreach ($child->child as $children) {
+                        array_push($cat_child_id, $children->id);
+                    }
+                }
+            }
+        }
+
+        $merchant_product_ev = ProductEvSubsidy::where('merchant_id', auth()->user()->merchant_id)->get();
+
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where([
+            'status' => 1,
+            'merchant_id' => auth()->user()->merchant_id,
+        ])->with([
+            'product_stock', 'product_photo', 'is_wishlist',
+            'merchant' => function ($merchant) {
+                $merchant->with(['city:id,name']);
+            },
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+        ])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereIn('category_id', $cat_child_id)
+        ->whereNotIn('id', collect($merchant_product_ev)->pluck('product_id')->toArray());
+
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $data = $this->productPaginate($sorted_data, $limit);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
