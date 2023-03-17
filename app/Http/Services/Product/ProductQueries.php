@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\Review;
 use App\Models\VariantValueProduct;
+use App\Models\ProductEvSubsidy;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -1280,6 +1281,8 @@ class ProductQueries extends Service
             }
         }
 
+        $merchant_product_ev = ProductEvSubsidy::where('merchant_id', auth()->user()->merchant_id)->get();
+
         $product = new Product();
         $products = $product->withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
@@ -1298,7 +1301,8 @@ class ProductQueries extends Service
             },
         ])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
-        })->whereIn('category_id', $cat_child_id);
+        })->whereIn('category_id', $cat_child_id)
+        ->whereNotIn('id', collect($merchant_product_ev)->pluck('product_id')->toArray());
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
