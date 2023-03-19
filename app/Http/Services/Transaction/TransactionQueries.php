@@ -420,13 +420,13 @@ class TransactionQueries extends Service
         $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = 0;
 
         $new_merchant = [];
+        $ev_subsidies = [];
         foreach (data_get($datas, 'merchants') as $merchant) {
             $total_weight = 0;
             $merchant_total_price = 0;
             $data_merchant = Merchant::with(['city', 'district'])->findOrFail($merchant['merchant_id']);
 
             $new_product = [];
-            $ev_subsidies = [];
             foreach (data_get($merchant, 'products') as $product) {
                 $data_product = Product::with(['product_photo', 'stock_active', 'ev_subsidy' => function($es) use ($merchant) {
                     $es->where('merchant_id', $merchant['merchant_id']);
@@ -505,8 +505,8 @@ class TransactionQueries extends Service
         }
 
         $new_products = [];
-        foreach (data_get($datas, 'merchants') as $merchant) {
-            foreach (data_get($merchant, 'products') as $product) {
+        foreach ($datas['merchants'] as $merchant) {
+            foreach ($merchant['products'] as $product) {
                 $new_products[] = $product;
             }
         }
