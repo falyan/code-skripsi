@@ -511,6 +511,10 @@ class TransactionQueries extends Service
             }
         }
 
+        if (count($ev_subsidies ) > 1) {
+            throw new Exception('Khusus untuk pembelian dengan subsidi, customer tidak dapat melakukan pembelian lebih dari 1 produk subsidi', 400);
+        }
+
         if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
             $ev_subsidy = null;
             foreach ($ev_subsidies as $subsidy) {
