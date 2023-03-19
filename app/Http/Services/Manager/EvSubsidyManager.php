@@ -26,14 +26,14 @@ class EvSubsidyManager
     }
 
     // checkNik
-    public static function checkNik($nik, $IdPln)
+    public static function checkNik($nik, $IdPln = null)
     {
         self::init();
 
         $url = sprintf('%s/%s', self::$endpointnik, 'api/dil-motor-listrik/data-exists');
         $body = '{
             "nik": "' . $nik . '",
-            "id_pln": "' . $IdPln . '"
+            "id_pln": "plnmobile"
         }';
         $headers = self::headers([
             'Authorization' => 'Basic ' . base64_encode(self::$username . ':' . self::$password),
