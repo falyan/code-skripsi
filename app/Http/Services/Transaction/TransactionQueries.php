@@ -574,19 +574,20 @@ class TransactionQueries extends Service
             $new_merchant[] = $merchant;
         }
 
-        $new_merchant2 = [];
-        foreach ($new_merchant as $merchant) {
-            if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
-                foreach ($merchant['products'] as $key => $product) {
-                    $merchant['products'][$key]['ev_subsidy'] = $ev_subsidy;
-                }
-            }
+        // $new_merchant2 = [];
+        // foreach ($new_merchant as $merchant) {
+        //     if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
+        //         foreach ($merchant['products'] as $key => $product) {
+        //             $merchant['products'][$key]['ev_subsidy'] = $ev_subsidy;
+        //         }
+        //     }
 
-            $new_merchant2[] = $merchant;
-        }
+        //     $new_merchant2[] = $merchant;
+        // }
 
         $datas['buyer_npwp'] = auth()->user()->npwp;
-        $datas['merchants'] = $new_merchant2;
+        // $datas['merchants'] = $new_merchant2;
+        $datas['merchants'] = $new_merchant;
         $datas['total_discount'] = $total_discount;
         $datas['total_insentif'] = $total_insentif;
         $datas['total_payment'] -= $total_discount;
