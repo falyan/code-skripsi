@@ -512,7 +512,11 @@ class TransactionQueries extends Service
         }
 
         if (count($ev_subsidies ) > 1) {
-            throw new Exception('Khusus untuk pembelian dengan subsidi, customer tidak dapat melakukan pembelian lebih dari 1 produk subsidi', 400);
+            return [
+                'success' => true,
+                'status_code' => 400,
+                'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif'
+            ];
         }
 
         if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
