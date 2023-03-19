@@ -26,23 +26,28 @@ class EvSubsidyManager
     }
 
     // checkNik
-    public static function checkNik($nik, $IdPln = null)
+    public static function checkNik($nik)
     {
         self::init();
 
         $url = sprintf('%s/%s', self::$endpointnik, 'api/dil-motor-listrik/data-exists');
+
         $body = '{
             "nik": "' . $nik . '",
             "id_pln": "plnmobile"
         }';
+
         $headers = self::headers([
             'Authorization' => 'Basic ' . base64_encode(self::$username . ':' . self::$password),
         ]);
 
-        $request = new Request('GET', $url, $headers, $body);
-        $response = self::$curl->sendAsync($request)->wait();
+        $response = self::$curl->request('GET', $url, [
+            'headers' => $headers,
+            'http_errors' => false,
+            'body' => $body,
+        ]);
 
-        $response = json_decode($response->getBody()->getContents(), true);
+        return $response = json_decode($response->getBody()->getContents(), true);
         throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
         return $response;

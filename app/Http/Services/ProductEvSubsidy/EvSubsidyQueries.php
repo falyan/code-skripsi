@@ -39,7 +39,6 @@ class EvSubsidyQueries extends Service
     public function checkIdentity($request)
     {
         $nik = $request['nik'];
-        $id_pln = $request['id_pln'] ?? null;
 
         $customers = CustomerEVSubsidy::where([
             'customer_nik' => $nik,
@@ -51,7 +50,7 @@ class EvSubsidyQueries extends Service
                     return [
                         'status' => false,
                         'status_code' => '01',
-                        'message' => 'Customer Subsidi sudah terdaftar',
+                        'message' => 'Nik Subsidi sudah terdaftar',
                         'errors' => [
                             'nik' => 'Nik sudah terdaftar',
                         ],
@@ -60,13 +59,13 @@ class EvSubsidyQueries extends Service
             }
         }
 
-        $checkNik = $this->EvSubsidyManager->checkNik($nik, $id_pln);
+        $checkNik = $this->EvSubsidyManager->checkNik($nik);
 
         if (!isset($checkNik['response']) || $checkNik['response'] != 'OK') {
             return [
                 'status' => false,
                 'status_code' => '02',
-                'message' => 'Customer Subsidi tidak ditemukan',
+                'message' => 'Nik Subsidi tidak ditemukan',
                 'errors' => 'Nik tidak ditemukan',
             ];
         }
