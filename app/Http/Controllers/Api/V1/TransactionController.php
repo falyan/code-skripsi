@@ -183,10 +183,6 @@ class TransactionController extends Controller
 
         if (isset(request()->all()['customer'])) {
             $rules['customer.nik'] = 'required';
-            $rules['customer.id_pel'] = 'required';
-            $rules['customer.umkm_url'] = 'required';
-            $rules['customer.kur_url'] = 'required';
-            $rules['customer.bpum_url'] = 'required';
         }
 
         $validator = Validator::make(request()->all(), $rules, [
@@ -1625,10 +1621,6 @@ class TransactionController extends Controller
 
         if (isset(request()->all()['customer'])) {
             $rules['customer.nik'] = 'required';
-            $rules['customer.id_pel'] = 'required';
-            $rules['customer.umkm_url'] = 'required';
-            $rules['customer.kur_url'] = 'required';
-            $rules['customer.bpum_url'] = 'required';
         }
 
         $validator = Validator::make(request()->all(), $rules, [
