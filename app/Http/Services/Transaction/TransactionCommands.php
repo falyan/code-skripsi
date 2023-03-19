@@ -321,8 +321,6 @@ class TransactionCommands extends Service
                 }
             }
 
-            return $datas;
-
             foreach (data_get($datas, 'merchants') as $data) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
