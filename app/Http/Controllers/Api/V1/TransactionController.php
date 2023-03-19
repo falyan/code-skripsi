@@ -1640,7 +1640,29 @@ class TransactionController extends Controller
 
         try {
             $customer = Auth::user();
-            return $this->transactionQueries->countCheckoutPriceV2($customer, request()->all());
+            $respond = $this->transactionQueries->countCheckoutPriceV2($customer, request()->all());
+
+            $ev_subsidies = [];
+            foreach ($respond['merchants'] as $merchant) {
+                foreach ($merchant['products'] as $product) {
+                    if ($product['ev_subsidy'] > 0) {
+                        $ev_subsidies[] = [
+                            'product_id' => $product['product_id'],
+                            'ev_subsidy' => $product['ev_subsidy'],
+                        ];
+                    }
+                }
+            }
+
+            if (count($ev_subsidies ) > 1) {
+                return array_merge($respond, [
+                    'success' => true,
+                    'status_code' => 400,
+                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif'
+                ]);
+            }
+
+            return $respond;
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

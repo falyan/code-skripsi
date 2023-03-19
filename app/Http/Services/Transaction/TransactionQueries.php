@@ -511,14 +511,6 @@ class TransactionQueries extends Service
             }
         }
 
-        if (count($ev_subsidies ) > 1) {
-            return [
-                'success' => true,
-                'status_code' => 400,
-                'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif'
-            ];
-        }
-
         if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
             $ev_subsidy = null;
             foreach ($ev_subsidies as $subsidy) {
