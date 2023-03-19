@@ -64,6 +64,7 @@ return [
     ],
     'evsubsidy' => [
         'endpoint_nik' => env('EV_SUBSIDY_CHECK_NIK_CREDENTIAL_ENDPOINT'),
-        'endpoint_id_pel' => env('EV_SUBSIDY_CHECK_ID_PEL_CREDENTIAL_ENDPOINT'),
+        'username' => env('EV_SUBSIDY_CHECK_NIK_CREDENTIAL_USERNAME'),
+        'password' => env('EV_SUBSIDY_CHECK_NIK_CREDENTIAL_PASSWORD'),
     ],
 ];

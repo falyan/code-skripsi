@@ -39,8 +39,7 @@ class EvSubsidyQueries extends Service
     public function checkIdentity($request)
     {
         $nik = $request['nik'];
-        $id_pel = $request['id_pel'];
-        $token = $request['key_pln'];
+        $id_pln = $request['id_pln'];
 
         $customers = CustomerEVSubsidy::where([
             'customer_nik' => $nik,
@@ -61,29 +60,14 @@ class EvSubsidyQueries extends Service
             }
         }
 
-        $checkNik = $this->EvSubsidyManager->checkNik($nik, $token);
-        $checkIdPel = $this->EvSubsidyManager->checkIdPel($id_pel, $token);
+        $checkNik = $this->EvSubsidyManager->checkNik($nik, $id_pln);
 
-        if (!isset($checkNik['data']) || !isset($checkIdPel['data'])) {
+        if (!isset($checkNik['response']) || $checkNik['response'] != 'OK') {
             return [
                 'status' => false,
                 'status_code' => '02',
                 'message' => 'Customer Subsidi tidak ditemukan',
-                'errors' => [
-                    'nik' => isset($checkNik['data']) ? '' : 'Nik tidak ditemukan',
-                    'id_pel' => isset($checkIdPel['data']) ? '' : 'Id Pelanggan tidak ditemukan',
-                ],
-            ];
-        }
-
-        if ($checkIdPel['data']['energy'] < 450 || $checkIdPel['data']['energy'] > 900) {
-            return [
-                'status' => false,
-                'status_code' => '03',
-                'message' => 'Id Pelanggan tidak sesuai',
-                'errors' => [
-                    'id_pel' => 'Id Pelanggan di bawah 450 atau di atas 900',
-                ],
+                'errors' => 'Nik tidak ditemukan',
             ];
         }
 
@@ -93,8 +77,6 @@ class EvSubsidyQueries extends Service
             'message' => 'Customer Subsidi ditemukan',
             'data' => [
                 'nik' => $nik,
-                'id_pel' => $checkIdPel['data']['meter_id'],
-                'daya' => $checkIdPel['data']['energy'],
             ],
         ];
     }

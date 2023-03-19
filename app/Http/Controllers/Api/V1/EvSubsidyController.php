@@ -159,8 +159,7 @@ class EvSubsidyController extends Controller
     {
         $validate = Validator::make($request->all(), [
             "nik" => "required|string",
-            "id_pel" => "required|string",
-            'key_pln' => 'required|string',
+            'id_pln' => 'required|string',
         ]);
 
         if ($validate->fails()) {
