@@ -12,6 +12,7 @@ use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
 use App\Http\Services\Voucher\VoucherCommands;
 use App\Models\Customer;
+use App\Models\CustomerEVSubsidy;
 use App\Models\IconcashInquiry;
 use App\Models\Order;
 use App\Models\OrderDelivery;
@@ -956,6 +957,15 @@ class TransactionController extends Controller
             $response = $this->transactionCommand->updateOrderStatus($order_id, '09', $notes);
             $order = Order::with('detail')->find($order_id);
 
+            $evCustomer = CustomerEVSubsidy::where([
+                'order_id' => $order_id,
+            ])->first();
+
+            if ($evCustomer) {
+                $evCustomer->status_approval = 0;
+                $evCustomer->save();
+            }
+
             foreach ($order->detail as $detail) {
                 $stock = ProductStock::where('product_id', $detail->product_id)
                     ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
@@ -1246,6 +1256,15 @@ class TransactionController extends Controller
                 $this->transactionCommand->updateOrderStatus($id, '99', request()->get('reason'));
 
                 $order = Order::with('detail')->find($id);
+
+                $evCustomer = CustomerEVSubsidy::where([
+                    'order_id' => $id,
+                ])->first();
+
+                if ($evCustomer) {
+                    $evCustomer->status_approval = 0;
+                    $evCustomer->save();
+                }
 
                 foreach ($order->detail as $detail) {
                     $stock = ProductStock::where('product_id', $detail->product_id)
