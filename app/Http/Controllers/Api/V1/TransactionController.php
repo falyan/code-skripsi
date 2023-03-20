@@ -958,7 +958,7 @@ class TransactionController extends Controller
             $order = Order::with('detail')->find($order_id);
 
             $evCustomer = CustomerEVSubsidy::where([
-                'order_id' => $id,
+                'order_id' => $order_id,
             ])->first();
 
             if ($evCustomer) {
