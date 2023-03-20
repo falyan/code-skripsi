@@ -1195,6 +1195,11 @@ class TransactionController extends Controller
                 $iconcash = Customer::where('merchant_id', $order->merchant_id)->first()->iconcash;
                 $account_type_id = null;
 
+                $total_insentif = 0;
+                foreach ($order->detail as $item) {
+                    $total_insentif += $item->total_insentif;
+                }
+
                 if (env('APP_ENV') == 'staging') {
                     $account_type_id = 13;
                 } elseif (env('APP_ENV') == 'production') {
@@ -1203,7 +1208,7 @@ class TransactionController extends Controller
                     $account_type_id = 13;
                 }
 
-                $amount = $order->total_amount;
+                $amount = $order->total_amount - $total_insentif;
                 $client_ref = $this->unique_code($iconcash->token);
                 $corporate_id = 10;
 
