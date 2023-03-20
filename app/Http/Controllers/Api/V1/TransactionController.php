@@ -1664,11 +1664,16 @@ class TransactionController extends Controller
             $ev_subsidies = [];
             foreach ($respond['merchants'] as $merchant) {
                 foreach ($merchant['products'] as $product) {
-                    if ($product['ev_subsidy'] > 0) {
-                        $ev_subsidies[] = [
-                            'product_id' => $product['product_id'],
-                            'ev_subsidy' => $product['ev_subsidy'],
-                        ];
+                    if ($product['ev_subsidy'] != null) {
+                        if ($product['quantity'] > 1) {
+                            return array_merge($respond, [
+                                'success' => true,
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif'
+                            ]);
+                        }
+
+                        $ev_subsidies[] = $product['ev_subsidy'];
                     }
                 }
             }
