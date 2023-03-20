@@ -445,15 +445,18 @@ class TransactionCommands extends Service
 
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
                 $ev_subsidy = $ev_subsidies[0];
-
-                $customerEv = new CustomerEVSubsidy();
-                $customerEv->customer_id = $customer_id;
-                $customerEv->order_id = $order->id;
-                $customerEv->product_id = $ev_subsidy->product_id;
-                $customerEv->status_approval = 1;
-                $customerEv->customer_nik = data_get($datas, 'customer.nik');
-                $customerEv->created_by = auth()->user()->full_name;
-                $customerEv->save();
+                foreach (data_get($data, 'products') as $product) {
+                    if ($ev_subsidy->product_id == data_get($product, 'product_id')) {
+                        $customerEv = new CustomerEVSubsidy();
+                        $customerEv->customer_id = $customer_id;
+                        $customerEv->order_id = $order->id;
+                        $customerEv->product_id = $ev_subsidy->product_id;
+                        $customerEv->status_approval = 1;
+                        $customerEv->customer_nik = data_get($datas, 'customer.nik');
+                        $customerEv->created_by = auth()->user()->full_name;
+                        $customerEv->save();
+                    }
+                }
             }
 
             $mailSender = new MailSenderManager();
