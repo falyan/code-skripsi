@@ -306,6 +306,15 @@ class TransactionCommands extends Service
                         $ev_subsidy = Product::with('ev_subsidy')->where('id', $product['product_id'])->first()->ev_subsidy;
 
                         if ($ev_subsidy) {
+                            if ($product['quantity'] > 1) {
+                                return [
+                                    'success' => false,
+                                    'status' => "Bad request",
+                                    'status_code' => 400,
+                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                                ];
+                            }
+
                             $ev_subsidies[] = $ev_subsidy;
                         }
                     }
@@ -316,7 +325,7 @@ class TransactionCommands extends Service
                         'success' => false,
                         'status' => "Bad request",
                         'status_code' => 400,
-                        'message' => 'Khusus untuk pembelian dengan subsidi, customer tidak dapat melakukan pembelian lebih dari 1 produk subsidi',
+                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
                     ];
                 }
             }
