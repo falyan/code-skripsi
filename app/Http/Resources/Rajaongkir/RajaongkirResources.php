@@ -36,7 +36,7 @@ class RajaongkirResources extends JsonResource
                 return [
                     'courier_code' => data_get($courier, 'code'),
                     'courier_name' => data_get($courier, 'name'),
-                    'delivery_discount' => $this->delivery_discount,
+                    'delivery_discount' => (int) $this->delivery_discount,
                     'list_ongkir' => array_map(function($ongkir) {
                         return [
                             'service_name' => data_get($ongkir, 'service'),
