@@ -12,6 +12,7 @@ use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
 use App\Http\Services\Voucher\VoucherCommands;
 use App\Models\Customer;
+use App\Models\CustomerEVSubsidy;
 use App\Models\IconcashInquiry;
 use App\Models\Order;
 use App\Models\OrderDelivery;
@@ -956,6 +957,15 @@ class TransactionController extends Controller
             $response = $this->transactionCommand->updateOrderStatus($order_id, '09', $notes);
             $order = Order::with('detail')->find($order_id);
 
+            $evCustomer = CustomerEVSubsidy::where([
+                'order_id' => $order_id,
+            ])->first();
+
+            if ($evCustomer) {
+                $evCustomer->status_approval = 0;
+                $evCustomer->save();
+            }
+
             foreach ($order->detail as $detail) {
                 $stock = ProductStock::where('product_id', $detail->product_id)
                     ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
@@ -1185,6 +1195,11 @@ class TransactionController extends Controller
                 $iconcash = Customer::where('merchant_id', $order->merchant_id)->first()->iconcash;
                 $account_type_id = null;
 
+                $total_insentif = 0;
+                foreach ($order->detail as $item) {
+                    $total_insentif += $item->total_insentif;
+                }
+
                 if (env('APP_ENV') == 'staging') {
                     $account_type_id = 13;
                 } elseif (env('APP_ENV') == 'production') {
@@ -1193,7 +1208,7 @@ class TransactionController extends Controller
                     $account_type_id = 13;
                 }
 
-                $amount = $order->total_amount;
+                $amount = $order->total_amount - $total_insentif;
                 $client_ref = $this->unique_code($iconcash->token);
                 $corporate_id = 10;
 
@@ -1246,6 +1261,15 @@ class TransactionController extends Controller
                 $this->transactionCommand->updateOrderStatus($id, '99', request()->get('reason'));
 
                 $order = Order::with('detail')->find($id);
+
+                $evCustomer = CustomerEVSubsidy::where([
+                    'order_id' => $id,
+                ])->first();
+
+                if ($evCustomer) {
+                    $evCustomer->status_approval = 0;
+                    $evCustomer->save();
+                }
 
                 foreach ($order->detail as $detail) {
                     $stock = ProductStock::where('product_id', $detail->product_id)
@@ -1645,11 +1669,16 @@ class TransactionController extends Controller
             $ev_subsidies = [];
             foreach ($respond['merchants'] as $merchant) {
                 foreach ($merchant['products'] as $product) {
-                    if ($product['ev_subsidy'] > 0) {
-                        $ev_subsidies[] = [
-                            'product_id' => $product['product_id'],
-                            'ev_subsidy' => $product['ev_subsidy'],
-                        ];
+                    if ($product['ev_subsidy'] != null) {
+                        if ($product['quantity'] > 1) {
+                            return array_merge($respond, [
+                                'success' => true,
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif'
+                            ]);
+                        }
+
+                        $ev_subsidies[] = $product['ev_subsidy'];
                     }
                 }
             }

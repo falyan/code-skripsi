@@ -299,13 +299,22 @@ class TransactionCommands extends Service
                 }
             }
 
+            $ev_subsidies = [];
             if (isset($datas['customer'])) {
-                $ev_subsidies = [];
                 foreach ($datas['merchants'] as $merchant) {
                     foreach ($merchant['products'] as $product) {
                         $ev_subsidy = Product::with('ev_subsidy')->where('id', $product['product_id'])->first()->ev_subsidy;
 
                         if ($ev_subsidy) {
+                            if ($product['quantity'] > 1) {
+                                return [
+                                    'success' => false,
+                                    'status' => "Bad request",
+                                    'status_code' => 400,
+                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                                ];
+                            }
+
                             $ev_subsidies[] = $ev_subsidy;
                         }
                     }
@@ -316,7 +325,7 @@ class TransactionCommands extends Service
                         'success' => false,
                         'status' => "Bad request",
                         'status_code' => 400,
-                        'message' => 'Khusus untuk pembelian dengan subsidi, customer tidak dapat melakukan pembelian lebih dari 1 produk subsidi',
+                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
                     ];
                 }
             }
@@ -435,33 +444,19 @@ class TransactionCommands extends Service
             }
 
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
-                $product_ids = [];
-                foreach ($datas['merchants'] as $merchants) {
-                    foreach ($merchants['products'] as $product) {
-                        $product_ids[] = $product['product_id'];
+                $ev_subsidy = $ev_subsidies[0];
+                foreach (data_get($data, 'products') as $product) {
+                    if ($ev_subsidy->product_id == data_get($product, 'product_id')) {
+                        $customerEv = new CustomerEVSubsidy();
+                        $customerEv->customer_id = $customer_id;
+                        $customerEv->order_id = $order->id;
+                        $customerEv->product_id = $ev_subsidy->product_id;
+                        $customerEv->status_approval = 1;
+                        $customerEv->customer_nik = data_get($datas, 'customer.nik');
+                        $customerEv->created_by = auth()->user()->full_name;
+                        $customerEv->save();
                     }
                 }
-
-                $ev_subsidy = null;
-                $products = Product::with('ev_subsidy')->whereIn('id', $product_ids)->get();
-                foreach ($products as $product) {
-                    if ($ev_subsidy == null) {
-                        $ev_subsidy = $product->ev_subsidy;
-                    } else {
-                        if ($product->ev_subsidy->subsidy_amount > $ev_subsidy->subsidy_amount) {
-                            $ev_subsidy = $product->ev_subsidy;
-                        }
-                    }
-                }
-
-                $customerEv = new CustomerEVSubsidy();
-                $customerEv->customer_id = $customer_id;
-                $customerEv->order_id = $order->id;
-                $customerEv->product_id = $ev_subsidy->product_id;
-                $customerEv->status_approval = 1;
-                $customerEv->customer_nik = data_get($datas, 'customer.nik');
-                $customerEv->created_by = auth()->user()->full_name;
-                $customerEv->save();
             }
 
             $mailSender = new MailSenderManager();
