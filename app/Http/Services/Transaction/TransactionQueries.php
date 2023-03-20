@@ -420,13 +420,13 @@ class TransactionQueries extends Service
         $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = 0;
 
         $new_merchant = [];
+        $ev_subsidies = [];
         foreach (data_get($datas, 'merchants') as $merchant) {
             $total_weight = 0;
             $merchant_total_price = 0;
             $data_merchant = Merchant::with(['city', 'district'])->findOrFail($merchant['merchant_id']);
 
             $new_product = [];
-            $ev_subsidies = [];
             foreach (data_get($merchant, 'products') as $product) {
                 $data_product = Product::with(['product_photo', 'stock_active', 'ev_subsidy' => function($es) use ($merchant) {
                     $es->where('merchant_id', $merchant['merchant_id']);
@@ -504,6 +504,13 @@ class TransactionQueries extends Service
             }
         }
 
+        $new_products = [];
+        foreach ($datas['merchants'] as $merchant) {
+            foreach ($merchant['products'] as $product) {
+                $new_products[] = $product;
+            }
+        }
+
         if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
             $ev_subsidy = null;
             foreach ($ev_subsidies as $subsidy) {
@@ -517,13 +524,13 @@ class TransactionQueries extends Service
             }
 
             $subsidy = false;
-            foreach ($new_product as $key => $product) {
+            foreach ($new_products as $key => $product) {
                 if ($ev_subsidy != null && $subsidy == false) {
                     if ($ev_subsidy->merchant_id == $product['merchant_id'] && $ev_subsidy->product_id == $product['id']) {
                         $product['insentif'] += $ev_subsidy->subsidy_amount;
                         $product['total_insentif'] += $ev_subsidy->subsidy_amount;
 
-                        $new_product[$key] = $product;
+                        $new_products[$key] = $product;
                         $subsidy = true;
                     }
                 }
@@ -536,12 +543,12 @@ class TransactionQueries extends Service
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
                 $insentif = 0;
                 foreach ($merchant['products'] as $key => $product) {
-                    foreach ($new_product as $new_product_value) {
-                        if ($product['id'] == $new_product_value['id']) {
+                    foreach ($new_products as $new_product_value) {
+                        if ($product['product_id'] == $new_product_value['product_id']) {
                             $merchant['products'][$key]['insentif'] = $new_product_value['insentif'];
                             $merchant['products'][$key]['total_insentif'] = $new_product_value['total_insentif'];
 
-                            $insentif = $merchant['products'][$key]['total_insentif'];
+                            $insentif += $merchant['products'][$key]['total_insentif'];
                         }
                     }
                 }
@@ -566,7 +573,20 @@ class TransactionQueries extends Service
 
             $new_merchant[] = $merchant;
         }
+
+        // $new_merchant2 = [];
+        // foreach ($new_merchant as $merchant) {
+        //     if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
+        //         foreach ($merchant['products'] as $key => $product) {
+        //             $merchant['products'][$key]['ev_subsidy'] = $ev_subsidy;
+        //         }
+        //     }
+
+        //     $new_merchant2[] = $merchant;
+        // }
+
         $datas['buyer_npwp'] = auth()->user()->npwp;
+        // $datas['merchants'] = $new_merchant2;
         $datas['merchants'] = $new_merchant;
         $datas['total_discount'] = $total_discount;
         $datas['total_insentif'] = $total_insentif;

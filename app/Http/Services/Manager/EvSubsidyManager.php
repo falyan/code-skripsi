@@ -13,57 +13,41 @@ class EvSubsidyManager
     static $now;
 
     static $endpointnik;
-    static $endpointidpel;
+    static $username;
+    static $password;
 
     public static function init()
     {
         self::$now = Carbon::now('Asia/Jakarta');
         self::$curl = new Client();
         self::$endpointnik = config('credentials.evsubsidy.endpoint_nik');
-        self::$endpointidpel = config('credentials.evsubsidy.endpoint_id_pel');
+        self::$username = config('credentials.evsubsidy.username');
+        self::$password = config('credentials.evsubsidy.password');
     }
 
-    // checkIdPel
-    public static function checkIdPel($id_pel, $tokenPln)
+    // checkNik
+    public static function checkNik($nik)
     {
         self::init();
 
-        $url = sprintf('%s/%s', self::$endpointidpel, 'api/v3/meter/accounts/check/' . $id_pel);
+        $url = sprintf('%s/%s', self::$endpointnik, 'api/dil-motor-listrik/data-exists');
+
+        $body = '{
+            "nik": "' . $nik . '",
+            "id_pln": "plnmobile"
+        }';
+
         $headers = self::headers([
-            'Authorization' => $tokenPln,
+            'Authorization' => 'Basic ' . base64_encode(self::$username . ':' . self::$password),
         ]);
 
         $response = self::$curl->request('GET', $url, [
             'headers' => $headers,
             'http_errors' => false,
+            'body' => $body,
         ]);
 
-        $response = json_decode($response->getBody()->getContents(), true);
-        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
-
-        return $response;
-    }
-
-    // checkNik
-    public static function checkNik($nik, $tokenPln)
-    {
-        self::init();
-
-        $url = sprintf('%s/%s', self::$endpointnik, 'api/v1/master/nik/check');
-        $body = [
-            'id_number' => $nik,
-        ];
-        $headers = self::headers([
-            'Authorization' => $tokenPln,
-        ]);
-
-        $response = self::$curl->request('POST', $url, [
-            'headers' => $headers,
-            'json' => $body,
-            'http_errors' => false,
-        ]);
-
-        $response = json_decode($response->getBody()->getContents(), true);
+        return $response = json_decode($response->getBody()->getContents(), true);
         throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
         return $response;

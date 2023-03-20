@@ -299,6 +299,28 @@ class TransactionCommands extends Service
                 }
             }
 
+            if (isset($datas['customer'])) {
+                $ev_subsidies = [];
+                foreach ($datas['merchants'] as $merchant) {
+                    foreach ($merchant['products'] as $product) {
+                        $ev_subsidy = Product::with('ev_subsidy')->where('id', $product['product_id'])->first()->ev_subsidy;
+
+                        if ($ev_subsidy) {
+                            $ev_subsidies[] = $ev_subsidy;
+                        }
+                    }
+                }
+
+                if (count($ev_subsidies ) > 1) {
+                    return [
+                        'success' => false,
+                        'status' => "Bad request",
+                        'status_code' => 400,
+                        'message' => 'Khusus untuk pembelian dengan subsidi, customer tidak dapat melakukan pembelian lebih dari 1 produk subsidi',
+                    ];
+                }
+            }
+
             foreach (data_get($datas, 'merchants') as $data) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
@@ -436,11 +458,8 @@ class TransactionCommands extends Service
                 $customerEv->customer_id = $customer_id;
                 $customerEv->order_id = $order->id;
                 $customerEv->product_id = $ev_subsidy->product_id;
+                $customerEv->status_approval = 1;
                 $customerEv->customer_nik = data_get($datas, 'customer.nik');
-                $customerEv->customer_id_pel = data_get($datas, 'customer.id_pel');
-                $customerEv->umkm_url = data_get($datas, 'customer.umkm_url');
-                $customerEv->kur_url = data_get($datas, 'customer.kur_url');
-                $customerEv->bpum_url = data_get($datas, 'customer.bpum_url');
                 $customerEv->created_by = auth()->user()->full_name;
                 $customerEv->save();
             }
