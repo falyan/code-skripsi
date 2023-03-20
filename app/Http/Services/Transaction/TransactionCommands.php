@@ -299,8 +299,8 @@ class TransactionCommands extends Service
                 }
             }
 
+            $ev_subsidies = [];
             if (isset($datas['customer'])) {
-                $ev_subsidies = [];
                 foreach ($datas['merchants'] as $merchant) {
                     foreach ($merchant['products'] as $product) {
                         $ev_subsidy = Product::with('ev_subsidy')->where('id', $product['product_id'])->first()->ev_subsidy;
@@ -435,24 +435,7 @@ class TransactionCommands extends Service
             }
 
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
-                $product_ids = [];
-                foreach ($datas['merchants'] as $merchants) {
-                    foreach ($merchants['products'] as $product) {
-                        $product_ids[] = $product['product_id'];
-                    }
-                }
-
-                $ev_subsidy = null;
-                $products = Product::with('ev_subsidy')->whereIn('id', $product_ids)->get();
-                foreach ($products as $product) {
-                    if ($ev_subsidy == null) {
-                        $ev_subsidy = $product->ev_subsidy;
-                    } else {
-                        if ($product->ev_subsidy->subsidy_amount > $ev_subsidy->subsidy_amount) {
-                            $ev_subsidy = $product->ev_subsidy;
-                        }
-                    }
-                }
+                $ev_subsidy = $ev_subsidies[0];
 
                 $customerEv = new CustomerEVSubsidy();
                 $customerEv->customer_id = $customer_id;
