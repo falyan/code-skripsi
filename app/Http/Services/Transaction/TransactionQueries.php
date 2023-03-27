@@ -3,6 +3,7 @@
 namespace App\Http\Services\Transaction;
 
 use App\Http\Services\Service;
+use App\Models\City;
 use App\Models\CustomerDiscount;
 use App\Models\DeliveryDiscount;
 use App\Models\MasterData;
@@ -10,6 +11,7 @@ use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\Product;
+use App\Models\VariantStock;
 use App\Models\VariantValueProduct;
 use Carbon\Carbon;
 use Exception;

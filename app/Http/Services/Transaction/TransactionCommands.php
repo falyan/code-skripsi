@@ -795,6 +795,28 @@ class TransactionCommands extends Service
         return true;
     }
 
+    public function generateResi($order_id)
+    {
+        $delivery = OrderDelivery::where('order_id', $order_id)->first();
+
+        Carbon::setLocale('id');
+        $date = Carbon::now('Asia/Jakarta')->isoFormat('YMMDD');
+        $id = str_pad($order_id, 4, '0', STR_PAD_LEFT);
+        $resi = "CLG/{$date}/{$id}";
+
+        $delivery->awb_number = $resi;
+        if (!$delivery->save()) {
+            $response['success'] = false;
+            $response['message'] = 'Gagal menambahkan nomor resi';
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil menambahkan nomor resi';
+        return $response;
+    }
+
+
     public function generateTicket($order_id)
     {
         $user_tikets = UserTiket::where('order_id', $order_id)->get();
