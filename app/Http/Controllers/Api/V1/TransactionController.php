@@ -1857,79 +1857,65 @@ class TransactionController extends Controller
                     $tiket = null;
                     $status_code = collect($status_codes)->where('status_code', '02')->first();
                     if ($status_code['status_code'] == '02' && $status_code['status'] == 1) {
-                        if ($data->total_weight > 50000) {
-                            if (count($request->order_ids) == 1) {
-                                return $this->respondWithResult(false, 'Berat pesanan ' . $order_id . ' tidak boleh lebih dari 50kg.', 400);
-                            } else {
-                                $delivery = OrderDelivery::where('order_id', $order_id)->first();
-                                $results[] = [
-                                    'success' => false,
-                                    'message' => 'Berat pesanan tidak boleh lebih dari 50kg.',
-                                    'trx_no' => $data->trx_no,
-                                    'awb_number' => $delivery->awb_number,
-                                ];
+                        if ($data->merchant->official_store_proliga) {
+                            $tiket = $this->transactionCommand->generateTicket($order_id);
+                            if ($tiket['success'] == false) {
+                                return $tiket;
                             }
-                        } else {
-                            if ($data->merchant->official_store_proliga) {
-                                $tiket = $this->transactionCommand->generateTicket($order_id);
-                                if ($tiket['success'] == false) {
-                                    return $tiket;
-                                }
-                            }
-
-                            $response = $this->transactionCommand->generateResi($order_id);
-                            if (count($request->order_ids) == 1 && $response['success'] == false) {
-                                return $response;
-                            }
-
-                            $status = $this->transactionCommand->updateOrderStatus($order_id, '03');
-                            if (count($request->order_ids) == 1 && $status['success'] == false) {
-                                return $status;
-                            }
-
-                            // dikomen untuk SIT
-                            $title = 'Pesanan Dikirim';
-                            $message = 'Pesanan anda sedang dalam pengiriman.';
-                            $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-                            // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
-                            $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
-
-                            // // $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
-                            // // $total_amount_trx = $total_delivery_fee_trx = 0;
-
-                            // // foreach($orders as $o){
-                            // //     $total_amount_trx += $o->total_amount;
-                            // //    $total_delivery_fee_trx += $o->delivery->delivery_fee;
-                            // // }
-
-                            // // if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
-                            // //    $this->voucherCommand->generateVoucher($order);
-                            // // }
-
-                            // dikomen untuk SIT
-                            // $mailSender = new MailSenderManager();
-                            // $district_name = $this->logisticManager->searchLocationByCode([
-                            //     'kode' => $order->delivery->district_code,
-                            // ]);
-                            // $mailSender->mailOrderOnDelivery($order_id);
-
-                            $mailSender = new MailSenderManager();
-                            if ($data->merchant->official_store_proliga) {
-                                // dispatch(new SendEmailTiketJob($order_id, $tiket['data']));
-                                $mailSender->mailSendTicket($order_id, $tiket['data']);
-                            } else {
-                                $mailSender->mailOrderOnDelivery($order_id);
-                            }
-
-                            $delivery = OrderDelivery::where('order_id', $order_id)->first();
-                            $results[] = [
-                                'success' => $delivery->awb_number != null ? true : false,
-                                'message' => $delivery->awb_number != null ? 'Berhasil menambahkan resi' : 'Gagal menambahkan resi',
-                                'trx_no' => $data->trx_no,
-                                'awb_number' => $delivery->awb_number,
-                                'no_reference' => $delivery->no_reference,
-                            ];
                         }
+
+                        $response = $this->transactionCommand->generateResi($order_id);
+                        if (count($request->order_ids) == 1 && $response['success'] == false) {
+                            return $response;
+                        }
+
+                        $status = $this->transactionCommand->updateOrderStatus($order_id, '03');
+                        if (count($request->order_ids) == 1 && $status['success'] == false) {
+                            return $status;
+                        }
+
+                        // dikomen untuk SIT
+                        $title = 'Pesanan Dikirim';
+                        $message = 'Pesanan anda sedang dalam pengiriman.';
+                        $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
+                        // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+                        $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+
+                        // // $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+                        // // $total_amount_trx = $total_delivery_fee_trx = 0;
+
+                        // // foreach($orders as $o){
+                        // //     $total_amount_trx += $o->total_amount;
+                        // //    $total_delivery_fee_trx += $o->delivery->delivery_fee;
+                        // // }
+
+                        // // if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
+                        // //    $this->voucherCommand->generateVoucher($order);
+                        // // }
+
+                        // dikomen untuk SIT
+                        // $mailSender = new MailSenderManager();
+                        // $district_name = $this->logisticManager->searchLocationByCode([
+                        //     'kode' => $order->delivery->district_code,
+                        // ]);
+                        // $mailSender->mailOrderOnDelivery($order_id);
+
+                        $mailSender = new MailSenderManager();
+                        if ($data->merchant->official_store_proliga) {
+                            // dispatch(new SendEmailTiketJob($order_id, $tiket['data']));
+                            $mailSender->mailSendTicket($order_id, $tiket['data']);
+                        } else {
+                            $mailSender->mailOrderOnDelivery($order_id);
+                        }
+
+                        $delivery = OrderDelivery::where('order_id', $order_id)->first();
+                        $results[] = [
+                            'success' => $delivery->awb_number != null ? true : false,
+                            'message' => $delivery->awb_number != null ? 'Berhasil menambahkan resi' : 'Gagal menambahkan resi',
+                            'trx_no' => $data->trx_no,
+                            'awb_number' => $delivery->awb_number,
+                            'no_reference' => $delivery->no_reference,
+                        ];
                     } else {
                         if (count($request->order_ids) == 1) {
                             return $this->respondWithResult(false, 'Pesanan ' . $order_id . ' tidak dalam status siap dikirim!', 400);
