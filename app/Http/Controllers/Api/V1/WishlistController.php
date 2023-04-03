@@ -59,8 +59,9 @@ class WishlistController extends Controller
         try {
             $limit = $request->limit ?? 10;
             $page = $request->page ?? 1;
+            $sortby = $request->sortby ?? null;
 
-            return $this->wishlistQueries->getListWishlistByCustomer(Auth::id(), $limit, $page);
+            return $this->wishlistQueries->getListWishlistByCustomer(Auth::id(), $limit, $page, $sortby);
         } catch (Exception $e) {
             return $this->respondWithData($e, 'Error', 400);
         }
