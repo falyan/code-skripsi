@@ -93,8 +93,9 @@ class WishlistController extends Controller
 
             $limit = $request->limit ?? 10;
             $page = $request->page ?? 1;
+            $sortby = $request->sortby ?? null;
 
-            return $this->wishlistQueries->searchListWishlistByName($request, $limit, $page);
+            return $this->wishlistQueries->searchListWishlistByName($request, $limit, $page, $sortby);
         } catch (Exception $e) {
             return $this->respondErrorException($e, $request);
         }

@@ -51,7 +51,7 @@ class WishlistQueries extends Service
         return $response;
     }
 
-    public function searchListWishlistByName($data, $limit = 10, $page = 1)
+    public function searchListWishlistByName($data, $limit = 10, $page = 1, $sortby = null)
     {
         $keyword = $data['keyword'];
         $wishlist = Wishlist::with(['customer', 'merchant' => function ($merchant) {
@@ -66,9 +66,27 @@ class WishlistQueries extends Service
             $query->where('name', 'ILIKE', '%' . $keyword . '%')->orWhereHas('merchant', function ($query) use ($keyword) {
                 $query->where('name', 'ILIKE', '%' . $keyword . '%');
             });
-        })->where('customer_id', $data['customer_id'])->where('is_valid', true)->get();
+        })->where('customer_id', $data['customer_id'])->where('is_valid', true);
 
-        $data = static::paginate($wishlist->toArray(), $limit, $page);
+        $immutable_data = $wishlist->get()->map(function ($wl) {
+            $wl->review_count = $wl->product->review_count;
+            $wl->items_sold = $wl->product->items_sold;
+            return $wl;
+        });
+
+        $collect_data = collect($immutable_data);
+
+        if ($sortby == 'newest') {
+            $collect_data = $collect_data->sortByDesc('created_at');
+        } else if ($sortby == 'oldest') {
+            $collect_data = $collect_data->sortBy('created_at', SORT_NATURAL | SORT_FLAG_CASE);
+        } else if ($sortby == 'review') {
+            $collect_data = $collect_data->sortByDesc('review_count');
+        } else if ($sortby == 'sold') {
+            $collect_data = $collect_data->sortByDesc('items_sold');
+        }
+
+        $data = static::paginate($collect_data->toArray(), $limit, $page);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data wishlist!';
