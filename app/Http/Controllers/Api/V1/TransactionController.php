@@ -14,6 +14,7 @@ use App\Http\Services\Voucher\VoucherCommands;
 use App\Models\Customer;
 use App\Models\CustomerEVSubsidy;
 use App\Models\IconcashInquiry;
+use App\Models\MasterData;
 use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\Product;
