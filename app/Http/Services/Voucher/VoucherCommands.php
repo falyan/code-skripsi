@@ -4,6 +4,8 @@ namespace App\Http\Services\Voucher;
 
 use App\Http\Services\Notification\NotificationCommands;
 use App\Models\Order;
+use App\Models\UbahDayaLog;
+use App\Models\UbahDayaMaster;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
@@ -133,6 +135,70 @@ class VoucherCommands
             'success' => true,
             'message' => 'Berhasil menyimpan data voucher'
         ];
+    }
+
+    public function generateVoucher2($order)
+    {
+        $master_ubah_dayas = UbahDayaMaster::where('status', 1)->get();
+
+        $master_ubah_daya = null;
+        foreach ($master_ubah_dayas as $value) {
+            if ($value->event_start_date <= date('Y-m-d') && $value->event_end_date >= date('Y-m-d')) {
+                $master_ubah_daya = $value;
+                break;
+            }
+        }
+
+        if ($master_ubah_daya != null) {
+            UbahDayaLog::create([
+                'customer_id' => $order->buyer_id,
+                'ubah_daya_id' => $master_ubah_daya->id,
+                'customer_email' => $order->buyer->email,
+                'event_name' => $master_ubah_daya->event_name,
+                'event_start_date' => $master_ubah_daya->event_start_date,
+                'event_end_date' => $master_ubah_daya->event_end_date,
+                'usage_date' => date('Y-m-d'),
+                'status' => 1
+            ]);
+
+            $voucher_code = '';
+            // create voucher code
+            $voucher_code = $this->generateVoucherCode($order->buyer_id, $master_ubah_daya->id);
+
+            $orders = Order::where('no_reference', $order->no_reference)->update([
+                'voucher_ubah_daya_code' => $voucher_code
+            ]);
+
+            throw_if(!$orders, Exception::class, new Exception('Terjadi kesalahan: Gagal menyimpan data voucher', 400));
+
+            $title = 'Selamat Anda Mendapatkan Voucher';
+            $message = 'Selamat anda mendapatkan voucher ubah daya! Cek voucher anda pada voucher saya di bagian profil ';
+            $url_path = 'v1/buyer/query/transaction/' . $order->buyer->id . '/detail/' . $order->id;
+            $notificationCommand = new NotificationCommands();
+            $notificationCommand->create('customer_id', $order->buyer->id, 2, $title, $message, $url_path);
+            //            $notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+            $notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Berhasil menyimpan data voucher'
+        ];
+    }
+
+    // generateVoucherCode random 14`char
+    public function generateVoucherCode($customer_id, $ubah_daya_id)
+    {
+        $length = 14;
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+
+        $voucher_code = $randomString . $customer_id . $ubah_daya_id;
+        return $voucher_code;
     }
 
     static function setParamAPI($data = [])

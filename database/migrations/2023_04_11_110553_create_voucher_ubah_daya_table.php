@@ -13,7 +13,7 @@ class CreateVoucherUbahDayaTable extends Migration
      */
     public function up()
     {
-        Schema::table('master_ubah_daya', function (Blueprint $table) {
+        Schema::create('master_ubah_daya', function (Blueprint $table) {
             $table->id();
             $table->string('event_name');
             $table->date('event_start_date');
@@ -25,7 +25,7 @@ class CreateVoucherUbahDayaTable extends Migration
             $table->softDeletes();
         });
 
-        Schema::table('pregenerate_ubah_daya', function (Blueprint $table) {
+        Schema::create('pregenerate_ubah_daya', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('master_ubah_daya_id');
             $table->string('kode');
@@ -34,7 +34,7 @@ class CreateVoucherUbahDayaTable extends Migration
             $table->softDeletes();
         });
 
-        Schema::table('log_ubah_daya', function (Blueprint $table) {
+        Schema::create('log_ubah_daya', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('customer_id');
             $table->unsignedBigInteger('ubah_daya_id');
