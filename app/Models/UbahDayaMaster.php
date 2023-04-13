@@ -44,5 +44,8 @@ class UbahDayaMaster extends Model
         return $date->format('Y-m-d H:i:s');
     }
 
-
+    public function pregenerates()
+    {
+        return $this->hasMany(UbahDayaPregenerate::class, 'master_ubah_daya_id');
+    }
 }
