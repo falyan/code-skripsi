@@ -18,7 +18,7 @@ class CreateVoucherUbahDayaTable extends Migration
             $table->string('event_name');
             $table->date('event_start_date');
             $table->date('event_end_date');
-            $table->integer('quota');
+            $table->integer('quota')->nullable();
             $table->string('type');
             $table->float('status')->default(1);
             $table->timestamps();

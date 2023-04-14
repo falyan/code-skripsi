@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Services\UbahDaya\UbahDayaCommands;
 use App\Http\Services\UbahDaya\UbahDayaQueries;
+use App\Imports\VoucherImport;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 
 class UbahDayaController extends Controller
 {
@@ -57,7 +60,7 @@ class UbahDayaController extends Controller
         }
 
         if ($request['type'] == 'pregenerate') {
-            $rules['file'] = 'required';
+            $rules['file'] = 'required|mimes:xlsx';
         }
 
         $validate = Validator::make($request, $rules);
@@ -71,17 +74,34 @@ class UbahDayaController extends Controller
             return response()->json($response, 400);
         }
 
-        // $data = $this->ubahDayaCommands->createVoucher($request);
+        try {
+            DB::beginTransaction();
+            $voucher = $this->ubahDayaCommands->createVoucher($request);
 
-        if ($request['file'] != null) {
+            if ($request['type'] == 'pregenerate') {
+                $import = new VoucherImport($voucher->id);
+                Excel::import($import, request()->file('file'));
+            }
 
+            $data = $this->ubahDayaQueries->getVoucherById($voucher->id);
+
+            DB::commit();
+
+            $response = [
+                'success' => true,
+                'message' => 'Voucher berhasil dibuat',
+                'data' => $data
+            ];
+
+            return response()->json($response, 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $response = [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+
+            return response()->json($response, 500);
         }
-
-        $response = [
-            'success' => true,
-            // 'data' => $data
-        ];
-
-        return response()->json($response, 200);
     }
 }
