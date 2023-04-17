@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\Voucher;
 
+use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Models\MasterData;
 use App\Models\Order;
@@ -224,6 +225,9 @@ class VoucherCommands
             $notificationCommand->create('customer_id', $order->buyer->id, 2, $title, $message, $url_path);
             // $notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
             $notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+
+            $mailSender = new MailSenderManager();
+            $mailSender->mainVoucherClaim($order->id);
 
             return [
                 'success' => true,

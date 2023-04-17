@@ -463,4 +463,30 @@ class MailSenderManager
             Log::info('Berhasil mengirim email pesanan selesai ke email: ' . $customer->email);
         }
     }
+
+    public function mainVoucherClaim($order_id)
+    {
+        $transactionQueries = new TransactionQueries();
+        $order = $transactionQueries->getDetailTransaction($order_id);
+        $customer = $order->buyer;
+        $data = [
+            'destination_name' => $customer->full_name ?? 'Pengguna Setia',
+            'order' => $order,
+            'district_name' => null,
+        ];
+
+        Mail::send('email.vaoucherClaim', $data, function ($mail) use ($customer) {
+            $mail->to($customer->email, 'no-reply')
+                ->subject("Klaim Voucher Ubah Daya PLN");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        if (Mail::failures()) {
+            Log::error('Gagal mengirim email klaim voucher ke email: ' . $customer->email);
+        } else {
+            Log::info('Berhasil mengirim email klaim voucher ke email: ' . $customer->email);
+        }
+
+        return;
+    }
 }
