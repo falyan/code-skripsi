@@ -3,9 +3,13 @@
 namespace App\Http\Services\Voucher;
 
 use App\Http\Services\Notification\NotificationCommands;
+use App\Models\MasterData;
 use App\Models\Order;
 use App\Models\UbahDayaLog;
 use App\Models\UbahDayaMaster;
+use App\Models\UbahDayaPregenerate;
+use App\Models\User;
+use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
@@ -139,7 +143,33 @@ class VoucherCommands
 
     public function generateVoucher2($order)
     {
-        $master_ubah_dayas = UbahDayaMaster::where('status', 1)->get();
+        $customer = User::where('id', $order->buyer_id)->first();
+
+        $master_data = MasterData::whereIn('key', ['ubah_daya_min_customer_create', 'ubah_daya_implementation_period'])->get();
+
+        $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
+        if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
+            return [
+                'success' => false,
+                'message' => 'Mohon maaf, event ini sudah tidak berlaku'
+            ];
+        }
+
+        $min_customer_create = collect($master_data)->where('key', 'ubah_daya_min_customer_create')->first();
+        if (Carbon::parse($customer->created_at)->diffInDays(Carbon::now()) < Carbon::parse($min_customer_create->value)->diffInDays(Carbon::now())) {
+            return [
+                'success' => false,
+                'message' => 'Mohon maaf, anda belum bisa mengikuti event ini'
+            ];
+        }
+
+        $master_ubah_dayas = UbahDayaMaster::with([
+            'pregenerates' => function ($query) {
+                $query->where('status', 1)->where('claimed_at', null);
+            }
+        ])
+        ->where('status', 1)
+        ->get();
 
         $master_ubah_daya = null;
         foreach ($master_ubah_dayas as $value) {
@@ -149,21 +179,37 @@ class VoucherCommands
             }
         }
 
-        if ($master_ubah_daya != null) {
+        $logs = UbahDayaLog::where([
+            'customer_id' => $order->buyer_id,
+            'status' => 1
+        ])->get();
+
+        foreach ($logs as $log) {
+            if ($log->master_ubah_daya_id == $master_ubah_daya->id) {
+                return [
+                    'success' => false,
+                    'message' => 'Anda sudah mengikuti event ini'
+                ];
+            }
+        }
+
+        if ($master_ubah_daya != null && count($master_ubah_daya->pregenerates) > 0) {
+            $voucher_code = '';
+
+            $voucher_code = $master_ubah_daya->pregenerates[0]->kode;
+            UbahDayaPregenerate::where('id', $master_ubah_daya->pregenerates[0]->id)->update([
+                'claimed_at' => date('Y-m-d H:i:s')
+            ]);
+
             UbahDayaLog::create([
                 'customer_id' => $order->buyer_id,
-                'ubah_daya_id' => $master_ubah_daya->id,
+                'master_ubah_daya_id' => $master_ubah_daya->id,
                 'customer_email' => $order->buyer->email,
                 'event_name' => $master_ubah_daya->event_name,
                 'event_start_date' => $master_ubah_daya->event_start_date,
                 'event_end_date' => $master_ubah_daya->event_end_date,
-                'usage_date' => date('Y-m-d'),
-                'status' => 1
+                'status' => 1,
             ]);
-
-            $voucher_code = '';
-            // create voucher code
-            $voucher_code = $this->generateVoucherCode($order->buyer_id, $master_ubah_daya->id);
 
             $orders = Order::where('no_reference', $order->no_reference)->update([
                 'voucher_ubah_daya_code' => $voucher_code
@@ -172,17 +218,22 @@ class VoucherCommands
             throw_if(!$orders, Exception::class, new Exception('Terjadi kesalahan: Gagal menyimpan data voucher', 400));
 
             $title = 'Selamat Anda Mendapatkan Voucher';
-            $message = 'Selamat anda mendapatkan voucher ubah daya! Cek voucher anda pada voucher saya di bagian profil ';
+            $message = 'Selamat anda mendapatkan voucher ubah daya! Cek voucher anda pada voucher saya di bagian profil';
             $url_path = 'v1/buyer/query/transaction/' . $order->buyer->id . '/detail/' . $order->id;
             $notificationCommand = new NotificationCommands();
             $notificationCommand->create('customer_id', $order->buyer->id, 2, $title, $message, $url_path);
-            //            $notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+            // $notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
             $notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+
+            return [
+                'success' => true,
+                'message' => 'Berhasil generate voucher'
+            ];
         }
 
         return [
-            'success' => true,
-            'message' => 'Berhasil menyimpan data voucher'
+            'success' => false,
+            'message' => 'Gagal generate voucher'
         ];
     }
 

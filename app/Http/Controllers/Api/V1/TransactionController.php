@@ -932,10 +932,13 @@ class TransactionController extends Controller
                     }
 
                     $min_ubah_daya = MasterData::where('key', 'ubah_daya_min_transaction')->first();
-
                     if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value) {
-                        $this->voucherCommand->generateVoucher2($order);
+                        return $this->voucherCommand->generateVoucher2($order);
                     }
+                    return [
+                        'success' => true,
+                        'message' => 'Pesanan ' . $order_id . ' berhasil dikonfirmasi',
+                    ];
 
                     DB::commit();
                     $mailSender = new MailSenderManager();
