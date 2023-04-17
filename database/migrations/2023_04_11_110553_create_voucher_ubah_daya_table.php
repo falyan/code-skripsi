@@ -38,7 +38,7 @@ class CreateVoucherUbahDayaTable extends Migration
         Schema::create('log_ubah_daya', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('customer_id');
-            $table->unsignedBigInteger('ubah_daya_id');
+            $table->unsignedBigInteger('master_ubah_daya_id');
             $table->unsignedBigInteger('pregenerate_ubah_daya_id')->nullable();
             $table->string('customer_email');
             $table->string('event_name');
