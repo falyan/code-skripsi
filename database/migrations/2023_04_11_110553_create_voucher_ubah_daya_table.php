@@ -30,6 +30,7 @@ class CreateVoucherUbahDayaTable extends Migration
             $table->unsignedBigInteger('master_ubah_daya_id');
             $table->string('kode');
             $table->float('status')->default(1);
+            $table->timestamp('claimed_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
