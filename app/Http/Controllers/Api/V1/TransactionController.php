@@ -893,6 +893,7 @@ class TransactionController extends Controller
                 return $this->respondValidationError($errors, 'Validation Error!');
             }
 
+            $response = null;
             DB::beginTransaction();
             foreach ($request->id as $order_id) {
                 $data = $this->transactionQueries->getStatusOrder($order_id, true);
@@ -933,7 +934,11 @@ class TransactionController extends Controller
 
                     $min_ubah_daya = MasterData::where('key', 'ubah_daya_min_transaction')->first();
                     if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value) {
-                        return $this->voucherCommand->generateVoucher2($order);
+                        $res_generate = $this->voucherCommand->generateVoucher($order);
+
+                        if ($res_generate['success'] == false) {
+                            return $res_generate;
+                        }
                     }
                     return [
                         'success' => true,

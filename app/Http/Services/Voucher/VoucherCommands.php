@@ -20,125 +20,149 @@ class VoucherCommands
     static $apiendpoint;
     static $curl;
     static $header;
-    static $keyname;
+    static $keyid;
+    static $keysecret;
 
-    static function init()
+    public static function init()
     {
         self::$curl = new Client();
         self::$apiendpoint = config('credentials.gamification.endpoint');
-        self::$keyname = config('credentials.gamification.key_name');
+        self::$keyid = config('credentials.gamification.key_id');
+        self::$keysecret = config('credentials.gamification.secret_key');
         self::$header = [
-            'timestamp' => \Carbon\Carbon::now('Asia/Jakarta')->timestamp
+            'timestamp' => \Carbon\Carbon::now('Asia/Jakarta')->timestamp,
         ];
     }
 
     public function generateVoucher($order)
     {
-        //Request signature
-        $param1 = static::setParamAPI([
-            'email' => $order->buyer->email,
-            'name' => $order->buyer->full_name,
-            'phone' => $order->buyer->phone
-        ]);
-        $url1 = sprintf('%s/%s', static::$apiendpoint, 'oauth/signature' . $param1);
-        $json_body1 = [];
+        $customer = User::where('id', $order->buyer_id)->first();
 
-        $response1 = static::$curl->request('POST', $url1, [
+        $master_data = MasterData::whereIn('key', ['ubah_daya_min_customer_create', 'ubah_daya_implementation_period'])->get();
+
+        $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
+        if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
+            return [
+                'success' => false,
+                'message' => 'Mohon maaf, event ini tidak berlaku',
+            ];
+        }
+
+        $min_customer_create = collect($master_data)->where('key', 'ubah_daya_min_customer_create')->first();
+        if (Carbon::parse($customer->created_at)->diffInDays(Carbon::now()) < Carbon::parse($min_customer_create->value)->diffInDays(Carbon::now())) {
+            return [
+                'success' => false,
+                'message' => 'Mohon maaf, anda belum bisa mengikuti event ini',
+            ];
+        }
+
+        $master_ubah_dayas = UbahDayaMaster::where('status', 1)->get();
+
+        $master_ubah_daya = null;
+        foreach ($master_ubah_dayas as $value) {
+            if ($value->event_start_date <= date('Y-m-d') && $value->event_end_date >= date('Y-m-d')) {
+                $master_ubah_daya = $value;
+                break;
+            }
+        }
+
+        if ($master_ubah_daya == null) {
+            return [
+                'success' => false,
+                'message' => 'Mohon maaf, belum ada event yang sedang berlangsung',
+            ];
+        }
+
+        $logs = UbahDayaLog::where([
+            'customer_id' => $order->buyer_id,
+            'status' => 1,
+        ])->get();
+
+        foreach ($logs as $log) {
+            if ($log->master_ubah_daya_id == $master_ubah_daya->id) {
+                return [
+                    'success' => false,
+                    'message' => 'Anda sudah mengikuti event ini',
+                ];
+            }
+        }
+
+        $param = static::setParamAPI([]);
+        $url = sprintf('%s/%s', static::$apiendpoint, '/v1/ext/plnmkp/voucher/claim/ubahdaya' . $param);
+        $json_body = [
+            'email' => 's'.$order->buyer->email,
+            'voucherId' => (int) static::$keyid,
+        ];
+
+        $hashmac = bin2hex(hash_hmac('sha256', self::$header['timestamp'] . json_encode($json_body), self::$keysecret));
+        self::$header['signature'] = $hashmac;
+
+        $response = static::$curl->request('POST', $url, [
             'headers' => static::$header,
             'http_errors' => false,
-            'json' => $json_body1
+            'json' => $json_body,
         ]);
-        $signature = json_decode($response1->getBody());
+
+        $response = json_decode($response->getBody());
+
+        return [
+            'url' => $url,
+            'header' => self::$header,
+            'body' => $json_body,
+            'response' => $response,
+        ];
 
         Log::info("E00003", [
             'path_url' => "voucher.signature",
             'query' => [],
-            'body' => $param1,
-            'response' => $signature
+            'body' => $json_body,
+            'response' => $response,
         ]);
 
-        throw_if(!$signature, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
+        throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
 
-        if (!isset($signature->success) || $signature->success != true) {
+        if (!isset($response->success) || $response->success != true) {
             throw new Exception('Terjadi kesalahan: Signature tidak dapat diperoleh', 400);
         }
 
-        //Sync account
-        $param2 = static::setParamAPI([
-            'email' => $order->buyer->email,
-            'name' => $order->buyer->full_name,
-            'phone' => $order->buyer->phone,
-            'signature' => $signature->data->signature
-        ]);
-        $url2 = sprintf('%s/%s', static::$apiendpoint, 'oauth/sync-account' . $param2);
-        $json_body2 = [];
+        if ($master_ubah_daya != null && $response->data != null) {
+            $voucher_code = '';
+            $voucher_code = $response->data->voucherCode;
+            UbahDayaLog::create([
+                'customer_id' => $order->buyer_id,
+                'master_ubah_daya_id' => $master_ubah_daya->id,
+                'customer_email' => $order->buyer->email,
+                'event_name' => $master_ubah_daya->event_name,
+                'event_start_date' => $master_ubah_daya->event_start_date,
+                'event_end_date' => $master_ubah_daya->event_end_date,
+                'voucher_code' => $voucher_code,
+            ]);
 
-        $response2 = static::$curl->request('POST', $url2, [
-            'headers' => static::$header,
-            'http_errors' => false,
-            'json' => $json_body2
-        ]);
-        $sync_account = json_decode($response2->getBody());
-
-        Log::info("E00003", [
-            'path_url' => "voucher.sync-account",
-            'query' => [],
-            'body' => $param2,
-            'response' => $sync_account
-        ]);
-
-        throw_if(!$sync_account, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
-
-        if (!isset($sync_account->success) || $sync_account->success != true) {
-            throw new Exception('Terjadi kesalahan: Gagal melakukan sync account', 400);
-        }
-
-        //Generate voucher ubahdaya
-        static::$header = [
-            'Authorization' => 'Bearer ' . $sync_account->data->token
-        ];
-        $param3 = static::setParamAPI([]);
-        $url3 = sprintf('%s/%s', static::$apiendpoint, 'v1/voucher/redeem/specific' . $param3);
-        $json_body3 = [
-            'activity_code' => '02',
-            'keyname' => static::$keyname
-        ];
-
-        $response3 = static::$curl->request('POST', $url3, [
-            'headers' => static::$header,
-            'http_errors' => false,
-            'json' => $json_body3
-        ]);
-        $voucher = json_decode($response3->getBody());
-
-        Log::info("E00003", [
-            'path_url' => "voucher.generate",
-            'query' => [],
-            'body' => $json_body3,
-            'response' => $voucher
-        ]);
-
-        throw_if(!$voucher, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
-
-        if ($voucher->success == true) {
             $orders = Order::where('no_reference', $order->no_reference)->update([
-                'voucher_ubah_daya_code' => $voucher->data->voucher_code
+                'voucher_ubah_daya_code' => $voucher_code,
             ]);
 
             throw_if(!$orders, Exception::class, new Exception('Terjadi kesalahan: Gagal menyimpan data voucher', 400));
 
             $title = 'Selamat Anda Mendapatkan Voucher';
-            $message = 'Selamat anda mendapatkan voucher ubah daya! Cek voucher anda pada voucher saya di bagian profil ';
+            $message = 'Selamat anda mendapatkan voucher ubah daya! Cek voucher anda pada voucher saya di bagian profil';
             $url_path = 'v1/buyer/query/transaction/' . $order->buyer->id . '/detail/' . $order->id;
             $notificationCommand = new NotificationCommands();
             $notificationCommand->create('customer_id', $order->buyer->id, 2, $title, $message, $url_path);
-            //            $notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
             $notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+
+            $mailSender = new MailSenderManager();
+            $mailSender->mainVoucherClaim($order->id);
+
+            return [
+                'success' => true,
+                'message' => 'Berhasil generate voucher',
+            ];
         }
 
         return [
-            'success' => true,
-            'message' => 'Berhasil menyimpan data voucher'
+            'success' => false,
+            'message' => 'Gagal generate voucher',
         ];
     }
 
@@ -152,7 +176,7 @@ class VoucherCommands
         if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
             return [
                 'success' => false,
-                'message' => 'Mohon maaf, event ini sudah tidak berlaku'
+                'message' => 'Mohon maaf, event ini sudah tidak berlaku',
             ];
         }
 
@@ -160,17 +184,17 @@ class VoucherCommands
         if (Carbon::parse($customer->created_at)->diffInDays(Carbon::now()) < Carbon::parse($min_customer_create->value)->diffInDays(Carbon::now())) {
             return [
                 'success' => false,
-                'message' => 'Mohon maaf, anda belum bisa mengikuti event ini'
+                'message' => 'Mohon maaf, anda belum bisa mengikuti event ini',
             ];
         }
 
         $master_ubah_dayas = UbahDayaMaster::with([
             'pregenerates' => function ($query) {
                 $query->where('status', 1)->where('claimed_at', null);
-            }
+            },
         ])
-        ->where('status', 1)
-        ->get();
+            ->where('status', 1)
+            ->get();
 
         $master_ubah_daya = null;
         foreach ($master_ubah_dayas as $value) {
@@ -180,16 +204,23 @@ class VoucherCommands
             }
         }
 
+        if ($master_ubah_daya == null) {
+            return [
+                'success' => false,
+                'message' => 'Mohon maaf, belum ada event yang sedang berlangsung',
+            ];
+        }
+
         $logs = UbahDayaLog::where([
             'customer_id' => $order->buyer_id,
-            'status' => 1
+            'status' => 1,
         ])->get();
 
         foreach ($logs as $log) {
             if ($log->master_ubah_daya_id == $master_ubah_daya->id) {
                 return [
                     'success' => false,
-                    'message' => 'Anda sudah mengikuti event ini'
+                    'message' => 'Anda sudah mengikuti event ini',
                 ];
             }
         }
@@ -197,9 +228,9 @@ class VoucherCommands
         if ($master_ubah_daya != null && count($master_ubah_daya->pregenerates) > 0) {
             $voucher_code = '';
 
-            $voucher_code = $master_ubah_daya->pregenerates[0]->kode;
-            UbahDayaPregenerate::where('id', $master_ubah_daya->pregenerates[0]->id)->update([
-                'claimed_at' => date('Y-m-d H:i:s')
+            $voucher_code = $master_ubah_daya->kode;
+            UbahDayaPregenerate::where('id', $master_ubah_daya->id)->update([
+                'claimed_at' => date('Y-m-d H:i:s'),
             ]);
 
             UbahDayaLog::create([
@@ -213,7 +244,7 @@ class VoucherCommands
             ]);
 
             $orders = Order::where('no_reference', $order->no_reference)->update([
-                'voucher_ubah_daya_code' => $voucher_code
+                'voucher_ubah_daya_code' => $voucher_code,
             ]);
 
             throw_if(!$orders, Exception::class, new Exception('Terjadi kesalahan: Gagal menyimpan data voucher', 400));
@@ -231,13 +262,13 @@ class VoucherCommands
 
             return [
                 'success' => true,
-                'message' => 'Berhasil generate voucher'
+                'message' => 'Berhasil generate voucher',
             ];
         }
 
         return [
             'success' => false,
-            'message' => 'Gagal generate voucher'
+            'message' => 'Gagal generate voucher',
         ];
     }
 
@@ -256,7 +287,7 @@ class VoucherCommands
         return $voucher_code;
     }
 
-    static function setParamAPI($data = [])
+    public static function setParamAPI($data = [])
     {
         $param = [];
         $index = 0;

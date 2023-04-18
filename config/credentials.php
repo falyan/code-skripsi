@@ -30,7 +30,8 @@ return [
     ],
     'gamification' => [
         'endpoint' => env('GAMIFICATION_ENDPOINT'),
-        'key_name' => 'pln_ubah_daya'
+        'key_id' => env('GAMIFICATION_KEY_ID'),
+        'secret_key' => env('GAMIFICATION_SECRET_KEY'),
     ],
     'plnmobile' => [
         'endpoint' => env('PLNMOBILE_ENDPOINT'),

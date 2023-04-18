@@ -40,6 +40,7 @@ class CreateVoucherUbahDayaTable extends Migration
             $table->unsignedBigInteger('customer_id');
             $table->unsignedBigInteger('master_ubah_daya_id');
             $table->unsignedBigInteger('pregenerate_ubah_daya_id')->nullable();
+            $table->string('voucher_code')->nullable();
             $table->string('customer_email');
             $table->string('event_name');
             $table->date('event_start_date');
