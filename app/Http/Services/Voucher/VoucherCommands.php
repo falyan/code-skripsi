@@ -123,7 +123,7 @@ class VoucherCommands
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
 
         if (!isset($response->success) || $response->success != true) {
-            throw new Exception('Terjadi kesalahan: Signature tidak dapat diperoleh', 400);
+            throw new Exception('Terjadi kesalahan: ' . $response->message, 400);
         }
 
         if ($master_ubah_daya != null && $response->data != null) {
