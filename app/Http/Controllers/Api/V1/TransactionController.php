@@ -940,14 +940,16 @@ class TransactionController extends Controller
                             return $res_generate;
                         }
                     }
+
+                    DB::commit();
+
+                    $mailSender = new MailSenderManager();
+                    $mailSender->mailAcceptOrder($order_id);
+
                     return [
                         'success' => true,
                         'message' => 'Pesanan ' . $order_id . ' berhasil dikonfirmasi',
                     ];
-
-                    DB::commit();
-                    $mailSender = new MailSenderManager();
-                    $mailSender->mailAcceptOrder($order_id);
                 } else {
                     return $this->respondWithResult(false, 'Pesanan ' . $order_id . ' tidak dalam status menunggu konfirmasi!', 400);
                 }

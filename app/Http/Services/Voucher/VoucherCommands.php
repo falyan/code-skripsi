@@ -90,11 +90,11 @@ class VoucherCommands
         $param = static::setParamAPI([]);
         $url = sprintf('%s/%s', static::$apiendpoint, '/v1/ext/plnmkp/voucher/claim/ubahdaya' . $param);
         $json_body = [
-            'email' => 's'.$order->buyer->email,
+            'email' => $order->buyer->email,
             'voucherId' => (int) static::$keyid,
         ];
 
-        $hashmac = bin2hex(hash_hmac('sha256', self::$header['timestamp'] . json_encode($json_body), self::$keysecret));
+        $hashmac = hash_hmac('sha256', self::$header['timestamp'] . json_encode($json_body), self::$keysecret);
         self::$header['signature'] = $hashmac;
 
         $response = static::$curl->request('POST', $url, [
@@ -105,19 +105,20 @@ class VoucherCommands
 
         $response = json_decode($response->getBody());
 
-        return [
-            'url' => $url,
-            'header' => self::$header,
-            'body' => $json_body,
-            'response' => $response,
-        ];
-
         Log::info("E00003", [
-            'path_url' => "voucher.signature",
+            'path_url' => "voucher.claim.ubahdaya",
             'query' => [],
             'body' => $json_body,
             'response' => $response,
         ]);
+
+        // return [
+        //     'url' => $url,
+        //     'header' => self::$header,
+        //     'json' => self::$header['timestamp'] . json_encode($json_body),
+        //     'body' => $json_body,
+        //     'response' => $response,
+        // ];
 
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
 
