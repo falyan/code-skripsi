@@ -593,6 +593,11 @@ class TransactionCommands extends Service
         // $data = [];
         foreach ($total_items as $key => $value) {
             $product = Product::withTrashed()->where('id', $key)->first();
+
+            if (!$product) {
+                continue;
+            }
+
             $product->items_sold += $value;
             $product->save();
 
