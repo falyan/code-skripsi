@@ -516,10 +516,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->get('get-webview', 'EvSubsidyController@webview');
     });
 
-    $router->group(['prefix' => 'plnmudik'], static function () use ($router) {
-        $router->get('check', 'TiketController@checkInvoice');
-    });
-
     $router->group(['prefix' => 'ubah-daya'], static function () use ($router) {
         $router->get('get-voucher', 'UbahDayaController@getVoucher');
         $router->get('get-voucher/{id}/', 'UbahDayaController@getVoucherById');
