@@ -5,7 +5,7 @@ networks:
     external: true
 
 services:
-  pln-marketplace-saruman-development-1:
+  pln-marketplace-saruman-development:
     image: $DOCKER_IMAGE_APP
     networks:
       - loadbalancer
@@ -42,94 +42,6 @@ services:
         max_replicas_per_node: 1
         constraints:
           - node.labels.ip == 10.14.204.124
-        preferences:
-          - spread: node.labels.ip
-      resources:
-        limits:
-          memory: 1G
-          cpus: "1"
-
-  pln-marketplace-saruman-development-2:
-    image: $DOCKER_IMAGE_APP
-    networks:
-      - loadbalancer
-    ports:
-      - target: 80
-        published: 3201
-        protocol: tcp
-        mode: host
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      # - /mnt/nfs-logs/pln-marketplace-saruman-staging:/var/www/html/storage/logs
-    environment:
-      - ELASTIC_APM_ENABLED=true
-      - ELASTIC_APM_LOG_LEVEL_STDERR=INFO
-      - ELASTIC_APM_LOG_LEVEL=INFO
-      - ELASTIC_APM_LOG_LEVEL_SYSLOG=INFO
-      - ELASTIC_APM_SERVER_URL=http://10.14.204.123:9901
-      - ELASTIC_APM_SECRET_TOKEN=yTt4JtctZKbbKfxTUboNWYWSD9jnUds7DQdQ9U9ogtSmTMdyA4mJ7YWg4KoJtMQT
-      - ELASTIC_APM_SERVER_TIMEOUT=30s
-      - ELASTIC_APM_SERVICE_NAME=plnmkp-core-api
-      - ELASTIC_APM_SERVICE_VERSION=0.1
-      - ELASTIC_APM_ENVIRONMENT=development
-      - ELASTIC_APM_TRANSACTION_MAX_SPANS=1000
-      - ELASTIC_APM_TRANSACTION_SAMPLE_RATE=1.0
-    logging:
-      driver: loki
-      options:
-        loki-url: "$DATASOURCE_LOKI"
-    deploy:
-      mode: replicated
-      replicas: 1
-      endpoint_mode: dnsrr
-      placement:
-        max_replicas_per_node: 1
-        constraints:
-          - node.labels.ip == 10.14.204.125
-        preferences:
-          - spread: node.labels.ip
-      resources:
-        limits:
-          memory: 1G
-          cpus: "1"
-
-  pln-marketplace-saruman-development-3:
-    image: $DOCKER_IMAGE_APP
-    networks:
-      - loadbalancer
-    ports:
-      - target: 80
-        published: 3201
-        protocol: tcp
-        mode: host
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      # - /mnt/nfs-logs/pln-marketplace-saruman-staging:/var/www/html/storage/logs
-    environment:
-      - ELASTIC_APM_ENABLED=true
-      - ELASTIC_APM_LOG_LEVEL_STDERR=INFO
-      - ELASTIC_APM_LOG_LEVEL=INFO
-      - ELASTIC_APM_LOG_LEVEL_SYSLOG=INFO
-      - ELASTIC_APM_SERVER_URL=http://10.14.204.123:9901
-      - ELASTIC_APM_SECRET_TOKEN=yTt4JtctZKbbKfxTUboNWYWSD9jnUds7DQdQ9U9ogtSmTMdyA4mJ7YWg4KoJtMQT
-      - ELASTIC_APM_SERVER_TIMEOUT=30s
-      - ELASTIC_APM_SERVICE_NAME=plnmkp-core-api
-      - ELASTIC_APM_SERVICE_VERSION=0.1
-      - ELASTIC_APM_ENVIRONMENT=development
-      - ELASTIC_APM_TRANSACTION_MAX_SPANS=1000
-      - ELASTIC_APM_TRANSACTION_SAMPLE_RATE=1.0
-    logging:
-      driver: loki
-      options:
-        loki-url: "$DATASOURCE_LOKI"
-    deploy:
-      mode: replicated
-      replicas: 1
-      endpoint_mode: dnsrr
-      placement:
-        max_replicas_per_node: 1
-        constraints:
-          - node.labels.ip == 10.14.204.126
         preferences:
           - spread: node.labels.ip
       resources:

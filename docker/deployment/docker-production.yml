@@ -30,12 +30,10 @@ services:
       - ELASTIC_APM_ENVIRONMENT=production
       - ELASTIC_APM_TRANSACTION_MAX_SPANS=1000
       - ELASTIC_APM_TRANSACTION_SAMPLE_RATE=1.0
-      # - ELASTIC_APM_VERIFY_SERVER_CERT=false
-      # - ELASTIC_APM_TRANSACTION_IGNORE_URLS=/swagger-resources*, /v2/api-docs*, /actuator*, /webjars/**, /swagger-ui.html
     logging:
-      driver: none
-    #  options:
-    #    loki-url: "$DATASOURCE_LOKI"
+      driver: loki
+      options:
+        loki-url: "$DATASOURCE_LOKI"
     deploy:
       mode: replicated
       replicas: 3
