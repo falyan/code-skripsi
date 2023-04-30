@@ -14,6 +14,7 @@ use App\Http\Services\Voucher\VoucherCommands;
 use App\Models\Customer;
 use App\Models\CustomerEVSubsidy;
 use App\Models\IconcashInquiry;
+use App\Models\MasterData;
 use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\Product;
@@ -892,6 +893,7 @@ class TransactionController extends Controller
                 return $this->respondValidationError($errors, 'Validation Error!');
             }
 
+            $response = null;
             DB::beginTransaction();
             foreach ($request->id as $order_id) {
                 $data = $this->transactionQueries->getStatusOrder($order_id, true);
@@ -930,14 +932,24 @@ class TransactionController extends Controller
                         $total_delivery_fee_trx += $o->delivery->delivery_fee;
                     }
 
-                    // Generate Voucher Gamification
-                    // if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000) {
-                    //     $this->voucherCommand->generateVoucher($order);
-                    // }
+                    $min_ubah_daya = MasterData::where('key', 'ubah_daya_min_transaction')->first();
+                    if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value) {
+                        $res_generate = $this->voucherCommand->generateVoucher($order);
+
+                        if ($res_generate['success'] == false) {
+                            return $res_generate;
+                        }
+                    }
 
                     DB::commit();
+
                     $mailSender = new MailSenderManager();
                     $mailSender->mailAcceptOrder($order_id);
+
+                    return [
+                        'success' => true,
+                        'message' => 'Pesanan ' . $order_id . ' berhasil dikonfirmasi',
+                    ];
                 } else {
                     return $this->respondWithResult(false, 'Pesanan ' . $order_id . ' tidak dalam status menunggu konfirmasi!', 400);
                 }

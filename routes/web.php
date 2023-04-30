@@ -515,4 +515,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     $router->group(['prefix' => 'ev-subsidy'], static function () use ($router) {
         $router->get('get-webview', 'EvSubsidyController@webview');
     });
+
+    $router->group(['prefix' => 'ubah-daya'], static function () use ($router) {
+        $router->get('get-voucher', 'UbahDayaController@getVoucher');
+        $router->get('get-voucher/{id}/', 'UbahDayaController@getVoucherById');
+        $router->post('voucher', 'UbahDayaController@createVoucher');
+    });
 });

@@ -320,7 +320,7 @@ class TransactionCommands extends Service
                     }
                 }
 
-                if (count($ev_subsidies ) > 1) {
+                if (count($ev_subsidies) > 1) {
                     return [
                         'success' => false,
                         'status' => "Bad request",
@@ -592,7 +592,12 @@ class TransactionCommands extends Service
 
         // $data = [];
         foreach ($total_items as $key => $value) {
-            $product = Product::where('id', $key)->first();
+            $product = Product::withTrashed()->where('id', $key)->first();
+
+            if (!$product) {
+                continue;
+            }
+
             $product->items_sold += $value;
             $product->save();
 
