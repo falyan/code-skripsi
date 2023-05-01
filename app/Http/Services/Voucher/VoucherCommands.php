@@ -36,7 +36,7 @@ class VoucherCommands
 
     public function generateVoucher($order)
     {
-        $customer = User::where('id', $order->buyer_id)->first();
+        // $customer = User::where('id', $order->buyer_id)->first();
 
         $master_data = MasterData::whereIn('key', ['ubah_daya_min_customer_create', 'ubah_daya_implementation_period'])->get();
 
@@ -48,13 +48,13 @@ class VoucherCommands
             ];
         }
 
-        $min_customer_create = collect($master_data)->where('key', 'ubah_daya_min_customer_create')->first();
-        if (Carbon::parse($customer->created_at)->diffInDays(Carbon::now()) < Carbon::parse($min_customer_create->value)->diffInDays(Carbon::now())) {
-            return [
-                'success' => false,
-                'message' => 'Mohon maaf, anda belum bisa mengikuti event ini',
-            ];
-        }
+        // $min_customer_create = collect($master_data)->where('key', 'ubah_daya_min_customer_create')->first();
+        // if (Carbon::parse($customer->created_at)->diffInDays(Carbon::now()) < Carbon::parse($min_customer_create->value)->diffInDays(Carbon::now())) {
+        //     return [
+        //         'success' => false,
+        //         'message' => 'Mohon maaf, anda belum bisa mengikuti event ini',
+        //     ];
+        // }
 
         $master_ubah_dayas = UbahDayaMaster::where('status', 1)->get();
 
