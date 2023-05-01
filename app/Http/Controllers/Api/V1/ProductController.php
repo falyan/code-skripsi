@@ -9,7 +9,6 @@ use App\Http\Services\Product\ProductQueries;
 use App\Http\Services\Variant\VariantCommands;
 use App\Http\Services\Variant\VariantQueries;
 use App\Models\Product;
-use App\Models\MasterData;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -26,7 +25,7 @@ class ProductController extends Controller
      * @return void
      */
     protected $productCommands, $productQueries;
-    protected $categoryQueries;
+    protected $categoryQueries, $variantCommands, $variantQueries;
     public function __construct()
     {
         $this->productCommands = new ProductCommands();
