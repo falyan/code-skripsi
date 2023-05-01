@@ -476,7 +476,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getRecommendProductOld($filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    public function getRecommendProduct($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         Log::info("T00001", [
             'path_url' => "product.recommend",
@@ -484,14 +484,8 @@ class ProductQueries extends Service
             'body' => Carbon::now('Asia/Jakarta'),
             'response' => '',
         ]);
+
         $product = new Product();
-        //        $products = $product->withCount(['order_details' => function ($details) {
-        //            $details->whereHas('order', function ($order) {
-        //                $order->whereHas('progress_done');
-        //            });
-        //        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])->whereHas('merchant', function ($merchant){
-        //            $merchant->where('status', 1);
-        //        })->orderBy('order_details_count', 'DESC');
         $products = $product->where('status', 1)->with([
             'product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name', 'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
@@ -500,14 +494,10 @@ class ProductQueries extends Service
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
             })->inRandomOrder();
-        //        $products = $product->withCount(['order_details' => function ($details) {
-        //            $details->whereHas('order', function ($order) {
-        //                $order->whereHas('progress_done');
-        //            });
-        //        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
-        //            ->whereHas('merchant', function ($merchant){
-        //                $merchant->where('status', 1);
-        //            })->inRandomOrder();
+
+        if ($sortby == null) {
+            $products = $products->orderBy('updated_at', 'desc');
+        }
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -520,7 +510,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getRecommendProduct($filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    public function getRecommendProductNew($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         Log::info("T00001", [
             'path_url' => "product.recommend",
@@ -707,7 +697,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getSpecialProductOld($filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    public function getSpecialProduct($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         Log::info("T00001", [
             'path_url' => "product.special",
@@ -715,15 +705,8 @@ class ProductQueries extends Service
             'body' => Carbon::now('Asia/Jakarta'),
             'response' => '',
         ]);
+
         $product = new Product();
-        // $products = $product->withCount(['order_details' => function ($details) {
-        //     $details->whereHas('order', function ($order) {
-        //         $order->whereHas('progress_done');
-        //     });
-        // }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
-        //     ->whereHas('merchant', function ($merchant) {
-        //         $merchant->where('status', 1);
-        //     })->latest();
         $products = $product->with([
             'product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name',
             'varian_product' => function ($query) {
@@ -733,6 +716,10 @@ class ProductQueries extends Service
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
             })->where('status', 1)->latest();
+
+        if ($sortby == null) {
+            $products = $products->orderBy('created_at', 'desc');
+        }
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -745,7 +732,7 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function getSpecialProduct($filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    public function getSpecialProductNew($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         Log::info("T00001", [
             'path_url' => "product.recommend",
