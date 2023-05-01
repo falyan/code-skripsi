@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Validator;
 
 class RajaOngkirController extends Controller
 {
+    protected $rajaongkirManager;
+
     /**
      * Create a new controller instance.
      *

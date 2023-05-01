@@ -6,6 +6,7 @@ use App\Exports\TransactionExport;
 use App\Http\Controllers\Controller;
 use App\Http\Services\Manager\IconcashManager;
 use App\Http\Services\Manager\MailSenderManager;
+use App\Http\Services\Manager\RajaOngkirManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Transaction\TransactionCommands;
@@ -19,7 +20,6 @@ use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\Product;
 use App\Models\ProductStock;
-use App\Models\User;
 use App\Models\VariantStock;
 use Exception;
 use Illuminate\Http\Request;
@@ -38,7 +38,7 @@ class TransactionController extends Controller
      *
      * @return void
      */
-    protected $transactionQueries, $transactionCommand, $mailSenderManager, $voucherCommand, $notificationCommand;
+    protected $transactionQueries, $transactionCommand, $mailSenderManager, $voucherCommand, $notificationCommand, $rajaongkirManager;
     public function __construct()
     {
         $this->transactionQueries = new TransactionQueries();
@@ -46,6 +46,8 @@ class TransactionController extends Controller
         $this->notificationCommand = new NotificationCommands();
         $this->mailSenderManager = new MailSenderManager();
         $this->voucherCommand = new VoucherCommands();
+        $this->logisticManager = new LogisticManager();
+        $this->rajaongkirManager = new RajaOngkirManager();
     }
 
     // Checkout
@@ -1023,8 +1025,23 @@ class TransactionController extends Controller
                 return $response;
             }
 
+            $courir = OrderDelivery::where('order_id', $order_id)->first()->delivery_method;
+            if ($courir == 'J&T') {
+                $courir = 'jnt';
+            }
+            $cek_resi = $this->rajaongkirManager->cekResi($awb, $courir);
+            if ($cek_resi == false) {
+                $response = [
+                    'success' => false,
+                    'message' => 'Nomor resi yang anda masukkan tidak ditemukan',
+                ];
+
+                return $response;
+            }
+
             DB::beginTransaction();
             $data = $this->transactionQueries->getStatusOrder($order_id, true);
+
 
             $status_codes = [];
             foreach ($data->progress as $item) {
