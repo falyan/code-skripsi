@@ -494,6 +494,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
     $router->group(['prefix' => 'banner'], static function () use ($router) {
         $router->get('all', 'BannerController@getAllBanner');
+        $router->get('flash-popup', 'BannerController@getFlashPopup');
         $router->get('type/{type}', 'BannerController@getBannerByType');
     });
 
