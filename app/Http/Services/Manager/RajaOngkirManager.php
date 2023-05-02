@@ -261,6 +261,41 @@ class RajaOngkirManager
         return $response;
     }
 
+    public static function cekResi($awb, $courir)
+    {
+        $param = static::setParamAPI([]);
+        $url = sprintf('%s/%s', static::$apiendpoint, 'api/waybill');
+
+        $body = [
+            'waybill' => $awb,
+            'courier' => $courir,
+        ];
+
+        $response = static::$curl->request('POST', $url, [
+            'headers' => static::$header,
+            'http_errors' => false,
+            'json' => $body
+        ]);
+
+        Log::info("E00002", [
+            'path_url' => "rajaongkir.endpoint/api/waybill",
+            'query' => [],
+            'body' => $body,
+            'response' => $response
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        if ($response->rajaongkir->status->code != 200) {
+            return false;
+            // return response()->json(['success' => false, 'error_code' => $response->rajaongkir->status->code, 'description' => $response->rajaongkir->status->description]);
+        }
+
+        // throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+
+        return true;
+    }
+
     static function setParamAPI($data = [])
     {
         $param = [];

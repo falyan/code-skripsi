@@ -6,6 +6,7 @@ use App\Exports\TransactionExport;
 use App\Http\Controllers\Controller;
 use App\Http\Services\Manager\IconcashManager;
 use App\Http\Services\Manager\MailSenderManager;
+use App\Http\Services\Manager\RajaOngkirManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Product\ProductCommands;
 use App\Http\Services\Transaction\TransactionCommands;
@@ -19,7 +20,6 @@ use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\Product;
 use App\Models\ProductStock;
-use App\Models\User;
 use App\Models\VariantStock;
 use Exception;
 use Illuminate\Http\Request;
@@ -38,7 +38,7 @@ class TransactionController extends Controller
      *
      * @return void
      */
-    protected $transactionQueries, $transactionCommand, $mailSenderManager, $voucherCommand, $notificationCommand;
+    protected $transactionQueries, $transactionCommand, $mailSenderManager, $voucherCommand, $notificationCommand, $rajaongkirManager;
     public function __construct()
     {
         $this->transactionQueries = new TransactionQueries();
@@ -46,6 +46,7 @@ class TransactionController extends Controller
         $this->notificationCommand = new NotificationCommands();
         $this->mailSenderManager = new MailSenderManager();
         $this->voucherCommand = new VoucherCommands();
+        $this->rajaongkirManager = new RajaOngkirManager();
     }
 
     // Checkout
@@ -1023,8 +1024,23 @@ class TransactionController extends Controller
                 return $response;
             }
 
+            $courir = OrderDelivery::where('order_id', $order_id)->first()->delivery_method;
+            if ($courir == 'J&T') {
+                $courir = 'jnt';
+            }
+            $cek_resi = $this->rajaongkirManager->cekResi($awb, $courir);
+            if ($cek_resi == false) {
+                $response = [
+                    'success' => false,
+                    'message' => 'Nomor resi yang anda masukkan tidak ditemukan',
+                ];
+
+                return $response;
+            }
+
             DB::beginTransaction();
             $data = $this->transactionQueries->getStatusOrder($order_id, true);
+
 
             $status_codes = [];
             foreach ($data->progress as $item) {
@@ -1892,25 +1908,6 @@ class TransactionController extends Controller
                         $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
                         // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
                         $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
-
-                        // // $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
-                        // // $total_amount_trx = $total_delivery_fee_trx = 0;
-
-                        // // foreach($orders as $o){
-                        // //     $total_amount_trx += $o->total_amount;
-                        // //    $total_delivery_fee_trx += $o->delivery->delivery_fee;
-                        // // }
-
-                        // // if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
-                        // //    $this->voucherCommand->generateVoucher($order);
-                        // // }
-
-                        // dikomen untuk SIT
-                        // $mailSender = new MailSenderManager();
-                        // $district_name = $this->logisticManager->searchLocationByCode([
-                        //     'kode' => $order->delivery->district_code,
-                        // ]);
-                        // $mailSender->mailOrderOnDelivery($order_id);
 
                         $mailSender = new MailSenderManager();
                         if ($data->merchant->official_store_proliga) {

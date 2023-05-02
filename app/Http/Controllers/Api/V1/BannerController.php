@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 
 class BannerController extends Controller
 {
-    protected $bannerQueries, $bannerCommmands;
+    protected $bannerQueries, $bannerCommands;
     public function __construct()
     {
         $this->bannerQueries = new BannerQueries();
@@ -84,15 +84,15 @@ class BannerController extends Controller
     //     }
     // }
 
-    // public function getFlashPopup()
-    // {
-    //     try {
-    //         $data = $this->bannerQueries->getFlashPopup();
-    //         return $this->respondWithData($data['data'], $data['message']);
-    //     } catch (Exception $e) {
-    //         return $this->respondErrorException($e, request());
-    //     }
-    // }
+    public function getFlashPopup()
+    {
+        try {
+            $data = $this->bannerQueries->getFlashPopup();
+            return $this->respondWithData($data['data'], $data['message']);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
 
     // public function getBannerAgent()
     // {
