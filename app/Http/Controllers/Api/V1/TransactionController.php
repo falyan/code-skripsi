@@ -1031,19 +1031,19 @@ class TransactionController extends Controller
                 return $response;
             }
 
-            $courir = OrderDelivery::where('order_id', $order_id)->first()->delivery_method;
-            if ($courir == 'J&T') {
-                $courir = 'jnt';
-            }
-            $cek_resi = $this->rajaongkirManager->cekResi($awb, $courir);
-            if ($cek_resi == false) {
-                $response = [
-                    'success' => false,
-                    'message' => 'Nomor resi yang anda masukkan tidak ditemukan',
-                ];
+            // $courir = OrderDelivery::where('order_id', $order_id)->first()->delivery_method;
+            // if ($courir == 'J&T') {
+            //     $courir = 'jnt';
+            // }
+            // $cek_resi = $this->rajaongkirManager->cekResi($awb, $courir);
+            // if ($cek_resi == false) {
+            //     $response = [
+            //         'success' => false,
+            //         'message' => 'Nomor resi yang anda masukkan tidak ditemukan',
+            //     ];
 
-                return $response;
-            }
+            //     return $response;
+            // }
 
             DB::beginTransaction();
             $data = $this->transactionQueries->getStatusOrder($order_id, true);
