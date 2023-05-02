@@ -934,12 +934,18 @@ class TransactionController extends Controller
                         $total_delivery_fee_trx += $o->delivery->delivery_fee;
                     }
 
-                    $min_ubah_daya = MasterData::where('key', 'ubah_daya_min_transaction')->first();
-                    if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value) {
-                        $res_generate = $this->voucherCommand->generateVoucher($order);
 
-                        if ($res_generate['success'] == false) {
-                            return $res_generate;
+                    $master_data = MasterData::whereIn('key', ['ubah_daya_min_transaction', 'ubah_daya_implementation_period'])->get();
+                    $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
+                    $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
+
+                    if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value) {
+                        if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
+                            $res_generate = $this->voucherCommand->generateVoucher($order);
+
+                            if ($res_generate['success'] == false) {
+                                return $res_generate;
+                            }
                         }
                     }
 
