@@ -139,7 +139,7 @@ class VoucherCommands
             $url_path = 'v1/buyer/query/transaction/' . $order->buyer->id . '/detail/' . $order->id;
             $notificationCommand = new NotificationCommands();
             $notificationCommand->create('customer_id', $order->buyer->id, 2, $title, $message, $url_path);
-            // $notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+            $notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
             $mailSender = new MailSenderManager();
             $mailSender->mainVoucherClaim($order->id);
@@ -245,7 +245,7 @@ class VoucherCommands
             $notificationCommand = new NotificationCommands();
             $notificationCommand->create('customer_id', $order->buyer->id, 2, $title, $message, $url_path);
             // $notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
-            // $notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+            $notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
             $mailSender = new MailSenderManager();
             $mailSender->mainVoucherClaim($order->id);
