@@ -271,6 +271,10 @@ class TransactionCommands extends Service
             $customer_id = $customer->id;
             $no_reference = (int) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
 
+            $city_id = data_get($datas, 'destination_info.city_id');
+            $province_id = City::where('id', $city_id)->first()->province_id;
+            $district = District::where('id', data_get($datas, 'destination_info.district_id'))->first();
+
             while (static::checkReferenceExist($no_reference) == false) {
                 $no_reference = (int) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
             }
@@ -406,27 +410,31 @@ class TransactionCommands extends Service
                 $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
                 $order->save();
 
+                $order_details = [];
                 foreach (data_get($data, 'products') as $product) {
-                    $order_detail = new OrderDetail();
-                    $order_detail->order_id = $order->id;
-                    $order_detail->detail_type = 1;
-                    $order_detail->product_id = data_get($product, 'product_id');
-                    $order_detail->quantity = data_get($product, 'quantity');
-                    $order_detail->price = data_get($product, 'price');
-                    $order_detail->weight = data_get($product, 'weight');
-                    $order_detail->insurance_cost = data_get($product, 'insurance_cost');
-                    $order_detail->discount = data_get($product, 'discount');
-                    $order_detail->insentif = data_get($product, 'insentif');
-                    $order_detail->total_price = data_get($product, 'total_price');
-                    $order_detail->total_weight = data_get($product, 'total_weight');
-                    $order_detail->total_discount = data_get($product, 'total_discount');
-                    $order_detail->total_insentif = data_get($product, 'total_insentif');
-                    $order_detail->total_insurance_cost = data_get($product, 'total_insurance_cost');
-                    $order_detail->total_amount = data_get($product, 'total_amount');
-                    $order_detail->notes = data_get($product, 'note');
-                    $order_detail->variant_value_product_id = data_get($product, 'variant_value_product_id');
-                    $order_detail->save();
+                    $order_details[] = [
+                        'order_id' => $order->id,
+                        'detail_type' => 1,
+                        'product_id' => data_get($product, 'product_id'),
+                        'quantity' => data_get($product, 'quantity'),
+                        'price' => data_get($product, 'price'),
+                        'weight' => data_get($product, 'weight'),
+                        'insurance_cost' => data_get($product, 'insurance_cost'),
+                        'discount' => data_get($product, 'discount'),
+                        'total_price' => data_get($product, 'total_price'),
+                        'total_weight' => data_get($product, 'total_weight'),
+                        'total_discount' => data_get($product, 'total_discount'),
+                        'total_insentif' => data_get($product, 'total_insentif'),
+                        'total_insurance_cost' => data_get($product, 'total_insurance_cost'),
+                        'total_amount' => data_get($product, 'total_amount'),
+                        'notes' => data_get($product, 'note'),
+                        'variant_value_product_id' => data_get($product, 'variant_value_product_id'),
+                        'created_at' => Carbon::now(),
+                    ];
                 }
+
+                // sementara ketika flash sale nempel merchant
+                // OrderDetail::insert($order_details);
 
                 $order_progress = new OrderProgress();
                 $order_progress->order_id = $order->id;
@@ -437,6 +445,85 @@ class TransactionCommands extends Service
                 $order_progress->created_by = 'user';
                 $order_progress->updated_by = 'user';
                 $order_progress->save();
+
+                $promo_merchant = PromoMerchant::with(['promo_master', 'promo_master.promo_regions', 'promo_master.promo_values'])
+                    ->where([
+                        'merchant_id' => data_get($data, 'merchant_id'),
+                        'status' => 1,
+                    ])
+                    ->where('start_date', '<=', date('Y-m-d H:i:s'))
+                    ->where('end_date', '>=', date('Y-m-d H:i:s'))
+                    ->whereHas('promo_master', function ($query) {
+                        $query->where('status', 1);
+                    })
+                    ->get();
+
+                $promo_merchant_ongkir = null;
+                $value_ongkir = 0;
+
+                if (data_get($data, 'can_shipping_discount') == true && data_get($data, 'delivery_discount') > 0) {
+                    foreach ($promo_merchant as $promo) {
+                        if ($promo['promo_master']['event_type'] == 'ongkir') {
+                            foreach ($promo['promo_master']['promo_regions'] as $region) {
+                                $region_ids = collect($region['province_ids'])->toArray();
+                                if (in_array($province_id, $region_ids)) {
+                                    $promo_merchant_ongkir = $promo;
+                                    $value_ongkir_m = 0;
+
+                                    if ($region['value_type'] == 'value_2') {
+                                        $value_ongkir_m = $promo['promo_master']['value_2'];
+                                    } else {
+                                        $value_ongkir_m = $promo['promo_master']['value_1'];
+                                    }
+
+                                    $max_merchant = ($promo['usage_value'] + $value_ongkir_m) > $promo['max_value'];
+                                    $max_master = ($promo['promo_master']['usage_value'] + $value_ongkir_m) > $promo['promo_master']['max_value'];
+
+                                    if ($max_merchant && !$max_master) {
+                                        $value_ongkir = $value_ongkir_m;
+                                        break;
+                                    }
+
+                                    if (!$max_merchant && $max_master) {
+                                        $value_ongkir = $value_ongkir_m;
+                                        break;
+                                    }
+
+                                    if (!$max_merchant && !$max_master) {
+                                        $value_ongkir = $value_ongkir_m;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if ($value_ongkir > data_get($data, 'delivery_fee')) {
+                    $value_ongkir = data_get($data, 'delivery_fee');
+                }
+
+                if ($promo_merchant_ongkir != null && $promo_merchant_ongkir['promo_master']['min_order_value'] <= $order->total_amount) {
+                    $promo_merchant_ongkir = PromoMerchant::find($promo_merchant_ongkir['id']);
+                    $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
+                    $promo_merchant_ongkir->save();
+
+                    $promo_master = PromoMaster::find($promo_merchant_ongkir['promo_master']['id']);
+                    $promo_master->usage_value = $promo_master->usage_value + $value_ongkir;
+                    $promo_master->save();
+
+                    $promo_log = new PromoLog();
+                    $promo_log->order_id = $order->id;
+                    $promo_log->promo_master_id = $promo_master->id;
+                    $promo_log->promo_merchant_id = $promo_merchant_ongkir->id;
+                    $promo_log->type = 'sub';
+                    $promo_log->value = $value_ongkir;
+                    $promo_log->created_by = 'System';
+                    $promo_log->save();
+                }
+
+                // sementara ketika flash sale nempel merchant
+                OrderDetail::insert($order_details);
 
                 $order_delivery = new OrderDelivery();
                 $order_delivery->order_id = $order->id;
