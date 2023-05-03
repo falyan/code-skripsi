@@ -26,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Input;
 use Maatwebsite\Excel\Facades\Excel;
@@ -943,7 +944,11 @@ class TransactionController extends Controller
                             $res_generate = $this->voucherCommand->generateVoucher($order);
 
                             if ($res_generate['success'] == false) {
-                                return $res_generate;
+                                Log::info("E00004", [
+                                    'path_url' => "voucher.claim.ubahdaya.error",
+                                    'query' => [],
+                                    'response' => $res_generate['message'],
+                                ]);
                             }
                         }
                     }
