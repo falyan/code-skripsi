@@ -457,6 +457,41 @@ class TransactionQueries extends Service
                 'promo_merchant.promo_master.promo_values',
             ])->findOrFail($merchant['merchant_id']);
 
+            $new_product = [];
+            foreach (data_get($merchant, 'products') as $product) {
+                $data_product = Product::with(['product_photo', 'stock_active', 'ev_subsidy' => function($es) use ($merchant) {
+                    $es->where('merchant_id', $merchant['merchant_id']);
+                }])->find($product['product_id']);
+                if (!$data_product) {
+                    throw new Exception('Produk dengan id ' . $product['product_id'] . ' tidak ditemukan', 404);
+                }
+
+                if ($data_product->ev_subsidy != null) {
+                    $ev_subsidies[] = $data_product->ev_subsidy;
+                }
+
+                $variant_data = null;
+                if (isset($product['variant_value_product_id']) && $product['variant_value_product_id'] != null) {
+                    if (!$variant_data = VariantValueProduct::with('variant_stock')->where('id', $product['variant_value_product_id'])
+                        ->where('product_id', $product['product_id'])->first()) {
+                        throw new Exception('Variant produk dengan id ' . $product['variant_value_product_id'] . ' tidak ditemukan', 404);
+                    }
+                    $product['total_price'] = $product['total_amount'] = $total_item_price = $variant_data['price'] * $product['quantity'];
+                } else {
+                    $product['total_price'] = $product['total_amount'] = $total_item_price = $data_product['price'] * $product['quantity'];
+                }
+
+                $product['total_weight'] = $product_total_weight = $data_product['weight'] * $product['quantity'];
+                $product['insurance_cost'] = $product['discount'] = $product['total_discount'] = $product['total_insurance_cost'] = 0;
+                $product['variant_data'] = $variant_data;
+                $product['total_insentif'] = $product['insentif'] = 0;
+
+                $total_weight += $product_total_weight;
+                $merchant_total_price += $total_item_price;
+
+                $new_product[] = array_merge($product, $data_product->toArray());
+            }
+
             // shipping discount
             $promo_merchant_ongkir = null;
             if ($data_merchant->can_shipping_discount == true) {
@@ -507,41 +542,6 @@ class TransactionQueries extends Service
                         }
                     }
                 }
-            }
-
-            $new_product = [];
-            foreach (data_get($merchant, 'products') as $product) {
-                $data_product = Product::with(['product_photo', 'stock_active', 'ev_subsidy' => function($es) use ($merchant) {
-                    $es->where('merchant_id', $merchant['merchant_id']);
-                }])->find($product['product_id']);
-                if (!$data_product) {
-                    throw new Exception('Produk dengan id ' . $product['product_id'] . ' tidak ditemukan', 404);
-                }
-
-                if ($data_product->ev_subsidy != null) {
-                    $ev_subsidies[] = $data_product->ev_subsidy;
-                }
-
-                $variant_data = null;
-                if (isset($product['variant_value_product_id']) && $product['variant_value_product_id'] != null) {
-                    if (!$variant_data = VariantValueProduct::with('variant_stock')->where('id', $product['variant_value_product_id'])
-                        ->where('product_id', $product['product_id'])->first()) {
-                        throw new Exception('Variant produk dengan id ' . $product['variant_value_product_id'] . ' tidak ditemukan', 404);
-                    }
-                    $product['total_price'] = $product['total_amount'] = $total_item_price = $variant_data['price'] * $product['quantity'];
-                } else {
-                    $product['total_price'] = $product['total_amount'] = $total_item_price = $data_product['price'] * $product['quantity'];
-                }
-
-                $product['total_weight'] = $product_total_weight = $data_product['weight'] * $product['quantity'];
-                $product['insurance_cost'] = $product['discount'] = $product['total_discount'] = $product['total_insurance_cost'] = 0;
-                $product['variant_data'] = $variant_data;
-                $product['total_insentif'] = $product['insentif'] = 0;
-
-                $total_weight += $product_total_weight;
-                $merchant_total_price += $total_item_price;
-
-                $new_product[] = array_merge($product, $data_product->toArray());
             }
 
             $merchant['products'] = $new_product;
