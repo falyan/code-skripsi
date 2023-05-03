@@ -1801,6 +1801,74 @@ class TransactionController extends Controller
         }
     }
 
+    public function countCheckoutPriceV4()
+    {
+        $rules = [
+            'merchants' => 'required|array',
+            'merchants.*.merchant_id' => 'required',
+            // 'merchants.*.delivery_method' => 'required',
+            'merchants.*.delivery_fee' => 'required',
+            'merchants.*.delivery_discount' => 'required',
+            'merchants.*.products' => 'required|array',
+            'merchants.*.products.*.product_id' => 'required',
+            'merchants.*.products.*.quantity' => 'required',
+            'merchants.*.products.*.payment_note' => 'sometimes',
+        ];
+
+        if (isset(request()->all()['customer'])) {
+            $rules['customer.nik'] = 'required';
+        }
+
+        $validator = Validator::make(request()->all(), $rules, [
+            'required' => ':attribute diperlukan.',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            $customer = Auth::user();
+            $respond = $this->transactionQueries->countCheckoutPriceV2($customer, request()->all());
+
+            $ev_subsidies = [];
+            foreach ($respond['merchants'] as $merchant) {
+                foreach ($merchant['products'] as $product) {
+                    if ($product['ev_subsidy'] != null) {
+                        if ($product['quantity'] > 1) {
+                            return array_merge($respond, [
+                                'success' => true,
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif'
+                            ]);
+                        }
+
+                        $ev_subsidies[] = $product['ev_subsidy'];
+                    }
+                }
+            }
+
+            if (count($ev_subsidies) > 1) {
+                return array_merge($respond, [
+                    'success' => true,
+                    'status_code' => 400,
+                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif'
+                ]);
+            }
+
+            return $respond;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function retryVoucher($order_id)
     {
         try {

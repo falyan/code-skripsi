@@ -421,15 +421,93 @@ class TransactionQueries extends Service
 
     public function countCheckoutPriceV2($customer, $datas)
     {
+        $city_id = data_get($datas, 'destination_info.city_id');
+        $province_id = City::where('id', $city_id)->first()->province_id;
+        $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = 0;
+        $total_discount = $total_price_discount = $discount = 0;
+        $message_error = '';
         $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = 0;
         $message_error = '';
 
         $new_merchant = [];
         $ev_subsidies = [];
+        $promo_masters = [];
+
         foreach (data_get($datas, 'merchants') as $merchant) {
             $total_weight = 0;
             $merchant_total_price = 0;
-            $data_merchant = Merchant::with(['city', 'district'])->findOrFail($merchant['merchant_id']);
+
+            $data_merchant = Merchant::with([
+                'city',
+                'district',
+                'promo_merchant' => function ($pd) {
+                    $pd->where('status', 1);
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                    $pd->whereHas('promo_master', function ($pm) {
+                        $pm->where('status', 1);
+                    });
+                },
+                'promo_merchant.promo_master' => function ($pm) {
+                    $pm->where('status', 1);
+                },
+                'promo_merchant.promo_master.promo_regions',
+                'promo_merchant.promo_master.promo_values',
+            ])->findOrFail($merchant['merchant_id']);
+
+            // shipping discount
+            $promo_merchant_ongkir = null;
+            if ($data_merchant->can_shipping_discount == true) {
+                foreach ($data_merchant->promo_merchant as $promo) {
+                    if ($promo->promo_master->event_type == 'ongkir') {
+                        foreach ($promo->promo_master->promo_regions as $region) {
+                            $region_ids = collect($region->province_ids)->toArray();
+                            if (in_array($province_id, $region_ids)) {
+                                $promo_merchant_ongkir = $promo;
+
+                                if ($promo_masters == []) {
+                                    $promo_masters[] = $promo->promo_master;
+                                } else {
+                                    foreach ($promo_masters as $promo_master) {
+                                        if ($promo_master->id == $promo->promo_master->id) {
+                                            $promo_merchant_ongkir->promo_master = $promo_master;
+                                            break;
+                                        } else {
+                                            $promo_masters[] = $promo->promo_master;
+                                        }
+                                    }
+                                }
+
+                                if ($region->value_type == 'value_2') {
+                                    $value_ongkir = $promo->promo_master->value_2;
+                                } else {
+                                    $value_ongkir = $promo->promo_master->value_1;
+                                }
+
+                                $max_merchant = ($promo->usage_value + $value_ongkir) > $promo->max_value;
+                                $max_master = ($promo->promo_master->usage_value + $value_ongkir) > $promo->promo_master->max_value;
+
+                                if ($max_merchant && !$max_master) {
+                                    $merchant['delivery_discount'] = $value_ongkir;
+                                    break;
+                                }
+
+                                if (!$max_merchant && $max_master) {
+                                    $merchant['delivery_discount'] = $value_ongkir;
+                                    break;
+                                }
+
+                                if (!$max_merchant && !$max_master) {
+                                    $merchant['delivery_discount'] = $value_ongkir;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             $new_product = [];
             foreach (data_get($merchant, 'products') as $product) {
@@ -474,10 +552,27 @@ class TransactionQueries extends Service
             $merchant['total_amount'] = $merchant_total_price_with_delivery = $merchant_total_price + $merchant['delivery_fee'];
             $merchant['total_payment'] = $merchant_total_payment = $merchant_total_price_with_delivery - $merchant['delivery_discount'];
 
+            if ($promo_merchant_ongkir != null) {
+                if ($promo_merchant_ongkir->promo_master->min_order_value > $merchant_total_price) {
+                    $merchant['delivery_discount'] = 0;
+                }
+
+                $promo_merchant_ongkir->promo_master->usage_value += $merchant['delivery_discount'];
+                foreach ($promo_masters as $key => $promo_master) {
+                    if ($promo_master->id == $promo_merchant_ongkir->promo_master->id) {
+                        $promo_masters[$key] = $promo_merchant_ongkir->promo_master;
+                        break;
+                    }
+                }
+            }
+
             $total_price += $merchant_total_price_with_delivery;
             $total_payment += $merchant_total_payment;
             $total_delivery_fee += $merchant['delivery_fee'];
             $total_delivery_discount += $merchant['delivery_discount'];
+
+            unset($data_merchant->promo_merchant);
+            unset($merchant['promo_merchant']);
 
             $new_merchant[] = array_merge($merchant, $data_merchant->toArray());
         }
