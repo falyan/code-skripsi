@@ -1212,10 +1212,17 @@ class TransactionController extends Controller
 
     public function finishOrder($id)
     {
+        $check_status = ['08'];
+        $data = $this->transactionQueries->getStatusOrder($id);
+        $status_code = $data->progress_active->status_code;
+
+        if (!Auth::check()) {
+            $check_status[] = '03';
+        }
+
         try {
-            $data = $this->transactionQueries->getStatusOrder($id);
-            if (in_array($data->progress_active->status_code, ['03', '08'])) {
-                if ($data->progress_active->status_code == '03') {
+            if (in_array($status_code, $check_status)) {
+                if ($status_code == '03') {
                     $notes = 'finish on delivery';
                     $this->transactionCommand->updateOrderStatus($id, '08', $notes);
                 }
@@ -1266,6 +1273,7 @@ class TransactionController extends Controller
 
                 return $this->respondWithResult(true, 'Selamat! Pesanan anda telah selesai', 200);
             } else {
+                if ($status_code == '03') return $this->respondWithResult(false, 'Pesanan sedang dalam pengiriman!', 400);
                 return $this->respondWithResult(false, 'Pesanan anda belum dikirimkan oleh Penjual!', 400);
             }
         } catch (Exception $e) {
