@@ -1274,6 +1274,7 @@ class TransactionController extends Controller
                 return $this->respondWithResult(true, 'Selamat! Pesanan anda telah selesai', 200);
             } else {
                 if ($status_code == '03') return $this->respondWithResult(false, 'Pesanan sedang dalam pengiriman!', 400);
+                if ($status_code == '88') return $this->respondWithResult(false, 'Pesanan anda sudah selesai!', 400);
                 return $this->respondWithResult(false, 'Pesanan anda belum dikirimkan oleh Penjual!', 400);
             }
         } catch (Exception $e) {
