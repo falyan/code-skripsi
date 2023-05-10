@@ -96,7 +96,10 @@ class IconcashInquiry extends Model
             'type'              => 'topup',
             'source_account_id' => $response->accountId,
             'order_id'          => $order->id,
-            'amount'            => $amount
+            'amount'            => $order->total_amount,
+            'client_ref'        => $client_ref,
+            'iconcash_order_id' => $response->orderId,
+            'res_json'  => json_encode($response),
         ]);
 
         return $response;

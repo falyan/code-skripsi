@@ -1260,7 +1260,12 @@ class TransactionController extends Controller
 
                 $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
 
-                IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+                $res = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+
+                IconcashInquiry::find($topup_inquiry->id)->update([
+                    'confirm_res_json' => json_decode($res),
+                ]);
+
 
                 $notificationCommand = new NotificationCommands();
                 $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
