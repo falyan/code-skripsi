@@ -1267,7 +1267,7 @@ class TransactionController extends Controller
 
                 $res = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
-                IconcashInquiry::where('order_id', $topup_inquiry->orderId)->first()->update([
+                IconcashInquiry::find($topup_inquiry->id)->update([
                     'confirm_res_json' => json_decode($res),
                 ]);
 
