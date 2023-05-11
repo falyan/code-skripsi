@@ -12,7 +12,7 @@ COPY ./docker/config/nginx-site.conf /etc/nginx/sites-enabled/default
 COPY ./docker/config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 RUN composer update
-RUN php artisan swagger-lume:generate
+# RUN php artisan swagger-lume:generate
 RUN rm -Rf docker/
 RUN chmod -R 775 /var/www/html/storage
 RUN chown -R www-data:www-data /var/www/html/storage
