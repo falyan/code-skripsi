@@ -1216,7 +1216,7 @@ class TransactionController extends Controller
         $data = $this->transactionQueries->getStatusOrder($id);
         $status_code = $data->progress_active->status_code;
 
-        if (!Auth::check()) {
+        if (!Auth::check() || Auth::user()->id == $data->buyer_id) {
             $check_status[] = '03';
         }
 
@@ -1239,13 +1239,13 @@ class TransactionController extends Controller
 
                 $order = Order::find($id);
                 $iconcash = Customer::where('merchant_id', $order->merchant_id)->first()->iconcash;
-                $account_type_id = null;
 
                 $total_insentif = 0;
                 foreach ($order->detail as $item) {
                     $total_insentif += $item->total_insentif;
                 }
 
+                $account_type_id = null;
                 if (env('APP_ENV') == 'staging') {
                     $account_type_id = 13;
                 } elseif (env('APP_ENV') == 'production') {

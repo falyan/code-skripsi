@@ -9,6 +9,7 @@ use App\Http\Services\Transaction\TransactionQueries;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderProgress;
+use App\Models\RajaOngkirSetting;
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
@@ -18,6 +19,8 @@ use Illuminate\Support\Facades\URL;
 
 class RajaOngkirManager
 {
+    protected $notificationCommand;
+
     static $apiendpoint;
     static $appkey;
     static $curl;
@@ -28,10 +31,12 @@ class RajaOngkirManager
         self::$curl = new Client();
         self::$apiendpoint = config('credentials.rajaongkir.endpoint');
         date_default_timezone_set('Asia/Jakarta');
-        if (date('Hi') >= '0000' && date('Hi') <= '1200'){
-            self::$appkey = config('credentials.rajaongkir.app_key1');
-        }else{
-            self::$appkey = config('credentials.rajaongkir.app_key2');
+
+        $settings = RajaOngkirSetting::where('status', 1)->get();
+        foreach ($settings as $setting) {
+            if (Carbon::now()->format('H:i') >= $setting->time_start && Carbon::now()->format('H:i') <= $setting->time_end) {
+                self::$appkey = $setting->credential_key;
+            }
         }
 
         self::$header = [
