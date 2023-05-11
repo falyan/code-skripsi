@@ -40,26 +40,26 @@ class EvSubsidyQueries extends Service
     {
         $nik = $request['nik'];
 
-        $customers = CustomerEVSubsidy::where([
-            'customer_nik' => $nik,
-        ])->get();
+        // $customers = CustomerEVSubsidy::where([
+        //     'customer_nik' => $nik,
+        // ])->get();
 
-        if (count($customers) > 0) {
-            foreach ($customers as $customer) {
-                if ($customer->status_approval == 1 || is_null($customer->status_approval)) {
-                    return [
-                        'status' => false,
-                        'status_code' => '01',
-                        'message' => 'Nik Subsidi sudah terdaftar',
-                        'errors' => [
-                            'nik' => 'Nik sudah terdaftar',
-                        ],
-                    ];
-                }
-            }
-        }
+        // if (count($customers) > 0) {
+        //     foreach ($customers as $customer) {
+        //         if ($customer->status_approval == 1 || is_null($customer->status_approval)) {
+        //             return [
+        //                 'status' => false,
+        //                 'status_code' => '01',
+        //                 'message' => 'Nik Subsidi sudah terdaftar',
+        //                 'errors' => [
+        //                     'nik' => 'Nik sudah terdaftar',
+        //                 ],
+        //             ];
+        //         }
+        //     }
+        // }
 
-        $checkNik = $this->EvSubsidyManager->checkNik($nik);
+        return $checkNik = $this->EvSubsidyManager->checkNik($nik);
 
         if (!isset($checkNik['response']) || $checkNik['response'] != 'OK') {
             return [

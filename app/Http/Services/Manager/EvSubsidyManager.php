@@ -32,22 +32,32 @@ class EvSubsidyManager
 
         $url = sprintf('%s/%s', self::$endpointnik, 'api/dil-motor-listrik/data-exists');
 
-        $body = '{
-            "nik": "' . $nik . '",
-            "id_pln": "plnmobile"
-        }';
+        $body = [
+            "nik" => $nik,
+            "userId" => "plnmobile",
+        ];
 
         $headers = self::headers([
             'Authorization' => 'Basic ' . base64_encode(self::$username . ':' . self::$password),
         ]);
 
-        $response = self::$curl->request('GET', $url, [
+        $response = self::$curl->request('POST', $url, [
             'headers' => $headers,
             'http_errors' => false,
-            'body' => $body,
+            'json' => $body,
         ]);
 
-        return $response = json_decode($response->getBody()->getContents(), true);
+        $response = json_decode($response->getBody()->getContents(), true);
+
+        // return [
+        //     'url' => $url,
+        //     'body' => $body,
+        //     'headers' => $headers,
+        //     'user' => self::$username,
+        //     'pass' => self::$password,
+        //     'response' => $response,
+        // ];
+
         throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
         return $response;

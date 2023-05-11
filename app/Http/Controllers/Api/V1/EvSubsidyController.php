@@ -170,7 +170,7 @@ class EvSubsidyController extends Controller
             ], 400);
         }
 
-        $data = $this->EvSubsidyQueries->checkIdentity($validate->validated());
+        return $data = $this->EvSubsidyQueries->checkIdentity($validate->validated());
 
         if (isset($data['status']) && $data['status'] == false) {
             return response()->json([
