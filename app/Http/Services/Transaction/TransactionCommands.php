@@ -453,6 +453,8 @@ class TransactionCommands extends Service
                         $customerEv->product_id = $ev_subsidy->product_id;
                         $customerEv->status_approval = 1;
                         $customerEv->customer_nik = data_get($datas, 'customer.nik');
+                        $customerEv->ktp_url = data_get($datas, 'customer.ktp_url');
+                        $customerEv->kk_url = data_get($datas, 'customer.kk_url');
                         $customerEv->created_by = auth()->user()->full_name;
                         $customerEv->save();
                     }
