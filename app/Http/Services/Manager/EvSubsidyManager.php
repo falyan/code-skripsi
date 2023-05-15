@@ -45,7 +45,7 @@ class EvSubsidyManager
             'headers' => $headers,
             'http_errors' => false,
             'body' => $body,
-            'verify' => false,
+            // 'verify' => false,
         ]);
 
         $response = json_decode($response->getBody()->getContents(), true);
