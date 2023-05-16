@@ -45,9 +45,11 @@ class EvSubsidyManager
             'headers' => $headers,
             'http_errors' => false,
             'body' => $body,
+            // 'verify' => false,
         ]);
 
-        return $response = json_decode($response->getBody()->getContents(), true);
+        $response = json_decode($response->getBody()->getContents(), true);
+
         throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
         return $response;

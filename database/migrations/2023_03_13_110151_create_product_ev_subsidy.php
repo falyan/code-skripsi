@@ -33,9 +33,9 @@ class CreateProductEvSubsidy extends Migration
             $table->unsignedBigInteger('product_id');
             $table->string('customer_nik', 100);
             $table->string('customer_id_pel', 100)->nullable();
-            $table->string('umkm_url')->nullable();
-            $table->string('kur_url')->nullable();
-            $table->string('bpum_url')->nullable();
+            $table->string('ktp_url')->nullable();
+            $table->string('kk_url')->nullable();
+            $table->string('file_url')->nullable();
             $table->integer('status_approval')->nullable();
             $table->string('created_by', 50)->nullable();
             $table->string('updated_by', 50)->nullable();
