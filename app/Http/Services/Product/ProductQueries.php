@@ -1665,9 +1665,15 @@ class ProductQueries extends Service
             'merchant_id' => auth()->user()->merchant_id,
         ])->with([
             'product_stock', 'product_photo', 'is_wishlist',
-            'merchant' => function ($merchant) {
-                $merchant->with(['city:id,name', 'promo_merchant.promo_master']);
+            'merchant.city:id,name',
+            'merchant.promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                });
             },
+            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_values',
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
             },
@@ -1676,6 +1682,7 @@ class ProductQueries extends Service
         })->whereIn('category_id', $cat_child_id)
             ->whereNotIn('id', collect($merchant_product_ev)->pluck('product_id')->toArray());
 
+        $products;
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
