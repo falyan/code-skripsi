@@ -699,6 +699,7 @@ class ProductQueries extends Service
                 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
                 },
+                'ev_subsidy',
             ])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
