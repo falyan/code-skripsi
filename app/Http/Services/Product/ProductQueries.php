@@ -42,6 +42,7 @@ class ProductQueries extends Service
                 'is_wishlist', 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
                 },
+                'ev_subsidy',
             ])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
@@ -77,6 +78,7 @@ class ProductQueries extends Service
                 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
                 },
+                'ev_subsidy',
             ])->when($featured == true, function ($query) {
                 $query->where('is_featured_product', true);
             });
@@ -106,6 +108,7 @@ class ProductQueries extends Service
             'product_stock',
             'product_photo',
             'is_wishlist',
+            'ev_subsidy',
         ])->where('merchant_id', $merchant_id);
 
         $immutable_data = $products->get()->map(function ($product) {
@@ -148,7 +151,7 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist'])->where('etalase_id', $etalase_id);
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'ev_subsidy'])->where('etalase_id', $etalase_id);
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
@@ -189,6 +192,7 @@ class ProductQueries extends Service
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
             },
+            'ev_subsidy',
         ])
             ->whereHas('merchant', function ($merchant) use ($filter) {
                 $merchant->where('status', 1);
@@ -240,6 +244,7 @@ class ProductQueries extends Service
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
             },
+            'ev_subsidy',
         ])
             ->whereHas('merchant', function ($merchant) use ($filter) {
                 $merchant->where('status', 1);
@@ -293,7 +298,8 @@ class ProductQueries extends Service
                 'merchant.promo_merchant.promo_master.promo_values',
                 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
-                }
+                },
+                'ev_subsidy',
             ])
             ->orderBy('updated_at', 'desc');
 
@@ -335,6 +341,7 @@ class ProductQueries extends Service
                 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
                 },
+                'ev_subsidy',
             ]);
 
         $filtered_data = $this->filter($products, $filter);
@@ -380,6 +387,7 @@ class ProductQueries extends Service
                 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
                 },
+                'ev_subsidy',
             ]);
 
         if (!empty($filter['category_id_parent'])) {
@@ -453,6 +461,7 @@ class ProductQueries extends Service
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
             },
+            'ev_subsidy',
         ])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
         })->whereIn('category_id', $cat_child_id);
@@ -500,7 +509,8 @@ class ProductQueries extends Service
                 },
                 'discussion_master' => function ($master) {
                     $master->orderBy('created_at', 'desc')->limit(2)->with(['discussion_response']);
-                }
+                },
+                'ev_subsidy',
             ])
             ->where('id', $id)->first();
 
@@ -747,6 +757,7 @@ class ProductQueries extends Service
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
             },
+            'ev_subsidy',
         ])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
         })->whereIn('category_id', $cat_child_id);
@@ -792,7 +803,8 @@ class ProductQueries extends Service
                     $details->whereHas('order', function ($order) {
                         $order->whereHas('progress_done');
                     });
-                }
+                },
+                'ev_subsidy',
             ])->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
             })->orderBy('order_details_count', 'DESC');
@@ -930,6 +942,7 @@ class ProductQueries extends Service
                 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
                 },
+                'ev_subsidy',
             ])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
@@ -988,6 +1001,7 @@ class ProductQueries extends Service
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
             },
+            'ev_subsidy',
         ])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
         })->whereIn('category_id', $cat_child_id);
@@ -1126,7 +1140,7 @@ class ProductQueries extends Service
 
         $product = new Product();
         $products = $product
-            ->with(['product_photo:id,product_id,url'])->where('status', 1)
+            ->with(['product_photo:id,product_id,url', 'ev_subsidy'])->where('status', 1)
             ->where([['merchant_id', $merchant_id], ['is_featured_product', true]])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
@@ -1157,7 +1171,7 @@ class ProductQueries extends Service
                 $order->whereHas('progress_done');
             });
         }])
-            ->with(['product_stock', 'product_photo', 'is_wishlist'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']]);
+            ->with(['product_stock', 'product_photo', 'is_wishlist', 'ev_subsidy'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']]);
 
         $products = $this->filter($products, $filter);
         $products = $this->sorting($products, $sortby);
@@ -1184,7 +1198,7 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']]);
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'ev_subsidy'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']]);
 
         $products = $this->filter($products, $filter);
         $products = $this->sorting($products, $sortby);
@@ -1211,7 +1225,7 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist'])
+        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'ev_subsidy'])
             ->where('merchant_id', $merchant_id)
             ->when(!empty($status), function ($query) use ($status) {
                 switch ($status) {
@@ -1293,6 +1307,7 @@ class ProductQueries extends Service
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
             },
+            'ev_subsidy',
         ])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
@@ -1334,6 +1349,7 @@ class ProductQueries extends Service
                 'merchant.promo_merchant.promo_master',
                 'merchant.promo_merchant.promo_master.promo_values',
                 'varian_product' => fn ($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
+                'ev_subsidy',
             ])
             ->whereHas('merchant.official_store', fn ($m) => $m->where([
                 'category_key' => $category_key,
@@ -1379,6 +1395,7 @@ class ProductQueries extends Service
                 'merchant.promo_merchant.promo_master',
                 'merchant.promo_merchant.promo_master.promo_values',
                 'varian_product' => fn ($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
+                'ev_subsidy',
             ])
             ->whereHas('merchant.official_store', fn ($m) => $m->where([
                 'category_key' => $category_key,
@@ -1411,6 +1428,7 @@ class ProductQueries extends Service
             ->with([
                 'product_stock', 'product_photo', 'merchant.city', 'category', 'is_wishlist',
                 'varian_product' => fn ($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
+                'ev_subsidy',
             ])
             ->whereIn('merchant_id', $merchantEV)
             ->whereHas('category', fn ($c) => $c->where('key', $master_data_key));
@@ -1446,6 +1464,7 @@ class ProductQueries extends Service
                 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
                 },
+                'ev_subsidy',
             ])
             ->whereIn('merchant_id', $merchantEV)
             ->whereHas('category', fn ($c) => $c->where('key', $master_data_key))
@@ -1513,6 +1532,7 @@ class ProductQueries extends Service
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
             },
+            'ev_subsidy',
         ])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
         })->whereIn('category_id', $cat_child_id);
@@ -1552,6 +1572,7 @@ class ProductQueries extends Service
                 },
                 'merchant.promo_merchant.promo_master',
                 'merchant.promo_merchant.promo_master.promo_values',
+                'ev_subsidy',
             ])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
@@ -1614,6 +1635,7 @@ class ProductQueries extends Service
                 },
                 'merchant.promo_merchant.promo_master',
                 'merchant.promo_merchant.promo_master.promo_values',
+                'ev_subsidy',
             ])
             ->where([
                 'merchant_id' => $merchant_id,
@@ -1677,6 +1699,7 @@ class ProductQueries extends Service
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
             },
+            'ev_subsidy',
         ])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
         })->whereIn('category_id', $cat_child_id)
