@@ -135,7 +135,7 @@
                                             </td>
                                             <td style="width: 50%;">
                                                 <p style="color: #666;margin-top: 0;font-weight: bold;">
-                                                    {{ $destination_name }}</p>
+                                                    {{ $order->delivery->receiver_name }}</p>
 
                                                 <p style="color: #666;">
                                                     {{ $order->delivery->address ?? '-' }},

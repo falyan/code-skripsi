@@ -223,7 +223,7 @@
                         <div style="margin-bottom: 30px;">
                             <h3>Alamat Pengiriman</h3>
                             <div style="font-size: 14px; color: #666;">
-                                <p style="margin-bottom: 0;">{{ $destination_name }}</p>
+                                <p style="margin-bottom: 0;">{{ $order->delivery->receiver_name }}</p>
                                 <p style="margin: 0px;">{{ $order->delivery->address ?? '-' }},
                                     {{ $order->delivery->district_id != null ? $order->delivery->district->name : '-' }},
                                     {{ $order->delivery->city_id != null ? $order->delivery->city->name : '-' }},
