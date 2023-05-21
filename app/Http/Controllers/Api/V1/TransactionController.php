@@ -207,39 +207,13 @@ class TransactionController extends Controller
         try {
             $customer = Auth::user();
             $request = request()->all();
-            $request['merchants'] = array_map(function ($merchant) {
-                if (data_get($merchant, 'delivery_method') == 'custom') {
-                    if (data_get($merchant, 'has_custom_logistic') == false || null) {
-                        throw new Exception('Merchant ' . data_get($merchant, 'name') . ' tidak mendukung pengiriman oleh seller', 404);
-                    }
-                    data_set($merchant, 'delivery_method', 'Pengiriman oleh Seller');
-                }
-                array_map(function ($item) {
-                    if (!$product = Product::find(data_get($item, 'product_id'))) {
-                        throw new Exception('Produk dengan id ' . data_get($item, 'product_id') . ' tidak ditemukan', 404);
-                    }
-                    if ($product->stock_active->amount < data_get($item, 'quantity')) {
-                        throw new Exception('Stok produk dengan id ' . $product->id . ' tidak mencukupi', 400);
-                    }
-                    if (data_get($item, 'quantity') < $product->minimum_purchase) {
-                        throw new Exception('Pembelian minimum untuk produk ' . $product->name . ' adalah ' . $product->minimum_purchase, 400);
-                    }
-                    if (data_get($item, 'variant_value_product_id') != null) {
-                        if (
-                            VariantStock::where('variant_value_product_id', data_get($item, 'variant_value_product_id'))
-                            ->where('status', 1)->pluck('amount')->first() < data_get($item, 'quantity')
-                        ) {
-                            throw new Exception('Stok variant produk dengan id ' . data_get($item, 'variant_value_product_id') . ' tidak mencukupi', 400);
-                        }
-                    }
-                }, data_get($merchant, 'products'));
-                return $merchant;
-            }, request()->get('merchants'));
+
+            $request['merchants'] = $this->transactionQueries->createOrderV2($request);
             $response = $this->transactionCommand->createOrderV2($request, $customer);
 
             if ($response['success'] == true) {
-                array_map(function ($merchant) {
-                    array_map(function ($item) use ($merchant) {
+                foreach ($request['merchants'] as $merchant) {
+                    foreach ($merchant['products'] as $item) {
                         $productCommand = new ProductCommands();
 
                         if (data_get($item, 'variant_value_product_id') != null) {
@@ -260,8 +234,8 @@ class TransactionController extends Controller
                         $data['full_name'] = Auth::user()->full_name;
 
                         $productCommand->updateStockProduct(data_get($item, 'product_id'), data_get($merchant, 'merchant_id'), $data);
-                    }, data_get($merchant, 'products'));
-                }, $request['merchants']);
+                    }
+                }
             }
 
             return $response;

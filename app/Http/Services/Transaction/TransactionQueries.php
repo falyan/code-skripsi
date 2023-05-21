@@ -1090,6 +1090,49 @@ class TransactionQueries extends Service
         return $datas;
     }
 
+    public function createOrderV2($request)
+    {
+        $merchants = [];
+        foreach(data_get($request, 'merchants') as $merchant) {
+            $get_merchant = Merchant::find(data_get($merchant, 'merchant_id'));
+
+            if (data_get($merchant, 'delivery_method') == 'custom') {
+                if (data_get($merchant, 'has_custom_logistic') == false || null) {
+                    throw new Exception('Merchant ' . data_get($merchant, 'name') . ' tidak mendukung pengiriman oleh seller', 404);
+                }
+                data_set($merchant, 'delivery_method', 'Pengiriman oleh Seller');
+            }
+
+            foreach(data_get($merchant, 'products') as $item) {
+                if (!$product = Product::find(data_get($item, 'product_id'))) {
+                    throw new Exception('Produk dengan id ' . data_get($item, 'product_id') . ' tidak ditemukan', 404);
+                }
+                if ($product->stock_active->amount < data_get($item, 'quantity')) {
+                    throw new Exception('Stok produk dengan id ' . $product->id . ' tidak mencukupi', 400);
+                }
+                if (data_get($item, 'quantity') < $product->minimum_purchase) {
+                    throw new Exception('Pembelian minimum untuk produk ' . $product->name . ' adalah ' . $product->minimum_purchase, 400);
+                }
+                if (data_get($item, 'variant_value_product_id') != null) {
+                    if (
+                        VariantStock::where('variant_value_product_id', data_get($item, 'variant_value_product_id'))
+                        ->where('status', 1)->pluck('amount')->first() < data_get($item, 'quantity')
+                    ) {
+                        throw new Exception('Stok variant produk dengan id ' . data_get($item, 'variant_value_product_id') . ' tidak mencukupi', 400);
+                    }
+                }
+            }
+
+            $merchant['can_shipping_discount'] = $get_merchant->can_shipping_discount;
+            $merchant['can_flash_sale_discount'] = $get_merchant->can_flash_sale_discount;
+            $merchant['is_shipping_discount'] = $get_merchant->is_shipping_discount;
+
+            $merchants[] = $merchant;
+        }
+
+        return $merchants;
+    }
+
     public function createOrderV3($request)
     {
         $merchants = [];

@@ -16,6 +16,10 @@ use App\Models\OrderDetail;
 use App\Models\OrderPayment;
 use App\Models\OrderProgress;
 use App\Models\Product;
+use App\Models\PromoLog;
+use App\Models\PromoMaster;
+use App\Models\PromoMerchant;
+use App\Models\UserTiket;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
@@ -300,7 +304,7 @@ class TransactionCommands extends Service
             }
 
             $ev_subsidies = [];
-            if (isset($datas['customer'])) {
+            if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
                 foreach ($datas['merchants'] as $merchant) {
                     foreach ($merchant['products'] as $product) {
                         $ev_subsidy = Product::with('ev_subsidy')->where('id', $product['product_id'])->first()->ev_subsidy;
@@ -371,7 +375,123 @@ class TransactionCommands extends Service
 
                     $buying_tiket = true;
                 }
-            }
+
+                $promo_merchant_flash_sale = null;
+                $promo_flash_sale_value = null;
+                $value_flash_sale = 0;
+                if (data_get($data, 'can_flash_sale_discount') == true) {
+                    foreach ($promo_merchant as $promo) {
+                        if ($promo['promo_master']['event_type'] == 'flash_sale') {
+                            $promo_merchant_flash_sale = $promo;
+                            $value_flash_sale_m = 0;
+
+                            $value_flash_sale_m = $promo['promo_master']['value_1'];
+                            if ($promo['promo_master']['promo_value_type'] == 'percentage') {
+                                $value_flash_sale_m = $order->total_amount * ($promo_merchant_flash_sale->promo_master->value_1 / 100);
+                                if ($value_flash_sale_m >= $promo['promo_master']['max_discount_value']) {
+                                    $value_flash_sale_m = $promo['promo_master']['max_discount_value'];
+                                }
+                            }
+
+                            foreach ($promo['promo_master']['promo_values'] as $promo_value) {
+                                $value_flash_sale_m = $promo['promo_master']['value_1'];
+                                if ($promo['promo_master']['promo_value_type'] == 'percentage') {
+                                    $value_flash_sale_m = $order->total_amount * ($promo_merchant_flash_sale->promo_master->value_1 / 100);
+                                    if ($value_flash_sale_m >= $promo['promo_master']['max_discount_value']) {
+                                        $value_flash_sale_m = $promo['promo_master']['max_discount_value'];
+                                    }
+                                }
+
+                                if ($order->total_amount >= $promo_value['min_value'] && $order->total_amount <= $promo_value['max_value'] && $promo_value['status'] == 1) {
+                                    $promo_flash_sale_value = $promo_value;
+
+                                    if ($value_flash_sale_m >= $promo_value['max_discount_value']) {
+                                        $value_flash_sale_m = $promo_value['max_discount_value'];
+                                    }
+
+                                    break;
+                                }
+                            }
+
+                            $max_merchant = ($promo['usage_value'] + $value_flash_sale_m) > $promo['max_value'];
+                            $max_master = ($promo['promo_master']['usage_value'] + $value_flash_sale_m) > $promo['promo_master']['max_value'];
+
+                            if ($max_merchant && !$max_master) {
+                                $value_flash_sale = $value_flash_sale_m;
+                                break;
+                            }
+
+                            if (!$max_merchant && $max_master) {
+                                $value_flash_sale = $value_flash_sale_m;
+                                break;
+                            }
+
+                            if (!$max_merchant && !$max_master) {
+                                $value_flash_sale = $value_flash_sale_m;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                $min_condition = false;
+                if ($promo_flash_sale_value != null) {
+                    $min_condition = true;
+                } else {
+                    if ($promo_merchant_flash_sale != null) {
+                        $min_condition = $promo_merchant_flash_sale['promo_master']['min_order_value'] <= $order->total_amount;
+                    }
+                }
+
+                if ($promo_merchant_flash_sale != null && $min_condition) {
+                    if ($value_flash_sale > $order->total_amount) {
+                        $value_flash_sale = $order->total_amount;
+                    }
+
+                    $promo_merchant_flash_sale = PromoMerchant::find($promo_merchant_flash_sale['id']);
+                    $promo_merchant_flash_sale->usage_value = $promo_merchant_flash_sale->usage_value + $value_flash_sale;
+                    $promo_merchant_flash_sale->save();
+
+                    $promo_master = PromoMaster::find($promo_merchant_flash_sale['promo_master']['id']);
+                    $promo_master->usage_value = $promo_master->usage_value + $value_flash_sale;
+                    $promo_master->save();
+
+                    $promo_log = new PromoLog();
+                    $promo_log->order_id = $order->id;
+                    $promo_log->promo_master_id = $promo_master->id;
+                    $promo_log->promo_merchant_id = $promo_merchant_flash_sale->id;
+                    $promo_log->type = 'sub';
+                    $promo_log->value = $value_flash_sale;
+                    $promo_log->created_by = 'System';
+                    $promo_log->save();
+
+                    // sementara ketika flash sale nempel merchant
+                    $order_details[0]['discount'] = $order_details[0]['discount'] + $value_flash_sale;
+                    $order_details[0]['total_discount'] = $order_details[0]['total_discount'] + $value_flash_sale;
+                    $order_details[0]['total_amount'] = $order_details[0]['total_amount'] - $value_flash_sale;
+                }
+
+                // sementara ketika flash sale nempel merchant
+                OrderDetail::insert($order_details);
+
+                $order_delivery = new OrderDelivery();
+                $order_delivery->order_id = $order->id;
+                $order_delivery->receiver_name = data_get($datas, 'destination_info.receiver_name');
+                $order_delivery->receiver_phone = data_get($datas, 'destination_info.receiver_phone');
+                $order_delivery->address = data_get($datas, 'destination_info.address');
+                $order_delivery->city_id = data_get($datas, 'destination_info.city_id');
+                $order_delivery->district_id = data_get($datas, 'destination_info.district_id');
+                $order_delivery->postal_code = data_get($datas, 'destination_info.postal_code');
+                $order_delivery->latitude = data_get($datas, 'destination_info.latitude');
+                $order_delivery->longitude = data_get($datas, 'destination_info.longitude');
+                $order_delivery->shipping_type = data_get($data, 'delivery_service');
+                $order_delivery->awb_number = null;
+                $order_delivery->district_code = $district != null ? $district->district_code : null;
+
+                //J&T Courier Validation
+                if (data_get($data, 'delivery_method') == 'J&T') {
+                    data_set($data, 'delivery_method', 'jnt');
+                }
 
             if ($count_tiket > 4 && $buying_tiket) {
                 return [
@@ -713,16 +833,13 @@ class TransactionCommands extends Service
 
     public function updateOrderStatusTiket($order_id, $status_codes = ['02', '03', '08'], $note = null)
     {
-        $old_order_progress = OrderProgress::where('order_id', $order_id)->get();
-        $total = count($old_order_progress) ?? 0;
-        if ($total >= 0) {
-            for ($i = 0; $i < $total; $i++) {
-                $old_order_progress[$i]->status = 0;
-                $old_order_progress[$i]->save();
-            }
-        }
+        $promo_merchant = PromoMerchant::find($promo_log_order->promo_merchant_id);
+        $promo_merchant->usage_value = $promo_merchant->usage_value - (int) $promo_log_order->value;
+        $promo_merchant->save();
 
-        $new_order_progress = new OrderProgress();
+        $promo_master = PromoMaster::find($promo_log_order->promo_master_id);
+        $promo_master->usage_value = $promo_master->usage_value - (int) $promo_log_order->value;
+        $promo_master->save();
 
         $create_order_progress = [];
         foreach ($status_codes as $status_code) {
@@ -1031,9 +1148,18 @@ class TransactionCommands extends Service
                 $master_tiket = collect($active_master_tikets)->where('master_data.id', $detail->product->category_id)->first();
                 $master_tiket['quantity'] = $detail->quantity;
 
-                for ($i = 0; $i < $master_tiket['quantity']; $i++) {
-                    $id = rand(10000, 99999);
-                    $number_tiket = (string) time() . (string) $id;
+                $cat_ticket[] = $ticket;
+            }
+        }
+
+        $master_tikets = MasterTiket::whereIn('master_data_key', collect($cat_ticket)->pluck('key')->toArray())->get();
+
+        foreach ($master_tikets as $master_tiket) {
+            $ticket = collect($cat_ticket)->where('key', $master_tiket->master_data_key)->first();
+
+            for ($i = 0; $i < $ticket['quantity']; $i++) {
+                $id = rand(10000, 99999);
+                $number_tiket = (string) time() . (string) $id;
 
                     $user_tikets[] = CustomerTiket::create([
                         'order_id' => $order_id,
@@ -1045,6 +1171,71 @@ class TransactionCommands extends Service
                         'status' => 1,
                     ]);
                 }
+            }
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil menambahkan tiket';
+        $response['data'] = $user_tikets;
+        return $response;
+    }
+
+    public function generateTicketMudik($order_id)
+    {
+        $user_tikets = UserTiket::where('order_id', $order_id)->get();
+
+        if (collect($user_tikets)->isNotEmpty()) {
+            $response['success'] = true;
+            $response['message'] = 'Berhasil menambahkan tiket';
+            $response['data'] = $user_tikets;
+
+            return $response;
+        }
+
+        $categories = MasterData::with(['child' => function ($j) {
+            $j->with('child');
+        }])->whereIn('key', ['prodcat_pln_mudik_2023_jabodetabek', 'prodcat_pln_mudik_2023_jawa_barat', 'prodcat_pln_mudik_2023_jawa_timur', 'prodcat_pln_mudik_2023_bali'])->get();
+
+        $cat_child = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    foreach ($child->child as $children) {
+                        array_push($cat_child, $children);
+                    }
+                }
+            }
+        }
+
+        $cat_ticket = [];
+        $order = Order::where('id', $order_id)->first()->load('detail.product');
+        foreach ($order->detail as $detail) {
+            if (in_array($detail->product->category_id, collect($cat_child)->pluck('id')->toArray())) {
+                $ticket = collect($cat_child)->where('id', $detail->product->category_id)->first();
+                $ticket['quantity'] = $detail->quantity;
+
+                $cat_ticket[] = $ticket;
+            }
+        }
+
+        $master_tikets = MasterTiket::whereIn('master_data_key', collect($cat_ticket)->pluck('key')->toArray())->get();
+
+        foreach ($master_tikets as $master_tiket) {
+            $ticket = collect($cat_ticket)->where('key', $master_tiket->master_data_key)->first();
+
+            for ($i = 0; $i < $ticket['quantity']; $i++) {
+                $id = rand(10000, 99999);
+                $number_tiket = (string) time() . (string) $id;
+
+                $user_tikets[] = UserTiket::create([
+                    'order_id' => $order_id,
+                    'master_tiket_id' => $master_tiket->id,
+                    'number_tiket' => $number_tiket,
+                    'usage_date' => $master_tiket->usage_date,
+                    'start_time_usage' => $master_tiket->start_time_usage,
+                    'end_time_usage' => $master_tiket->end_time_usage,
+                    'status' => 0, // flagging belum isi form = status tiket 0, sudah isi form = status tiket 1
+                ]);
             }
         }
 
