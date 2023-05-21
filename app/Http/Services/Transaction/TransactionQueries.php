@@ -62,7 +62,7 @@ class TransactionQueries extends Service
                     $o->where('merchant_id', $merchant_id);
                 });
             })
-            ->where('merchant_id',$merchant_id)
+            ->where('merchant_id', $merchant_id)
             ->when($keyword != null, function ($query) use ($keyword) {
                 $query->where('trx_no', 'ILIKE', "%{$keyword}%");
             })
@@ -218,6 +218,23 @@ class TransactionQueries extends Service
                 $review->with(['review_photo']);
             },
         ])->find($id);
+
+        $details = $data->detail;
+        foreach ($data->promo_log_orders as $promo_log_order) {
+            if ($promo_log_order->promo_merchant->promo_master->event_type == 'ongkir') {
+                $data->delivery->is_shipping_discount = true;
+            }
+
+            if ($promo_log_order->promo_merchant->promo_master->event_type == 'flash_sale') {
+                foreach ($details as $key => $detail) {
+                    $detail->product->is_flash_sale_discount = true;
+                    $details[$key] = $detail;
+                }
+            }
+        }
+
+        unset($data->promo_log_orders);
+        $data->detail = $details;
 
         $data->iconpay_product_id = static::$productid;
 
@@ -459,7 +476,7 @@ class TransactionQueries extends Service
 
             $new_product = [];
             foreach (data_get($merchant, 'products') as $product) {
-                $data_product = Product::with(['product_photo', 'stock_active', 'ev_subsidy' => function($es) use ($merchant) {
+                $data_product = Product::with(['product_photo', 'stock_active', 'ev_subsidy' => function ($es) use ($merchant) {
                     $es->where('merchant_id', $merchant['merchant_id']);
                 }])->find($product['product_id']);
                 if (!$data_product) {
@@ -566,10 +583,103 @@ class TransactionQueries extends Service
                 }
             }
 
+            // flash sale discount
+            $promo_merchant_flash_sale = null;
+            $promo_flash_sale_value = null;
+            $merchant['product_discount'] = 0;
+            if ($data_merchant->can_flash_sale_discount == true) {
+                foreach ($data_merchant->promo_merchant as $promo) {
+                    if ($promo->promo_master->event_type == 'flash_sale') {
+                        $value_flash_sale = 0;
+                        $promo_merchant_flash_sale = $promo;
+
+                        if ($promo_masters == []) {
+                            $promo_masters[] = $promo->promo_master;
+                        } else {
+                            foreach ($promo_masters as $promo_master) {
+                                if ($promo_master->id == $promo->promo_master->id) {
+                                    $promo_merchant_flash_sale->promo_master = $promo_master;
+                                    break;
+                                } else {
+                                    $promo_masters[] = $promo->promo_master;
+                                }
+                            }
+                        }
+
+                        $value_flash_sale = $promo->promo_master->value_1;
+                        if ($promo->promo_master->promo_value_type == 'percentage') {
+                            $value_flash_sale = $merchant_total_price * ($promo_merchant_flash_sale->promo_master->value_1 / 100);
+                            if ($value_flash_sale >= $promo->promo_master->max_discount_value) {
+                                $value_flash_sale = $promo->promo_master->max_discount_value;
+                            }
+                        }
+
+                        foreach ($promo->promo_master->promo_values as $promo_value) {
+                            $value_flash_sale = $promo->promo_master->value_1;
+                            if ($promo->promo_master->promo_value_type == 'percentage') {
+                                $value_flash_sale = $merchant_total_price * ($promo_merchant_flash_sale->promo_master->value_1 / 100);
+                                if ($value_flash_sale >= $promo->promo_master->max_discount_value) {
+                                    $value_flash_sale = $promo->promo_master->max_discount_value;
+                                }
+                            }
+
+                            if ($merchant_total_price >= $promo_value->min_value && $merchant_total_price <= $promo_value->max_value && $promo_value->status == 1) {
+                                $promo_flash_sale_value = $promo_value;
+
+                                if ($value_flash_sale >= $promo_value->max_discount_value) {
+                                    $value_flash_sale = $promo_value->max_discount_value;
+                                }
+
+                                break;
+                            }
+                        }
+
+                        $max_merchant = ($promo->usage_value + $value_flash_sale) > $promo->max_value;
+                        $max_master = ($promo->promo_master->usage_value + $value_flash_sale) > $promo->promo_master->max_value;
+
+                        if ($max_merchant && !$max_master) {
+                            $merchant['product_discount'] = $value_flash_sale;
+                            break;
+                        }
+
+                        if (!$max_merchant && $max_master) {
+                            $merchant['product_discount'] = $value_flash_sale;
+                            break;
+                        }
+
+                        if (!$max_merchant && !$max_master) {
+                            $merchant['product_discount'] = $value_flash_sale;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($promo_merchant_flash_sale != null) {
+                if ($promo_merchant_flash_sale->promo_master->min_order_value > $merchant_total_price && $promo_flash_sale_value == null) {
+                    $merchant['product_discount'] = 0;
+                }
+
+                if ($merchant['product_discount'] > $merchant_total_price) {
+                    $merchant['product_discount'] = $merchant_total_price;
+                }
+
+                $promo_merchant_flash_sale->promo_master->usage_value += $merchant['product_discount'];
+                foreach ($promo_masters as $key => $promo_master) {
+                    if ($promo_master->id == $promo_merchant_flash_sale->promo_master->id) {
+                        $promo_masters[$key] = $promo_merchant_flash_sale->promo_master;
+                        break;
+                    }
+                }
+            }
+
+            $merchant['total_payment'] = $merchant['total_payment'] - $merchant['product_discount'];
+
             $total_price += $merchant_total_price_with_delivery;
             $total_payment += $merchant_total_payment;
             $total_delivery_fee += $merchant['delivery_fee'];
             $total_delivery_discount += $merchant['delivery_discount'];
+            $total_price_discount += $merchant['product_discount'];
 
             unset($data_merchant->promo_merchant);
             unset($merchant['promo_merchant']);
@@ -584,25 +694,25 @@ class TransactionQueries extends Service
         $datas['total_delivery_discount'] = $total_delivery_discount;
         $datas['total_payment'] = $total_payment;
 
-        $total_discount = $total_price_discount = 0;
-        $percent_discount = 50;
-        $max_percent_discount = 500000;
-        $is_percent_discount = false;
-        $discount = $this->getCustomerDiscount($customer->id, $customer->email);
+        // $total_discount = $total_price_discount = 0;
+        // $percent_discount = 50;
+        // $max_percent_discount = 500000;
+        // $is_percent_discount = false;
+        // $discount = $this->getCustomerDiscount($customer->id, $customer->email);
 
-        if ($discount == 0 && $is_percent_discount == true) {
-            $total_item_price = 0;
-            array_map(function ($merchant) use (&$total_item_price) {
-                array_map(function ($product) use (&$total_item_price) {
-                    $total_item_price += $product['total_price'];
-                }, data_get($merchant, 'products'));
-            }, data_get($datas, 'merchants'));
+        // if ($discount == 0 && $is_percent_discount == true) {
+        //     $total_item_price = 0;
+        //     array_map(function ($merchant) use (&$total_item_price) {
+        //         array_map(function ($product) use (&$total_item_price) {
+        //             $total_item_price += $product['total_price'];
+        //         }, data_get($merchant, 'products'));
+        //     }, data_get($datas, 'merchants'));
 
-            $discount = ($percent_discount / 100) * $total_item_price;
-            if ($discount > $max_percent_discount) {
-                $discount = $max_percent_discount;
-            }
-        }
+        //     $discount = ($percent_discount / 100) * $total_item_price;
+        //     if ($discount > $max_percent_discount) {
+        //         $discount = $max_percent_discount;
+        //     }
+        // }
 
         $new_products = [];
         foreach ($datas['merchants'] as $merchant) {
@@ -655,17 +765,17 @@ class TransactionQueries extends Service
 
                 $product_insentif += $insentif;
             }
-            $count_discount = $discount;
+            // $count_discount = $discount;
 
-            if (data_get($merchant, 'total_payment') != null && data_get($merchant, 'total_payment') <= $discount) {
-                $count_discount = data_get($merchant, 'total_payment');
-            }
+            // if (data_get($merchant, 'total_payment') != null && data_get($merchant, 'total_payment') <= $discount) {
+            //     $count_discount = data_get($merchant, 'total_payment');
+            // }
 
-            data_set($merchant, 'total_payment', data_get($merchant, 'total_payment') - $count_discount);
-            $discount = $discount - $count_discount;
-            $total_discount += $count_discount;
-            $total_price_discount += data_get($merchant, 'total_payment');
-            $merchant['product_discount'] = $count_discount;
+            // data_set($merchant, 'total_payment', data_get($merchant, 'total_payment') - $count_discount);
+            // $discount = $discount - $count_discount;
+            // $total_discount += $count_discount;
+            // $total_price_discount += data_get($merchant, 'total_payment');
+            // $merchant['product_discount'] = $count_discount;
             $merchant['product_insentif'] = $product_insentif;
             $merchant['total_payment'] -= $product_insentif;
 
@@ -685,12 +795,12 @@ class TransactionQueries extends Service
         //     $new_merchant2[] = $merchant;
         // }
 
-        $datas['buyer_npwp'] = auth()->user()->npwp;
         // $datas['merchants'] = $new_merchant2;
+        $datas['buyer_npwp'] = auth()->user()->npwp;
         $datas['merchants'] = $new_merchant;
-        $datas['total_discount'] = $total_discount;
+        $datas['total_discount'] = $total_price_discount;
         $datas['total_insentif'] = $total_insentif;
-        $datas['total_payment'] -= $total_discount;
+        $datas['total_payment'] -= $total_price_discount;
         $datas['total_payment'] -= $total_insentif;
 
         if ($message_error != '') {
@@ -701,46 +811,6 @@ class TransactionQueries extends Service
             $datas['success'] = true;
             $datas['status_code'] = null;
             $datas['message'] = 'Berhasil menghitung total pembayaran';
-        }
-
-        // validasi tiket
-        $master_tikets = MasterTiket::with(['master_data'])->where('status', 1)->get();
-        $customer_tiket = Order::with(['detail', 'detail.product'])->where('buyer_id', $customer->id)
-        ->whereHas('progress_active', function($q) {
-            $q->whereIn('status_code', ['00', '01', '02', '03','08', '88']);
-        })
-        ->whereHas('detail', function($q) use ($master_tikets) {
-            $q->whereHas('product', function($q) use ($master_tikets) {
-                $q->whereIn('category_id', collect($master_tikets)->pluck('master_data.id')->toArray());
-            });
-        })->get();
-
-        $count_tiket = 0;
-        foreach ($customer_tiket as $order) {
-            foreach ($order->detail as $detail) {
-                $tiket = collect($master_tikets)->where('master_data.id', $detail->product->category_id)->first();
-
-                if($tiket) {
-                    $count_tiket += $detail->quantity;
-                }
-            }
-        }
-
-        $buying_tiket = false;
-        foreach ($new_product as $product) {
-            $tiket = collect($master_tikets)->where('master_data.id', $product['category_id'])->first();
-
-            if($tiket) {
-                $count_tiket += $product['quantity'];
-
-                $buying_tiket = true;
-            }
-        }
-
-        if ($count_tiket > 4 && $buying_tiket) {
-            $datas['success'] = false;
-            $datas['status_code'] = 400;
-            $datas['message'] = 'Anda telah melebihi batas pembelian tiket';
         }
 
         return $datas;
@@ -997,16 +1067,16 @@ class TransactionQueries extends Service
         // }
 
         // foreach (data_get($datas, 'merchants') as $key => $merchant) {
-            // $count_discount = $discount;
+        // $count_discount = $discount;
 
-            // if (data_get($merchant, 'total_payment') != null && data_get($merchant, 'total_payment') <= $discount) {
-            //     $count_discount = data_get($merchant, 'total_payment');
-            // }
+        // if (data_get($merchant, 'total_payment') != null && data_get($merchant, 'total_payment') <= $discount) {
+        //     $count_discount = data_get($merchant, 'total_payment');
+        // }
 
-            // data_set($merchant, 'total_payment', data_get($merchant, 'total_payment') - $count_discount);
-            // $discount = $discount - $count_discount;
-            // $total_discount += $count_discount;
-            // $total_price_discount += data_get($merchant, 'total_payment');
+        // data_set($merchant, 'total_payment', data_get($merchant, 'total_payment') - $count_discount);
+        // $discount = $discount - $count_discount;
+        // $total_discount += $count_discount;
+        // $total_price_discount += data_get($merchant, 'total_payment');
         //     $merchant['product_discount'] = $count_discount;
 
         //     $new_merchant[$key] = $merchant;
@@ -1023,7 +1093,7 @@ class TransactionQueries extends Service
     public function createOrderV3($request)
     {
         $merchants = [];
-        foreach(data_get($request, 'merchants') as $merchant) {
+        foreach (data_get($request, 'merchants') as $merchant) {
             $get_merchant = Merchant::find(data_get($merchant, 'merchant_id'));
 
             if (data_get($merchant, 'delivery_method') == 'custom') {
@@ -1033,7 +1103,7 @@ class TransactionQueries extends Service
                 data_set($merchant, 'delivery_method', 'Pengiriman oleh Seller');
             }
 
-            foreach(data_get($merchant, 'products') as $item) {
+            foreach (data_get($merchant, 'products') as $item) {
                 if (!$product = Product::find(data_get($item, 'product_id'))) {
                     throw new Exception('Produk dengan id ' . data_get($item, 'product_id') . ' tidak ditemukan', 404);
                 }
@@ -1115,7 +1185,7 @@ class TransactionQueries extends Service
 
         $itemsTransformed = $itemsPaginated->getCollection()->toArray();
 
-        $itemsTransformedAndPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
+        $itemsTransformedAndPaginated = new \Illuminate\Pagination\LengthAwarePaginator (
             $itemsTransformed,
             $itemsPaginated->total(),
             $itemsPaginated->perPage(),
