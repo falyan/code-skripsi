@@ -596,7 +596,7 @@ class TransactionCommands extends Service
                 'status_code' => $status_code,
                 'status_name' => parent::$status_order[$status_code],
                 'note' => $note,
-                'status' => $status_code == '03' ? 1 : 0,
+                'status' => $status_code == '08' ? 1 : 0,
                 'created_by' => 'system',
                 'updated_by' => 'system',
             ];
