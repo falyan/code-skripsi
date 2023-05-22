@@ -599,6 +599,8 @@ class TransactionCommands extends Service
                 'status' => $status_code == '08' ? 1 : 0,
                 'created_by' => 'system',
                 'updated_by' => 'system',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
             ];
         }
 
