@@ -3,9 +3,8 @@
 namespace App\Http\Services\Tiket;
 
 use App\Http\Services\Service;
-use App\Models\MasterData;
-use App\Models\Order;
 use App\Models\CustomerTiket;
+use App\Models\Order;
 use Carbon\Carbon;
 
 class TiketQueries extends Service
@@ -34,7 +33,7 @@ class TiketQueries extends Service
             ];
         }
 
-        $tiket->load('master_tiket');
+        $tiket->load(['master_tiket', 'order', 'order.buyer']);
 
         if ($tiket->master_tiket->status == 0) {
             return [
@@ -150,5 +149,63 @@ class TiketQueries extends Service
         }
 
         return $tikets;
+    }
+
+    public function getTiketAll($limit = 10)
+    {
+        $tikets = CustomerTiket::with(['master_tiket', 'order', 'order.buyer'])
+            ->whereHas(
+                'master_tiket',
+                function ($query) {
+                    $query->where('status', 1);
+                }
+            )
+            ->paginate($limit);
+
+        if (!$tikets) {
+            return [
+                'error_code' => static::$TICKET_NOT_FOUND,
+                'status' => 'error',
+                'message' => 'Tiket tidak ditemukan',
+            ];
+        }
+
+        return $tikets;
+    }
+
+    //==== Tiket PLN MUDIK 2023 ====//
+    public function getOrder($trx_no, $email)
+    {
+        $order = Order::whereHas('buyer', function ($query) use ($email) {
+            $query->where('email', $email);
+        })->where('trx_no', 'ILIKE', '%' . $trx_no)->first();
+
+        if (!$order) {
+            return [
+                'error_code' => static::$ORDER_NOT_FOUND,
+                'status' => 'error',
+                'message' => 'Order tidak ditemukan',
+            ];
+        }
+
+        $order->load(
+            'detail.product.category.parent.parent',
+            'buyer',
+        );
+
+        $cat_product = null;
+        foreach ($order->detail as $detail) {
+            $cat_product = $detail->product->category->parent->parent->key;
+        }
+
+        if (substr($cat_product, 0, 22) != 'prodcat_pln_mudik_2023') {
+            return [
+                'error_code' => static::$ORDER_NOT_FOUND,
+                'status' => 'error',
+                'message' => 'Order tidak valid - bukan tiket PLN MUDIK 2023',
+            ];
+        }
+
+        return $order;
     }
 }

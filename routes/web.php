@@ -508,7 +508,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     });
 
     $router->group(['prefix' => 'tiket'], static function () use ($router) {
+        $router->get('', 'TiketController@getTiket');
         $router->post('scan-qr', 'TiketController@scanQr');
+        $router->post('scan-qr/check-in', 'TiketController@scanQrCheckIn');
         $router->post('cek-order', 'TiketController@cekOrder');
         $router->post('resend-mail', 'TiketController@resendTicket');
     });

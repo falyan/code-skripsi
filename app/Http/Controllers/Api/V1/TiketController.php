@@ -85,7 +85,72 @@ class TiketController extends Controller
         ];
     }
 
+    public function getTiket()
+    {
+        $limit = request()->get('limit') ?? 10;
+        $tiket = $this->tiketQueries->getTiketAll($limit);
+        if (isset($tiket['status']) && $tiket['status'] == 'error') {
+            return $this->respondBadRequest($tiket['message'], $tiket['error_code']);
+        }
+
+        $customDataTiket = collect($tiket);
+        $customDataTiket['data'] = array_map(function ($item) {
+            return $this->respondDataMaping($item);
+        }, $customDataTiket['data']);
+
+        return [
+            'status_code' => static::$SUCCESS,
+            'status' => 'success',
+            'message' => 'Tiket ditemukan',
+            'data' => $customDataTiket,
+        ];
+    }
+
     public function scanQr(Request $request)
+    {
+        if (!$keyAccess = $request->header('Key-Access')) {
+            return $this->respondBadRequest('Header Key-Access diperlukan', static::$HEADER_KEY_ACCESS_REQUIRED);
+        }
+
+        if (config('credentials.tiket.api_hash') != md5($keyAccess)) {
+            return $this->respondBadRequest('Key-Access tidak valid', static::$HEADER_KEY_ACCESS_INVALID);
+        }
+
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'qr' => 'required',
+            ],
+            [
+                'exists' => 'kode :attribute tidak ditemukan.',
+                'required' => ':attribute diperlukan.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors);
+        }
+
+        $tiket = $this->tiketQueries->getTiket($request->get('qr'));
+        if (isset($tiket['status']) && $tiket['status'] == 'error') {
+            return $this->respondBadRequest($tiket['message'], $tiket['error_code'], isset($tiket['data']) ? $tiket['data'] : null);
+        }
+
+        return [
+            'status_code' => static::$SUCCESS,
+            'status' => 'success',
+            'message' => 'Tiket ditemukan',
+            'data' => $this->respondDataMaping($tiket),
+        ];
+    }
+
+    public function scanQrCheckIn(Request $request)
     {
         if (!$keyAccess = $request->header('Key-Access')) {
             return $this->respondBadRequest('Header Key-Access diperlukan', static::$HEADER_KEY_ACCESS_REQUIRED);
@@ -220,10 +285,32 @@ class TiketController extends Controller
             'description' => $data['master_tiket']['description'],
             'terms_and_conditions' => $data['master_tiket']['tnc'],
             'event_address' => $data['master_tiket']['event_address'],
+            'customer_name' => $data['order']['buyer']['full_name'],
+            'customer_email' => $data['order']['buyer']['email'],
+            'customer_phone' => $data['order']['buyer']['phone'],
             'usage_date' => $data['usage_date'],
             'usage_time' => ($data['start_time_usage'] != null && $data['end_time_usage'] != null) ? $data['start_time_usage'] . ' - ' . $data['end_time_usage'] : null,
             'status' => $data['status'],
-            'is_vip' => $data['is_vip'],
+            'created_at' => Carbon::parse($data['created_at'])->format('Y-m-d H:i:s'),
+            'updated_at' => Carbon::parse($data['updated_at'])->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    private function respondDataMapingOrder($data)
+    {
+        return [
+            'number_tiket' => $data['number_tiket'],
+            'name' => $data['master_tiket']['name'],
+            'description' => $data['master_tiket']['description'],
+            'terms_and_conditions' => $data['master_tiket']['tnc'],
+            'event_address' => $data['master_tiket']['event_address'],
+            'customer_name' => $data['order']['buyer']['full_name'],
+            'customer_email' => $data['order']['buyer']['email'],
+            'customer_phone' => $data['order']['buyer']['phone'],
+            'usage_date' => $data['usage_date'],
+            'usage_time' => ($data['start_time_usage'] != null && $data['end_time_usage'] != null) ? $data['start_time_usage'] . ' - ' . $data['end_time_usage'] : null,
+            'status' => $data['status'],
+            // 'is_vip' => $data['is_vip'],
             'created_at' => Carbon::parse($data['created_at'])->format('d M Y H:i:s'),
             'updated_at' => Carbon::parse($data['updated_at'])->format('d M Y H:i:s'),
         ];
