@@ -35,14 +35,6 @@ class TiketController extends Controller
 
     public function cekOrder(Request $request)
     {
-        if (!$keyAccess = $request->header('Key-Access')) {
-            return $this->respondBadRequest('Header Key-Access diperlukan', static::$HEADER_KEY_ACCESS_REQUIRED);
-        }
-
-        if (config('credentials.tiket.api_hash') != md5($keyAccess)) {
-            return $this->respondBadRequest('Key-Access tidak valid', static::$HEADER_KEY_ACCESS_INVALID);
-        }
-
         $validator = Validator::make(
             $request->all(),
             [
@@ -108,14 +100,6 @@ class TiketController extends Controller
 
     public function scanQr(Request $request)
     {
-        if (!$keyAccess = $request->header('Key-Access')) {
-            return $this->respondBadRequest('Header Key-Access diperlukan', static::$HEADER_KEY_ACCESS_REQUIRED);
-        }
-
-        if (config('credentials.tiket.api_hash') != md5($keyAccess)) {
-            return $this->respondBadRequest('Key-Access tidak valid', static::$HEADER_KEY_ACCESS_INVALID);
-        }
-
         $validator = Validator::make(
             $request->all(),
             [
@@ -152,14 +136,6 @@ class TiketController extends Controller
 
     public function scanQrCheckIn(Request $request)
     {
-        if (!$keyAccess = $request->header('Key-Access')) {
-            return $this->respondBadRequest('Header Key-Access diperlukan', static::$HEADER_KEY_ACCESS_REQUIRED);
-        }
-
-        if (config('credentials.tiket.api_hash') != md5($keyAccess)) {
-            return $this->respondBadRequest('Key-Access tidak valid', static::$HEADER_KEY_ACCESS_INVALID);
-        }
-
         $validator = Validator::make(
             $request->all(),
             [
@@ -215,14 +191,6 @@ class TiketController extends Controller
 
     public function resendTicket(Request $request)
     {
-        if (!$keyAccess = $request->header('Key-Access')) {
-            return $this->respondBadRequest('Header Key-Access diperlukan', static::$HEADER_KEY_ACCESS_REQUIRED);
-        }
-
-        if (config('credentials.tiket.api_hash') != md5($keyAccess)) {
-            return $this->respondBadRequest('Key-Access tidak valid', static::$HEADER_KEY_ACCESS_INVALID);
-        }
-
         $validator = Validator::make(
             $request->all(),
             [
@@ -257,6 +225,42 @@ class TiketController extends Controller
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
+    }
+    //==== End of Tiket Proliga ====//
+
+    //==== Tiket PLN MUDIK 2023 ====//
+    public function checkInvoice(Request $request)
+    {
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'trx_no' => 'required|exists:order,trx_no',
+                'email' => 'required|email',
+            ],
+            [
+                'required' => ':attribute diperlukan.',
+                'exists' => 'Nomor invoice tidak ditemukan.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors);
+        }
+
+        //check if trx_no and email is valid and exist
+        $order = $this->tiketQueries->getOrder($request->get('trx_no'), $request->get('email'));
+
+        if (isset($order['status']) && $order['status'] == 'error') {
+            return $this->respondBadRequest($order['message'], $order['error_code']);
+        }
+
+        return $this->respondWithData($order);
     }
 
     private function respondBadRequest($message, $error_code, $data = null)

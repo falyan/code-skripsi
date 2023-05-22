@@ -507,12 +507,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('email/{order_id}', 'TransactionController@resendEmailVoucher');
     });
 
-    $router->group(['prefix' => 'tiket'], static function () use ($router) {
+    $router->group(['prefix' => 'tiket', 'middleware' => 'auth:tiket'], static function () use ($router) {
         $router->get('', 'TiketController@getTiket');
         $router->post('scan-qr', 'TiketController@scanQr');
         $router->post('scan-qr/check-in', 'TiketController@scanQrCheckIn');
-        $router->post('cek-order', 'TiketController@cekOrder');
-        $router->post('resend-mail', 'TiketController@resendTicket');
+        // $router->post('cek-order', 'TiketController@cekOrder');
+        // $router->post('resend-mail', 'TiketController@resendTicket');
     });
 
     $router->group(['prefix' => 'ev-subsidy'], static function () use ($router) {
