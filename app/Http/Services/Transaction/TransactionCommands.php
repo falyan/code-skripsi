@@ -590,13 +590,13 @@ class TransactionCommands extends Service
         $new_order_progress = new OrderProgress();
 
         $create_order_progress = [];
-        foreach($status_codes as $key => $status_code) {
+        foreach($status_codes as $status_code) {
             $create_order_progress[] = [
                 'order_id' => $order_id,
                 'status_code' => $status_code,
                 'status_name' => parent::$status_order[$status_code],
                 'note' => $note,
-                'status' => $status_code[count($status_codes) - 1] == $status_code ? 1 : 0,
+                'status' => $status_code == '03' ? 1 : 0,
                 'created_by' => 'system',
                 'updated_by' => 'system',
             ];
