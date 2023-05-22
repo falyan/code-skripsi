@@ -910,9 +910,21 @@ class TransactionController extends Controller
                 $status_code = collect($status_codes)->where('status_code', '01')->first();
 
                 if (count($status_codes) == 1 && $status_code['status'] == 1) {
-                    $response = $this->transactionCommand->updateOrderStatus($order_id, '02');
-                    if ($response['success'] == false) {
-                        return $response;
+                    if ($data->merchant->official_store_tiket) {
+                        $tiket = $this->transactionCommand->generateTicket($order_id);
+                        if ($tiket['success'] == false) {
+                            return $tiket;
+                        }
+
+                        $response = $this->transactionCommand->updateOrderStatusTiket($order_id);
+                        if ($response['success'] == false) {
+                            return $response;
+                        }
+                    } else {
+                        $response = $this->transactionCommand->updateOrderStatus($order_id, '02');
+                        if ($response['success'] == false) {
+                            return $response;
+                        }
                     }
 
                     $title = 'Pesanan Dikonfirmasi';
@@ -1126,13 +1138,6 @@ class TransactionController extends Controller
 
             $status_code = collect($status_codes)->where('status_code', '02')->first();
             if (count($status_codes) == 2 && $status_code['status'] == 1) {
-                if ($data->merchant->official_store_tiket) {
-                    $tiket = $this->transactionCommand->generateTicket($order_id);
-                    if ($tiket['success'] == false) {
-                        return $tiket;
-                    }
-                }
-
                 $response = $this->transactionCommand->addAwbNumberAuto($order_id);
                 if ($response['success'] == false) {
                     return $response;

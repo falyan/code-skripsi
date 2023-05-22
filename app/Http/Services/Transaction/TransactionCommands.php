@@ -576,6 +576,66 @@ class TransactionCommands extends Service
         return $response;
     }
 
+    public function updateOrderStatusTiket($order_id, $status_codes = ['02', '03', '08'], $note = null)
+    {
+        $old_order_progress = OrderProgress::where('order_id', $order_id)->get();
+        $total = count($old_order_progress) ?? 0;
+        if ($total >= 0) {
+            for ($i = 0; $i < $total; $i++) {
+                $old_order_progress[$i]->status = 0;
+                $old_order_progress[$i]->save();
+            }
+        }
+
+        $new_order_progress = new OrderProgress();
+
+        $create_order_progress = [];
+        foreach($status_codes as $key => $status_code) {
+            $create_order_progress[] = [
+                'order_id' => $order_id,
+                'status_code' => $status_code,
+                'status_name' => parent::$status_order[$status_code],
+                'note' => $note,
+                'status' => $status_code[count($status_codes) - 1] == $status_code ? 1 : 0,
+                'created_by' => 'system',
+                'updated_by' => 'system',
+            ];
+        }
+
+        if (!$new_order_progress->insert($create_order_progress)) {
+            $response['success'] = false;
+            $response['message'] = 'Gagal merubah status pesanan';
+            return $response;
+        }
+
+        $awb = $this->addAwbNumberAuto($order_id);
+        if (!$awb['success']) {
+            $response['success'] = false;
+            $response['message'] = $awb['message'];
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil merubah status pesanan';
+        $response['status_code'] = $status_code;
+        return $response;
+    }
+
+    public function updatePromoLog($promo_log_order)
+    {
+        $promo_merchant = PromoMerchant::find($promo_log_order->promo_merchant_id);
+        $promo_merchant->usage_value = $promo_merchant->usage_value - (int) $promo_log_order->value;
+        $promo_merchant->save();
+
+        $promo_master = PromoMaster::find($promo_log_order->promo_master_id);
+        $promo_master->usage_value = $promo_master->usage_value - (int) $promo_log_order->value;
+        $promo_master->save();
+
+        PromoLog::create(array_merge($promo_log_order->toArray(), [
+            'type' => 'add',
+        ]));
+    }
+
     public function triggerItemSold($order_id)
     {
         $order = Order::where('id', $order_id)->with('detail', function ($query) {
