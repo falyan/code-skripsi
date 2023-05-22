@@ -32,7 +32,7 @@ class CreateMasterTiketsTable extends Migration
             $table->softDeletes();
         });
 
-        Schema::create('user_tiket', function (Blueprint $table) {
+        Schema::create('customer_tiket', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('master_tiket_id');
             $table->unsignedBigInteger('order_id');
@@ -50,7 +50,7 @@ class CreateMasterTiketsTable extends Migration
         });
 
         Schema::table('merchant', function (Blueprint $table) {
-            $table->boolean('official_store_proliga')->default(false);
+            $table->boolean('official_store_tiket')->default(false);
         });
     }
 
@@ -64,7 +64,7 @@ class CreateMasterTiketsTable extends Migration
         Schema::table('merchant', function (Blueprint $table) {
             $table->dropColumn('official_store_ticket');
         });
-        Schema::dropIfExists('user_tiket');
+        Schema::dropIfExists('customer_tiket');
         Schema::dropIfExists('master_tiket');
     }
 }

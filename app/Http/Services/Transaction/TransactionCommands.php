@@ -19,7 +19,7 @@ use App\Models\Product;
 use App\Models\PromoLog;
 use App\Models\PromoMaster;
 use App\Models\PromoMerchant;
-use App\Models\UserTiket;
+use App\Models\CustomerTiket;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
@@ -828,7 +828,7 @@ class TransactionCommands extends Service
 
     public function generateTicket($order_id)
     {
-        $user_tikets = UserTiket::where('order_id', $order_id)->get();
+        $user_tikets = CustomerTiket::where('order_id', $order_id)->get();
 
         if (collect($user_tikets)->isNotEmpty()) {
             $response['success'] = true;
@@ -873,7 +873,7 @@ class TransactionCommands extends Service
                 $id = rand(10000, 99999);
                 $number_tiket = (string) time() . (string)$id;
 
-                $user_tikets[] = UserTiket::create([
+                $user_tikets[] = CustomerTiket::create([
                     'order_id' => $order_id,
                     'master_tiket_id' => $master_tiket->id,
                     'number_tiket' => $number_tiket,

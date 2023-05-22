@@ -19,6 +19,6 @@ class MasterTiket extends Model
 
     public function user_tiket()
     {
-        return $this->hasMany(UserTiket::class, 'master_tiket_id', 'id');
+        return $this->hasMany(CustomerTiket::class, 'master_tiket_id', 'id');
     }
 }

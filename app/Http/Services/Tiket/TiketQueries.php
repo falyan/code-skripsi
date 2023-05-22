@@ -5,7 +5,7 @@ namespace App\Http\Services\Tiket;
 use App\Http\Services\Service;
 use App\Models\MasterData;
 use App\Models\Order;
-use App\Models\UserTiket;
+use App\Models\CustomerTiket;
 use Carbon\Carbon;
 
 class TiketQueries extends Service
@@ -24,7 +24,7 @@ class TiketQueries extends Service
 
     public function getTiket($qr)
     {
-        $tiket = UserTiket::where('number_tiket', $qr)->first();
+        $tiket = CustomerTiket::where('number_tiket', $qr)->first();
 
         if (!$tiket) {
             return [
@@ -124,7 +124,7 @@ class TiketQueries extends Service
             $master_data_tiket[] = $detail->product->category;
         }
 
-        $user_tikets = UserTiket::with('master_tiket')->where('order_id', $order->id)->get();
+        $user_tikets = CustomerTiket::with('master_tiket')->where('order_id', $order->id)->get();
 
         $tikets = [];
         foreach ($user_tikets as $user_tiket) {

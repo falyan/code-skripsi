@@ -4,7 +4,7 @@ namespace App\Http\Services\Manager;
 
 use App\Http\Services\Transaction\TransactionQueries;
 use App\Models\Order;
-use App\Models\UserTiket;
+use App\Models\CustomerTiket;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -334,7 +334,7 @@ class MailSenderManager
             $master_data_tiket[] = $detail->product->category;
         }
 
-        $user_tikets = UserTiket::with('master_tiket')->whereIn('id', collect($user_tikets)->pluck('id')->toArray())->get();
+        $user_tikets = CustomerTiket::with('master_tiket')->whereIn('id', collect($user_tikets)->pluck('id')->toArray())->get();
 
         //generate ticket pdf and send to customer
         $attachments = [];

@@ -1126,7 +1126,7 @@ class TransactionController extends Controller
 
             $status_code = collect($status_codes)->where('status_code', '02')->first();
             if (count($status_codes) == 2 && $status_code['status'] == 1) {
-                if ($data->merchant->official_store_proliga) {
+                if ($data->merchant->official_store_tiket) {
                     $tiket = $this->transactionCommand->generateTicket($order_id);
                     if ($tiket['success'] == false) {
                         return $tiket;
@@ -1163,7 +1163,8 @@ class TransactionController extends Controller
 
                 DB::commit();
                 $mailSender = new MailSenderManager();
-                if ($data->merchant->official_store_proliga) {
+                if ($data->merchant->official_store_tiket) {
+                    // dispatch(new SendEmailTiketJob($order_id, $tiket['data']));
                     $mailSender->mailSendTicket($order_id, $tiket['data']);
                 } else {
                     $mailSender->mailOrderOnDelivery($order_id);
@@ -1909,7 +1910,7 @@ class TransactionController extends Controller
                     $tiket = null;
                     $status_code = collect($status_codes)->where('status_code', '02')->first();
                     if ($status_code['status_code'] == '02' && $status_code['status'] == 1) {
-                        if ($data->merchant->official_store_proliga) {
+                        if ($data->merchant->official_store_tiket) {
                             $tiket = $this->transactionCommand->generateTicket($order_id);
                             if ($tiket['success'] == false) {
                                 return $tiket;
@@ -1934,7 +1935,7 @@ class TransactionController extends Controller
                         $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
                         $mailSender = new MailSenderManager();
-                        if ($data->merchant->official_store_proliga) {
+                        if ($data->merchant->official_store_tiket) {
                             // dispatch(new SendEmailTiketJob($order_id, $tiket['data']));
                             $mailSender->mailSendTicket($order_id, $tiket['data']);
                         } else {
