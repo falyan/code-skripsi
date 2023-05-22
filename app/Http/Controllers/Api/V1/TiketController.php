@@ -123,7 +123,7 @@ class TiketController extends Controller
 
         $tiket = $this->tiketQueries->getTiket($request->get('qr'));
         if (isset($tiket['status']) && $tiket['status'] == 'error') {
-            return $this->respondBadRequest($tiket['message'], $tiket['error_code'], isset($tiket['data']) ? $tiket['data'] : null);
+            return $this->respondBadRequest($tiket['message'], $tiket['error_code'], isset($tiket['data']) ? $this->respondDataMaping($tiket['data']) : null);
         }
 
         return [

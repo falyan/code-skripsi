@@ -48,9 +48,7 @@ class TiketQueries extends Service
                 'error_code' => static::$TICKET_HAS_USED,
                 'status' => 'error',
                 'message' => 'Tiket telah digunakan',
-                'data' => [
-                    'used_at' => Carbon::parse($tiket->updated_at)->format('Y-m-d H:i:s'),
-                ],
+                'data' => $tiket,
             ];
         }
 
