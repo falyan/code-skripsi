@@ -235,6 +235,8 @@ class TransactionQueries extends Service
 
         unset($data->promo_log_orders);
         $data->detail = $details;
+        $data->buyer->full_name = $data->delivery->receiver_name;
+        $data->buyer->phone = $data->delivery->receiver_phone;
 
         $data->iconpay_product_id = static::$productid;
 
