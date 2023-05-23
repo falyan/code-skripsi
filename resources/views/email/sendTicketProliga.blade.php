@@ -28,7 +28,7 @@
             align-items: center;
           ">
                 <div>
-                    <img src="https://api-central.air.id/plnmp-sauron-staging/api/firebase/file/load/Marketplace~merchants~1684815896a3e79896-1614-438e-a068-02066220df9e.png"
+                    <img src="https://cdn.discordapp.com/attachments/1070177904723497042/1070178023678148679/PLN_PRO_LIGA_2023_LOGO_1_1.png"
                         alt="" style="max-width: 125px" />
                 </div>
                 <div>
@@ -61,12 +61,10 @@
               padding-bottom: 24px;
               border-bottom: 1px dashed #d9d9d9;
             ">
-                    Halo, Joshua Prima 🖐🏻
-
                     Email ini adalah konfirmasi pemesanan tiket Anda untuk acara
-                    <strong>GJLS x PLN Mobile - Bandung - 16 Juni 2023.</strong>
-                    Berikut kami lampirkan tiket untuk kenyamanan Anda.
-                    Pada hari acara, harap scan barcode di loket penukaran tiket untuk memasuki event.
+                    <strong>PRO LIGA Bola Voli 2023.</strong> Berikut kami lampirkan
+                    tiket untuk kenyamanan Anda. Pada hari acara, harap scan barcode di
+                    loket penukaran tiket untuk memasuki event.
                 </p>
             </td>
         </tr>
@@ -115,21 +113,21 @@
                     </tr>
                     <tr>
                         <td>
-                            <span style="font-size: 14px; color: #595a5b"> No. Handphone </span>
-                        </td>
-                        <td>
-                            <span style="font-size: 14px; color: #595a5b">
-                                <strong>{{ $order->buyer->phone }}</strong>
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
                             <span style="font-size: 14px; color: #595a5b"> Email </span>
                         </td>
                         <td>
                             <span style="font-size: 14px; color: #595a5b">
                                 <strong>{{ $order->buyer->email }}</strong>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span style="font-size: 14px; color: #595a5b"> No. HP </span>
+                        </td>
+                        <td>
+                            <span style="font-size: 14px; color: #595a5b">
+                                <strong>{{ $order->buyer->phone }}</strong>
                             </span>
                         </td>
                     </tr>
@@ -187,7 +185,7 @@
                             <strong>Harga Tiket</strong>
                         </td>
                         <td>
-                            <strong>Kuantitas</strong>
+                            <strong>Qty</strong>
                         </td>
                         <td>
                             <strong>Total</strong>
@@ -207,7 +205,7 @@
                     <tr style="font-size: 14px; color: #595a5b">
                         <td></td>
                         <td>
-                            <strong>Total Bayar</strong>
+                            <strong>Total</strong>
                         </td>
                         <td></td>
                         <td>
