@@ -241,6 +241,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->post('filter', 'ProductController@getProductWithFilter');
                 $router->post('filter/count', 'ProductController@countProductWithFilter');
                 $router->post('check/stock', 'ProductController@checkProductStock');
+                $router->get('tiket', 'ProductController@getTiketProduct');
             });
 
             $router->group(['prefix' => 'variant'], static function () use ($router) {

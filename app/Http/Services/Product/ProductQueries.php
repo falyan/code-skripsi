@@ -5,6 +5,7 @@ namespace App\Http\Services\Product;
 use App\Http\Services\Service;
 use App\Models\MasterData;
 use App\Models\MasterEvStore;
+use App\Models\MasterTiket;
 use App\Models\MasterVariant;
 use App\Models\Merchant;
 use App\Models\Product;
@@ -1296,6 +1297,80 @@ class ProductQueries extends Service
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
         $data = $this->productPaginate($sorted_data, $limit);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function getTiketProduct($limit, $filter = [], $sortby = null, $current_page = 1)
+    {
+        $tikets = MasterTiket::with(['master_data', 'master_data.parent', 'master_data.parent.parent'])->where('status', 1)->get();
+
+        $masterDataKeys = collect($tikets)->pluck('master_data.parent.parent.key')->toArray();
+
+        $categories = MasterData::with(['child', 'child.child'])->where([
+            'type' => 'product_category',
+        ])->whereIn('key', $masterDataKeys)->get();
+
+        $cat_child_id = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    foreach ($child->child as $children) {
+                        array_push($cat_child_id, $children->id);
+                    }
+                }
+            }
+        }
+
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where([
+            'status' => 1,
+        ])->with([
+            'product_stock', 'product_photo', 'is_wishlist',
+            'merchant.city:id,name',
+            'merchant.promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                });
+            },
+            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_values',
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+            'ev_subsidy',
+        ])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereIn('category_id', $cat_child_id);
+
+        $products;
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $data = $this->productPaginate($sorted_data, $limit);
+
+        $data = array_map(function ($item) use ($tikets) {
+            foreach ($tikets as $key => $tiket) {
+                if ($item['category_id'] == $tiket->master_data->id) {
+                    $item['tiket'] = $tiket;
+                    break;
+                } else {
+                    $item['tiket'] = null;
+                }
+            }
+
+            unset($item['tiket']['master_data']);
+
+            return $item;
+        }, $data->toArray()['data']);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';

@@ -21,4 +21,9 @@ class MasterTiket extends Model
     {
         return $this->hasMany(CustomerTiket::class, 'master_tiket_id', 'id');
     }
+
+    public function master_data()
+    {
+        return $this->belongsTo(MasterData::class, 'master_data_key', 'key');
+    }
 }
