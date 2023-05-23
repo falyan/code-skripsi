@@ -22,47 +22,38 @@
     <table width="600" align="center" style="border-spacing: 10px; background: #ffffff; padding: 48px">
         <tr>
             <td
-                style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          ">
+                style="display: flex;
+                justify-content: space-between;
+                align-items: center;
+            ">
                 <div>
                     <img src="https://api-central.air.id/plnmp-sauron-staging/api/firebase/file/load/Marketplace~merchants~1684815896a3e79896-1614-438e-a068-02066220df9e.png"
-                        alt="" style="max-width: 125px" />
+                        alt="" style="width: 105px" />
                 </div>
                 <div>
                     <img src="https://media.discordapp.net/attachments/830329995989352458/1062551640978247770/pln-mobile-logo.png"
-                        alt="" style="max-width: 125px" />
+                        alt="" style="width: 80px" />
                 </div>
             </td>
         </tr>
         <tr>
             <td>
                 <p
-                    style="
-              font-weight: 400;
-              font-size: 16px;
-              line-height: 140%;
-              color: #323232;
-            ">
+                    style="font-weight: 400;
+                    font-size: 16px;
+                    line-height: 100%;
+                    color: #323232;
+                ">
                     Halo, {{ $destination_name }}! 🖐🏻
                 </p>
-            </td>
-        </tr>
-        <tr>
-            <td>
                 <p
-                    style="
-              font-weight: 400;
-              font-size: 16px;
-              line-height: 140%;
-              color: #323232;
-              padding-bottom: 24px;
-              border-bottom: 1px dashed #d9d9d9;
-            ">
-                    Halo, Joshua Prima 🖐🏻
-
+                    style="font-weight: 400;
+                    font-size: 16px;
+                    line-height: 140%;
+                    color: #323232;
+                    padding-bottom: 24px;
+                    border-bottom: 1px dashed #d9d9d9;
+                ">
                     Email ini adalah konfirmasi pemesanan tiket Anda untuk acara
                     <strong>GJLS x PLN Mobile - Bandung - 16 Juni 2023.</strong>
                     Berikut kami lampirkan tiket untuk kenyamanan Anda.
@@ -73,24 +64,24 @@
         <tr>
             <td
                 style="
-            font-weight: 600;
-            font-size: 14px;
-            line-height: 19px;
-            color: #595a5b;
-            display: flex;
-            align-items: center;
-          ">
+                font-weight: 600;
+                font-size: 14px;
+                line-height: 19px;
+                color: #595a5b;
+                display: flex;
+                align-items: center;
+            ">
                 <table
                     style="
-              width: 100%;
-              border-spacing: 10px;
-              background: #f8f8f9;
-              margin-top: 5px;
-              margin-bottom: 16px;
-              color: #ffffff;
-              border-radius: 8px;
-              padding: 10px;
-            ">
+                    width: 100%;
+                    border-spacing: 10px;
+                    background: #f8f8f9;
+                    margin-top: 5px;
+                    margin-bottom: 16px;
+                    color: #ffffff;
+                    border-radius: 8px;
+                    padding: 10px;
+                ">
                     <tr>
                         <td>
                             <span style="font-size: 14px; color: #595a5b">
@@ -137,10 +128,22 @@
                         <td>
                             <span style="font-size: 14px; color: #595a5b"> Waktu </span>
                         </td>
+                        @php
+                            \Carbon\Carbon::setLocale('id');
+                            $date = tanggalDate($user_tikets[0]->usage_date);
+                            $time_start = \Carbon\Carbon::createFromFormat('H:i:s', $user_tikets[0]->start_time_usage)->format('H:i');
+                            $time_end = \Carbon\Carbon::createFromFormat('H:i:s', $user_tikets[0]->end_time_usage)->format('H:i');
+                        @endphp
                         <td>
-                            <span style="font-size: 14px; color: #595a5b">
-                                <strong>{{ \Carbon\Carbon::now()->format('d M Y H:m') }}</strong>
-                            </span>
+                            @if ($user_tikets[0]->start_time_usage != null && $user_tikets[0]->end_time_usage != null)
+                                <span style="font-size: 14px; color: #595a5b">
+                                    <strong>{{ $date . ', ' . $time_start . '-' . $time_end . ' WIB' }}</strong>
+                                </span>
+                            @else
+                                <span style="font-size: 14px; color: #595a5b">
+                                    <strong>{{ $date }}</strong>
+                                </span>
+                            @endif
                         </td>
                     </tr>
                     <tr>
@@ -160,21 +163,22 @@
             <td style="display: flex; align-items: top">
                 <table
                     style="
-              width: 100%;
-              border-spacing: 10px;
-              background: #f8f8f9;
-              margin-top: 5px;
-              margin-bottom: 16px;
-              color: #ffffff;
-              border-radius: 8px;
-              padding: 10px;
-            ">
+                    width: 100%;
+                    border-spacing: 10px;
+                    background: #f8f8f9;
+                    margin-top: 5px;
+                    margin-bottom: 16px;
+                    color: #ffffff;
+                    border-radius: 8px;
+                    padding: 10px;
+                ">
                     <!-- Header table -->
                     <tr>
-                        <td style="width: 50%">
-                            <span style="font-size: 20px; color: #595a5b">
+                        <td style="width: 30%;">
+                            <span style="font-size: 16px; color: #595a5b;">
                                 <strong>Detail Tiket</strong>
                             </span>
+                            <p></p>
                         </td>
                     </tr>
                     <!-- End Header table -->
@@ -227,27 +231,27 @@
         margin-bottom: 17px;
         color: #ffffff;
         border-radius: 8px;
-      ">
+    ">
         <tr>
             <td>
                 <p
                     style="
-              text-align: center;
-              font-weight: 800;
-              font-size: 16px;
-              line-height: 22px;
-              margin-bottom: 16px;
-            ">
+                    text-align: center;
+                    font-weight: 800;
+                    font-size: 16px;
+                    line-height: 22px;
+                    margin-bottom: 16px;
+                ">
                     Punya Pertanyaan?
                 </p>
                 <p
                     style="
-              text-align: center;
-              font-weight: 400;
-              font-size: 14px;
-              line-height: 19px;
-              margin: 0;
-            ">
+                    text-align: center;
+                    font-weight: 400;
+                    font-size: 14px;
+                    line-height: 19px;
+                    margin: 0;
+                ">
                     Hubungi PLN Mobile Help Center disini:
                 </p>
             </td>
@@ -276,11 +280,11 @@
             <td align="center">
                 <p
                     style="
-              font-weight: 700;
-              font-size: 16px;
-              line-height: 22px;
-              color: #666666;
-            ">
+                    font-weight: 700;
+                    font-size: 16px;
+                    line-height: 22px;
+                    color: #666666;
+                ">
                     Download PLN Mobile di
                 </p>
             </td>

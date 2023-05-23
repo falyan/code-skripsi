@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>E-Ticket GJLS x PLN Mobile</title>
+    <title>E-Ticket PLN Mobile Pro Liga 2023</title>
 
     <style>
         table,
@@ -39,12 +39,12 @@
             align-items: center;
             justify-content: space-between;
         ">
-            <img src="{{ storage_path('assets/logo-tiket-gjls.png') }}" alt="image" style="width: 105px;" />
+            <img src="{{ storage_path('assets/logo-tiket-proliga.png') }}" alt="image" style="width: 150px;" />
         </div>
 
         <div style="width: 100%; padding-top: 10px">
             <span style="font-family: Nunito; font-size: 24px; font-weight: bold">
-                <p>E-Ticket GJLS x PLN Mobile</p>
+                <p>E-Ticket Pro Liga 2023</p>
             </span>
         </div>
 
@@ -94,16 +94,10 @@
                         {{ $customer->full_name }}
                     </td>
                     <td style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                        @php
-                            \Carbon\Carbon::setLocale('id');
-                            $date = tanggalDate($user_tiket->usage_date);
-                            $time_start = \Carbon\Carbon::createFromFormat('H:i:s', $user_tiket->start_time_usage)->format('H:i');
-                            $time_end = \Carbon\Carbon::createFromFormat('H:i:s', $user_tiket->end_time_usage)->format('H:i');
-                        @endphp
                         @if ($user_tiket->start_time_usage == null && $user_tiket->end_time_usage == null)
-                            {{ $date }}
+                            {{ \Carbon\Carbon::parse($user_tiket->usage_date)->format('d M Y') }}
                         @else
-                            {{ $date . ', ' . $time_start . '-' . $time_end . ' WIB' }}
+                            {{ \Carbon\Carbon::parse($user_tiket->usage_date)->format('d M Y') . ' ' . \Carbon\Carbon::parse($user_tiket->start_time_usage)->format('H:i') . ' - ' . \Carbon\Carbon::parse($user_tiket->end_time_usage)->format('H:i') . ' WIB' }}
                         @endif
                     </td>
                 </tr>
@@ -140,7 +134,7 @@
                             style="width: 85px" />
                         <br>
                         <span style="font-family: Nunito;font-size: 14px;color: #595a5b;font-weight: bold;">
-                            GJLS x PLN Mobile - Bandung - 16 Juni 2023
+                            Pro Liga 2023
                         </span>
                         <br>
                         @if ($user_tiket['is_vip'])
@@ -164,12 +158,9 @@
 
                 </td>
                 <td style="width: 70%">
-                    <div style="float: right; margin-top:14px">
-                        <img src="{{ storage_path('assets/gambar-gjls-1.png') }}"
-                            alt="Ticket Image"
-                            style="border-radius: 14px; width: 100%"
-                        />
-                    </div>
+                    <div style="float: right;">
+                        <img src="{{ storage_path('assets/gambar-proliga-1.png') }}" alt="Ticket Image"
+                            style="border-radius: 14px; width: 95%" />
                 </td>
             </tr>
         </table>

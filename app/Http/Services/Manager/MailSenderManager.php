@@ -377,7 +377,7 @@ class MailSenderManager
 
         Mail::send('email.sendTicket', $data, function ($mail) use ($customer, $attachments, $order) {
             $mail->to($customer->email, 'no-reply')
-                ->subject("Pemesanan Tiket PLN Mobile Proliga 2023");
+                    ->subject("Pemesanan Tiket GJLS COMEDY NIGHT");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
             foreach ($attachments as $file_path) {
                 $mail->attach($file_path);
@@ -446,7 +446,7 @@ class MailSenderManager
 
         Mail::send('email.sendTicket', $data, function ($mail) use ($customer, $attachments, $order) {
             $mail->to($customer->email, 'no-reply')
-                ->subject("[Pengiriman Ulang] Tiket PLN Mobile Proliga 2023");
+                    ->subject("Pemesanan Tiket GJLS COMEDY NIGHT");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
             foreach ($attachments as $file_path) {
                 $mail->attach($file_path);
