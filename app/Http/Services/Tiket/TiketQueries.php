@@ -94,6 +94,25 @@ class TiketQueries extends Service
         return $tiket;
     }
 
+    public function getDashboard()
+    {
+        $getTiket = CustomerTiket::with(['master_tiket'])
+        ->whereHas(
+            'master_tiket',
+            function ($query) {
+                $query->where('status', 1);
+            }
+        )
+        ->get();
+
+        $tiket = collect($getTiket);
+
+        return [
+            'total_tiket' => $tiket->count(),
+            'total_tiket_claim' => $tiket->where('status', 2)->count(),
+        ];
+    }
+
     public function getTiketByOrder($trx_no, $withId = false)
     {
         if ($withId) {
@@ -149,7 +168,7 @@ class TiketQueries extends Service
         return $tikets;
     }
 
-    public function getTiketAll($limit = 10)
+    public function getTiketAll($limit = 10, $keyword = null)
     {
         $tikets = CustomerTiket::with(['master_tiket', 'order', 'order.buyer'])
             ->whereHas(
@@ -158,6 +177,15 @@ class TiketQueries extends Service
                     $query->where('status', 1);
                 }
             )
+            ->when($keyword, function ($query, $keyword) {
+                $query->whereHas('order', function ($query) use ($keyword) {
+                    $query->whereHas('buyer', function ($query) use ($keyword) {
+                        $query->where('full_name', 'ILIKE', '%' . $keyword . '%');
+                        $query->orWhere('email', 'ILIKE', '%' . $keyword . '%');
+                        $query->orWhere('phone', 'ILIKE', '%' . $keyword . '%');
+                    });
+                });
+            })
             ->paginate($limit);
 
         if (!$tikets) {
