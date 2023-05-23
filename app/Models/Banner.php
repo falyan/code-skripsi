@@ -19,6 +19,7 @@ class Banner extends Model
         'is_video',
         'type',
         'status',
+        'link_url',
         'created_by',
         'updated_by',
     ];

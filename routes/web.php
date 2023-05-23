@@ -498,6 +498,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->get('all', 'BannerController@getAllBanner');
         $router->get('flash-popup', 'BannerController@getFlashPopup');
         $router->get('type/{type}', 'BannerController@getBannerByType');
+        $router->get('home', 'BannerController@getHomeBannerByType');
+        $router->post('create', 'BannerController@createBanner');
+        $router->delete('delete/{id}', 'BannerController@deleteBanner');
     });
 
     $router->group(['prefix' => 'version'], static function () use ($router) {

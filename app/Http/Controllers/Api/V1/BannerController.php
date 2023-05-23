@@ -41,48 +41,57 @@ class BannerController extends Controller
         }
     }
 
+    public function getHomeBannerByType(Request $request)
+    {
+        try {
+            $type = $request->type;
+
+            $data = $this->bannerQueries->getHomeBannerByType($type);
+            return $this->respondWithData($data['data'], $data['message']);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     // //Create Banner
-    // public function createBanner(Request $request)
-    // {
-    //     try {
-    //         $rules = [
-    //             'url' => 'required',
-    //             'type' => 'required',
-    //         ];
+    public function createBanner(Request $request)
+    {
+        try {
+            $rules = [
+                'url' => 'required',
+                'type' => 'required',
+            ];
 
-    //         $validator = Validator::make(request()->all(), $rules, [
-    //             'required' => ':attribute diperlukan.',
-    //         ]);
+            $validator = Validator::make(request()->all(), $rules, [
+                'required' => ':attribute diperlukan.',
+            ]);
 
-    //         if ($validator->fails()) {
-    //             $errors = collect();
-    //             foreach ($validator->errors()->getMessages() as $key => $value) {
-    //                 foreach ($value as $error) {
-    //                     $errors->push($error);
-    //                 }
-    //             }
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
 
-    //             return $this->respondValidationError($errors, 'Validation Error!');
-    //         }
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
 
-    //         $request['full_name'] = Auth::user()->full_name;
-
-    //         return $this->bannerCommands->createBanner($request);
-
-    //     } catch(Exception $e) {
-    //         return $this->respondErrorException($e, request());
-    //     }
-    // }
+            return $this->bannerCommands->createBanner($request);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
 
     // //Delete Banner
-    // public function deleteBanner($banner_id)
-    // {
-    //     try {
-    //         return $this->bannerCommands->deleteBanner($banner_id);
-    //     } catch(Exception $e) {
-    //         return $this->respondErrorException($e, request());
-    //     }
-    // }
+    public function deleteBanner($banner_id)
+    {
+        try {
+            return $this->bannerCommands->deleteBanner($banner_id);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
 
     public function getFlashPopup()
     {
