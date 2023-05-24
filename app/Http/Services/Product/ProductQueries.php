@@ -418,7 +418,7 @@ class ProductQueries extends Service
         //     });
         // }])->where('id', $id)->first();
 
-        $data = Product::withCount(['order_details' => function ($details) {
+        $product = Product::withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
@@ -454,26 +454,34 @@ class ProductQueries extends Service
             })
             ->where('product_id', $id)->orderBy('main_variant', 'desc')->get();
 
-        $data['variants'] = $master_variants;
-        $data['variant_value_products'] = $variant_value_product;
+        $product['variants'] = $master_variants;
+        $product['variant_value_products'] = $variant_value_product;
 
-        if (!$data) {
+        if (!$product) {
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data produk!';
-            $response['data'] = $data;
+            $response['data'] = $product;
             return $response;
         }
 
-        $data['variants'] = $master_variants;
-        $data['variant_value_products'] = $variant_value_product;
+        $category = MasterData::where('id', $product->category_id)->first();
 
-        $data['avg_rating'] = ($data->reviews()->count() > 0) ? round($data->reviews()->avg('rate'), 1) : 0.0;
-        $data->reviews = null;
-        //        $data->avg_rating = null;
+        $master_tiket = MasterTiket::where('master_data_key', $category->key)->first();
+
+        $product['variants'] = $master_variants;
+        $product['variant_value_products'] = $variant_value_product;
+
+
+        $item = $product->toArray();
+
+        $item['tiket'] = $master_tiket;
+
+        $item['avg_rating'] = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+        $item['reviews'] = null;
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $data;
+        $response['data'] = $item;
         return $response;
     }
 
