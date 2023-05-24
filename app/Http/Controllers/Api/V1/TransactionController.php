@@ -965,7 +965,7 @@ class TransactionController extends Controller
                         }
                     }
 
-                    // DB::commit();
+                    DB::commit();
 
                     $mailSender = new MailSenderManager();
                     if ($data->merchant->official_store_tiket) {
