@@ -164,10 +164,10 @@
 
                 </td>
                 <td style="width: 70%">
-                    <div style="float: right; margin-top:14px">
+                    <div style="float: right; margin-top:14px; margin-right: 80px">
                         <img src="{{ storage_path('assets/gambar-gjls-1.png') }}"
                             alt="Ticket Image"
-                            style="border-radius: 14px; width: 100%"
+                            style="border-radius: 14px; width: 120%"
                         />
                     </div>
                 </td>
