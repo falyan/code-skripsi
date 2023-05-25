@@ -422,6 +422,7 @@ class TransactionQueries extends Service
     public function countCheckoutPriceV2($customer, $datas)
     {
         $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = 0;
+        $message_error = '';
 
         $new_merchant = [];
         $ev_subsidies = [];
