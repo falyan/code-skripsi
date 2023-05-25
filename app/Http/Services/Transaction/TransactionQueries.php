@@ -5,8 +5,10 @@ namespace App\Http\Services\Transaction;
 use App\Http\Services\Service;
 use App\Models\City;
 use App\Models\CustomerDiscount;
+use App\Models\CustomerTiket;
 use App\Models\DeliveryDiscount;
 use App\Models\MasterData;
+use App\Models\MasterTiket;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\OrderDelivery;
@@ -594,6 +596,34 @@ class TransactionQueries extends Service
         $datas['total_insentif'] = $total_insentif;
         $datas['total_payment'] -= $total_discount;
         $datas['total_payment'] -= $total_insentif;
+
+        if ($message_error != '') {
+            $datas['success'] = false;
+            $datas['status_code'] = 402;
+            $datas['message'] = $message_error;
+        } else {
+            $datas['success'] = true;
+            $datas['status_code'] = null;
+            $datas['message'] = 'Berhasil menghitung total pembayaran';
+        }
+
+        // validasi tiket
+        $master_tikets = MasterTiket::with(['master_data'])->get();
+        foreach ($new_product as $product) {
+            $tiket = collect($master_tikets)->where('master_data.id', $product['category_id'])->first();
+
+            if($tiket) {
+                $customer_tiket = CustomerTiket::whereHas('order', function($q) use ($customer) {
+                    $q->where('buyer_id', $customer->id);
+                })->get();
+
+                if (collect($customer_tiket)->count() > 4) {
+                    $datas['success'] = false;
+                    $datas['status_code'] = 402;
+                    $datas['message'] = 'Anda sudah mencapai batas maksimal pembelian tiket';
+                }
+            }
+        }
 
         return $datas;
     }
