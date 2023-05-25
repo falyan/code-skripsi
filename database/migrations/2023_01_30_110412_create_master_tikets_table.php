@@ -28,6 +28,7 @@ class CreateMasterTiketsTable extends Migration
             $table->time('end_time_usage')->nullable();
             $table->float('status');
             $table->json('tnc')->nullable();
+            $table->json('badge')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

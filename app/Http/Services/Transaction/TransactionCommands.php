@@ -900,50 +900,32 @@ class TransactionCommands extends Service
             return $response;
         }
 
-        $categories = MasterData::with(['child' => function ($j) {
-            $j->with('child');
-        }])->where('key', 'prodcat_tiket')->get();
+        $active_master_tikets = MasterTiket::with(['master_data'])
+            ->where('status', 1)->get();
 
-        $cat_child = [];
-        foreach ($categories as $category) {
-            foreach ($category->child as $child) {
-                if (!$child->child->isEmpty()) {
-                    foreach ($child->child as $children) {
-                        array_push($cat_child, $children);
-                    }
-                }
-            }
-        }
+        $cat_child = collect($active_master_tikets)->pluck('master_data')->toArray();
 
-        $cat_ticket = [];
+        $user_tikets = [];
         $order = Order::where('id', $order_id)->first()->load('detail.product');
         foreach ($order->detail as $detail) {
             if (in_array($detail->product->category_id, collect($cat_child)->pluck('id')->toArray())) {
-                $ticket = collect($cat_child)->where('id', $detail->product->category_id)->first();
-                $ticket['quantity'] = $detail->quantity;
+                $master_tiket = collect($active_master_tikets)->where('master_data.id', $detail->product->category_id)->first();
+                $master_tiket['quantity'] = $detail->quantity;
 
-                $cat_ticket[] = $ticket;
-            }
-        }
+                for ($i = 0; $i < $master_tiket['quantity']; $i++) {
+                    $id = rand(10000, 99999);
+                    $number_tiket = (string) time() . (string) $id;
 
-        $master_tikets = MasterTiket::whereIn('master_data_key', collect($cat_ticket)->pluck('key')->toArray())->get();
-
-        foreach ($master_tikets as $master_tiket) {
-            $ticket = collect($cat_ticket)->where('key', $master_tiket->master_data_key)->first();
-
-            for ($i = 0; $i < $ticket['quantity']; $i++) {
-                $id = rand(10000, 99999);
-                $number_tiket = (string) time() . (string)$id;
-
-                $user_tikets[] = CustomerTiket::create([
-                    'order_id' => $order_id,
-                    'master_tiket_id' => $master_tiket->id,
-                    'number_tiket' => $number_tiket,
-                    'usage_date' => $master_tiket->usage_date,
-                    'start_time_usage' => $master_tiket->start_time_usage,
-                    'end_time_usage' => $master_tiket->end_time_usage,
-                    'status' => 1,
-                ]);
+                    $user_tikets[] = CustomerTiket::create([
+                        'order_id' => $order_id,
+                        'master_tiket_id' => $master_tiket['id'],
+                        'number_tiket' => $number_tiket,
+                        'usage_date' => $master_tiket['usage_date'],
+                        'start_time_usage' => $master_tiket['start_time_usage'],
+                        'end_time_usage' => $master_tiket['end_time_usage'],
+                        'status' => 1,
+                    ]);
+                }
             }
         }
 

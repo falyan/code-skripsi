@@ -15,6 +15,7 @@ class MasterTiket extends Model
 
     protected $casts = [
         'tnc' => 'array',
+        'badge' => 'array',
     ];
 
     public function user_tiket()

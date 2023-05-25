@@ -49,12 +49,9 @@
         </div>
 
         <!-- Span text with background radius Red -->
-        @if ($user_tiket['is_vip'])
+        @if ($user_tiket->master_tiket->badge != null)
             <span
-                style=" background-color: #fcc71d33;color: #fcc71d;padding: 8px 16px; border-radius: 8px; font-family: Nunito; font-size: 16px;">VIP</span>
-        @else
-            <span
-                style="background-color: #831d641a;color: #831d64;padding: 8px 16px;border-radius: 8px;font-family: Nunito;font-size: 16px;">Reguler</span>
+                style=" background-color: {{ $user_tiket->master_tiket->badge['background-color'] }};color: {{ $user_tiket->master_tiket->badge['color'] }};padding: 8px 16px; border-radius: 8px; font-family: Nunito; font-size: 16px;">{{ $user_tiket->master_tiket->badge['title'] }}</span>
         @endif
 
         <div style="width: 100%; padding-top: 10px; margin-top:18px">
@@ -143,13 +140,9 @@
                             GJLS x PLN Mobile - Bandung - 16 Juni 2023
                         </span>
                         <br>
-                        @if ($user_tiket['is_vip'])
+                        @if ($user_tiket->master_tiket->badge != null)
                             <span style="font-family: Nunito; font-size: 12px; color: #595a5b">
-                                VIP
-                            </span>
-                        @else
-                            <span style="font-family: Nunito; font-size: 12px; color: #595a5b">
-                                Reguler
+                                {{ $user_tiket->master_tiket->badge['title'] }}
                             </span>
                         @endif
                         <br />
