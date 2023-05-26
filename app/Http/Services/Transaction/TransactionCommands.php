@@ -83,7 +83,49 @@ class TransactionCommands extends Service
                 }
             }
 
-            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date) {
+            // validasi tiket
+            $master_tikets = MasterTiket::with(['master_data'])->where('status', 1)->get();
+            $customer_tiket = Order::with(['detail', 'detail.product'])->where('buyer_id', $customer->id)
+                ->whereHas('progress_active', function($q) {
+                    $q->whereIn('status_code', ['00', '01', '02', '03','08', '88']);
+                })
+                ->whereHas('detail', function($q) use ($master_tikets) {
+                    $q->whereHas('product', function($q) use ($master_tikets) {
+                        $q->whereIn('category_id', collect($master_tikets)->pluck('master_data.id')->toArray());
+                    });
+                })->get();
+
+            $count_tiket = 0;
+            foreach ($customer_tiket as $order) {
+                foreach ($order->detail as $detail) {
+                    $tiket = collect($master_tikets)->where('master_data.id', $detail->product->category_id)->first();
+
+                    if($tiket) {
+                        $count_tiket += $detail->quantity;
+                    }
+                }
+            }
+
+            $new_product = collect($datas['merchants'])->pluck('products')->flatten(1)->toArray();
+            foreach ($new_product as $product) {
+                $product = Product::where('id', $product['product_id'])->first();
+                $tiket = collect($master_tikets)->where('master_data.id', $product['category_id'])->first();
+
+                if($tiket) {
+                    $count_tiket += $product['quantity'];
+                }
+            }
+
+            if ($count_tiket > 4) {
+                return [
+                    'success' => false,
+                    'status' => "Bad request",
+                    'status_code' => 400,
+                    'message' => 'Anda telah mencapai batas pembelian tiket',
+                ];
+            }
+
+            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, $district) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
                 $order->buyer_id = $customer_id;
@@ -332,7 +374,7 @@ class TransactionCommands extends Service
 
             // validasi tiket
             $master_tikets = MasterTiket::with(['master_data'])->where('status', 1)->get();
-            $customer_tiket = Order::where('buyer_id', $customer->id)
+            $customer_tiket = Order::with(['detail', 'detail.product'])->where('buyer_id', $customer->id)
                 ->whereHas('progress_active', function($q) {
                     $q->whereIn('status_code', ['00', '01', '02', '03','08', '88']);
                 })
@@ -342,7 +384,17 @@ class TransactionCommands extends Service
                     });
                 })->get();
 
-            $count_tiket = collect($customer_tiket)->count();
+            $count_tiket = 0;
+            foreach ($customer_tiket as $order) {
+                foreach ($order->detail as $detail) {
+                    $tiket = collect($master_tikets)->where('master_data.id', $detail->product->category_id)->first();
+
+                    if($tiket) {
+                        $count_tiket += $detail->quantity;
+                    }
+                }
+            }
+
             $new_product = collect($datas['merchants'])->pluck('products')->flatten(1)->toArray();
             foreach ($new_product as $product) {
                 $product = Product::where('id', $product['product_id'])->first();
@@ -358,7 +410,7 @@ class TransactionCommands extends Service
                     'success' => false,
                     'status' => "Bad request",
                     'status_code' => 400,
-                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 4 tiket',
+                    'message' => 'Anda telah mencapai batas pembelian tiket',
                 ];
             }
 
