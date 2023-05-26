@@ -243,6 +243,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->post('check/stock', 'ProductController@checkProductStock');
                 $router->get('special/tiket', 'ProductController@getTiketProduct');
                 $router->get('special/subsidy', 'ProductController@getSubsidyProduct');
+                $router->get('special/umkm', 'ProductController@getUmkmProduct');
             });
 
             $router->group(['prefix' => 'variant'], static function () use ($router) {

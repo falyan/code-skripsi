@@ -772,6 +772,18 @@ class ProductController extends Controller
         }
     }
 
+    public function getUmkmProduct(Request $request)
+    {
+        try {
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? null;
+            return $this->productQueries->getUmkmProduct($limit, $filter, $sorting, request()->input('page') ?? 1);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function countProductWithFilter(Request $request)
     {
         try {
