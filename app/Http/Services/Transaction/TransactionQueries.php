@@ -609,17 +609,22 @@ class TransactionQueries extends Service
         }
 
         // validasi tiket
-        $master_tikets = MasterTiket::with(['master_data'])->get();
-        $count_tiket = 0;
+        $master_tikets = MasterTiket::with(['master_data'])->where('status', 1)->get();
+        $customer_tiket = Order::where('buyer_id', $customer->id)
+        ->whereHas('progress_active', function($q) {
+            $q->whereIn('status_code', ['00', '01', '02', '03','08', '88']);
+        })
+        ->whereHas('detail', function($q) use ($master_tikets) {
+            $q->whereHas('product', function($q) use ($master_tikets) {
+                $q->whereIn('category_id', collect($master_tikets)->pluck('master_data.id')->toArray());
+            });
+        })->get();
+
+        $count_tiket = collect($customer_tiket)->count();
         foreach ($new_product as $product) {
             $tiket = collect($master_tikets)->where('master_data.id', $product['category_id'])->first();
 
             if($tiket) {
-                $customer_tiket = CustomerTiket::whereHas('order', function($q) use ($customer) {
-                    $q->where('buyer_id', $customer->id);
-                })->get();
-
-                $count_tiket += collect($customer_tiket)->count();
                 $count_tiket += $product['quantity'];
             }
         }

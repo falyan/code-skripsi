@@ -79,4 +79,9 @@ class Order extends Model
     {
         return $this->hasOne(CustomerEVSubsidy::class, 'order_id');
     }
+
+    public function customer_tiket()
+    {
+        return $this->hasOne(CustomerTiket::class, 'order_id');
+    }
 }
