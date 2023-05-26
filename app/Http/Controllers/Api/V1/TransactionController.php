@@ -1172,13 +1172,9 @@ class TransactionController extends Controller
                 // }
 
                 DB::commit();
+
                 $mailSender = new MailSenderManager();
-                if ($data->merchant->official_store_tiket) {
-                    // dispatch(new SendEmailTiketJob($order_id, $tiket['data']));
-                    $mailSender->mailSendTicket($order_id, $tiket['data']);
-                } else {
-                    $mailSender->mailOrderOnDelivery($order_id);
-                }
+                $mailSender->mailOrderOnDelivery($order_id);
 
                 return $response;
             } else {

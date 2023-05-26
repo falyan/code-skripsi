@@ -439,7 +439,7 @@ class MailSenderManager
 
         Mail::send('email.sendTicket', $data, function ($mail) use ($customer, $attachments, $order) {
             $mail->to($customer->email, 'no-reply')
-                    ->subject("Pemesanan Tiket GJLS COMEDY NIGHT");
+                    ->subject("[Pengiriman Ulang] Pemesanan Tiket GJLS COMEDY NIGHT");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
             foreach ($attachments as $file_path) {
                 $mail->attach($file_path);

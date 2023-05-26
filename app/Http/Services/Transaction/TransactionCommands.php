@@ -672,21 +672,6 @@ class TransactionCommands extends Service
         return $response;
     }
 
-    public function updatePromoLog($promo_log_order)
-    {
-        $promo_merchant = PromoMerchant::find($promo_log_order->promo_merchant_id);
-        $promo_merchant->usage_value = $promo_merchant->usage_value - (int) $promo_log_order->value;
-        $promo_merchant->save();
-
-        $promo_master = PromoMaster::find($promo_log_order->promo_master_id);
-        $promo_master->usage_value = $promo_master->usage_value - (int) $promo_log_order->value;
-        $promo_master->save();
-
-        PromoLog::create(array_merge($promo_log_order->toArray(), [
-            'type' => 'add',
-        ]));
-    }
-
     public function triggerItemSold($order_id)
     {
         $order = Order::where('id', $order_id)->with('detail', function ($query) {

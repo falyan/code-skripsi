@@ -6,8 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Tiket\TiketResource;
 use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Tiket\TiketQueries;
-use App\Models\UserTiket;
-use Carbon\Carbon;
+use App\Models\CustomerTiket;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -147,7 +146,7 @@ class TiketController extends Controller
         try {
             DB::beginTransaction();
 
-            UserTiket::find($tiket->id)->update([
+            CustomerTiket::find($tiket->id)->update([
                 'status' => 2,
                 'event_info' => $request->get('event_info') ?? null,
             ]);
@@ -161,7 +160,7 @@ class TiketController extends Controller
                 'message' => 'Tiket ditemukan',
                 'data' => $this->tiketResource->respondDataMaping($tiket),
             ];
-        } catch (\Exception$e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return [
                 'status' => 'error',
@@ -170,7 +169,6 @@ class TiketController extends Controller
             return $this->tiketResource->respondBadRequest('Gagal memperbarui status tiket', static::$TICKET_UPDATE_FAILED);
         }
     }
-
 
     public function cekOrder(Request $request)
     {
@@ -254,39 +252,4 @@ class TiketController extends Controller
         }
     }
     //==== End of Tiket Proliga ====//
-
-    //==== Tiket PLN MUDIK 2023 ====//
-    public function checkInvoice(Request $request)
-    {
-        $validator = Validator::make(
-            $request->all(),
-            [
-                'trx_no' => 'required|exists:order,trx_no',
-                'email' => 'required|email',
-            ],
-            [
-                'required' => ':attribute diperlukan.',
-                'exists' => 'Nomor invoice tidak ditemukan.',
-            ]
-        );
-
-        if ($validator->fails()) {
-            $errors = collect();
-            foreach ($validator->errors()->getMessages() as $value) {
-                foreach ($value as $error) {
-                    $errors->push($error);
-                }
-            }
-            return $this->respondValidationError($errors);
-        }
-
-        //check if trx_no and email is valid and exist
-        $order = $this->tiketQueries->getOrder($request->get('trx_no'), $request->get('email'));
-
-        if (isset($order['status']) && $order['status'] == 'error') {
-            return $this->tiketResource->respondBadRequest($order['message'], $order['error_code']);
-        }
-
-        return $this->respondWithData($order);
-    }
 }
