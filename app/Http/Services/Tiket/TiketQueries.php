@@ -144,13 +144,6 @@ class TiketQueries extends Service
 
         $tikets = [];
         foreach ($user_tikets as $user_tiket) {
-            $master_tiket = collect($master_data_tiket)->where('key', $user_tiket->master_tiket->master_data_key)->first();
-            if (isset($master_tiket['parent']['key']) && $master_tiket['parent']['key'] == 'prodcat_vip_proliga_2023') {
-                $user_tiket['is_vip'] = true;
-            } else {
-                $user_tiket['is_vip'] = false;
-            }
-
             $user_tiket['user_name'] = $order->buyer->full_name;
             $user_tiket['user_email'] = $order->buyer->email;
             $user_tiket['trx_no'] = $order->trx_no;
