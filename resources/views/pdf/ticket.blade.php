@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 
+@php
+    $event_name = $user_tiket->master_tiket->name;
+    $title_event = $event_name . ' - ' . $user_tiket->master_tiket->event_address . ' - ' . tanggal($user_tiket->usage_date);
+@endphp
+
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>E-Ticket GJLS x PLN Mobile</title>
+    <title>E-Ticket {{ $event_name }}</title>
 
     <style>
         table,
@@ -44,7 +49,7 @@
 
         <div style="width: 100%; padding-top: 10px">
             <span style="font-family: Nunito; font-size: 24px; font-weight: bold">
-                <p>E-Ticket GJLS x PLN Mobile</p>
+                <p>E-Ticket {{ $event_name }}</p>
             </span>
         </div>
 
@@ -137,7 +142,7 @@
                             style="width: 85px" />
                         <br>
                         <span style="font-family: Nunito;font-size: 14px;color: #595a5b;font-weight: bold;">
-                            GJLS x PLN Mobile - Bandung - 16 Juni 2023
+                            {{ $title_event }}
                         </span>
                         <br>
                         @if ($user_tiket->master_tiket->badge != null)

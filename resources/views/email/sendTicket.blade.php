@@ -46,6 +46,9 @@
                 ">
                     Halo, {{ $destination_name }}! 🖐🏻
                 </p>
+                @php
+                    $title_event = $user_tikets[0]->master_tiket->name . ' - ' . $user_tikets[0]->master_tiket->event_address . ' - ' . tanggal($user_tikets[0]->usage_date);
+                @endphp
                 <p
                     style="font-weight: 400;
                     font-size: 16px;
@@ -55,7 +58,7 @@
                     border-bottom: 1px dashed #d9d9d9;
                 ">
                     Email ini adalah konfirmasi pemesanan tiket Anda untuk acara
-                    <strong>GJLS x PLN Mobile - Bandung - 16 Juni 2023.</strong>
+                    <strong>{{ $title_event }}.</strong>
                     Berikut kami lampirkan tiket untuk kenyamanan Anda.
                     Pada hari acara, harap scan barcode di loket penukaran tiket untuk memasuki event.
                 </p>
