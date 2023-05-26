@@ -610,6 +610,7 @@ class TransactionQueries extends Service
 
         // validasi tiket
         $master_tikets = MasterTiket::with(['master_data'])->get();
+        $count_tiket = 0;
         foreach ($new_product as $product) {
             $tiket = collect($master_tikets)->where('master_data.id', $product['category_id'])->first();
 
@@ -618,12 +619,15 @@ class TransactionQueries extends Service
                     $q->where('buyer_id', $customer->id);
                 })->get();
 
-                if (collect($customer_tiket)->count() > 4) {
-                    $datas['success'] = false;
-                    $datas['status_code'] = 402;
-                    $datas['message'] = 'Anda sudah mencapai batas maksimal pembelian tiket';
-                }
+                $count_tiket += collect($customer_tiket)->count();
+                $count_tiket += $product['quantity'];
             }
+        }
+
+        if ($count_tiket > 4) {
+            $datas['success'] = false;
+            $datas['status_code'] = 400;
+            $datas['message'] = 'Anda telah melebihi batas pembelian tiket';
         }
 
         return $datas;
