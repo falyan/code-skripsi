@@ -61,7 +61,7 @@ return [
         ]
     ],
     'tiket' => [
-        'api_hash' => env('TIKET_EVENT_HASH'),
+        'plnmudik_api_hash' => env('PLNMUDIK_EVENT_HASH'),
     ],
     'evsubsidy' => [
         'endpoint_nik' => env('EV_SUBSIDY_CHECK_NIK_CREDENTIAL_ENDPOINT'),

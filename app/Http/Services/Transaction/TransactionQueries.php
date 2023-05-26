@@ -5,8 +5,10 @@ namespace App\Http\Services\Transaction;
 use App\Http\Services\Service;
 use App\Models\City;
 use App\Models\CustomerDiscount;
+use App\Models\CustomerTiket;
 use App\Models\DeliveryDiscount;
 use App\Models\MasterData;
+use App\Models\MasterTiket;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\OrderDelivery;
@@ -420,6 +422,7 @@ class TransactionQueries extends Service
     public function countCheckoutPriceV2($customer, $datas)
     {
         $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = 0;
+        $message_error = '';
 
         $new_merchant = [];
         $ev_subsidies = [];
@@ -594,6 +597,53 @@ class TransactionQueries extends Service
         $datas['total_insentif'] = $total_insentif;
         $datas['total_payment'] -= $total_discount;
         $datas['total_payment'] -= $total_insentif;
+
+        if ($message_error != '') {
+            $datas['success'] = false;
+            $datas['status_code'] = 402;
+            $datas['message'] = $message_error;
+        } else {
+            $datas['success'] = true;
+            $datas['status_code'] = null;
+            $datas['message'] = 'Berhasil menghitung total pembayaran';
+        }
+
+        // validasi tiket
+        $master_tikets = MasterTiket::with(['master_data'])->where('status', 1)->get();
+        $customer_tiket = Order::with(['detail', 'detail.product'])->where('buyer_id', $customer->id)
+        ->whereHas('progress_active', function($q) {
+            $q->whereIn('status_code', ['00', '01', '02', '03','08', '88']);
+        })
+        ->whereHas('detail', function($q) use ($master_tikets) {
+            $q->whereHas('product', function($q) use ($master_tikets) {
+                $q->whereIn('category_id', collect($master_tikets)->pluck('master_data.id')->toArray());
+            });
+        })->get();
+
+        $count_tiket = 0;
+        foreach ($customer_tiket as $order) {
+            foreach ($order->detail as $detail) {
+                $tiket = collect($master_tikets)->where('master_data.id', $detail->product->category_id)->first();
+
+                if($tiket) {
+                    $count_tiket += $detail->quantity;
+                }
+            }
+        }
+
+        foreach ($new_product as $product) {
+            $tiket = collect($master_tikets)->where('master_data.id', $product['category_id'])->first();
+
+            if($tiket) {
+                $count_tiket += $product['quantity'];
+            }
+        }
+
+        if ($count_tiket > 4) {
+            $datas['success'] = false;
+            $datas['status_code'] = 400;
+            $datas['message'] = 'Anda telah melebihi batas pembelian tiket';
+        }
 
         return $datas;
     }

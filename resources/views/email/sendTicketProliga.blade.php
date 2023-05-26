@@ -1,17 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 
-@php
-    $event_name = $user_tikets[0]->master_tiket->name;
-    $event_address = $user_tikets[0]->master_tiket->event_address;
-    $event_date = tanggal($user_tikets[0]->usage_date);
-@endphp
-
 <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pemesanan Tiket {{ $event_name }}</title>
+    <title>Pemesanan Tiket PLN MObile Proliga 2023</title>
 </head>
 
 <body
@@ -28,67 +22,73 @@
     <table width="600" align="center" style="border-spacing: 10px; background: #ffffff; padding: 48px">
         <tr>
             <td
-                style="display: flex;
-                justify-content: space-between;
-                align-items: center;
-            ">
+                style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          ">
                 <div>
-                    <img src="https://api-central.air.id/plnmp-sauron-staging/api/firebase/file/load/Marketplace~merchants~1684815896a3e79896-1614-438e-a068-02066220df9e.png"
-                        alt="" style="width: 105px" />
+                    <img src="https://cdn.discordapp.com/attachments/1070177904723497042/1070178023678148679/PLN_PRO_LIGA_2023_LOGO_1_1.png"
+                        alt="" style="max-width: 125px" />
                 </div>
                 <div>
                     <img src="https://media.discordapp.net/attachments/830329995989352458/1062551640978247770/pln-mobile-logo.png"
-                        alt="" style="width: 80px" />
+                        alt="" style="max-width: 125px" />
                 </div>
             </td>
         </tr>
         <tr>
             <td>
                 <p
-                    style="font-weight: 400;
-                    font-size: 16px;
-                    line-height: 100%;
-                    color: #323232;
-                ">
+                    style="
+              font-weight: 400;
+              font-size: 16px;
+              line-height: 140%;
+              color: #323232;
+            ">
                     Halo, {{ $destination_name }}! 🖐🏻
                 </p>
+            </td>
+        </tr>
+        <tr>
+            <td>
                 <p
-                    style="font-weight: 400;
-                    font-size: 16px;
-                    line-height: 140%;
-                    color: #323232;
-                    padding-bottom: 24px;
-                    border-bottom: 1px dashed #d9d9d9;
-                ">
-                    Terima kasih telah bertransaksi melalui marketplace PLN Mobile.
-                    Berikut adalah konfirmasi pembelian tiket acara
-                    <strong>{{ $event_name }}</strong> Pada {{ $event_date }} di {{ $event_address }}.
-                    Kami lampirkan pada email ini E-Ticket untuk proses registrasi.
-                    Harap mempersiapkan E-Ticket pada hari acara untuk ditunjukan kepada petugas acara untuk memasuki lokasi event.
+                    style="
+              font-weight: 400;
+              font-size: 16px;
+              line-height: 140%;
+              color: #323232;
+              padding-bottom: 24px;
+              border-bottom: 1px dashed #d9d9d9;
+            ">
+                    Email ini adalah konfirmasi pemesanan tiket Anda untuk acara
+                    <strong>PRO LIGA Bola Voli 2023.</strong> Berikut kami lampirkan
+                    tiket untuk kenyamanan Anda. Pada hari acara, harap scan barcode di
+                    loket penukaran tiket untuk memasuki event.
                 </p>
             </td>
         </tr>
         <tr>
             <td
                 style="
-                font-weight: 600;
-                font-size: 14px;
-                line-height: 19px;
-                color: #595a5b;
-                display: flex;
-                align-items: center;
-            ">
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 19px;
+            color: #595a5b;
+            display: flex;
+            align-items: center;
+          ">
                 <table
                     style="
-                    width: 100%;
-                    border-spacing: 10px;
-                    background: #f8f8f9;
-                    margin-top: 5px;
-                    margin-bottom: 16px;
-                    color: #ffffff;
-                    border-radius: 8px;
-                    padding: 10px;
-                ">
+              width: 100%;
+              border-spacing: 10px;
+              background: #f8f8f9;
+              margin-top: 5px;
+              margin-bottom: 16px;
+              color: #ffffff;
+              border-radius: 8px;
+              padding: 10px;
+            ">
                     <tr>
                         <td>
                             <span style="font-size: 14px; color: #595a5b">
@@ -113,16 +113,6 @@
                     </tr>
                     <tr>
                         <td>
-                            <span style="font-size: 14px; color: #595a5b"> No. Handphone </span>
-                        </td>
-                        <td>
-                            <span style="font-size: 14px; color: #595a5b">
-                                <strong>{{ $order->buyer->phone }}</strong>
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
                             <span style="font-size: 14px; color: #595a5b"> Email </span>
                         </td>
                         <td>
@@ -133,24 +123,22 @@
                     </tr>
                     <tr>
                         <td>
+                            <span style="font-size: 14px; color: #595a5b"> No. HP </span>
+                        </td>
+                        <td>
+                            <span style="font-size: 14px; color: #595a5b">
+                                <strong>{{ $order->buyer->phone }}</strong>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
                             <span style="font-size: 14px; color: #595a5b"> Waktu </span>
                         </td>
-                        @php
-                            \Carbon\Carbon::setLocale('id');
-                            $date = tanggalDate($user_tikets[0]->usage_date);
-                            $time_start = \Carbon\Carbon::createFromFormat('H:i:s', $user_tikets[0]->start_time_usage)->format('H:i');
-                            $time_end = \Carbon\Carbon::createFromFormat('H:i:s', $user_tikets[0]->end_time_usage)->format('H:i');
-                        @endphp
                         <td>
-                            @if ($user_tikets[0]->start_time_usage != null && $user_tikets[0]->end_time_usage != null)
-                                <span style="font-size: 14px; color: #595a5b">
-                                    <strong>{{ $date . ', ' . $time_start . '-' . $time_end . ' WIB' }}</strong>
-                                </span>
-                            @else
-                                <span style="font-size: 14px; color: #595a5b">
-                                    <strong>{{ $date }}</strong>
-                                </span>
-                            @endif
+                            <span style="font-size: 14px; color: #595a5b">
+                                <strong>{{ \Carbon\Carbon::now()->format('d M Y H:m') }}</strong>
+                            </span>
                         </td>
                     </tr>
                     <tr>
@@ -170,22 +158,21 @@
             <td style="display: flex; align-items: top">
                 <table
                     style="
-                    width: 100%;
-                    border-spacing: 10px;
-                    background: #f8f8f9;
-                    margin-top: 5px;
-                    margin-bottom: 16px;
-                    color: #ffffff;
-                    border-radius: 8px;
-                    padding: 10px;
-                ">
+              width: 100%;
+              border-spacing: 10px;
+              background: #f8f8f9;
+              margin-top: 5px;
+              margin-bottom: 16px;
+              color: #ffffff;
+              border-radius: 8px;
+              padding: 10px;
+            ">
                     <!-- Header table -->
                     <tr>
-                        <td style="width: 30%;">
-                            <span style="font-size: 16px; color: #595a5b;">
+                        <td style="width: 50%">
+                            <span style="font-size: 20px; color: #595a5b">
                                 <strong>Detail Tiket</strong>
                             </span>
-                            <p></p>
                         </td>
                     </tr>
                     <!-- End Header table -->
@@ -198,7 +185,7 @@
                             <strong>Harga Tiket</strong>
                         </td>
                         <td>
-                            <strong>Kuantitas</strong>
+                            <strong>Qty</strong>
                         </td>
                         <td>
                             <strong>Total</strong>
@@ -218,7 +205,7 @@
                     <tr style="font-size: 14px; color: #595a5b">
                         <td></td>
                         <td>
-                            <strong>Total Bayar</strong>
+                            <strong>Total</strong>
                         </td>
                         <td></td>
                         <td>
@@ -238,27 +225,27 @@
         margin-bottom: 17px;
         color: #ffffff;
         border-radius: 8px;
-    ">
+      ">
         <tr>
             <td>
                 <p
                     style="
-                    text-align: center;
-                    font-weight: 800;
-                    font-size: 16px;
-                    line-height: 22px;
-                    margin-bottom: 16px;
-                ">
+              text-align: center;
+              font-weight: 800;
+              font-size: 16px;
+              line-height: 22px;
+              margin-bottom: 16px;
+            ">
                     Punya Pertanyaan?
                 </p>
                 <p
                     style="
-                    text-align: center;
-                    font-weight: 400;
-                    font-size: 14px;
-                    line-height: 19px;
-                    margin: 0;
-                ">
+              text-align: center;
+              font-weight: 400;
+              font-size: 14px;
+              line-height: 19px;
+              margin: 0;
+            ">
                     Hubungi PLN Mobile Help Center disini:
                 </p>
             </td>
@@ -287,11 +274,11 @@
             <td align="center">
                 <p
                     style="
-                    font-weight: 700;
-                    font-size: 16px;
-                    line-height: 22px;
-                    color: #666666;
-                ">
+              font-weight: 700;
+              font-size: 16px;
+              line-height: 22px;
+              color: #666666;
+            ">
                     Download PLN Mobile di
                 </p>
             </td>

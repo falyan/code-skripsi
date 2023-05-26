@@ -4,7 +4,7 @@ namespace App\Http\Services\Manager;
 
 use App\Http\Services\Transaction\TransactionQueries;
 use App\Models\Order;
-use App\Models\UserTiket;
+use App\Models\CustomerTiket;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -334,18 +334,11 @@ class MailSenderManager
             $master_data_tiket[] = $detail->product->category;
         }
 
-        $user_tikets = UserTiket::with('master_tiket')->whereIn('id', collect($user_tikets)->pluck('id')->toArray())->get();
+        $user_tikets = CustomerTiket::with('master_tiket')->whereIn('id', collect($user_tikets)->pluck('id')->toArray())->get();
 
         //generate ticket pdf and send to customer
         $attachments = [];
         foreach ($user_tikets as $user_tiket) {
-            $master_tiket = collect($master_data_tiket)->where('key', $user_tiket->master_tiket->master_data_key)->first();
-            if (isset($master_tiket['parent']['key']) && $master_tiket['parent']['key'] == 'prodcat_vip_proliga_2023') {
-                $user_tiket['is_vip'] = true;
-            } else {
-                $user_tiket['is_vip'] = false;
-            }
-
             // Generate QR Code using Endroid/QRCode and builder
             $result = Builder::create()
                 ->writer(new PngWriter())
@@ -377,7 +370,7 @@ class MailSenderManager
 
         Mail::send('email.sendTicket', $data, function ($mail) use ($customer, $attachments, $order) {
             $mail->to($customer->email, 'no-reply')
-                ->subject("Pemesanan Tiket PLN Mobile Proliga 2023");
+                    ->subject("Pemesanan Tiket GJLS COMEDY NIGHT");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
             foreach ($attachments as $file_path) {
                 $mail->attach($file_path);
@@ -446,7 +439,7 @@ class MailSenderManager
 
         Mail::send('email.sendTicket', $data, function ($mail) use ($customer, $attachments, $order) {
             $mail->to($customer->email, 'no-reply')
-                ->subject("[Pengiriman Ulang] Tiket PLN Mobile Proliga 2023");
+                    ->subject("[Pengiriman Ulang] Pemesanan Tiket GJLS COMEDY NIGHT");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
             foreach ($attachments as $file_path) {
                 $mail->attach($file_path);

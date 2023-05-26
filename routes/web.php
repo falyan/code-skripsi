@@ -241,6 +241,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->post('filter', 'ProductController@getProductWithFilter');
                 $router->post('filter/count', 'ProductController@countProductWithFilter');
                 $router->post('check/stock', 'ProductController@checkProductStock');
+                $router->get('special/tiket', 'ProductController@getTiketProduct');
+                $router->get('special/subsidy', 'ProductController@getSubsidyProduct');
             });
 
             $router->group(['prefix' => 'variant'], static function () use ($router) {
@@ -507,8 +509,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('email/{order_id}', 'TransactionController@resendEmailVoucher');
     });
 
-    $router->group(['prefix' => 'tiket'], static function () use ($router) {
+    $router->group(['prefix' => 'tiket', 'middleware' => 'auth:tiket'], static function () use ($router) {
+        $router->get('', 'TiketController@getTiket');
+        $router->get('dasboard', 'TiketController@getDashboard');
         $router->post('scan-qr', 'TiketController@scanQr');
+        $router->post('scan-qr/check-in', 'TiketController@scanQrCheckIn');
         $router->post('cek-order', 'TiketController@cekOrder');
         $router->post('resend-mail', 'TiketController@resendTicket');
     });

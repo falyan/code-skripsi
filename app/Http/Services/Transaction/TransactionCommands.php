@@ -19,7 +19,7 @@ use App\Models\Product;
 use App\Models\PromoLog;
 use App\Models\PromoMaster;
 use App\Models\PromoMerchant;
-use App\Models\UserTiket;
+use App\Models\CustomerTiket;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
@@ -83,7 +83,7 @@ class TransactionCommands extends Service
                 }
             }
 
-            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date) {
+            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, $district) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
                 $order->buyer_id = $customer_id;
@@ -330,6 +330,55 @@ class TransactionCommands extends Service
                 }
             }
 
+            // validasi tiket
+            $master_tikets = MasterTiket::with(['master_data'])->where('status', 1)->get();
+            $customer_tiket = Order::with(['detail', 'detail.product'])->where('buyer_id', $customer->id)
+                ->whereHas('progress_active', function($q) {
+                    $q->whereIn('status_code', ['00', '01', '02', '03','08', '88']);
+                })
+                ->whereHas('detail', function($q) use ($master_tikets) {
+                    $q->whereHas('product', function($q) use ($master_tikets) {
+                        $q->whereIn('category_id', collect($master_tikets)->pluck('master_data.id')->toArray());
+                    });
+                })->get();
+
+            $count_tiket = 0;
+            foreach ($customer_tiket as $order) {
+                foreach ($order->detail as $detail) {
+                    $tiket = collect($master_tikets)->where('master_data.id', $detail->product->category_id)->first();
+
+                    if($tiket) {
+                        $count_tiket += $detail->quantity;
+                    }
+                }
+            }
+
+            $new_products = [];
+            foreach ($datas['merchants'] as $merchant) {
+                foreach ($merchant['products'] as $product) {
+                    $new_product = Product::where('id', data_get($product, 'product_id'))->first();
+                    $new_product['quantity'] = data_get($product, 'quantity');
+                    $new_products[] = $new_product;
+                }
+            }
+
+            foreach ($new_products as $product) {
+                $tiket = collect($master_tikets)->where('master_data.id', $product['category_id'])->first();
+
+                if($tiket) {
+                    $count_tiket += $product['quantity'];
+                }
+            }
+
+            if ($count_tiket > 4) {
+                return [
+                    'success' => false,
+                    'status' => "Bad request",
+                    'status_code' => 400,
+                    'message' => 'Anda telah mencapai batas pembelian tiket',
+                ];
+            }
+
             foreach (data_get($datas, 'merchants') as $data) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
@@ -567,6 +616,53 @@ class TransactionCommands extends Service
         if (!$new_order_progress->save()) {
             $response['success'] = false;
             $response['message'] = 'Gagal merubah status pesanan';
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil merubah status pesanan';
+        $response['status_code'] = $status_code;
+        return $response;
+    }
+
+    public function updateOrderStatusTiket($order_id, $status_codes = ['02', '03', '08'], $note = null)
+    {
+        $old_order_progress = OrderProgress::where('order_id', $order_id)->get();
+        $total = count($old_order_progress) ?? 0;
+        if ($total >= 0) {
+            for ($i = 0; $i < $total; $i++) {
+                $old_order_progress[$i]->status = 0;
+                $old_order_progress[$i]->save();
+            }
+        }
+
+        $new_order_progress = new OrderProgress();
+
+        $create_order_progress = [];
+        foreach($status_codes as $status_code) {
+            $create_order_progress[] = [
+                'order_id' => $order_id,
+                'status_code' => $status_code,
+                'status_name' => parent::$status_order[$status_code],
+                'note' => $note,
+                'status' => $status_code == '08' ? 1 : 0,
+                'created_by' => 'system',
+                'updated_by' => 'system',
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ];
+        }
+
+        if (!$new_order_progress->insert($create_order_progress)) {
+            $response['success'] = false;
+            $response['message'] = 'Gagal merubah status pesanan';
+            return $response;
+        }
+
+        $awb = $this->addAwbNumberAuto($order_id);
+        if (!$awb['success']) {
+            $response['success'] = false;
+            $response['message'] = $awb['message'];
             return $response;
         }
 
@@ -828,7 +924,7 @@ class TransactionCommands extends Service
 
     public function generateTicket($order_id)
     {
-        $user_tikets = UserTiket::where('order_id', $order_id)->get();
+        $user_tikets = CustomerTiket::where('order_id', $order_id)->get();
 
         if (collect($user_tikets)->isNotEmpty()) {
             $response['success'] = true;
@@ -838,50 +934,32 @@ class TransactionCommands extends Service
             return $response;
         }
 
-        $categories = MasterData::with(['child' => function ($j) {
-            $j->with('child');
-        }])->where('key', 'prodcat_tiket')->get();
+        $active_master_tikets = MasterTiket::with(['master_data'])
+            ->where('status', 1)->get();
 
-        $cat_child = [];
-        foreach ($categories as $category) {
-            foreach ($category->child as $child) {
-                if (!$child->child->isEmpty()) {
-                    foreach ($child->child as $children) {
-                        array_push($cat_child, $children);
-                    }
-                }
-            }
-        }
+        $cat_child = collect($active_master_tikets)->pluck('master_data')->toArray();
 
-        $cat_ticket = [];
+        $user_tikets = [];
         $order = Order::where('id', $order_id)->first()->load('detail.product');
         foreach ($order->detail as $detail) {
             if (in_array($detail->product->category_id, collect($cat_child)->pluck('id')->toArray())) {
-                $ticket = collect($cat_child)->where('id', $detail->product->category_id)->first();
-                $ticket['quantity'] = $detail->quantity;
+                $master_tiket = collect($active_master_tikets)->where('master_data.id', $detail->product->category_id)->first();
+                $master_tiket['quantity'] = $detail->quantity;
 
-                $cat_ticket[] = $ticket;
-            }
-        }
+                for ($i = 0; $i < $master_tiket['quantity']; $i++) {
+                    $id = rand(10000, 99999);
+                    $number_tiket = (string) time() . (string) $id;
 
-        $master_tikets = MasterTiket::whereIn('master_data_key', collect($cat_ticket)->pluck('key')->toArray())->get();
-
-        foreach ($master_tikets as $master_tiket) {
-            $ticket = collect($cat_ticket)->where('key', $master_tiket->master_data_key)->first();
-
-            for ($i = 0; $i < $ticket['quantity']; $i++) {
-                $id = rand(10000, 99999);
-                $number_tiket = (string) time() . (string)$id;
-
-                $user_tikets[] = UserTiket::create([
-                    'order_id' => $order_id,
-                    'master_tiket_id' => $master_tiket->id,
-                    'number_tiket' => $number_tiket,
-                    'usage_date' => $master_tiket->usage_date,
-                    'start_time_usage' => $master_tiket->start_time_usage,
-                    'end_time_usage' => $master_tiket->end_time_usage,
-                    'status' => 1,
-                ]);
+                    $user_tikets[] = CustomerTiket::create([
+                        'order_id' => $order_id,
+                        'master_tiket_id' => $master_tiket['id'],
+                        'number_tiket' => $number_tiket,
+                        'usage_date' => $master_tiket['usage_date'],
+                        'start_time_usage' => $master_tiket['start_time_usage'],
+                        'end_time_usage' => $master_tiket['end_time_usage'],
+                        'status' => 1,
+                    ]);
+                }
             }
         }
 

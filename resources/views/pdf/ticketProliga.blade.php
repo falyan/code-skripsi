@@ -1,14 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 
-@php
-    $event_name = $user_tiket->master_tiket->name;
-@endphp
-
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>E-Ticket {{ $event_name }}</title>
+    <title>E-Ticket PLN Mobile Pro Liga 2023</title>
 
     <style>
         table,
@@ -43,19 +39,22 @@
             align-items: center;
             justify-content: space-between;
         ">
-            <img src="{{ storage_path('assets/logo-tiket-gjls.png') }}" alt="image" style="width: 105px;" />
+            <img src="{{ storage_path('assets/logo-tiket-proliga.png') }}" alt="image" style="width: 150px;" />
         </div>
 
         <div style="width: 100%; padding-top: 10px">
             <span style="font-family: Nunito; font-size: 24px; font-weight: bold">
-                <p>E-Ticket {{ $event_name }}</p>
+                <p>E-Ticket Pro Liga 2023</p>
             </span>
         </div>
 
         <!-- Span text with background radius Red -->
-        @if ($user_tiket->master_tiket->badge != null)
+        @if ($user_tiket['is_vip'])
             <span
-                style=" background-color: {{ $user_tiket->master_tiket->badge['background-color'] }};color: {{ $user_tiket->master_tiket->badge['color'] }};padding: 8px 16px; border-radius: 8px; font-family: Nunito; font-size: 16px;">{{ $user_tiket->master_tiket->badge['title'] }}</span>
+                style=" background-color: #fcc71d33;color: #fcc71d;padding: 8px 16px; border-radius: 8px; font-family: Nunito; font-size: 16px;">VIP</span>
+        @else
+            <span
+                style="background-color: #831d641a;color: #831d64;padding: 8px 16px;border-radius: 8px;font-family: Nunito;font-size: 16px;">Reguler</span>
         @endif
 
         <div style="width: 100%; padding-top: 10px; margin-top:18px">
@@ -95,16 +94,10 @@
                         {{ $customer->full_name }}
                     </td>
                     <td style="font-family: Nunito; font-size: 14px; color: #595a5b">
-                        @php
-                            \Carbon\Carbon::setLocale('id');
-                            $date = tanggalDate($user_tiket->usage_date);
-                            $time_start = \Carbon\Carbon::createFromFormat('H:i:s', $user_tiket->start_time_usage)->format('H:i');
-                            $time_end = \Carbon\Carbon::createFromFormat('H:i:s', $user_tiket->end_time_usage)->format('H:i');
-                        @endphp
                         @if ($user_tiket->start_time_usage == null && $user_tiket->end_time_usage == null)
-                            {{ $date }}
+                            {{ \Carbon\Carbon::parse($user_tiket->usage_date)->format('d M Y') }}
                         @else
-                            {{ $date . ', ' . $time_start . '-' . $time_end . ' WIB' }}
+                            {{ \Carbon\Carbon::parse($user_tiket->usage_date)->format('d M Y') . ' ' . \Carbon\Carbon::parse($user_tiket->start_time_usage)->format('H:i') . ' - ' . \Carbon\Carbon::parse($user_tiket->end_time_usage)->format('H:i') . ' WIB' }}
                         @endif
                     </td>
                 </tr>
@@ -129,7 +122,7 @@
 
         <!-- Ticket layout template -->
 
-        <table style="width:100%; border:#e5e5e5 1px solid; justify-content: space-between">
+        <table style="width:100%; border:#e5e5e5 1px solid;">
             <tr>
                 <td style="width:30%">
                     <span
@@ -140,13 +133,17 @@
                         <img src="{{ storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.png') }}"alt="image"
                             style="width: 85px" />
                         <br>
-                        <span style="font-family: Nunito;font-size: 12px;color: #595a5b;font-weight: bold; width: 80px">
-                            {{ $event_name }}
+                        <span style="font-family: Nunito;font-size: 14px;color: #595a5b;font-weight: bold;">
+                            Pro Liga 2023
                         </span>
                         <br>
-                        @if ($user_tiket->master_tiket->badge != null)
+                        @if ($user_tiket['is_vip'])
                             <span style="font-family: Nunito; font-size: 12px; color: #595a5b">
-                                {{ $user_tiket->master_tiket->badge['title'] }}
+                                VIP
+                            </span>
+                        @else
+                            <span style="font-family: Nunito; font-size: 12px; color: #595a5b">
+                                Reguler
                             </span>
                         @endif
                         <br />
@@ -160,13 +157,10 @@
                     </div>
 
                 </td>
-                <td style="width: 60%;">
-                    <div style="float: right; margin-right: 10px;">
-                        <img src="{{ storage_path('assets/gambar-gjls-1.jpeg') }}"
-                            alt="Ticket Image"
-                            style="border-radius: 14px; width: 100%;"
-                        />
-                    </div>
+                <td style="width: 70%">
+                    <div style="float: right;">
+                        <img src="{{ storage_path('assets/gambar-proliga-1.png') }}" alt="Ticket Image"
+                            style="border-radius: 14px; width: 95%" />
                 </td>
             </tr>
         </table>

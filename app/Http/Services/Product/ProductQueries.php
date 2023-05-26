@@ -5,6 +5,7 @@ namespace App\Http\Services\Product;
 use App\Http\Services\Service;
 use App\Models\MasterData;
 use App\Models\MasterEvStore;
+use App\Models\MasterTiket;
 use App\Models\MasterVariant;
 use App\Models\Merchant;
 use App\Models\Product;
@@ -417,7 +418,7 @@ class ProductQueries extends Service
         //     });
         // }])->where('id', $id)->first();
 
-        $data = Product::withCount(['order_details' => function ($details) {
+        $product = Product::withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
@@ -453,26 +454,34 @@ class ProductQueries extends Service
             })
             ->where('product_id', $id)->orderBy('main_variant', 'desc')->get();
 
-        $data['variants'] = $master_variants;
-        $data['variant_value_products'] = $variant_value_product;
+        $product['variants'] = $master_variants;
+        $product['variant_value_products'] = $variant_value_product;
 
-        if (!$data) {
+        if (!$product) {
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data produk!';
-            $response['data'] = $data;
+            $response['data'] = $product;
             return $response;
         }
 
-        $data['variants'] = $master_variants;
-        $data['variant_value_products'] = $variant_value_product;
+        $category = MasterData::where('id', $product->category_id)->first();
 
-        $data['avg_rating'] = ($data->reviews()->count() > 0) ? round($data->reviews()->avg('rate'), 1) : 0.0;
-        $data->reviews = null;
-        //        $data->avg_rating = null;
+        $master_tiket = MasterTiket::where('master_data_key', $category->key)->first();
+
+        $product['variants'] = $master_variants;
+        $product['variant_value_products'] = $variant_value_product;
+
+
+        $item = $product->toArray();
+
+        $item['tiket'] = $master_tiket;
+
+        $item['avg_rating'] = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+        $item['reviews'] = null;
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $data;
+        $response['data'] = $item;
         return $response;
     }
 
@@ -804,6 +813,9 @@ class ProductQueries extends Service
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->url_deeplink = 'https://plnmarketplace.page.link?link=https://plnmarketplace.page.link/detail-product?id=' . $product->id;
+
+            $product['reviews'] = null;
+            $product['tiket'] = null;
             return $product;
         });
 
@@ -1303,6 +1315,113 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function getTiketProduct($limit, $filter = [], $sortby = null, $current_page = 1)
+    {
+        $tikets = MasterTiket::with(['master_data', 'master_data.parent', 'master_data.parent.parent'])->where('status', 1)->get();
+
+        $masterDataKeys = collect($tikets)->pluck('master_data.parent.parent.key')->toArray();
+
+        $categories = MasterData::with(['child', 'child.child'])->where([
+            'type' => 'product_category',
+        ])->whereIn('key', $masterDataKeys)->get();
+
+        $cat_child_id = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    foreach ($child->child as $children) {
+                        array_push($cat_child_id, $children->id);
+                    }
+                }
+            }
+        }
+
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where([
+            'status' => 1,
+        ])->with([
+            'product_stock', 'product_photo', 'is_wishlist',
+            'merchant.city:id,name',
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+            'ev_subsidy',
+        ])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereIn('category_id', $cat_child_id);
+
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $data = $this->productPaginate($sorted_data, $limit, $tikets);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function getSubsidyProduct($limit, $filter = [], $sortby = null, $current_page = 1)
+    {
+        $categories = MasterData::with(['child', 'child.child'])->where([
+            'type' => 'product_category',
+            'key' => 'prodcat_electric_vehicle',
+        ])->get();
+
+        $cat_child_id = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    foreach ($child->child as $children) {
+                        array_push($cat_child_id, $children->id);
+                    }
+                }
+            }
+        }
+
+        $product = new Product();
+        $products = $product->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->where([
+            'status' => 1,
+        ])->with([
+            'product_stock', 'product_photo', 'is_wishlist',
+            'merchant.city:id,name',
+            'merchant.promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                });
+            },
+            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_values',
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+            'ev_subsidy',
+        ])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereHas('ev_subsidy', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereIn('category_id', $cat_child_id);
+
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $data = $this->productPaginate($sorted_data, $limit);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
     public function getReviewByProduct($product_id, $limit = 10)
     {
         $review = Review::with(['review_photo', 'merchant', 'customer', 'product' => function ($product) {
@@ -1459,15 +1578,33 @@ class ProductQueries extends Service
         }
     }
 
-    public function productPaginate($products, $limit = 10)
+    public function productPaginate($products, $limit = 10, $tikets = null)
     {
         $itemsPaginated = $products->paginate($limit);
 
         $itemsTransformed = $itemsPaginated
             ->getCollection()
-            ->map(function ($item) {
-                // $item->avg_rating = 0.0;
-                $item->reviews = null;
+            ->map(function ($item) use ($tikets) {
+                $item = $item->toArray();
+
+                if ($tikets != null) {
+                    foreach ($tikets as $tiket) {
+                        if ($item['category_id'] == $tiket->master_data->id) {
+                            $item['tiket'] = $tiket;
+                            break;
+                        } else {
+                            $item['tiket'] = null;
+                        }
+                    }
+                } else {
+                    $item['tiket'] = null;
+                }
+
+                unset($item['tiket']['master_data']);
+
+                return $item;
+
+                $item['reviews'] = null;
                 return $item;
             })->toArray();
 

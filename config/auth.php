@@ -40,6 +40,11 @@ return [
             'driver' => 'jwt',
             'provider' => 'users',
         ],
+
+        'tiket' => [
+            'driver' => 'jwt',
+            'provider' => 'user_tiket',
+        ],
     ],
 
     /*
@@ -64,6 +69,12 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
         ],
+
+        'user_tiket' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\UserTiketOfficer::class,
+        ],
+
     ],
 
     /*
@@ -91,6 +102,13 @@ return [
             'table' => 'password_resets',
             'expire' => 60,
         ],
+
+        'user_tiket' => [
+            'provider' => 'user_tiket',
+            'table' => 'password_resets',
+            'expire' => 60,
+        ],
+
     ],
 
 ];

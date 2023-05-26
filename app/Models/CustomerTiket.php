@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class UserTiket extends Model
+class CustomerTiket extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'user_tiket';
+    protected $table = 'customer_tiket';
     protected $guarded = ['id'];
 
     public function master_tiket()

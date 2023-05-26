@@ -15,10 +15,16 @@ class MasterTiket extends Model
 
     protected $casts = [
         'tnc' => 'array',
+        'badge' => 'array',
     ];
 
     public function user_tiket()
     {
-        return $this->hasMany(UserTiket::class, 'master_tiket_id', 'id');
+        return $this->hasMany(CustomerTiket::class, 'master_tiket_id', 'id');
+    }
+
+    public function master_data()
+    {
+        return $this->belongsTo(MasterData::class, 'master_data_key', 'key');
     }
 }

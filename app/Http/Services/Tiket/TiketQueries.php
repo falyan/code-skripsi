@@ -3,9 +3,8 @@
 namespace App\Http\Services\Tiket;
 
 use App\Http\Services\Service;
-use App\Models\MasterData;
+use App\Models\CustomerTiket;
 use App\Models\Order;
-use App\Models\UserTiket;
 use Carbon\Carbon;
 
 class TiketQueries extends Service
@@ -24,7 +23,7 @@ class TiketQueries extends Service
 
     public function getTiket($qr)
     {
-        $tiket = UserTiket::where('number_tiket', $qr)->first();
+        $tiket = CustomerTiket::where('number_tiket', $qr)->first();
 
         if (!$tiket) {
             return [
@@ -34,7 +33,7 @@ class TiketQueries extends Service
             ];
         }
 
-        $tiket->load('master_tiket');
+        $tiket->load(['master_tiket', 'order', 'order.buyer']);
 
         if ($tiket->master_tiket->status == 0) {
             return [
@@ -49,9 +48,7 @@ class TiketQueries extends Service
                 'error_code' => static::$TICKET_HAS_USED,
                 'status' => 'error',
                 'message' => 'Tiket telah digunakan',
-                'data' => [
-                    'used_at' => Carbon::parse($tiket->updated_at)->format('Y-m-d H:i:s'),
-                ],
+                'data' => $tiket,
             ];
         }
 
@@ -97,6 +94,25 @@ class TiketQueries extends Service
         return $tiket;
     }
 
+    public function getDashboard()
+    {
+        $getTiket = CustomerTiket::with(['master_tiket'])
+        ->whereHas(
+            'master_tiket',
+            function ($query) {
+                $query->where('status', 1);
+            }
+        )
+        ->get();
+
+        $tiket = collect($getTiket);
+
+        return [
+            'total_tiket' => $tiket->count(),
+            'total_tiket_claim' => $tiket->where('status', 2)->count(),
+        ];
+    }
+
     public function getTiketByOrder($trx_no, $withId = false)
     {
         if ($withId) {
@@ -124,17 +140,10 @@ class TiketQueries extends Service
             $master_data_tiket[] = $detail->product->category;
         }
 
-        $user_tikets = UserTiket::with('master_tiket')->where('order_id', $order->id)->get();
+        $user_tikets = CustomerTiket::with('master_tiket')->where('order_id', $order->id)->get();
 
         $tikets = [];
         foreach ($user_tikets as $user_tiket) {
-            $master_tiket = collect($master_data_tiket)->where('key', $user_tiket->master_tiket->master_data_key)->first();
-            if (isset($master_tiket['parent']['key']) && $master_tiket['parent']['key'] == 'prodcat_vip_proliga_2023') {
-                $user_tiket['is_vip'] = true;
-            } else {
-                $user_tiket['is_vip'] = false;
-            }
-
             $user_tiket['user_name'] = $order->buyer->full_name;
             $user_tiket['user_email'] = $order->buyer->email;
             $user_tiket['trx_no'] = $order->trx_no;
@@ -150,5 +159,72 @@ class TiketQueries extends Service
         }
 
         return $tikets;
+    }
+
+    public function getTiketAll($limit = 10, $keyword = null)
+    {
+        $tikets = CustomerTiket::with(['master_tiket', 'order', 'order.buyer'])
+            ->whereHas(
+                'master_tiket',
+                function ($query) {
+                    $query->where('status', 1);
+                }
+            )
+            ->when($keyword, function ($query, $keyword) {
+                $query->whereHas('order', function ($query) use ($keyword) {
+                    $query->whereHas('buyer', function ($query) use ($keyword) {
+                        $query->where('full_name', 'ILIKE', '%' . $keyword . '%');
+                        $query->orWhere('email', 'ILIKE', '%' . $keyword . '%');
+                        $query->orWhere('phone', 'ILIKE', '%' . $keyword . '%');
+                    });
+                });
+            })
+            ->paginate($limit);
+
+        if (!$tikets) {
+            return [
+                'error_code' => static::$TICKET_NOT_FOUND,
+                'status' => 'error',
+                'message' => 'Tiket tidak ditemukan',
+            ];
+        }
+
+        return $tikets;
+    }
+
+    //==== Tiket PLN MUDIK 2023 ====//
+    public function getOrder($trx_no, $email)
+    {
+        $order = Order::whereHas('buyer', function ($query) use ($email) {
+            $query->where('email', $email);
+        })->where('trx_no', 'ILIKE', '%' . $trx_no)->first();
+
+        if (!$order) {
+            return [
+                'error_code' => static::$ORDER_NOT_FOUND,
+                'status' => 'error',
+                'message' => 'Order tidak ditemukan',
+            ];
+        }
+
+        $order->load(
+            'detail.product.category.parent.parent',
+            'buyer',
+        );
+
+        $cat_product = null;
+        foreach ($order->detail as $detail) {
+            $cat_product = $detail->product->category->parent->parent->key;
+        }
+
+        if (substr($cat_product, 0, 22) != 'prodcat_pln_mudik_2023') {
+            return [
+                'error_code' => static::$ORDER_NOT_FOUND,
+                'status' => 'error',
+                'message' => 'Order tidak valid - bukan tiket PLN MUDIK 2023',
+            ];
+        }
+
+        return $order;
     }
 }
