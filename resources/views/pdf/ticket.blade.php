@@ -129,7 +129,7 @@
 
         <!-- Ticket layout template -->
 
-        <table style="width:100%; border:#e5e5e5 1px solid;">
+        <table style="width:100%; border:#e5e5e5 1px solid; justify-content: space-between">
             <tr>
                 <td style="width:30%">
                     <span
@@ -140,7 +140,7 @@
                         <img src="{{ storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.png') }}"alt="image"
                             style="width: 85px" />
                         <br>
-                        <span style="font-family: Nunito;font-size: 12px;color: #595a5b;font-weight: bold;">
+                        <span style="font-family: Nunito;font-size: 12px;color: #595a5b;font-weight: bold; width: 80px">
                             {{ $event_name }}
                         </span>
                         <br>
@@ -160,11 +160,11 @@
                     </div>
 
                 </td>
-                <td style="width: 70%">
-                    <div style="float: right; margin-top:8px; margin-right: 80px">
-                        <img src="{{ storage_path('assets/gambar-gjls-2.png') }}"
+                <td style="width: 60%;">
+                    <div style="float: right; margin-right: 10px;">
+                        <img src="{{ storage_path('assets/gambar-gjls-1.jpeg') }}"
                             alt="Ticket Image"
-                            style="border-radius: 14px; width: 120%"
+                            style="border-radius: 14px; width: 100%;"
                         />
                     </div>
                 </td>
