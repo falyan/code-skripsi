@@ -3,7 +3,6 @@
 
 @php
     $event_name = $user_tiket->master_tiket->name;
-    $title_event = $event_name . ' - ' . $user_tiket->master_tiket->event_address . ' - ' . tanggal($user_tiket->usage_date);
 @endphp
 
 <head>
@@ -142,7 +141,7 @@
                             style="width: 85px" />
                         <br>
                         <span style="font-family: Nunito;font-size: 12px;color: #595a5b;font-weight: bold;">
-                            {{ $title_event }}
+                            {{ $event_name }}
                         </span>
                         <br>
                         @if ($user_tiket->master_tiket->badge != null)
@@ -162,7 +161,7 @@
 
                 </td>
                 <td style="width: 70%">
-                    <div style="float: right; margin-top:14px; margin-right: 80px">
+                    <div style="float: right; margin-top:8px; margin-right: 80px">
                         <img src="{{ storage_path('assets/gambar-gjls-2.png') }}"
                             alt="Ticket Image"
                             style="border-radius: 14px; width: 120%"
