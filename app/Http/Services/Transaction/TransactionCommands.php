@@ -336,15 +336,112 @@ class TransactionCommands extends Service
 
             // validasi tiket
             $master_tikets = MasterTiket::with(['master_data'])->where('status', 1)->get();
-            $customer_tiket = Order::with(['detail', 'detail.product'])->where('buyer_id', $customer->id)
-                ->whereHas('progress_active', function ($q) {
-                    $q->whereIn('status_code', ['00', '01', '02', '03', '08', '88']);
+            $customer_tiket = Order::where('buyer_id', $customer->id)
+                ->whereHas('progress_active', function($q) {
+                    $q->whereIn('status_code', ['00', '01', '02', '03','08', '88']);
                 })
-                ->whereHas('detail', function ($q) use ($master_tikets) {
-                    $q->whereHas('product', function ($q) use ($master_tikets) {
+                ->whereHas('detail', function($q) use ($master_tikets) {
+                    $q->whereHas('product', function($q) use ($master_tikets) {
                         $q->whereIn('category_id', collect($master_tikets)->pluck('master_data.id')->toArray());
                     });
                 })->get();
+
+            $count_tiket = collect($customer_tiket)->count();
+            $new_product = collect($datas['merchants'])->pluck('products')->flatten(1)->toArray();
+            foreach ($new_product as $product) {
+                $product = Product::where('id', $product['product_id'])->first();
+                $tiket = collect($master_tikets)->where('master_data.id', $product['category_id'])->first();
+
+                if($tiket) {
+                    $count_tiket += $product['quantity'];
+                }
+            }
+
+            if ($count_tiket > 4) {
+                return [
+                    'success' => false,
+                    'status' => "Bad request",
+                    'status_code' => 400,
+                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 4 tiket',
+                ];
+            }
+
+            foreach (data_get($datas, 'merchants') as $data) {
+                $order = new Order();
+                $order->merchant_id = data_get($data, 'merchant_id');
+                $order->buyer_id = $customer_id;
+                $order->trx_no = static::invoice_num(static::nextOrderId(), 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
+                $order->order_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now())->setTimezone('Asia/Jakarta')->timestamp);
+                $order->total_amount = data_get($data, 'total_amount');
+                $order->total_weight = data_get($data, 'total_weight');
+                $order->related_pln_mobile_customer_id = null;
+                $order->no_reference = $no_reference;
+                $order->discount = data_get($data, 'product_discount');
+                $order->npwp = data_get($data, 'npwp');
+                $order->created_by = 'user';
+                $order->updated_by = 'user';
+                $order->npwp = data_get($datas, 'npwp');
+                $order->save();
+
+                if (isset($datas['save_npwp'])) {
+                    $datas['save_npwp'] = in_array($datas['save_npwp'], [1, true]) ? true : false;
+                }
+                if (isset($datas['save_npwp']) && $datas['save_npwp'] === true) {
+                    Customer::where('id', $customer_id)->update(['npwp' => $datas['npwp']]);
+                }
+
+                $this->order_id = $order->id;
+                $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
+                $order->save();
+
+                $order_details = [];
+                foreach (data_get($data, 'products') as $product) {
+                    $order_details[] = [
+                        'order_id' => $order->id,
+                        'detail_type' => 1,
+                        'product_id' => data_get($product, 'product_id'),
+                        'quantity' => data_get($product, 'quantity'),
+                        'price' => data_get($product, 'price'),
+                        'weight' => data_get($product, 'weight'),
+                        'insurance_cost' => data_get($product, 'insurance_cost'),
+                        'discount' => data_get($product, 'discount'),
+                        'total_price' => data_get($product, 'total_price'),
+                        'total_weight' => data_get($product, 'total_weight'),
+                        'total_discount' => data_get($product, 'total_discount'),
+                        'total_insentif' => data_get($product, 'total_insentif'),
+                        'total_insurance_cost' => data_get($product, 'total_insurance_cost'),
+                        'total_amount' => data_get($product, 'total_amount'),
+                        'notes' => data_get($product, 'note'),
+                        'variant_value_product_id' => data_get($product, 'variant_value_product_id'),
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now(),
+                    ];
+                }
+
+                // sementara ketika flash sale nempel merchant
+                // OrderDetail::insert($order_details);
+
+                $order_progress = new OrderProgress();
+                $order_progress->order_id = $order->id;
+                $order_progress->status_code = '00';
+                $order_progress->status_name = 'Pesanan Belum Dibayar';
+                $order_progress->note = null;
+                $order_progress->status = 1;
+                $order_progress->created_by = 'user';
+                $order_progress->updated_by = 'user';
+                $order_progress->save();
+
+                $promo_merchant = PromoMerchant::with(['promo_master', 'promo_master.promo_regions', 'promo_master.promo_values'])
+                    ->where([
+                        'merchant_id' => data_get($data, 'merchant_id'),
+                        'status' => 1,
+                    ])
+                    ->where('start_date', '<=', date('Y-m-d H:i:s'))
+                    ->where('end_date', '>=', date('Y-m-d H:i:s'))
+                    ->whereHas('promo_master', function ($query) {
+                        $query->where('status', 1);
+                    })
+                    ->get();
 
             $count_tiket = 0;
             foreach ($customer_tiket as $order) {
