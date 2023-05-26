@@ -141,7 +141,7 @@
                         <img src="{{ storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.png') }}"alt="image"
                             style="width: 85px" />
                         <br>
-                        <span style="font-family: Nunito;font-size: 14px;color: #595a5b;font-weight: bold;">
+                        <span style="font-family: Nunito;font-size: 12px;color: #595a5b;font-weight: bold;">
                             {{ $title_event }}
                         </span>
                         <br>
@@ -163,7 +163,7 @@
                 </td>
                 <td style="width: 70%">
                     <div style="float: right; margin-top:14px; margin-right: 80px">
-                        <img src="{{ storage_path('assets/gambar-gjls-1.png') }}"
+                        <img src="{{ storage_path('assets/gambar-gjls-2.png') }}"
                             alt="Ticket Image"
                             style="border-radius: 14px; width: 120%"
                         />

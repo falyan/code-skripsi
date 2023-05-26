@@ -1,11 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 
+@php
+    $event_name = $user_tikets[0]->master_tiket->name;
+    $event_address = $user_tikets[0]->master_tiket->event_address;
+    $event_date = tanggal($user_tikets[0]->usage_date);
+@endphp
+
 <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pemesanan Tiket PLN MObile Proliga 2023</title>
+    <title>Pemesanan Tiket {{ $event_name }}</title>
 </head>
 
 <body
@@ -46,9 +52,6 @@
                 ">
                     Halo, {{ $destination_name }}! 🖐🏻
                 </p>
-                @php
-                    $title_event = $user_tikets[0]->master_tiket->name . ' - ' . $user_tikets[0]->master_tiket->event_address . ' - ' . tanggal($user_tikets[0]->usage_date);
-                @endphp
                 <p
                     style="font-weight: 400;
                     font-size: 16px;
@@ -57,10 +60,11 @@
                     padding-bottom: 24px;
                     border-bottom: 1px dashed #d9d9d9;
                 ">
-                    Email ini adalah konfirmasi pemesanan tiket Anda untuk acara
-                    <strong>{{ $title_event }}.</strong>
-                    Berikut kami lampirkan tiket untuk kenyamanan Anda.
-                    Pada hari acara, harap scan barcode di loket penukaran tiket untuk memasuki event.
+                    Terima kasih telah bertransaksi melalui marketplace PLN Mobile.
+                    Berikut adalah konfirmasi pembelian tiket acara
+                    <strong>{{ $event_name }}</strong> Pada {{ $event_date }} di {{ $event_address }}.
+                    Kami lampirkan pada email ini E-Ticket untuk proses registrasi.
+                    Harap mempersiapkan E-Ticket pada hari acara untuk ditunjukan kepada petugas acara untuk memasuki lokasi event.
                 </p>
             </td>
         </tr>
