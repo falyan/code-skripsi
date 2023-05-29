@@ -358,15 +358,18 @@ class TransactionCommands extends Service
                 }
             }
 
+            $buying_tiket = false;
             foreach ($new_products as $product) {
                 $tiket = collect($master_tikets)->where('master_data.id', $product['category_id'])->first();
 
                 if ($tiket) {
                     $count_tiket += $product['quantity'];
+
+                    $buying_tiket = true;
                 }
             }
 
-            if ($count_tiket > 4) {
+            if ($count_tiket > 4 && $buying_tiket) {
                 return [
                     'success' => false,
                     'status' => "Bad request",
