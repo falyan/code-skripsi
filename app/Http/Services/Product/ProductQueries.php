@@ -20,11 +20,11 @@ class ProductQueries extends Service
     {
         $product = new Product();
         $products = $product
-            ->withCount(['order_details' => function ($details) {
-                $details->whereHas('order', function ($order) {
-                    $order->whereHas('progress_done');
-                });
-            }])
+            // ->withCount(['order_details' => function ($details) {
+            //     $details->whereHas('order', function ($order) {
+            //         $order->whereHas('progress_done');
+            //     });
+            // }])
             ->where('status', 1)
             ->with([
                 'product_stock',
@@ -66,11 +66,11 @@ class ProductQueries extends Service
 
         $products = $product
             ->where(['merchant_id' => $merchant_id])
-            ->withCount(['order_details' => function ($order_details) {
-                $order_details->whereHas('order', function ($order) {
-                    $order->whereHas('progress_done');
-                });
-            }])
+            // ->withCount(['order_details' => function ($order_details) {
+            //     $order_details->whereHas('order', function ($order) {
+            //         $order->whereHas('progress_done');
+            //     });
+            // }])
             ->with([
                 'product_photo',
                 'product_stock',
@@ -147,11 +147,13 @@ class ProductQueries extends Service
     {
         // seller
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'ev_subsidy'])->where('etalase_id', $etalase_id);
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->with(['product_stock', 'product_photo', 'is_wishlist', 'ev_subsidy'])->where('etalase_id', $etalase_id);
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
@@ -171,11 +173,13 @@ class ProductQueries extends Service
     public function searchProductByName($keyword, $limit, $filter = [], $sortby = null, $current_page = 1)
     {
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->where('status', 1)->with([
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->where('status', 1)->with([
             'product_stock:id,product_id,amount,uom',
             'product_photo:id,product_id,url',
             'is_wishlist',
@@ -223,11 +227,13 @@ class ProductQueries extends Service
     public function searchProductByNameV2($keyword, $limit, $filter = [], $sortby = null, $current_page = 1)
     {
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->where('status', 1)->with([
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->where('status', 1)->with([
             'product_stock:id,product_id,amount,uom',
             'product_photo:id,product_id,url',
             'is_wishlist',
@@ -278,11 +284,11 @@ class ProductQueries extends Service
 
         $products = $product
             ->where(['merchant_id' => $merchant_id, 'status' => 1, 'is_featured_product' => true])
-            ->withCount(['order_details' => function ($order_details) {
-                $order_details->whereHas('order', function ($order) {
-                    $order->whereHas('progress_done');
-                });
-            }])
+            // ->withCount(['order_details' => function ($order_details) {
+            //     $order_details->whereHas('order', function ($order) {
+            //         $order->whereHas('progress_done');
+            //     });
+            // }])
             ->with([
                 'product_photo',
                 'product_stock',
@@ -320,11 +326,11 @@ class ProductQueries extends Service
 
         $products = $product
             ->where(['merchant_id' => $merchant_id, 'status' => 1])
-            ->withCount(['order_details' => function ($order_details) {
-                $order_details->whereHas('order', function ($order) {
-                    $order->whereHas('progress_done');
-                });
-            }])
+            // ->withCount(['order_details' => function ($order_details) {
+            //     $order_details->whereHas('order', function ($order) {
+            //         $order->whereHas('progress_done');
+            //     });
+            // }])
             ->with([
                 'product_photo',
                 'product_stock',
@@ -361,11 +367,11 @@ class ProductQueries extends Service
 
         $products = $product
             ->where(['merchant_id' => $merchant_id, 'status' => 1])
-            ->withCount(['order_details' => function ($order_details) {
-                $order_details->whereHas('order', function ($order) {
-                    $order->whereHas('progress_done');
-                });
-            }])
+            // ->withCount(['order_details' => function ($order_details) {
+            //     $order_details->whereHas('order', function ($order) {
+            //         $order->whereHas('progress_done');
+            //     });
+            // }])
             ->with([
                 'product_photo',
                 'product_stock',
@@ -440,11 +446,13 @@ class ProductQueries extends Service
         }
 
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->where('status', 1)->with([
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->where('status', 1)->with([
             'product_stock',
             'product_photo',
             'is_wishlist',
@@ -479,11 +487,13 @@ class ProductQueries extends Service
 
     public function getProductById($id, $seller = false)
     {
-        $product = Product::withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])
+        $product = new Product();
+        $product = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
             ->with([
                 'product_stock',
                 'product_photo',
@@ -746,11 +756,13 @@ class ProductQueries extends Service
         }
 
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->where('status', 1)->with([
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->where('status', 1)->with([
             'product_stock', 'product_photo', 'is_wishlist',
             'merchant' => function ($merchant) {
                 $merchant->with(['city:id,name']);
@@ -791,11 +803,11 @@ class ProductQueries extends Service
         // $merchant = Merchant::with(['city'])->find($merchant_id);
         $products = $product
             ->where('merchant_id', $merchant_id)
-            ->withCount(['order_details' => function ($details) {
-                $details->whereHas('order', function ($order) {
-                    $order->whereHas('progress_done');
-                });
-            }])
+            // ->withCount(['order_details' => function ($details) {
+            //     $details->whereHas('order', function ($order) {
+            //         $order->whereHas('progress_done');
+            //     });
+            // }])
             ->with([
                 'product_stock',
                 'product_photo',
@@ -990,11 +1002,13 @@ class ProductQueries extends Service
         }
 
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->where('status', 1)->with([
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->where('status', 1)->with([
             'product_stock', 'product_photo', 'is_wishlist',
             'merchant' => function ($merchant) {
                 $merchant->with(['city:id,name']);
@@ -1167,11 +1181,12 @@ class ProductQueries extends Service
     public function searchProductBySeller($merchant_id, $keyword, $limit, $filter = [], $sortby = null, $page = 1)
     {
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
             ->with(['product_stock', 'product_photo', 'is_wishlist', 'ev_subsidy'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']]);
 
         $products = $this->filter($products, $filter);
@@ -1195,11 +1210,13 @@ class ProductQueries extends Service
     public function searchProductBySellerV2($merchant_id, $keyword, $limit, $filter = [], $sortby = null, $page = 1)
     {
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'ev_subsidy'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']]);
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->with(['product_stock', 'product_photo', 'is_wishlist', 'ev_subsidy'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']]);
 
         $products = $this->filter($products, $filter);
         $products = $this->sorting($products, $sortby);
@@ -1222,11 +1239,13 @@ class ProductQueries extends Service
     public function filterProductBySeller($merchant_id, $status, $limit, $filter = [], $sortby = null, $page = 1)
     {
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'ev_subsidy'])
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->with(['product_stock', 'product_photo', 'is_wishlist', 'ev_subsidy'])
             ->where('merchant_id', $merchant_id)
             ->when(!empty($status), function ($query) use ($status) {
                 switch ($status) {
@@ -1291,11 +1310,13 @@ class ProductQueries extends Service
         }
 
         $products = new Product();
-        $products = $products->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->with([
+        $products = $products
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->with([
             'product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name',
             'merchant.promo_merchant' => function ($pd) {
                 $pd->where(function ($query) {
@@ -1331,9 +1352,9 @@ class ProductQueries extends Service
     public function getElectricVehicleByCategory($category_key, $sub_category_key, $sortby = null, $limit = 10)
     {
         $products = Product::where('status', 1)
-            ->withCount([
-                'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
-            ])
+            // ->withCount([
+            //     'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
+            // ])
             ->with([
                 'product_stock',
                 'product_photo',
@@ -1377,9 +1398,9 @@ class ProductQueries extends Service
     public function getElectricVehicleWithCategoryById($category_key, $sub_category_key, $id)
     {
         $product = Product::where('status', 1)
-            ->withCount([
-                'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
-            ])
+            // ->withCount([
+            //     'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
+            // ])
             ->with([
                 'product_stock',
                 'product_photo',
@@ -1423,9 +1444,9 @@ class ProductQueries extends Service
         $merchantEV = collect($merchantEV)->pluck('merchant')->pluck('id');
 
         $products = Product::where('status', 1)
-            ->withCount([
-                'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
-            ])
+            // ->withCount([
+            //     'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
+            // ])
             ->with([
                 'product_stock', 'product_photo', 'merchant.city', 'category', 'is_wishlist',
                 'varian_product' => fn ($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
@@ -1457,9 +1478,11 @@ class ProductQueries extends Service
         $merchantEV = MasterEvStore::with('merchant')->where('category_key', $category_key)->get();
         $merchantEV = collect($merchantEV)->pluck('merchant')->pluck('id');
 
-        $product = Product::withCount([
-            'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
-        ])
+        $product = new Product();
+        $product = $product
+        // ->withCount([
+        //     'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
+        // ])
             ->with([
                 'product_stock', 'product_photo', 'merchant.city', 'category', 'is_wishlist',
                 'varian_product' => function ($query) {
@@ -1521,11 +1544,13 @@ class ProductQueries extends Service
         }
 
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->where('status', 1)->with([
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->where('status', 1)->with([
             'product_stock', 'product_photo', 'is_wishlist',
             'merchant' => function ($merchant) {
                 $merchant->with(['city:id,name', 'promo_merchant.promo_master']);
@@ -1555,11 +1580,13 @@ class ProductQueries extends Service
     public function getProductWithFilter($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->where('status', 1)
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+            ->where('status', 1)
             ->with([
                 'product_stock',
                 'product_photo',
@@ -1613,13 +1640,13 @@ class ProductQueries extends Service
     {
         $product = new Product();
         $products = $product
-            ->withCount([
-                'order_details' => function ($details) {
-                    $details->whereHas('order', function ($order) {
-                        $order->whereHas('progress_done');
-                    });
-                },
-            ])
+            // ->withCount([
+            //     'order_details' => function ($details) {
+            //         $details->whereHas('order', function ($order) {
+            //             $order->whereHas('progress_done');
+            //         });
+            //     },
+            // ])
             ->with([
                 'product_stock',
                 'product_photo',
@@ -1679,11 +1706,13 @@ class ProductQueries extends Service
         $merchant_product_ev = ProductEvSubsidy::where('merchant_id', auth()->user()->merchant_id)->get();
 
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->where([
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->where([
             'status' => 1,
             'merchant_id' => auth()->user()->merchant_id,
         ])->with([
@@ -1707,6 +1736,125 @@ class ProductQueries extends Service
             ->whereNotIn('id', collect($merchant_product_ev)->pluck('product_id')->toArray());
 
         $products;
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $data = $this->productPaginate($sorted_data, $limit);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function getTiketProduct($limit, $filter = [], $sortby = null, $current_page = 1)
+    {
+        $tikets = MasterTiket::with(['master_data', 'master_data.parent', 'master_data.parent.parent'])->where('status', 1)->get();
+
+        $masterDataKeys = collect($tikets)->pluck('master_data.parent.parent.key')->toArray();
+
+        $categories = MasterData::with(['child', 'child.child'])->where([
+            'type' => 'product_category',
+        ])->whereIn('key', $masterDataKeys)->get();
+
+        $cat_child_id = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    foreach ($child->child as $children) {
+                        array_push($cat_child_id, $children->id);
+                    }
+                }
+            }
+        }
+
+        $product = new Product();
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->where([
+            'status' => 1,
+        ])->with([
+            'product_stock', 'product_photo', 'is_wishlist',
+            'merchant.city:id,name',
+            'merchant.promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                });
+            },
+            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_values',
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+            'ev_subsidy',
+        ])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereIn('category_id', $cat_child_id);
+
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+
+        $data = $this->productPaginate($sorted_data, $limit, $tikets);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
+    public function getSubsidyProduct($limit, $filter = [], $sortby = null, $current_page = 1)
+    {
+        $categories = MasterData::with(['child', 'child.child'])->where([
+            'type' => 'product_category',
+            'key' => 'prodcat_electric_vehicle',
+        ])->get();
+
+        $cat_child_id = [];
+        foreach ($categories as $category) {
+            foreach ($category->child as $child) {
+                if (!$child->child->isEmpty()) {
+                    foreach ($child->child as $children) {
+                        array_push($cat_child_id, $children->id);
+                    }
+                }
+            }
+        }
+
+        $product = new Product();
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->where([
+            'status' => 1,
+        ])->with([
+            'product_stock', 'product_photo', 'is_wishlist',
+            'merchant.city:id,name',
+            'merchant.promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                });
+            },
+            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_values',
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+            'ev_subsidy',
+        ])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereHas('ev_subsidy', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereIn('category_id', $cat_child_id);
+
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
@@ -1779,11 +1927,12 @@ class ProductQueries extends Service
     public function countProductWithFilter($filter = [], $sortby = null)
     {
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])
+        $products = $product
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
             ->where('status', 1)
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
