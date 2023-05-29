@@ -1596,13 +1596,11 @@ class ProductQueries extends Service
                             $item['tiket'] = null;
                         }
                     }
+
+                    unset($item['tiket']['master_data']);
                 } else {
                     $item['tiket'] = null;
                 }
-
-                unset($item['tiket']['master_data']);
-
-                return $item;
 
                 $item['reviews'] = null;
                 return $item;
