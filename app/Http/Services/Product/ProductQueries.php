@@ -1602,9 +1602,6 @@ class ProductQueries extends Service
                     $item['tiket'] = null;
                 }
 
-                unset($item['tiket']['master_data']);
-                unset($item['merchant']['promo_merchant']);
-
                 $item['reviews'] = null;
                 return $item;
             })->toArray();
