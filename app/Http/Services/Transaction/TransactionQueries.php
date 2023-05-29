@@ -836,15 +836,18 @@ class TransactionQueries extends Service
             }
         }
 
+        $buying_tiket = false;
         foreach ($new_product as $product) {
             $tiket = collect($master_tikets)->where('master_data.id', $product['category_id'])->first();
 
             if($tiket) {
                 $count_tiket += $product['quantity'];
+
+                $buying_tiket = true;
             }
         }
 
-        if ($count_tiket > 4) {
+        if ($count_tiket > 4 && $buying_tiket) {
             $datas['success'] = false;
             $datas['status_code'] = 400;
             $datas['message'] = 'Anda telah melebihi batas pembelian tiket';
