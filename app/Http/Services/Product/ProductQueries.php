@@ -1745,9 +1745,6 @@ class ProductQueries extends Service
         ])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
             $merchant->where('store_umkm', true);
-
-        })->whereHas('ev_subsidy', function ($merchant) {
-            $merchant->where('status', 1);
         });
 
         $filtered_data = $this->filter($products, $filter);
