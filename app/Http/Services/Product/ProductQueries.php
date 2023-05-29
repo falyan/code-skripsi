@@ -1916,13 +1916,13 @@ class ProductQueries extends Service
         }
     }
 
-    public function productPaginate($products, $limit = 10)
+    public function productPaginate($products, $limit = 10, $tikets = null)
     {
         $itemsPaginated = $products->paginate($limit);
 
         $itemsTransformed = $itemsPaginated
             ->getCollection()
-            ->map(function ($item) {
+            ->map(function ($item) use ($tikets) {
                 $is_shipping_discount = false;
                 $is_flash_sale_discount = false;
                 $promo_value = 0;
@@ -2018,7 +2018,22 @@ class ProductQueries extends Service
                     }
                 }
 
+                if ($tikets != null) {
+                    foreach ($tikets as $tiket) {
+                        if ($item['category_id'] == $tiket->master_data->id) {
+                            $item['tiket'] = $tiket;
+                            break;
+                        } else {
+                            $item['tiket'] = null;
+                        }
+                    }
+                } else {
+                    $item['tiket'] = null;
+                }
+
+                unset($item['tiket']['master_data']);
                 unset($item['merchant']['promo_merchant']);
+
                 $item['merchant']['is_shipping_discount'] = $is_shipping_discount;
                 $item['is_flash_sale_discount'] = $is_flash_sale_discount;
                 $item['promo_value'] = $promo_value;
