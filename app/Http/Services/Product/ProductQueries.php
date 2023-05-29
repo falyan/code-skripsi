@@ -1721,31 +1721,35 @@ class ProductQueries extends Service
     public function getUmkmProduct($limit, $filter = [], $sortby = null, $current_page = 1)
     {
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->where([
-            'status' => 1,
-        ])->with([
-            'product_stock', 'product_photo', 'is_wishlist',
-            'merchant.city:id,name',
-            'merchant.promo_merchant' => function ($pd) {
-                $pd->where(function ($query) {
-                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
-                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+        $products = $product
+            ->withCount(['order_details' => function ($details) {
+                $details->whereHas('order', function ($order) {
+                    $order->whereHas('progress_done');
                 });
-            },
-            'merchant.promo_merchant.promo_master',
-            'merchant.promo_merchant.promo_master.promo_values',
-            'varian_product' => function ($query) {
-                $query->with(['variant_stock'])->where('main_variant', true);
-            },
-            'ev_subsidy',
-        ])->whereHas('merchant', function ($merchant) {
-            $merchant->where('status', 1);
-            $merchant->where('store_umkm', true);
-        });
+            }])
+            ->where('status', 1)
+            ->with([
+                'product_stock',
+                'product_photo',
+                'merchant',
+                'merchant.city:id,name',
+                'merchant.promo_merchant' => function ($pd) {
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                },
+                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_values',
+                'is_wishlist', 'varian_product' => function ($query) {
+                    $query->with(['variant_stock'])->where('main_variant', true);
+                },
+                'ev_subsidy',
+            ])
+            ->whereHas('merchant', function ($merchant) {
+                $merchant->where('status', 1);
+                $merchant->where('store_umkm', true);
+            });
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
