@@ -17,4 +17,9 @@ class CustomerTiket extends Model
     {
         return $this->belongsTo(MasterTiket::class, 'master_tiket_id', 'id');
     }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class, 'order_id', 'id');
+    }
 }

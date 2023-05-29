@@ -4,6 +4,7 @@ namespace App\Http\Services\Tiket;
 
 use App\Http\Services\Service;
 use App\Models\CustomerTiket;
+use App\Models\MasterData;
 use App\Models\Order;
 use Carbon\Carbon;
 

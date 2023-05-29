@@ -946,7 +946,6 @@ class TransactionController extends Controller
                         $total_delivery_fee_trx += $o->delivery->delivery_fee;
                     }
 
-
                     $master_data = MasterData::whereIn('key', ['ubah_daya_min_transaction', 'ubah_daya_implementation_period'])->get();
                     $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
                     $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
@@ -1068,7 +1067,6 @@ class TransactionController extends Controller
 
             DB::beginTransaction();
             $data = $this->transactionQueries->getStatusOrder($order_id, true);
-
 
             $status_codes = [];
             foreach ($data->progress as $item) {
@@ -1284,8 +1282,14 @@ class TransactionController extends Controller
 
                 return $this->respondWithResult(true, 'Selamat! Pesanan anda telah selesai', 200);
             } else {
-                if ($status_code == '03') return $this->respondWithResult(false, 'Pesanan sedang dalam pengiriman!', 400);
-                if ($status_code == '88') return $this->respondWithResult(false, 'Pesanan anda sudah selesai!', 400);
+                if ($status_code == '03') {
+                    return $this->respondWithResult(false, 'Pesanan sedang dalam pengiriman!', 400);
+                }
+
+                if ($status_code == '88') {
+                    return $this->respondWithResult(false, 'Pesanan anda sudah selesai!', 400);
+                }
+
                 return $this->respondWithResult(false, 'Pesanan anda belum dikirimkan oleh Penjual!', 400);
             }
         } catch (Exception $e) {
@@ -1733,7 +1737,7 @@ class TransactionController extends Controller
                             return array_merge($respond, [
                                 'success' => true,
                                 'status_code' => 400,
-                                'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif'
+                                'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
                             ]);
                         }
 
@@ -1742,11 +1746,11 @@ class TransactionController extends Controller
                 }
             }
 
-            if (count($ev_subsidies ) > 1) {
+            if (count($ev_subsidies) > 1) {
                 return array_merge($respond, [
                     'success' => true,
                     'status_code' => 400,
-                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif'
+                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
                 ]);
             }
 
