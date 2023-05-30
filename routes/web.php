@@ -496,7 +496,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     // });
 
     $router->group(['middleware' => 'auth'], static function () use ($router) {
-        $router->get('get-gatheway', 'ManualTransferController@getGatheway');
+        $router->get('get-gateway', 'ManualTransferController@getGatheway');
         $router->post('select/gateway', 'ManualTransferController@selectGatheway');
     });
 
