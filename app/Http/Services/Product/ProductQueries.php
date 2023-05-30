@@ -714,8 +714,7 @@ class ProductQueries extends Service
             ])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
-            })
-            ->inRandomOrder();
+            });
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
