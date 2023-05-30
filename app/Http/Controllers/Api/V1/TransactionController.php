@@ -1721,7 +1721,7 @@ class TransactionController extends Controller
             $request = request()->all();
             $respond = $this->transactionQueries->countCheckoutPriceV2($customer, $request);
 
-            if (isset($request['customer']) && data_get($request, 'customer') != null){
+            if (isset($request['customer']) && data_get($request, 'customer') != null) {
                 $ev_subsidies = [];
                 foreach ($respond['merchants'] as $merchant) {
                     foreach ($merchant['products'] as $product) {
