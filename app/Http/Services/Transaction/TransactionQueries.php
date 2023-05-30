@@ -442,14 +442,12 @@ class TransactionQueries extends Service
         $province_id = City::where('id', $city_id)->first()->province_id;
         $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = 0;
         $total_discount = $total_price_discount = $discount = 0;
-        $message_error = '';
         $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = 0;
         $message_error = '';
 
         $new_merchant = [];
         $ev_subsidies = [];
         $promo_masters = [];
-
         foreach (data_get($datas, 'merchants') as $merchant) {
             $total_weight = 0;
             $merchant_total_price = 0;

@@ -41,13 +41,6 @@ class ManualTransferController extends Controller
                 return $this->respondValidationError($errors, 'Validation Error!');
             }
 
-            if (!request()->hasHeader('api_key') || request()->header('api_key') == null) {
-                return response()->json([
-                    'kode' => '93',
-                    'pesan' => 'INVALID USER-PASSWORD',
-                ]);
-            }
-
             $data = $this->commands->create($request);
 
             return response()->json($data);

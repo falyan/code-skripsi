@@ -1241,8 +1241,8 @@ class TransactionController extends Controller
 
                 $res = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
-                IconcashInquiry::find($topup_inquiry->id)->update([
-                    'confirm_res_json' => json_decode($res),
+                IconcashInquiry::where('order_id', $topup_inquiry->orderId)->update([
+                    'confirm_res_json' => json_encode($res),
                 ]);
 
                 $notificationCommand = new NotificationCommands();
@@ -1704,7 +1704,7 @@ class TransactionController extends Controller
             $request = request()->all();
             $respond = $this->transactionQueries->countCheckoutPriceV2($customer, $request);
 
-            if (isset($request['customer']) && data_get($request, 'customer') != null){
+            if (isset($request['customer']) && data_get($request, 'customer') != null) {
                 $ev_subsidies = [];
                 foreach ($respond['merchants'] as $merchant) {
                     foreach ($merchant['products'] as $product) {

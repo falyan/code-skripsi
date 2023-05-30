@@ -1367,4 +1367,4 @@ class TransactionCommands extends Service
         $response['data'] = $user_tikets;
         return $response;
     }
-};
+}

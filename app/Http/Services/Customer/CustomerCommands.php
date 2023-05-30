@@ -7,6 +7,8 @@ use App\Models\CustomerAddress;
 
 class CustomerCommands
 {
+    private $customerQueries;
+
     public function __construct()
     {
         $this->customerQueries = new CustomerQueries();

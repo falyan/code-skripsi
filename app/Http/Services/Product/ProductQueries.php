@@ -5,6 +5,7 @@ namespace App\Http\Services\Product;
 use App\Http\Services\Service;
 use App\Models\MasterData;
 use App\Models\MasterEvStore;
+use App\Models\MasterTiket;
 use App\Models\MasterVariant;
 use App\Models\Merchant;
 use App\Models\Product;
