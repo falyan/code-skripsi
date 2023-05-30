@@ -5,16 +5,13 @@ namespace App\Http\Services\Product;
 use App\Http\Services\Service;
 use App\Models\MasterData;
 use App\Models\MasterEvStore;
-use App\Models\MasterTiket;
 use App\Models\MasterVariant;
 use App\Models\Merchant;
 use App\Models\Product;
-use App\Models\ProductStock;
 use App\Models\Review;
 use App\Models\VariantValueProduct;
 use App\Models\ProductEvSubsidy;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class ProductQueries extends Service
@@ -28,19 +25,34 @@ class ProductQueries extends Service
                     $order->whereHas('progress_done');
                 });
             }])
-            ->where('status', 1)->with(['product_stock', 'product_photo', 'merchant.city', 'is_wishlist', 'varian_product' => function ($query) {
-                $query->with(['variant_stock'])->where('main_variant', true);
-            }])->whereHas('merchant', function ($merchant) {
+            ->where('status', 1)
+            ->with([
+                'product_stock',
+                'product_photo',
+                'merchant',
+                'merchant.city:id,name',
+                'merchant.promo_merchant' => function ($pd) {
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                },
+                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_values',
+                'is_wishlist', 'varian_product' => function ($query) {
+                    $query->with(['variant_stock'])->where('main_variant', true);
+                },
+            ])
+            ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
-            }); //todo paginate 10
+            });
 
-        $data = $this->productPaginate($products, $limit);
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
+        // return $sorted_data->paginate($limit);
 
-        // if ($data->isEmpty()) {
-        //     $response['success'] = false;
-        //     $response['message'] = 'Gagal mendapatkan data produk!';
-        //     return $response;
-        // }
+        $data = $this->productPaginate($sorted_data, $limit);
+
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -58,29 +70,21 @@ class ProductQueries extends Service
                     $order->whereHas('progress_done');
                 });
             }])
-            ->with(['product_photo', 'product_stock', 'is_wishlist', 'varian_product' => function ($query) {
-                $query->with(['variant_stock'])->where('main_variant', true);
-            }])->when($featured == true, function ($query) {
+            ->with([
+                'product_photo',
+                'product_stock',
+                'is_wishlist',
+                'varian_product' => function ($query) {
+                    $query->with(['variant_stock'])->where('main_variant', true);
+                },
+            ])->when($featured == true, function ($query) {
                 $query->where('is_featured_product', true);
             });
-        // ->when($filter != '', function ($q) use ($filter) {
-        //     $filters = explode(",", $filter);
-        //     if (define('status', $filters)) {
-        //         $q->where('status', 1);
-        //     }
-        // });
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
-        $immutable_data = $sorted_data->get()->map(function ($product) {
-            $product->reviews = null;
-            // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            // $product->avg_rating = 0.0;
-            return $product;
-        });
-
-        $data = static::paginate($immutable_data->toArray(), $limit, $current_page);
+        $data = $this->productPaginate($sorted_data, $limit);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
@@ -98,7 +102,11 @@ class ProductQueries extends Service
             'response' => '',
         ]);
         $product = new Product();
-        $products = $product->with(['product_stock', 'product_photo', 'is_wishlist'])->where('merchant_id', $merchant_id);
+        $products = $product->with([
+            'product_stock',
+            'product_photo',
+            'is_wishlist',
+        ])->where('merchant_id', $merchant_id);
 
         $immutable_data = $products->get()->map(function ($product) {
             $id = $product->id;
@@ -126,11 +134,6 @@ class ProductQueries extends Service
 
         $data = static::paginate($immutable_data->toArray(), $limit, $current_page);
 
-        // if ($data->isEmpty()){
-        //     $response['success'] = false;
-        //     $response['message'] = 'Gagal mendapatkan data produk!';
-        //     return $response;
-        // }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -149,18 +152,13 @@ class ProductQueries extends Service
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
-            //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
             // $product->avg_rating = 0.0;
             return $product;
         });
 
         $data = static::paginate($immutable_data->toArray(), $limit, $current_page);
 
-        //        if ($data->isEmpty()){
-        //            $response['success'] = false;
-        //            $response['message'] = 'Gagal mendapatkan data produk!';
-        //            return $response;
-        //        }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -175,10 +173,20 @@ class ProductQueries extends Service
                 $order->whereHas('progress_done');
             });
         }])->where('status', 1)->with([
-            'product_stock:id,product_id,amount,uom', 'product_photo:id,product_id,url', 'is_wishlist',
-            'merchant' => function ($merchant) {
-                $merchant->with(['city:id,name'])->select('id', 'name', 'address', 'postal_code', 'city_id', 'photo_url', 'official_store');
-            }, 'varian_product' => function ($query) {
+            'product_stock:id,product_id,amount,uom',
+            'product_photo:id,product_id,url',
+            'is_wishlist',
+            'merchant',
+            'merchant.city:id,name',
+            'merchant.promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                });
+            },
+            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_values',
+            'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
             },
         ])
@@ -216,10 +224,20 @@ class ProductQueries extends Service
                 $order->whereHas('progress_done');
             });
         }])->where('status', 1)->with([
-            'product_stock:id,product_id,amount,uom', 'product_photo:id,product_id,url', 'is_wishlist',
-            'merchant' => function ($merchant) {
-                $merchant->with(['city:id,name'])->select('id', 'name', 'address', 'postal_code', 'city_id', 'photo_url', 'official_store');
-            }, 'varian_product' => function ($query) {
+            'product_stock:id,product_id,amount,uom',
+            'product_photo:id,product_id,url',
+            'is_wishlist',
+            'merchant',
+            'merchant.city:id,name',
+            'merchant.promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                });
+            },
+            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_values',
+            'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
             },
         ])
@@ -260,11 +278,23 @@ class ProductQueries extends Service
                     $order->whereHas('progress_done');
                 });
             }])
-            ->with(['product_photo', 'product_stock', 'merchant' => function ($merchant) {
-                $merchant->with('city:id,name');
-            }, 'varian_product' => function ($query) {
-                $query->with(['variant_stock'])->where('main_variant', true);
-            }])
+            ->with([
+                'product_photo',
+                'product_stock',
+                'merchant',
+                'merchant.city:id,name',
+                'merchant.promo_merchant' => function ($pd) {
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                },
+                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_values',
+                'varian_product' => function ($query) {
+                    $query->with(['variant_stock'])->where('main_variant', true);
+                }
+            ])
             ->orderBy('updated_at', 'desc');
 
         $filtered_data = $this->filter($products, $filter);
@@ -289,11 +319,23 @@ class ProductQueries extends Service
                     $order->whereHas('progress_done');
                 });
             }])
-            ->with(['product_photo', 'product_stock', 'merchant' => function ($merchant) {
-                $merchant->with('city:id,name');
-            }, 'varian_product' => function ($query) {
-                $query->with(['variant_stock'])->where('main_variant', true);
-            }]);
+            ->with([
+                'product_photo',
+                'product_stock',
+                'merchant',
+                'merchant.city:id,name',
+                'merchant.promo_merchant' => function ($pd) {
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                },
+                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_values',
+                'varian_product' => function ($query) {
+                    $query->with(['variant_stock'])->where('main_variant', true);
+                },
+            ]);
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -317,11 +359,28 @@ class ProductQueries extends Service
                     $order->whereHas('progress_done');
                 });
             }])
-            ->with(['product_photo', 'product_stock', 'merchant' => function ($merchant) {
-                $merchant->with('city:id,name');
-            }, 'varian_product' => function ($query) {
-                $query->with(['variant_stock'])->where('main_variant', true);
-            }]);
+            ->with([
+                'product_photo',
+                'product_stock',
+                'merchant',
+                'merchant.city:id,name',
+                'merchant.promo_merchant' => function ($pd) {
+                    $pd->where('status', 1);
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                    $pd->whereHas('promo_master', function ($pm) {
+                        $pm->where('status', 1);
+                    });
+                },
+                'merchant.promo_merchant.promo_master' => function ($pm) {
+                    $pm->where('status', 1);
+                },
+                'varian_product' => function ($query) {
+                    $query->with(['variant_stock'])->where('main_variant', true);
+                },
+            ]);
 
         if (!empty($filter['category_id_parent'])) {
             $cat_id_parent = $filter['category_id_parent'];
@@ -378,23 +437,31 @@ class ProductQueries extends Service
                 $order->whereHas('progress_done');
             });
         }])->where('status', 1)->with([
-            'product_stock', 'product_photo', 'is_wishlist',
-            'merchant' => function ($merchant) {
-                $merchant->with('city:id,name');
-            }, 'varian_product' => function ($query) {
+            'product_stock',
+            'product_photo',
+            'is_wishlist',
+            'merchant',
+            'merchant.city:id,name',
+            'merchant.promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                });
+            },
+            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_values',
+            'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
             },
         ])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
         })->whereIn('category_id', $cat_child_id);
 
-        $data = $this->productPaginate($products, $limit);
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
 
-        // if ($data->isEmpty()) {
-        //     $response['success'] = false;
-        //     $response['message'] = 'Gagal mendapatkan data produk!';
-        //     return $response;
-        // }
+        $data = $this->productPaginate($sorted_data, $limit);
+
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -403,36 +470,39 @@ class ProductQueries extends Service
 
     public function getProductById($id, $seller = false)
     {
-        // seller/buyer
-        // $data = Product::withCount(['reviews', 'order_details' => function ($details) {
-        //     $details->whereHas('order', function ($order) {
-        //         $order->whereHas('progress_done');
-        //     });
-        // }])->with(['reviews' => function ($reviews) {
-        //     $reviews->with('customer:id,full_name,image_url')->paginate(10);
-        // }, 'product_stock', 'product_photo', 'merchant' => function ($region) {
-        //     $region->with(['province', 'city', 'district', 'expedition']);
-        // }, 'etalase', 'category', 'order_details' => function ($order_details) {
-        //     $order_details->whereHas('order', function ($order) {
-        //         $order->whereHas('progress_done');
-        //     });
-        // }])->where('id', $id)->first();
-
         $product = Product::withCount(['order_details' => function ($details) {
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant' => function ($region) {
-            $region->with(['province', 'city', 'district', 'expedition']);
-        }, 'etalase', 'category', 'order_details' => function ($order_details) {
-            $order_details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }, 'reviews' => function ($reviews) {
-            $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo'])->where('status', 1);
-        }, 'discussion_master' => function ($master) {
-            $master->orderBy('created_at', 'desc')->limit(2)->with(['discussion_response']);
-        }])->where('id', $id)->first();
+        }])
+            ->with([
+                'product_stock',
+                'product_photo',
+                'is_wishlist',
+                'merchant' => function ($region) {
+                    $region->with(['province', 'city', 'district', 'expedition']);
+                },
+                'merchant.promo_merchant' => function ($pd) {
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                },
+                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_values',
+                'etalase', 'category', 'order_details' => function ($order_details) {
+                    $order_details->whereHas('order', function ($order) {
+                        $order->whereHas('progress_done');
+                    });
+                },
+                'reviews' => function ($reviews) {
+                    $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo'])->where('status', 1);
+                },
+                'discussion_master' => function ($master) {
+                    $master->orderBy('created_at', 'desc')->limit(2)->with(['discussion_response']);
+                }
+            ])
+            ->where('id', $id)->first();
 
         $master_variants = MasterVariant::whereHas('variants', function ($v) use ($id) {
             $v->whereHas('variant_values', function ($vv) use ($id) {
@@ -454,9 +524,6 @@ class ProductQueries extends Service
             })
             ->where('product_id', $id)->orderBy('main_variant', 'desc')->get();
 
-        $product['variants'] = $master_variants;
-        $product['variant_value_products'] = $variant_value_product;
-
         if (!$product) {
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data produk!';
@@ -464,17 +531,126 @@ class ProductQueries extends Service
             return $response;
         }
 
-        $category = MasterData::where('id', $product->category_id)->first();
-
-        $master_tiket = MasterTiket::where('master_data_key', $category->key)->first();
-
         $product['variants'] = $master_variants;
         $product['variant_value_products'] = $variant_value_product;
 
+        $is_shipping_discount = false;
+        $is_flash_sale_discount = false;
+        $promo_value = 0;
+        $promo_type = '';
+        $promo_min_order = 0;
+        $wording_title = '';
+        $wording_subtitle = '';
 
         $item = $product->toArray();
 
-        $item['tiket'] = $master_tiket;
+        if (isset($item['merchant']['promo_merchant']) && $item['merchant']['can_shipping_discount'] == true) {
+            foreach ($item['merchant']['promo_merchant'] as $promo) {
+                if (isset($promo['promo_master']['event_type']) && $promo['promo_master']['event_type'] == 'ongkir') {
+                    if ($promo['promo_master']['value_2'] >= $promo['promo_master']['value_1']) {
+                        $value_ongkir = $promo['promo_master']['value_2'];
+                    } else {
+                        $value_ongkir = $promo['promo_master']['value_1'];
+                    }
+
+                    $max_merchant = ($promo['usage_value'] + $value_ongkir) > $promo['max_value'];
+                    $max_master = ($promo['promo_master']['usage_value'] + $value_ongkir) > $promo['promo_master']['max_value'];
+
+                    if ($max_merchant && !$max_master) {
+                        $is_shipping_discount = true;
+                        break;
+                    }
+
+                    if (!$max_merchant && $max_master) {
+                        $is_shipping_discount = true;
+                        break;
+                    }
+
+                    if (!$max_merchant && !$max_master) {
+                        $is_shipping_discount = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (isset($item['merchant']['promo_merchant']) && $item['merchant']['can_flash_sale_discount'] == true) {
+            foreach ($item['merchant']['promo_merchant'] as $promo) {
+                if (isset($promo['promo_master']['event_type']) && $promo['promo_master']['event_type'] == 'flash_sale') {
+                    $value_flash_sale_m = 0;
+
+                    $value_flash_sale_m = $promo['promo_master']['value_1'];
+                    if ($promo['promo_master']['promo_value_type'] == 'percentage') {
+                        $value_flash_sale_m = $item['price'] * ($promo['promo_master']['value_1'] / 100);
+                        if ($value_flash_sale_m >= $promo['promo_master']['max_discount_value']) {
+                            $value_flash_sale_m = $promo['promo_master']['max_discount_value'];
+                        }
+                    }
+
+                    foreach ($promo['promo_master']['promo_values'] as $promo_value_) {
+                        $value_flash_sale_m = $promo['promo_master']['value_1'];
+                        if ($promo['promo_master']['promo_value_type'] == 'percentage') {
+                            $value_flash_sale_m = $item['price'] * ($promo['promo_master']['value_1'] / 100);
+                            if ($value_flash_sale_m >= $promo['promo_master']['max_discount_value']) {
+                                $value_flash_sale_m = $promo['promo_master']['max_discount_value'];
+                            }
+                        }
+
+                        if ($item['price'] >= $promo_value_['min_value'] && $item['price'] <= $promo_value_['max_value'] && $promo_value_['status'] == 1) {
+                            if ($value_flash_sale_m >= $promo_value_['max_discount_value']) {
+                                $value_flash_sale_m = $promo_value_['max_discount_value'];
+                            }
+
+                            break;
+                        }
+                    }
+
+                    $max_merchant = ($promo['usage_value'] + $value_flash_sale_m) > $promo['max_value'];
+                    $max_master = ($promo['promo_master']['usage_value'] + $value_flash_sale_m) > $promo['promo_master']['max_value'];
+
+                    if ($max_merchant && !$max_master) {
+                        $is_flash_sale_discount = true;
+                        $promo_value = $promo['promo_master']['value_1'];
+                        $promo_type = $promo['promo_master']['promo_value_type'];
+                        $promo_min_order = $promo['promo_master']['min_order_value'];
+                        break;
+                    }
+
+                    if (!$max_merchant && $max_master) {
+                        $is_flash_sale_discount = true;
+                        $promo_value = $promo['promo_master']['value_1'];
+                        $promo_type = $promo['promo_master']['promo_value_type'];
+                        $promo_min_order = $promo['promo_master']['min_order_value'];
+                        break;
+                    }
+
+                    if (!$max_merchant && !$max_master) {
+                        $is_flash_sale_discount = true;
+                        $promo_value = $promo['promo_master']['value_1'];
+                        $promo_type = $promo['promo_master']['promo_value_type'];
+                        $promo_min_order = $promo['promo_master']['min_order_value'];
+                        break;
+                    }
+                }
+            }
+        }
+
+        unset($item['merchant']['promo_merchant']);
+        $item['merchant']['is_shipping_discount'] = $is_shipping_discount;
+        $item['is_flash_sale_discount'] = $is_flash_sale_discount;
+        $item['promo_value'] = $promo_value;
+        $item['promo_type'] = $promo_type;
+
+        if ($promo_value != 0) {
+            $master_data = MasterData::whereIn('key', ['promo_wording_title', 'promo_wording_subtitle'])->get();
+
+            $wording_title = collect($master_data)->where('key', 'promo_wording_title')->first()['value'];
+            $wording_subtitle = collect($master_data)->where('key', 'promo_wording_subtitle')->first()['value'];
+
+            $item['promo_wording_title'] = $wording_title;
+            $if_type_wording = $promo_type == 'percentage' ? $promo_value . '% ' : 'Rp ' . number_format($promo_value, 0, ',', '.') . ' ';
+            $item['promo_wording_subtitle'] = explode('/', $wording_subtitle)[0] . $if_type_wording . explode('/', $wording_subtitle)[1] . "Rp " . number_format($promo_min_order, 0, ',', '.');
+        }
 
         $item['avg_rating'] = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
         $item['reviews'] = null;
@@ -493,20 +669,31 @@ class ProductQueries extends Service
             'body' => Carbon::now('Asia/Jakarta'),
             'response' => '',
         ]);
-
         $product = new Product();
-        $products = $product->where('status', 1)->with([
-            'product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name', 'varian_product' => function ($query) {
-                $query->with(['variant_stock'])->where('main_variant', true);
-            },
-        ])
+        $products = $product
+            ->where('status', 1)
+            ->with([
+                'product_stock',
+                'product_photo',
+                'is_wishlist',
+                'merchant',
+                'merchant.city:id,name',
+                'merchant.promo_merchant' => function ($pd) {
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                },
+                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_values',
+                'varian_product' => function ($query) {
+                    $query->with(['variant_stock'])->where('main_variant', true);
+                },
+            ])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
-            })->inRandomOrder();
-
-        if ($sortby == null) {
-            $products = $products->orderBy('updated_at', 'desc');
-        }
+            })
+            ->inRandomOrder();
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -528,7 +715,10 @@ class ProductQueries extends Service
             'response' => '',
         ]);
 
-        $categories = MasterData::with(['child','child.child'])->where([
+        $categories = MasterData::with([
+            'child' => fn ($j) => $j->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeda_listrik']),
+            'child.child' => fn ($q) => $q->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_mobil_listrik_', 'prodcat_sepeda_listrik_']),
+        ])->where([
             'type' => 'product_category',
             'key' => 'prodcat_electric_vehicle',
         ])->get();
@@ -559,17 +749,15 @@ class ProductQueries extends Service
             },
         ])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
-        })->whereIn('category_id', $cat_child_id)
-            ->orderByDesc(ProductStock::select('amount')
-                ->whereColumn('product_stock.product_id', 'product.id')
-                ->latest()
-                ->take(1)
-            );
+        })->whereIn('category_id', $cat_child_id);
 
-        $filtered_data = $this->filter($products, $filter);
-        $sorted_data = $this->sorting($filtered_data, $sortby);
+        $data = $this->productPaginate($products, $limit);
 
-        $data = $this->productPaginate($sorted_data, $limit);
+        if ($data->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Produk tidak tersedia!';
+            return $response;
+        }
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
@@ -589,17 +777,25 @@ class ProductQueries extends Service
 
         $product = new Product();
         // $merchant = Merchant::with(['city'])->find($merchant_id);
-        $products = $product->where('merchant_id', $merchant_id)->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->whereHas('merchant', function ($merchant) {
-            $merchant->where('status', 1);
-        })->orderBy('order_details_count', 'DESC');
+        $products = $product
+            ->where('merchant_id', $merchant_id)
+            ->withCount(['order_details' => function ($details) {
+                $details->whereHas('order', function ($order) {
+                    $order->whereHas('progress_done');
+                });
+            }])
+            ->with([
+                'product_stock',
+                'product_photo',
+                'is_wishlist',
+                'order_details' => function ($details) {
+                    $details->whereHas('order', function ($order) {
+                        $order->whereHas('progress_done');
+                    });
+                }
+            ])->whereHas('merchant', function ($merchant) {
+                $merchant->where('status', 1);
+            })->orderBy('order_details_count', 'DESC');
 
         $itemsPaginated = $products->paginate($limit);
 
@@ -694,7 +890,7 @@ class ProductQueries extends Service
         // $data = array_merge(['merchant' => $merchant], $data);
         // $data = [];
 
-        // if ($product->isEmpty()){
+        // if ($product->isEmpty()) {
         //     $response['success'] = false;
         //     $response['message'] = 'Gagal mendapatkan data produk!';
         //     return $response;
@@ -716,19 +912,29 @@ class ProductQueries extends Service
         ]);
 
         $product = new Product();
-        $products = $product->with([
-            'product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name',
-            'varian_product' => function ($query) {
-                $query->with(['variant_stock'])->where('main_variant', true);
-            },
-        ])
+        $products = $product
+            ->with([
+                'product_stock',
+                'product_photo',
+                'is_wishlist',
+                'merchant',
+                'merchant.city:id,name',
+                'merchant.promo_merchant' => function ($pd) {
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                },
+                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_values',
+                'varian_product' => function ($query) {
+                    $query->with(['variant_stock'])->where('main_variant', true);
+                },
+            ])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
-            })->where('status', 1)->latest();
-
-        if ($sortby == null) {
-            $products = $products->orderBy('created_at', 'desc');
-        }
+            })
+            ->where('status', 1)->latest();
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -750,7 +956,10 @@ class ProductQueries extends Service
             'response' => '',
         ]);
 
-        $categories = MasterData::with(['child','child.child'])->where([
+        $categories = MasterData::with([
+            'child' => fn ($j) => $j->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeda_listrik']),
+            'child.child' => fn ($q) => $q->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_mobil_listrik_', 'prodcat_sepeda_listrik_']),
+        ])->where([
             'type' => 'product_category',
             'key' => 'prodcat_electric_vehicle',
         ])->get();
@@ -781,17 +990,15 @@ class ProductQueries extends Service
             },
         ])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
-        })->whereIn('category_id', $cat_child_id)
-            ->orderByDesc(ProductStock::select('amount')
-                ->whereColumn('product_stock.product_id', 'product.id')
-                ->latest()
-                ->take(1)
-            );
+        })->whereIn('category_id', $cat_child_id);
 
-        $filtered_data = $this->filter($products, $filter);
-        $sorted_data = $this->sorting($filtered_data, $sortby);
+        $data = $this->productPaginate($products, $limit);
 
-        $data = $this->productPaginate($sorted_data, $limit);
+        if ($data->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Produk tidak tersedia!';
+            return $response;
+        }
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
@@ -801,21 +1008,138 @@ class ProductQueries extends Service
 
     public function getMerchantFeaturedProduct($merchant_id)
     {
-        $merchant = Merchant::with(['province:id,name', 'city:id,name', 'district:id,name'])->where('id', $merchant_id)->first(['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url']);
-        $merchant['url_deeplink'] = 'https://plnmarketplace.page.link/?link=https://plnmarketplace.page.link/profile-toko-seller?id=' . $merchant_id;
+        $merchant = Merchant::with([
+            'province:id,name',
+            'city:id,name',
+            'district:id,name',
+            'city:id,name',
+            'promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d'))
+                        ->where('end_date', '>=', date('Y-m-d'));
+                });
+            },
+            'promo_merchant.promo_master',
+        ])
+            ->where('id', $merchant_id)
+            ->first(['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url', 'can_shipping_discount', 'can_flash_sale_discount', 'is_shipping_discount']);
+
+        $merchant->url_deeplink = 'https://plnmarketplace.page.link/?link=https://plnmarketplace.page.link/profile-toko-seller?id=' . $merchant_id;
+
+        $is_shipping_discount = false;
+        $is_flash_sale_discount = false;
+        $promo_value = 0;
+        $promo_type = '';
+
+        $item = $merchant->toArray();
+
+        if (isset($item['promo_merchant']) && $item['can_shipping_discount'] == true) {
+            foreach ($item['promo_merchant'] as $promo) {
+                if (isset($promo['promo_master']['event_type']) && $promo['promo_master']['event_type'] == 'ongkir') {
+                    if ($promo['promo_master']['value_2'] >= $promo['promo_master']['value_1']) {
+                        $value_ongkir = $promo['promo_master']['value_2'];
+                    } else {
+                        $value_ongkir = $promo['promo_master']['value_1'];
+                    }
+
+                    $max_merchant = ($promo['usage_value'] + $value_ongkir) > $promo['max_value'];
+                    $max_master = ($promo['promo_master']['usage_value'] + $value_ongkir) > $promo['promo_master']['max_value'];
+
+                    if ($max_merchant && !$max_master) {
+                        $is_shipping_discount = true;
+                        break;
+                    }
+
+                    if (!$max_merchant && $max_master) {
+                        $is_shipping_discount = true;
+                        break;
+                    }
+
+                    if (!$max_merchant && !$max_master) {
+                        $is_shipping_discount = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (isset($item['promo_merchant']) && $item['can_flash_sale_discount'] == true) {
+            foreach ($item['promo_merchant'] as $promo) {
+                if (isset($promo['promo_master']['event_type']) && $promo['promo_master']['event_type'] == 'flash_sale') {
+                    $value_flash_sale_m = 0;
+
+                    $value_flash_sale_m = $promo['promo_master']['value_1'];
+                    if ($promo['promo_master']['promo_value_type'] == 'percentage') {
+                        $value_flash_sale_m = $item['price'] * ($promo['promo_master']['value_1'] / 100);
+                        if ($value_flash_sale_m >= $promo['promo_master']['max_discount_value']) {
+                            $value_flash_sale_m = $promo['promo_master']['max_discount_value'];
+                        }
+                    }
+
+                    foreach ($promo['promo_master']['promo_values'] as $promo_value) {
+                        $value_flash_sale_m = $promo['promo_master']['value_1'];
+                        if ($promo['promo_master']['promo_value_type'] == 'percentage') {
+                            $value_flash_sale_m = $item['price'] * ($promo['promo_master']['value_1'] / 100);
+                            if ($value_flash_sale_m >= $promo['promo_master']['max_discount_value']) {
+                                $value_flash_sale_m = $promo['promo_master']['max_discount_value'];
+                            }
+                        }
+
+                        if ($item['price'] >= $promo_value['min_value'] && $item['price'] <= $promo_value['max_value'] && $promo_value['status'] == 1) {
+                            if ($value_flash_sale_m >= $promo_value['max_discount_value']) {
+                                $value_flash_sale_m = $promo_value['max_discount_value'];
+                            }
+
+                            break;
+                        }
+                    }
+
+                    $max_merchant = ($promo['usage_value'] + $value_flash_sale_m) > $promo['max_value'];
+                    $max_master = ($promo['promo_master']['usage_value'] + $value_flash_sale_m) > $promo['promo_master']['max_value'];
+
+                    if ($max_merchant && !$max_master) {
+                        $is_flash_sale_discount = true;
+                        $promo_value = $promo['promo_master']['value_1'];
+                        $promo_type = $promo['promo_master']['promo_value_type'];
+                        break;
+                    }
+
+                    if (!$max_merchant && $max_master) {
+                        $is_flash_sale_discount = true;
+                        $promo_value = $promo['promo_master']['value_1'];
+                        $promo_type = $promo['promo_master']['promo_value_type'];
+                        break;
+                    }
+
+                    if (!$max_merchant && !$max_master) {
+                        $is_flash_sale_discount = true;
+                        $promo_value = $promo['promo_master']['value_1'];
+                        $promo_type = $promo['promo_master']['promo_value_type'];
+                        break;
+                    }
+                }
+            }
+        }
+
+        unset($merchant['promo_merchant']);
+        $merchant['is_shipping_discount'] = $is_shipping_discount;
 
         $product = new Product();
-
-        $products = $product->with(['product_photo:id,product_id,url'])->where('status', 1)->where([['merchant_id', $merchant_id], ['is_featured_product', true]])
+        $products = $product
+            ->with(['product_photo:id,product_id,url'])->where('status', 1)
+            ->where([['merchant_id', $merchant_id], ['is_featured_product', true]])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
-            })->select('id', 'name', 'price');
+            })
+            ->select('id', 'name', 'price');
 
-        $immutable_data = $products->get()->map(function ($product) {
+        $immutable_data = $products->get()->map(function ($product) use ($is_flash_sale_discount, $promo_value, $promo_type) {
             $product->url_deeplink = 'https://plnmarketplace.page.link?link=https://plnmarketplace.page.link/detail-product?id=' . $product->id;
 
+            $product['is_flash_sale_discount'] = $is_flash_sale_discount;
+            $product['promo_value'] = $promo_value;
+            $product['promo_type'] = $promo_type;
             $product['reviews'] = null;
-            $product['tiket'] = null;
             return $product;
         });
 
@@ -832,14 +1156,15 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']]);
+        }])
+            ->with(['product_stock', 'product_photo', 'is_wishlist'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']]);
 
         $products = $this->filter($products, $filter);
         $products = $this->sorting($products, $sortby);
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
-            //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
             // $product->avg_rating = 0.0;
             return $product;
         });
@@ -866,7 +1191,7 @@ class ProductQueries extends Service
 
         $immutable_data = $products->get()->map(function ($product) {
             $product->reviews = null;
-            //            $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
+            // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
             // $product->avg_rating = 0.0;
             return $product;
         });
@@ -942,46 +1267,45 @@ class ProductQueries extends Service
                 }
             }
         }
-        $collection_product = [];
+
+        $category_ids = [];
         foreach ($cat_child as $cat) {
             foreach ($cat as $obj) {
-                $product = new Product();
-                $products = $product->withCount(['order_details' => function ($details) {
-                    $details->whereHas('order', function ($order) {
-                        $order->whereHas('progress_done');
-                    });
-                }])->with([
-                    'product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name',
-                    'varian_product' => function ($query) {
-                        $query->with(['variant_stock'])->where('main_variant', true);
-                    },
-                ])
-                    ->whereHas('merchant', function ($merchant) {
-                        $merchant->where('status', 1);
-                    })->where('category_id', $obj->id)->where('status', 1)->orderBy('order_details_count', 'ASC')->get();
-
-                array_push($collection_product, $products);
+                array_push($category_ids, $obj->id);
             }
         }
-        $collection = new Collection($collection_product);
 
-        $filtered_data = $this->filter($collection->collapse(), $filter);
-        $sorted_data = $this->sorting($filtered_data, $sortby);
+        $products = new Product();
+        $products = $products->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])->with([
+            'product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name',
+            'merchant.promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                });
+            },
+            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_values',
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+        ])
+            ->whereHas('merchant', function ($merchant) {
+                $merchant->where('status', 1);
+            })
+            ->whereIn('category_id', $category_ids)
+            ->where('status', 1)
+            ->orderBy('order_details_count', 'ASC');
 
-        $immutable_data = $sorted_data->map(function ($product) {
-            $product->reviews = null;
-            // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            // $product->avg_rating = 0.0;
-            return $product;
-        });
+        $filter_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filter_data, $sortby);
 
-        $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
+        $data = $this->productPaginate($sorted_data, $limit);
 
-        // if ($product->isEmpty()) {
-        //     $response['success'] = false;
-        //     $response['message'] = 'Gagal mendapatkan data produk!';
-        //     return $response;
-        // }
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
         $response['data'] = $data;
@@ -995,7 +1319,20 @@ class ProductQueries extends Service
                 'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
             ])
             ->with([
-                'product_stock', 'product_photo', 'merchant.city', 'category', 'merchant.official_store', 'is_wishlist',
+                'product_stock',
+                'product_photo',
+                'category',
+                'is_wishlist',
+                'merchant',
+                'merchant.city',
+                'merchant.promo_merchant' => function ($pd) {
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                },
+                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_values',
                 'varian_product' => fn ($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
             ])
             ->whereHas('merchant.official_store', fn ($m) => $m->where([
@@ -1008,7 +1345,6 @@ class ProductQueries extends Service
 
         $data = $this->productPaginate($sorted_data, $limit);
 
-        //if data empty
         if ($data->isEmpty()) {
             $response['success'] = false;
             $response['message'] = 'Produk belum tersedia saat ini!';
@@ -1028,7 +1364,20 @@ class ProductQueries extends Service
                 'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
             ])
             ->with([
-                'product_stock', 'product_photo', 'merchant.city', 'category', 'merchant.official_store', 'is_wishlist',
+                'product_stock',
+                'product_photo',
+                'category',
+                'is_wishlist',
+                'merchant',
+                'merchant.city:id,name',
+                'merchant.promo_merchant' => function ($pd) {
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                },
+                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_values',
                 'varian_product' => fn ($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
             ])
             ->whereHas('merchant.official_store', fn ($m) => $m->where([
@@ -1060,7 +1409,7 @@ class ProductQueries extends Service
                 'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
             ])
             ->with([
-                'product_stock', 'product_photo', 'merchant.city', 'category', 'merchant.official_store', 'is_wishlist',
+                'product_stock', 'product_photo', 'merchant.city', 'category', 'is_wishlist',
                 'varian_product' => fn ($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
             ])
             ->whereIn('merchant_id', $merchantEV)
@@ -1093,7 +1442,7 @@ class ProductQueries extends Service
             'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
         ])
             ->with([
-                'product_stock', 'product_photo', 'merchant.city', 'category', 'merchant.official_store', 'is_wishlist',
+                'product_stock', 'product_photo', 'merchant.city', 'category', 'is_wishlist',
                 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
                 },
@@ -1120,29 +1469,23 @@ class ProductQueries extends Service
 
     public function getOtherEvProductByCategory($category_id, $filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
-        $categories = MasterData::with(['child' => function ($j) use ($category_id) {
-            $j->with('child', function ($query) use ($category_id) {
-                $query->where('id', $category_id);
-            });
-        }])->where('type', 'product_category')->where('key', 'prodcat_electric_vehicle')->get();
-
         if (!$category_id) {
             $categories = MasterData::with([
                 'child' => fn ($j) => $j->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeda_listrik']),
-                'child.child' => fn ($q) => $q->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_mobil_listrik_', 'prodcat_sepeda_listrik_'])
+                'child.child' => fn ($q) => $q->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_mobil_listrik_', 'prodcat_sepeda_listrik_']),
             ])->where([
                 'type' => 'product_category',
-                'key' => 'prodcat_electric_vehicle'
+                'key' => 'prodcat_electric_vehicle',
             ])->get();
         } else {
             $categories = MasterData::with([
                 'child' => fn ($j) => $j->whereHas('child', fn ($q) => $q->where('id', $category_id)),
-                'child.child' => fn ($q) => $q->where('id', $category_id)
+                'child.child' => fn ($q) => $q->where('id', $category_id),
             ])
                 ->whereHas('child.child', fn ($q) => $q->where('id', $category_id))
                 ->where([
                     'type' => 'product_category',
-                    'key' => 'prodcat_electric_vehicle'
+                    'key' => 'prodcat_electric_vehicle',
                 ])->get();
         }
 
@@ -1165,8 +1508,9 @@ class ProductQueries extends Service
         }])->where('status', 1)->with([
             'product_stock', 'product_photo', 'is_wishlist',
             'merchant' => function ($merchant) {
-                $merchant->with('city:id,name');
-            }, 'varian_product' => function ($query) {
+                $merchant->with(['city:id,name', 'promo_merchant.promo_master']);
+            },
+            'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
             },
         ])->whereHas('merchant', function ($merchant) {
@@ -1194,7 +1538,21 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->where('status', 1)->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
+        }])->where('status', 1)
+            ->with([
+                'product_stock',
+                'product_photo',
+                'is_wishlist', 'merchant',
+                'merchant.city:id,name',
+                'merchant.promo_merchant' => function ($pd) {
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                },
+                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_values',
+            ])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
             });
@@ -1202,15 +1560,7 @@ class ProductQueries extends Service
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
 
-        $immutable_data = $sorted_data->get()->map(function ($product) {
-            $product->reviews = null;
-            // $product->avg_rating = 0.0;
-            // $product->avg_rating = ($product->reviews()->count() > 0) ? round($product->reviews()->avg('rate'), 1) : 0.0;
-            return $product;
-        });
-        // $products = $sorted_data->get();
-
-        $data = static::paginate($immutable_data->toArray(), (int) $limit, $current_page);
+        $data = $this->productPaginate($sorted_data, $limit);
 
         //check if value min_price is greater than max_price
         if (isset($filter['min_price']) && isset($filter['max_price']) && $filter['min_price'] > $filter['max_price']) {
@@ -1224,7 +1574,7 @@ class ProductQueries extends Service
         }
 
         //check if filter product is empty
-        if ($immutable_data->isEmpty()) {
+        if ($data->isEmpty()) {
             $response['success'] = false;
             $response['message'] = 'Produk tidak ditemukan!';
             $response['data'] = ['data' => []];
@@ -1240,17 +1590,39 @@ class ProductQueries extends Service
     public function getproductMerchantEtalaseId($merchant_id, $etalase_id, $filter = '', $sortby = null, $limit)
     {
         $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
+        $products = $product
+            ->withCount([
+                'order_details' => function ($details) {
+                    $details->whereHas('order', function ($order) {
+                        $order->whereHas('progress_done');
+                    });
+                },
+            ])
+            ->with([
+                'product_stock',
+                'product_photo',
+                'is_wishlist',
+                'varian_product' => function ($query) {
+                    $query->with(['variant_stock'])->where('main_variant', true);
+                },
+                'merchant.city:id,name',
+                'merchant.promo_merchant' => function ($pd) {
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                },
+                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_values',
+            ])
+            ->where([
+                'merchant_id' => $merchant_id,
+                'etalase_id' => $etalase_id,
+                'status' => 1,
+            ])
+            ->whereHas('merchant', function ($merchant) {
+                $merchant->where('status', 1);
             });
-        }])->with(['product_stock', 'product_photo', 'is_wishlist', 'varian_product' => function ($query) {
-            $query->with(['variant_stock'])->where('main_variant', true);
-        }])->where([
-            'merchant_id' => $merchant_id,
-            'etalase_id' => $etalase_id,
-            'status' => 1,
-        ]);
 
         $filtered_data = static::filter($products, $filter);
         $sorted_data = static::sorting($filtered_data, $sortby);
@@ -1294,7 +1666,7 @@ class ProductQueries extends Service
         ])->with([
             'product_stock', 'product_photo', 'is_wishlist',
             'merchant' => function ($merchant) {
-                $merchant->with(['city:id,name']);
+                $merchant->with(['city:id,name', 'promo_merchant.promo_master']);
             },
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
@@ -1302,114 +1674,7 @@ class ProductQueries extends Service
         ])->whereHas('merchant', function ($merchant) {
             $merchant->where('status', 1);
         })->whereIn('category_id', $cat_child_id)
-        ->whereNotIn('id', collect($merchant_product_ev)->pluck('product_id')->toArray());
-
-        $filtered_data = $this->filter($products, $filter);
-        $sorted_data = $this->sorting($filtered_data, $sortby);
-
-        $data = $this->productPaginate($sorted_data, $limit);
-
-        $response['success'] = true;
-        $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $data;
-        return $response;
-    }
-
-    public function getTiketProduct($limit, $filter = [], $sortby = null, $current_page = 1)
-    {
-        $tikets = MasterTiket::with(['master_data', 'master_data.parent', 'master_data.parent.parent'])->where('status', 1)->get();
-
-        $masterDataKeys = collect($tikets)->pluck('master_data.parent.parent.key')->toArray();
-
-        $categories = MasterData::with(['child', 'child.child'])->where([
-            'type' => 'product_category',
-        ])->whereIn('key', $masterDataKeys)->get();
-
-        $cat_child_id = [];
-        foreach ($categories as $category) {
-            foreach ($category->child as $child) {
-                if (!$child->child->isEmpty()) {
-                    foreach ($child->child as $children) {
-                        array_push($cat_child_id, $children->id);
-                    }
-                }
-            }
-        }
-
-        $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->where([
-            'status' => 1,
-        ])->with([
-            'product_stock', 'product_photo', 'is_wishlist',
-            'merchant.city:id,name',
-            'varian_product' => function ($query) {
-                $query->with(['variant_stock'])->where('main_variant', true);
-            },
-            'ev_subsidy',
-        ])->whereHas('merchant', function ($merchant) {
-            $merchant->where('status', 1);
-        })->whereIn('category_id', $cat_child_id);
-
-        $filtered_data = $this->filter($products, $filter);
-        $sorted_data = $this->sorting($filtered_data, $sortby);
-
-        $data = $this->productPaginate($sorted_data, $limit, $tikets);
-
-        $response['success'] = true;
-        $response['message'] = 'Berhasil mendapatkan data produk!';
-        $response['data'] = $data;
-        return $response;
-    }
-
-    public function getSubsidyProduct($limit, $filter = [], $sortby = null, $current_page = 1)
-    {
-        $categories = MasterData::with(['child', 'child.child'])->where([
-            'type' => 'product_category',
-            'key' => 'prodcat_electric_vehicle',
-        ])->get();
-
-        $cat_child_id = [];
-        foreach ($categories as $category) {
-            foreach ($category->child as $child) {
-                if (!$child->child->isEmpty()) {
-                    foreach ($child->child as $children) {
-                        array_push($cat_child_id, $children->id);
-                    }
-                }
-            }
-        }
-
-        $product = new Product();
-        $products = $product->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])->where([
-            'status' => 1,
-        ])->with([
-            'product_stock', 'product_photo', 'is_wishlist',
-            'merchant.city:id,name',
-            'merchant.promo_merchant' => function ($pd) {
-                $pd->where(function ($query) {
-                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
-                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
-                });
-            },
-            'merchant.promo_merchant.promo_master',
-            'merchant.promo_merchant.promo_master.promo_values',
-            'varian_product' => function ($query) {
-                $query->with(['variant_stock'])->where('main_variant', true);
-            },
-            'ev_subsidy',
-        ])->whereHas('merchant', function ($merchant) {
-            $merchant->where('status', 1);
-        })->whereHas('ev_subsidy', function ($merchant) {
-            $merchant->where('status', 1);
-        })->whereIn('category_id', $cat_child_id);
+            ->whereNotIn('id', collect($merchant_product_ev)->pluck('product_id')->toArray());
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -1443,7 +1708,8 @@ class ProductQueries extends Service
             $details->whereHas('order', function ($order) {
                 $order->whereHas('progress_done');
             });
-        }])->where('status', 1)->with(['product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name'])
+        }])
+            ->where('status', 1)
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
             });
@@ -1463,18 +1729,16 @@ class ProductQueries extends Service
 
     public function checkProductStock($request)
     {
-        $data = [];
-        foreach ($request->product_id as $id) {
-            $product = Product::with(['stock_active', 'varian_value_product' => function ($variant) {
+        $product = Product::with([
+            'stock_active',
+            'varian_value_product' => function ($variant) {
                 $variant->with("variant_stock");
-            }])->where("id", $id)->first();
-
-            array_push($data, $product);
-        }
+            },
+        ])->whereIn("id", $request->product_id)->get();
 
         $response['success'] = true;
         $response['message'] = "Berhasil mendapatkan stok produk";
-        $response['data'] = $data;
+        $response['data'] = $product;
 
         return $response;
     }
@@ -1578,30 +1842,113 @@ class ProductQueries extends Service
         }
     }
 
-    public function productPaginate($products, $limit = 10, $tikets = null)
+    public function productPaginate($products, $limit = 10)
     {
         $itemsPaginated = $products->paginate($limit);
 
         $itemsTransformed = $itemsPaginated
             ->getCollection()
-            ->map(function ($item) use ($tikets) {
+            ->map(function ($item) {
+                $is_shipping_discount = false;
+                $is_flash_sale_discount = false;
+                $promo_value = 0;
+                $promo_type = '';
+
                 $item = $item->toArray();
 
-                if ($tikets != null) {
-                    foreach ($tikets as $tiket) {
-                        if ($item['category_id'] == $tiket->master_data->id) {
-                            $item['tiket'] = $tiket;
-                            break;
-                        } else {
-                            $item['tiket'] = null;
+                if (isset($item['merchant']['promo_merchant']) && $item['merchant']['can_shipping_discount'] == true) {
+                    foreach ($item['merchant']['promo_merchant'] as $promo) {
+                        if (isset($promo['promo_master']['event_type']) && $promo['promo_master']['event_type'] == 'ongkir') {
+                            if ($promo['promo_master']['value_2'] >= $promo['promo_master']['value_1']) {
+                                $value_ongkir = $promo['promo_master']['value_2'];
+                            } else {
+                                $value_ongkir = $promo['promo_master']['value_1'];
+                            }
+
+                            $max_merchant = ($promo['usage_value'] + $value_ongkir) > $promo['max_value'];
+                            $max_master = ($promo['promo_master']['usage_value'] + $value_ongkir) > $promo['promo_master']['max_value'];
+
+                            if ($max_merchant && !$max_master) {
+                                $is_shipping_discount = true;
+                                break;
+                            }
+
+                            if (!$max_merchant && $max_master) {
+                                $is_shipping_discount = true;
+                                break;
+                            }
+
+                            if (!$max_merchant && !$max_master) {
+                                $is_shipping_discount = true;
+                                break;
+                            }
                         }
                     }
-
-                    unset($item['tiket']['master_data']);
-                } else {
-                    $item['tiket'] = null;
                 }
 
+                if (isset($item['merchant']['promo_merchant']) && $item['merchant']['can_flash_sale_discount'] == true) {
+                    foreach ($item['merchant']['promo_merchant'] as $promo) {
+                        if (isset($promo['promo_master']['event_type']) && $promo['promo_master']['event_type'] == 'flash_sale') {
+                            $value_flash_sale_m = 0;
+
+                            $value_flash_sale_m = $promo['promo_master']['value_1'];
+                            if ($promo['promo_master']['promo_value_type'] == 'percentage') {
+                                $value_flash_sale_m = $item['price'] * ($promo['promo_master']['value_1'] / 100);
+                                if ($value_flash_sale_m >= $promo['promo_master']['max_discount_value']) {
+                                    $value_flash_sale_m = $promo['promo_master']['max_discount_value'];
+                                }
+                            }
+
+                            foreach ($promo['promo_master']['promo_values'] as $promo_value) {
+                                $value_flash_sale_m = $promo['promo_master']['value_1'];
+                                if ($promo['promo_master']['promo_value_type'] == 'percentage') {
+                                    $value_flash_sale_m = $item['price'] * ($promo['promo_master']['value_1'] / 100);
+                                    if ($value_flash_sale_m >= $promo['promo_master']['max_discount_value']) {
+                                        $value_flash_sale_m = $promo['promo_master']['max_discount_value'];
+                                    }
+                                }
+
+                                if ($item['price'] >= $promo_value['min_value'] && $item['price'] <= $promo_value['max_value'] && $promo_value['status'] == 1) {
+                                    if ($value_flash_sale_m >= $promo_value['max_discount_value']) {
+                                        $value_flash_sale_m = $promo_value['max_discount_value'];
+                                    }
+
+                                    break;
+                                }
+                            }
+
+                            $max_merchant = ($promo['usage_value'] + $value_flash_sale_m) > $promo['max_value'];
+                            $max_master = ($promo['promo_master']['usage_value'] + $value_flash_sale_m) > $promo['promo_master']['max_value'];
+
+                            if ($max_merchant && !$max_master) {
+                                $is_flash_sale_discount = true;
+                                $promo_value = $promo['promo_master']['value_1'];
+                                $promo_type = $promo['promo_master']['promo_value_type'];
+                                break;
+                            }
+
+                            if (!$max_merchant && $max_master) {
+                                $is_flash_sale_discount = true;
+                                $promo_value = $promo['promo_master']['value_1'];
+                                $promo_type = $promo['promo_master']['promo_value_type'];
+                                break;
+                            }
+
+                            if (!$max_merchant && !$max_master) {
+                                $is_flash_sale_discount = true;
+                                $promo_value = $promo['promo_master']['value_1'];
+                                $promo_type = $promo['promo_master']['promo_value_type'];
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                unset($item['merchant']['promo_merchant']);
+                $item['merchant']['is_shipping_discount'] = $is_shipping_discount;
+                $item['is_flash_sale_discount'] = $is_flash_sale_discount;
+                $item['promo_value'] = $promo_value;
+                $item['promo_type'] = $promo_type;
                 $item['reviews'] = null;
                 return $item;
             })->toArray();
