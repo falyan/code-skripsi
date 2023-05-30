@@ -35,7 +35,7 @@ class WishlistQueries extends Service
                 $details->whereHas('order', function ($order) {
                     $order->whereHas('progress_done');
                 });
-            }])->with(['product_stock', 'product_photo']);
+            }])->with(['product_stock', 'product_photo', 'ev_subsidy']);
         }])->where('customer_id', $customer_id)->where('is_valid', true);
 
         $collect_data = collect($wishlist->get());
@@ -67,7 +67,7 @@ class WishlistQueries extends Service
                 $details->whereHas('order', function ($order) {
                     $order->whereHas('progress_done');
                 });
-            }])->with(['product_stock', 'product_photo']);
+            }])->with(['product_stock', 'product_photo', 'ev_subsidy']);
         }])->whereHas('product', function ($query) use ($keyword) {
             $query->where('name', 'ILIKE', '%' . $keyword . '%')->orWhereHas('merchant', function ($query) use ($keyword) {
                 $query->where('name', 'ILIKE', '%' . $keyword . '%');
