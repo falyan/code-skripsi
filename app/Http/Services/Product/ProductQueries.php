@@ -1311,11 +1311,11 @@ class ProductQueries extends Service
 
         $products = new Product();
         $products = $products
-        // ->withCount(['order_details' => function ($details) {
-        //     $details->whereHas('order', function ($order) {
-        //         $order->whereHas('progress_done');
-        //     });
-        // }])
+        ->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])
         ->with([
             'product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name',
             'merchant.promo_merchant' => function ($pd) {
