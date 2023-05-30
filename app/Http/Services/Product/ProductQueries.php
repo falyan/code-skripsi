@@ -803,11 +803,11 @@ class ProductQueries extends Service
         // $merchant = Merchant::with(['city'])->find($merchant_id);
         $products = $product
             ->where('merchant_id', $merchant_id)
-            // ->withCount(['order_details' => function ($details) {
-            //     $details->whereHas('order', function ($order) {
-            //         $order->whereHas('progress_done');
-            //     });
-            // }])
+            ->withCount(['order_details' => function ($details) {
+                $details->whereHas('order', function ($order) {
+                    $order->whereHas('progress_done');
+                });
+            }])
             ->with([
                 'product_stock',
                 'product_photo',
