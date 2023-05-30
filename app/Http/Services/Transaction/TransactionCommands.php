@@ -5,10 +5,13 @@ namespace App\Http\Services\Transaction;
 use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Service;
+use App\Models\City;
 use App\Models\Customer;
 use App\Models\CustomerDiscount;
 use App\Models\CustomerEVSubsidy;
 use App\Models\CustomerTiket;
+use App\Models\District;
+use App\Models\MasterData;
 use App\Models\MasterTiket;
 use App\Models\Order;
 use App\Models\OrderDelivery;
@@ -83,7 +86,7 @@ class TransactionCommands extends Service
                 }
             }
 
-            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date, $district) {
+            array_map(function ($data) use ($datas, $customer_id, $no_reference, $trx_date, $exp_date) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
                 $order->buyer_id = $customer_id;
@@ -286,6 +289,7 @@ class TransactionCommands extends Service
             $timestamp = Carbon::now('Asia/Jakarta')->toIso8601String();
             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(1))->timestamp);
+            $district = District::where('id', data_get($datas, 'destination_info.district_id'))->first();
 
             foreach ($datas['merchants'] as $m) {
                 if (isset($m['is_npwp_required']) && $m['is_npwp_required'] === true) {
@@ -463,34 +467,68 @@ class TransactionCommands extends Service
                     })
                     ->get();
 
-            $count_tiket = 0;
-            foreach ($customer_tiket as $order) {
-                foreach ($order->detail as $detail) {
-                    $tiket = collect($master_tikets)->where('master_data.id', $detail->product->category_id)->first();
+                $promo_merchant_ongkir = null;
+                $value_ongkir = 0;
 
-                    if ($tiket) {
-                        $count_tiket += $detail->quantity;
+                if (data_get($data, 'can_shipping_discount') == true && data_get($data, 'delivery_discount') > 0) {
+                    foreach ($promo_merchant as $promo) {
+                        if ($promo['promo_master']['event_type'] == 'ongkir') {
+                            foreach ($promo['promo_master']['promo_regions'] as $region) {
+                                $region_ids = collect($region['province_ids'])->toArray();
+                                if (in_array($province_id, $region_ids)) {
+                                    $promo_merchant_ongkir = $promo;
+                                    $value_ongkir_m = 0;
+
+                                    if ($region['value_type'] == 'value_2') {
+                                        $value_ongkir_m = $promo['promo_master']['value_2'];
+                                    } else {
+                                        $value_ongkir_m = $promo['promo_master']['value_1'];
+                                    }
+
+                                    $max_merchant = ($promo['usage_value'] + $value_ongkir_m) > $promo['max_value'];
+                                    $max_master = ($promo['promo_master']['usage_value'] + $value_ongkir_m) > $promo['promo_master']['max_value'];
+
+                                    if ($max_merchant && !$max_master) {
+                                        $value_ongkir = $value_ongkir_m;
+                                        break;
+                                    }
+
+                                    if (!$max_merchant && $max_master) {
+                                        $value_ongkir = $value_ongkir_m;
+                                        break;
+                                    }
+
+                                    if (!$max_merchant && !$max_master) {
+                                        $value_ongkir = $value_ongkir_m;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-            }
 
-            $new_products = [];
-            foreach ($datas['merchants'] as $merchant) {
-                foreach ($merchant['products'] as $product) {
-                    $new_product = Product::where('id', data_get($product, 'product_id'))->first();
-                    $new_product['quantity'] = data_get($product, 'quantity');
-                    $new_products[] = $new_product;
+                if ($value_ongkir > data_get($data, 'delivery_fee')) {
+                    $value_ongkir = data_get($data, 'delivery_fee');
                 }
-            }
 
-            $buying_tiket = false;
-            foreach ($new_products as $product) {
-                $tiket = collect($master_tikets)->where('master_data.id', $product['category_id'])->first();
+                if ($promo_merchant_ongkir != null && $promo_merchant_ongkir['promo_master']['min_order_value'] <= $order->total_amount) {
+                    $promo_merchant_ongkir = PromoMerchant::find($promo_merchant_ongkir['id']);
+                    $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
+                    $promo_merchant_ongkir->save();
 
-                if ($tiket) {
-                    $count_tiket += $product['quantity'];
+                    $promo_master = PromoMaster::find($promo_merchant_ongkir['promo_master']['id']);
+                    $promo_master->usage_value = $promo_master->usage_value + $value_ongkir;
+                    $promo_master->save();
 
-                    $buying_tiket = true;
+                    $promo_log = new PromoLog();
+                    $promo_log->order_id = $order->id;
+                    $promo_log->promo_master_id = $promo_master->id;
+                    $promo_log->promo_merchant_id = $promo_merchant_ongkir->id;
+                    $promo_log->type = 'sub';
+                    $promo_log->value = $value_ongkir;
+                    $promo_log->created_by = 'System';
+                    $promo_log->save();
                 }
 
                 $promo_merchant_flash_sale = null;
@@ -610,176 +648,6 @@ class TransactionCommands extends Service
                     data_set($data, 'delivery_method', 'jnt');
                 }
 
-            if ($count_tiket > 4 && $buying_tiket) {
-                return [
-                    'success' => false,
-                    'status' => "Bad request",
-                    'status_code' => 400,
-                    'message' => 'Anda telah mencapai batas pembelian tiket',
-                ];
-            }
-
-            foreach (data_get($datas, 'merchants') as $data) {
-                $order = new Order();
-                $order->merchant_id = data_get($data, 'merchant_id');
-                $order->buyer_id = $customer_id;
-                $order->trx_no = static::invoice_num(static::nextOrderId(), 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
-                $order->order_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now())->setTimezone('Asia/Jakarta')->timestamp);
-                $order->total_amount = data_get($data, 'total_amount');
-                $order->total_weight = data_get($data, 'total_weight');
-                $order->related_pln_mobile_customer_id = null;
-                $order->no_reference = $no_reference;
-                $order->discount = data_get($data, 'product_discount');
-                $order->npwp = data_get($data, 'npwp');
-                $order->created_by = 'user';
-                $order->updated_by = 'user';
-                $order->npwp = data_get($datas, 'npwp');
-                $order->save();
-
-                if (isset($datas['save_npwp'])) {
-                    $datas['save_npwp'] = in_array($datas['save_npwp'], [1, true]) ? true : false;
-                }
-                if (isset($datas['save_npwp']) && $datas['save_npwp'] === true) {
-                    Customer::where('id', $customer_id)->update(['npwp' => $datas['npwp']]);
-                }
-
-                $this->order_id = $order->id;
-                $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
-                $order->save();
-
-                $order_details = [];
-                foreach (data_get($data, 'products') as $product) {
-                    $order_details[] = [
-                        'order_id' => $order->id,
-                        'detail_type' => 1,
-                        'product_id' => data_get($product, 'product_id'),
-                        'quantity' => data_get($product, 'quantity'),
-                        'price' => data_get($product, 'price'),
-                        'weight' => data_get($product, 'weight'),
-                        'insurance_cost' => data_get($product, 'insurance_cost'),
-                        'discount' => data_get($product, 'discount'),
-                        'total_price' => data_get($product, 'total_price'),
-                        'total_weight' => data_get($product, 'total_weight'),
-                        'total_discount' => data_get($product, 'total_discount'),
-                        'total_insentif' => data_get($product, 'total_insentif'),
-                        'total_insurance_cost' => data_get($product, 'total_insurance_cost'),
-                        'total_amount' => data_get($product, 'total_amount'),
-                        'notes' => data_get($product, 'note'),
-                        'variant_value_product_id' => data_get($product, 'variant_value_product_id'),
-                        'created_at' => Carbon::now(),
-                    ];
-                }
-
-                // sementara ketika flash sale nempel merchant
-                // OrderDetail::insert($order_details);
-
-                $order_progress = new OrderProgress();
-                $order_progress->order_id = $order->id;
-                $order_progress->status_code = '00';
-                $order_progress->status_name = 'Pesanan Belum Dibayar';
-                $order_progress->note = null;
-                $order_progress->status = 1;
-                $order_progress->created_by = 'user';
-                $order_progress->updated_by = 'user';
-                $order_progress->save();
-
-                $promo_merchant = PromoMerchant::with(['promo_master', 'promo_master.promo_regions', 'promo_master.promo_values'])
-                    ->where([
-                        'merchant_id' => data_get($data, 'merchant_id'),
-                        'status' => 1,
-                    ])
-                    ->where('start_date', '<=', date('Y-m-d H:i:s'))
-                    ->where('end_date', '>=', date('Y-m-d H:i:s'))
-                    ->whereHas('promo_master', function ($query) {
-                        $query->where('status', 1);
-                    })
-                    ->get();
-
-                $promo_merchant_ongkir = null;
-                $value_ongkir = 0;
-
-                if (data_get($data, 'can_shipping_discount') == true && data_get($data, 'delivery_discount') > 0) {
-                    foreach ($promo_merchant as $promo) {
-                        if ($promo['promo_master']['event_type'] == 'ongkir') {
-                            foreach ($promo['promo_master']['promo_regions'] as $region) {
-                                $region_ids = collect($region['province_ids'])->toArray();
-                                if (in_array($province_id, $region_ids)) {
-                                    $promo_merchant_ongkir = $promo;
-                                    $value_ongkir_m = 0;
-
-                                    if ($region['value_type'] == 'value_2') {
-                                        $value_ongkir_m = $promo['promo_master']['value_2'];
-                                    } else {
-                                        $value_ongkir_m = $promo['promo_master']['value_1'];
-                                    }
-
-                                    $max_merchant = ($promo['usage_value'] + $value_ongkir_m) > $promo['max_value'];
-                                    $max_master = ($promo['promo_master']['usage_value'] + $value_ongkir_m) > $promo['promo_master']['max_value'];
-
-                                    if ($max_merchant && !$max_master) {
-                                        $value_ongkir = $value_ongkir_m;
-                                        break;
-                                    }
-
-                                    if (!$max_merchant && $max_master) {
-                                        $value_ongkir = $value_ongkir_m;
-                                        break;
-                                    }
-
-                                    if (!$max_merchant && !$max_master) {
-                                        $value_ongkir = $value_ongkir_m;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if ($value_ongkir > data_get($data, 'delivery_fee')) {
-                    $value_ongkir = data_get($data, 'delivery_fee');
-                }
-
-                if ($promo_merchant_ongkir != null && $promo_merchant_ongkir['promo_master']['min_order_value'] <= $order->total_amount) {
-                    $promo_merchant_ongkir = PromoMerchant::find($promo_merchant_ongkir['id']);
-                    $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
-                    $promo_merchant_ongkir->save();
-
-                    $promo_master = PromoMaster::find($promo_merchant_ongkir['promo_master']['id']);
-                    $promo_master->usage_value = $promo_master->usage_value + $value_ongkir;
-                    $promo_master->save();
-
-                    $promo_log = new PromoLog();
-                    $promo_log->order_id = $order->id;
-                    $promo_log->promo_master_id = $promo_master->id;
-                    $promo_log->promo_merchant_id = $promo_merchant_ongkir->id;
-                    $promo_log->type = 'sub';
-                    $promo_log->value = $value_ongkir;
-                    $promo_log->created_by = 'System';
-                    $promo_log->save();
-                }
-
-                // sementara ketika flash sale nempel merchant
-                OrderDetail::insert($order_details);
-
-                $order_delivery = new OrderDelivery();
-                $order_delivery->order_id = $order->id;
-                $order_delivery->receiver_name = data_get($datas, 'destination_info.receiver_name');
-                $order_delivery->receiver_phone = data_get($datas, 'destination_info.receiver_phone');
-                $order_delivery->address = data_get($datas, 'destination_info.address');
-                $order_delivery->city_id = data_get($datas, 'destination_info.city_id');
-                $order_delivery->district_id = data_get($datas, 'destination_info.district_id');
-                $order_delivery->postal_code = data_get($datas, 'destination_info.postal_code');
-                $order_delivery->latitude = data_get($datas, 'destination_info.latitude');
-                $order_delivery->longitude = data_get($datas, 'destination_info.longitude');
-                $order_delivery->shipping_type = data_get($data, 'delivery_service');
-                $order_delivery->awb_number = null;
-
-                //J&T Courier Validation
-                if (data_get($data, 'delivery_method') == 'J&T') {
-                    data_set($data, 'delivery_method', 'jnt');
-                }
-
                 $order_delivery->delivery_method = data_get($data, 'delivery_method');
                 $order_delivery->delivery_fee = data_get($data, 'delivery_fee');
                 $order_delivery->delivery_discount = data_get($data, 'delivery_discount');
@@ -815,6 +683,8 @@ class TransactionCommands extends Service
                 throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
             }
 
+            $mailSender = new MailSenderManager();
+
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
                 $ev_subsidy = $ev_subsidies[0];
                 foreach (data_get($data, 'products') as $product) {
@@ -833,10 +703,11 @@ class TransactionCommands extends Service
                         $customerEv->save();
                     }
                 }
-            }
 
-            $mailSender = new MailSenderManager();
-            $mailSender->mailCheckout($this->order_id);
+                $mailSender->mailCheckoutSubsidy($this->order_id);
+            } else {
+                $mailSender->mailCheckout($this->order_id);
+            }
 
             if ($datas['total_discount'] > 0) {
                 $update_discount = $this->updateCustomerDiscount($customer_id, $customer->email, $datas['total_discount'], $no_reference);
@@ -874,6 +745,8 @@ class TransactionCommands extends Service
 
             $response = json_decode($response->getBody());
 
+            LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
+
             throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
             if ($response->response_details[0]->response_code != 00) {
@@ -904,6 +777,7 @@ class TransactionCommands extends Service
             }
             throw new Exception($th->getMessage(), 500);
         }
+
     }
 
     public static function nextOrderId()
@@ -950,16 +824,19 @@ class TransactionCommands extends Service
 
     public function updateOrderStatusTiket($order_id, $status_codes = ['02', '03', '08'], $note = null)
     {
-        $promo_merchant = PromoMerchant::find($promo_log_order->promo_merchant_id);
-        $promo_merchant->usage_value = $promo_merchant->usage_value - (int) $promo_log_order->value;
-        $promo_merchant->save();
+        $old_order_progress = OrderProgress::where('order_id', $order_id)->get();
+        $total = count($old_order_progress) ?? 0;
+        if ($total >= 0) {
+            for ($i = 0; $i < $total; $i++) {
+                $old_order_progress[$i]->status = 0;
+                $old_order_progress[$i]->save();
+            }
+        }
 
-        $promo_master = PromoMaster::find($promo_log_order->promo_master_id);
-        $promo_master->usage_value = $promo_master->usage_value - (int) $promo_log_order->value;
-        $promo_master->save();
+        $new_order_progress = new OrderProgress();
 
         $create_order_progress = [];
-        foreach ($status_codes as $status_code) {
+        foreach($status_codes as $status_code) {
             $create_order_progress[] = [
                 'order_id' => $order_id,
                 'status_code' => $status_code,
@@ -1265,18 +1142,9 @@ class TransactionCommands extends Service
                 $master_tiket = collect($active_master_tikets)->where('master_data.id', $detail->product->category_id)->first();
                 $master_tiket['quantity'] = $detail->quantity;
 
-                $cat_ticket[] = $ticket;
-            }
-        }
-
-        $master_tikets = MasterTiket::whereIn('master_data_key', collect($cat_ticket)->pluck('key')->toArray())->get();
-
-        foreach ($master_tikets as $master_tiket) {
-            $ticket = collect($cat_ticket)->where('key', $master_tiket->master_data_key)->first();
-
-            for ($i = 0; $i < $ticket['quantity']; $i++) {
-                $id = rand(10000, 99999);
-                $number_tiket = (string) time() . (string) $id;
+                for ($i = 0; $i < $master_tiket['quantity']; $i++) {
+                    $id = rand(10000, 99999);
+                    $number_tiket = (string) time() . (string) $id;
 
                     $user_tikets[] = CustomerTiket::create([
                         'order_id' => $order_id,
@@ -1291,6 +1159,12 @@ class TransactionCommands extends Service
             }
         }
 
+        if (count($user_tikets) == 0) {
+            $response['success'] = false;
+            $response['message'] = 'Gagal menambahkan tiket';
+            return $response;
+        }
+
         $response['success'] = true;
         $response['message'] = 'Berhasil menambahkan tiket';
         $response['data'] = $user_tikets;
@@ -1299,7 +1173,7 @@ class TransactionCommands extends Service
 
     public function generateTicketMudik($order_id)
     {
-        $user_tikets = UserTiket::where('order_id', $order_id)->get();
+        $user_tikets = CustomerTiket::where('order_id', $order_id)->get();
 
         if (collect($user_tikets)->isNotEmpty()) {
             $response['success'] = true;
@@ -1344,7 +1218,7 @@ class TransactionCommands extends Service
                 $id = rand(10000, 99999);
                 $number_tiket = (string) time() . (string) $id;
 
-                $user_tikets[] = UserTiket::create([
+                $user_tikets[] = CustomerTiket::create([
                     'order_id' => $order_id,
                     'master_tiket_id' => $master_tiket->id,
                     'number_tiket' => $number_tiket,
