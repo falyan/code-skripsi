@@ -20,8 +20,8 @@ RUN NUMPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1) \
 RUN docker-php-ext-configure intl \
     && docker-php-ext-install intl
 
-RUN wget -O elastic-apm.apk https://github.com/elastic/apm-agent-php/releases/download/v1.7.1/apm-agent-php_1.7.1_all.apk
-RUN apk --allow-untrusted add elastic-apm.apk 
+# RUN wget -O elastic-apm.apk https://github.com/elastic/apm-agent-php/releases/download/v1.7.1/apm-agent-php_1.7.1_all.apk
+# RUN apk --allow-untrusted add elastic-apm.apk
 
 # RUN mkdir -p /home/apm-agent && \
 #     cd /home/apm-agent && \
@@ -35,6 +35,6 @@ RUN rm -Rf /var/www/hmtl/elastic-apm.apk \
            composer --version
 
 COPY ./docker/config/php.ini /usr/local/etc/php/php.ini
-COPY ./docker/config/elastic_apm.ini /opt/elastic/apm-agent-php/etc/elastic-apm-custom.ini
+#COPY ./docker/config/elastic_apm.ini /opt/elastic/apm-agent-php/etc/elastic-apm-custom.ini
 COPY ./docker/config/fpm-pool.conf /usr/local/etc/php-fpm.d/03-fpm-pool.conf
 COPY ./docker/config/nginx.conf /etc/nginx/nginx.conf
