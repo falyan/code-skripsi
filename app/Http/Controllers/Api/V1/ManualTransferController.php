@@ -105,16 +105,7 @@ class ManualTransferController extends Controller
             "code" => "marketplace-payment",
             "label" => "Cicilan Tanpa Kartu Kredit",
             "gateways" => array_map(function ($gatheway) {
-                return [
-                    "name" => $gatheway['name'],
-                    "code" => $gatheway['code'],
-                    "icon" => $gatheway['icon'],
-                    "debitInfo" => $gatheway['debit_info'],
-                    "description" => $gatheway['description'],
-                    "descriptionColor" => $gatheway['description_color'],
-                    "url" => $gatheway['url'],
-                    "isTapable" => $gatheway['is_tapable'],
-                ];
+                return $gatheway;
             }, $gatheways->toArray()),
         ];
 
