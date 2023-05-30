@@ -276,6 +276,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'checkout', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('/count', 'TransactionController@countCheckoutPrice');
                 $router->post('/countv2', 'TransactionController@countCheckoutPriceV2');
+                $router->post('/countv3', 'TransactionController@countCheckoutPriceV3');
             });
 
             $router->group(['prefix' => 'transaction', 'middleware' => 'auth'], static function () use ($router) {
@@ -336,7 +337,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'address'], static function () use ($router) {
                 $router->group(['middleware' => 'auth'], static function () use ($router) {
                     $router->post('add', 'CustomerController@createCustomerAddress');
+                    $router->post('addv2', 'CustomerController@createCustomerAddressV2');
                     $router->post('update/{id}', 'CustomerController@updateCustomerAddress');
+                    $router->post('updatev2/{id}', 'CustomerController@updateCustomerAddressV2');
                     $router->post('default/{id}', 'CustomerController@setDefaultCustomerAddress');
                     $router->delete('delete/{id}', 'CustomerController@deleteCustomerAddress');
                 });
@@ -351,6 +354,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('checkout', 'TransactionController@checkout');
                 $router->post('checkoutv2', 'TransactionController@checkoutV2');
+                $router->post('checkoutv3', 'TransactionController@checkoutV3');
+                $router->post('checkoutv4', 'TransactionController@checkoutV4');
             });
 
             $router->group(['prefix' => 'cart', 'middleware' => 'auth'], static function () use ($router) {
@@ -518,6 +523,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('email/{order_id}', 'TransactionController@resendEmailVoucher');
     });
 
+    $router->group(['prefix' => 'email'], static function () use ($router) {
+        $router->post('resend', 'TransactionController@resendEmailVoucher');
+    });
+
     $router->group(['prefix' => 'tiket', 'middleware' => 'auth:tiket'], static function () use ($router) {
         $router->get('', 'TiketController@getTiket');
         $router->get('dasboard', 'TiketController@getDashboard');
@@ -529,6 +538,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
     $router->group(['prefix' => 'ev-subsidy'], static function () use ($router) {
         $router->get('get-webview', 'EvSubsidyController@webview');
+    });
+
+    $router->group(['prefix' => 'plnmudik'], static function () use ($router) {
+        $router->get('check', 'TiketController@checkInvoice');
     });
 
     $router->group(['prefix' => 'ubah-daya'], static function () use ($router) {
