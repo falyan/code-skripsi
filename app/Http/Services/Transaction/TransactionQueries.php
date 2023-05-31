@@ -132,7 +132,8 @@ class TransactionQueries extends Service
         ])->where(
             $column_name, $column_value,
         )->whereHas('progress_active', function ($j) use ($status_code) {
-            $j->where('status_code', $status_code);
+            if (count($status_code) > 1) $j->whereIn('status_code', $status_code);
+            if (count($status_code) == 1) $j->where('status_code', $status_code[0]);
         })
             ->when($column_name == 'merchant_id', function ($query) {
                 $query->whereHas('progress_active', function ($q) {
