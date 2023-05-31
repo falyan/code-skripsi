@@ -563,7 +563,9 @@ class TransactionQueries extends Service
             if ($merchant['delivery_discount'] > $merchant['delivery_fee']) {
                 $merchant['delivery_discount'] = $merchant['delivery_fee'];
             }
-            $merchant['total_amount'] = $merchant_total_price_with_delivery = $merchant_total_price + $merchant['delivery_fee'];
+
+            $merchant_total_price_with_delivery = $merchant_total_price + $merchant['delivery_fee'];
+            $merchant['total_amount'] =  $merchant_total_price;
             $merchant['total_payment'] = $merchant_total_payment = $merchant_total_price_with_delivery - $merchant['delivery_discount'];
 
             if ($promo_merchant_ongkir != null) {
