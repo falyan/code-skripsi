@@ -30,7 +30,28 @@ class BannerQueries extends Service
             ->get();
 
         $response['success'] = true;
-        $response['message'] ='Berhasil mendapatkan data banner';
+        $response['message'] = 'Berhasil mendapatkan data banner';
+        $response['data'] = $data;
+
+        return $response;
+    }
+
+    public function getHomeBannerByType($type)
+    {
+        $data = Banner::where('type', $type)
+            ->where('status', 1)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        if ($data->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Data banner tidak ada';
+            $response['data'] = $data;
+            return $response;
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data banner homepage';
         $response['data'] = $data;
 
         return $response;

@@ -482,4 +482,27 @@ class MailSenderManager
 
         return;
     }
+
+    public function mailCheckoutSubsidy($order_id)
+    {
+        $transactionQueries = new TransactionQueries();
+        $order = $transactionQueries->getDetailTransaction($order_id);
+        $customer = $order->buyer;
+        $data = [
+            'destination_name' => $customer->full_name ?? 'Pengguna Setia',
+            'order' => $order,
+        ];
+
+        Mail::send('email.checkoutSubsidyFeedback', $data, function ($mail) use ($customer) {
+            $mail->to($customer->email, 'no-reply')
+                ->subject("Pesananmu lagi direview");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        if (Mail::failures()) {
+            Log::error('Gagal mengirim email checkout ke email: ' . $customer->email);
+        } else {
+            Log::info('Berhasil mengirim email checkout ke email: ' . $customer->email);
+        }
+    }
 }

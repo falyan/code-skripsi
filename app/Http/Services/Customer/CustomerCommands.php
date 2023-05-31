@@ -7,6 +7,8 @@ use App\Models\CustomerAddress;
 
 class CustomerCommands
 {
+    private $customerQueries;
+
     public function __construct()
     {
         $this->customerQueries = new CustomerQueries();
@@ -17,9 +19,53 @@ class CustomerCommands
         $customer_address = new CustomerAddress();
         $customer_address->customer_id = $customer_id;
         $customer_address->address = $data['address'];
-        $customer_address->district_id = $data['district_id'];
-        $customer_address->city_id = $data['city_id'];
-        $customer_address->province_id = $data['province_id'];
+        $customer_address->district_code = $data['district_code'] ?? null;
+        $customer_address->location_name = $data['location_name'] ?? null;
+        $customer_address->district_id = $data['district_id'] ?? null;
+        $customer_address->city_id = $data['city_id'] ?? null;
+        $customer_address->province_id = $data['province_id'] ?? null;
+        $customer_address->postal_code = $data['postal_code'];
+        $customer_address->longitude = $data['longitude'] ?? null;
+        $customer_address->latitude = $data['latitude'] ?? null;
+        $customer_address->receiver_name = $data['receiver_name'];
+        $customer_address->receiver_phone = $data['receiver_phone'];
+        $customer_address->title = $data['title'];
+        if ($data['is_default'] == true){
+            $change_isdefault = $this->changeIsDefaultToFalse($customer_id, $customer_address->id);
+            if ($change_isdefault == false){
+                $response['success'] = false;
+                $response['message'] = 'Gagal merubah alamat utama';
+                return $response;
+            }
+        }
+        $customer_address->is_default = $data['is_default'];
+
+        if (!$customer_address->save()){
+            $response['success'] = false;
+            $response['message'] = 'Gagal menyimpan alamat customer';
+            return $response;
+        }
+
+        $getAddress = CustomerAddress::where('customer_id', $customer_id)->get();
+        if (collect($getAddress)->count() == 1) {
+            $getAddress[0]->is_default = true;
+            $getAddress[0]->save();
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil menyimpan alamat customer';
+        return $response;
+    }
+
+    public function createCustomerAddressV2($customer_id, $data){
+        $customer_address = new CustomerAddress();
+        $customer_address->customer_id = $customer_id;
+        $customer_address->address = $data['address'];
+        $customer_address->district_code = $data['district_code'];
+        $customer_address->location_name = $data['location_name'];
+        $customer_address->district_id = $data['district_id'] ?? null;
+        $customer_address->city_id = $data['city_id'] ?? null;
+        $customer_address->province_id = $data['province_id'] ?? null;
         $customer_address->postal_code = $data['postal_code'];
         $customer_address->longitude = $data['longitude'] ?? null;
         $customer_address->latitude = $data['latitude'] ?? null;
@@ -41,6 +87,12 @@ class CustomerCommands
                 $response['message'] = 'Gagal merubah alamat utama';
                 return $response;
             }
+        }
+
+        $getAddress = CustomerAddress::where('customer_id', $customer_id)->get();
+        if (collect($getAddress)->count() == 1) {
+            $getAddress[0]->is_default = true;
+            $getAddress[0]->save();
         }
 
         $response['success'] = true;

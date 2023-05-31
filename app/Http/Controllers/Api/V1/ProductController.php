@@ -656,8 +656,13 @@ class ProductController extends Controller
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
             $page = $request->page ?? 1;
+            $master = $request->master ?? false;
 
-            return $this->productQueries->getElectricVehicleByCategory($category_key, $sub_category_key, $filter, $sorting, $limit, $page);
+            if ($master) {
+                return $this->productQueries->getElectricVehicleByCategoryMaster($category_key, $sub_category_key, $filter, $sorting, $limit, $page);
+            } else {
+                return $this->productQueries->getElectricVehicleByCategory($category_key, $sub_category_key, $filter, $sorting, $limit, $page);
+            }
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -665,8 +670,14 @@ class ProductController extends Controller
 
     public function getElectricVehicleWithCategoryById($category_key, $sub_category_key, $id)
     {
+        $master = request()->master ?? false;
+
         try {
-            $data = $this->productQueries->getElectricVehicleWithCategoryById($category_key, $sub_category_key, $id);
+            if ($master) {
+                $data = $this->productQueries->getElectricVehicleWithCategoryMasterById($category_key, $sub_category_key, $id);
+            } else {
+                $data = $this->productQueries->getElectricVehicleWithCategoryById($category_key, $sub_category_key, $id);
+            }
             return $this->respondWithData($data['data'], $data['message']);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -756,6 +767,18 @@ class ProductController extends Controller
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
             return $this->productQueries->getSubsidyProduct($limit, $filter, $sorting, request()->input('page') ?? 1);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getUmkmProduct(Request $request)
+    {
+        try {
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? null;
+            return $this->productQueries->getUmkmProduct($limit, $filter, $sorting, request()->input('page') ?? 1);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

@@ -140,7 +140,7 @@
                             <table style="width: 100%;">
                                 <tbody>
                                     <tr>
-                                        <td style="padding: 5px 0px 5px 0px;font-size: 14px;color:#666;width: 50%;">\
+                                        <td style="padding: 5px 0px 5px 0px;font-size: 14px;color:#666;width: 50%;">
                                             Total Harga ({{ $order->detail->sum('quantity') }} Barang)
                                         </td>
                                         <td style="font-weight:bold;text-align:right;">
@@ -245,7 +245,7 @@
                         <div style="margin-bottom: 30px;">
                             <h3>Alamat Pengiriman</h3>
                             <div style="font-size: 14px; color: #666;">
-                                <p style="margin-bottom: 0;">{{ $destination_name }}</p>
+                                <p style="margin-bottom: 0;">{{ $order->delivery->receiver_name }}</p>
                                 <p style="margin: 0px;">{{ $order->delivery->address ?? '-' }}, {{$order->delivery->district_id != null ? $order->delivery->district->name : '-'}}, {{$order->delivery->city_id != null ? $order->delivery->city->name : '-'}}, {{ $order->delivery->postal_code ?? '-' }}</p>
                                 <p style="margin-top: 0px;">+{{ $order->delivery->receiver_phone }}</p>
                             </div>

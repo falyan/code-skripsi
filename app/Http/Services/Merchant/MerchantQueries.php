@@ -2,22 +2,15 @@
 
 namespace App\Http\Services\Merchant;
 
-use App\Http\Resources\Etalase\EtalaseCollection;
-use App\Http\Resources\Etalase\EtalaseResource;
 use App\Http\Services\Discussion\DiscussionQueries;
 use App\Http\Services\Review\ReviewQueries;
 use App\Http\Services\Service;
-use App\Models\Etalase;
 use App\Models\Merchant;
 use App\Models\MerchantBanner;
 use App\Models\Order;
-use App\Models\OrderProgress;
 use Carbon\Carbon;
-use Carbon\CarbonPeriod;
 use Exception;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use stdClass;
 
 class MerchantQueries extends Service
 {
@@ -119,7 +112,7 @@ class MerchantQueries extends Service
                         'percentage_canceled' => ['percent' => 0 . "%", 'status' => ''],
                         'charts' => $orders['charts'],
                     ],
-                ]
+                ],
             ];
         } catch (Exception $th) {
             if (in_array($th->getCode(), self::$error_codes)) {
@@ -133,7 +126,7 @@ class MerchantQueries extends Service
     {
         try {
             $merchant = Merchant::where('id', (int) $merchant_id)
-            ->first();
+                ->first();
 
             $mc = $merchant->toArray();
             $cityname = $merchant->city->toArray();
@@ -191,10 +184,10 @@ class MerchantQueries extends Service
                 'merchant' => $merged_data,
                 'banner' => $banner,
                 'meta_data' => [
-                    'total_product' =>(string) static::format_number((int) $total_product),
+                    'total_product' => (string) static::format_number((int) $total_product),
                     'total_transaction' => (string) static::format_number((int) $total_trx),
                     'operational_hour' => $merchant->operationals()->first(['open_time', 'closed_time', 'timezone']),
-                ]
+                ],
             ];
         } catch (Exception $th) {
             if (in_array($th->getCode(), self::$error_codes)) {
@@ -210,7 +203,7 @@ class MerchantQueries extends Service
             'path_url' => "merchant.activity",
             'query' => [],
             'body' => Carbon::now('Asia/Jakarta'),
-            'response' => ''
+            'response' => '',
         ]);
         try {
             $merchant = Merchant::with(['city'])->find($merchant_id);
@@ -230,8 +223,8 @@ class MerchantQueries extends Service
             return [
                 'data' => [
                     'merchant' => $merchant,
-                    'transactions' => $data
-                ]
+                    'transactions' => $data,
+                ],
             ];
         } catch (Exception $th) {
             if (in_array($th->getCode(), self::$error_codes)) {
@@ -241,9 +234,9 @@ class MerchantQueries extends Service
         }
     }
 
-    public static function unsetValue(array $array, $value, $strict = TRUE)
+    public static function unsetValue(array $array, $value, $strict = true)
     {
-        if (($key = array_search($value, $array, $strict)) !== FALSE) {
+        if (($key = array_search($value, $array, $strict)) !== false) {
             unset($array[$key]);
         }
         return $array;
@@ -253,14 +246,14 @@ class MerchantQueries extends Service
     {
 
         $data = Order::with('progress_active')
-        ->whereHas('progress_active', function ($query) use ($status_code, $daterange) {
-            $query->where('status_code', $status_code);
-            $query->when(count($daterange) == 2, function($q) use ($daterange) {
-                return $q->whereBetween('created_at', $daterange);
-            });
-            return $query;
-        })
-        ->where('merchant_id', $merchant_id);
+            ->whereHas('progress_active', function ($query) use ($status_code, $daterange) {
+                $query->where('status_code', $status_code);
+                $query->when(count($daterange) == 2, function ($q) use ($daterange) {
+                    return $q->whereBetween('created_at', $daterange);
+                });
+                return $query;
+            })
+            ->where('merchant_id', $merchant_id);
 
         $data = $data->count();
 
@@ -268,7 +261,7 @@ class MerchantQueries extends Service
             'path_url' => "count.order",
             'query' => [],
             'body' => Carbon::now('Asia/Jakarta'),
-            'response' => $data
+            'response' => $data,
         ]);
 
         return $data;
@@ -289,13 +282,13 @@ class MerchantQueries extends Service
     //     })->whereHas('review')->orderBy('created_at', 'desc')->get();
     // }
 
-    static function format_number($number)
+    public static function format_number($number)
     {
         if ($number >= 1000 && $number <= 999999) {
-            return $number / 1000 . ' ribu';   // NB: you will want to round this
+            return $number / 1000 . ' ribu'; // NB: you will want to round this
         }
         if ($number >= 1000000) {
-            return $number / 1000000 . ' juta';   // NB: you will want to round this
+            return $number / 1000000 . ' juta'; // NB: you will want to round this
         } else {
             return $number;
         }
@@ -351,12 +344,11 @@ class MerchantQueries extends Service
 
     public function getOfficialMerchant($category_key)
     {
-        $official_store = Merchant::with(['official_store', 'province:id,name', 'city:id,name', 'district:id,name'])
+        $official_store = Merchant::with(['province:id,name', 'city:id,name', 'district:id,name'])
             ->whereHas('official_store', function ($query) use ($category_key) {
                 $query->where('category_key', $category_key)
                     ->where('status', 1);
-            })->get(['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url'])
-                ->forget(['province_id', 'city_id', 'district_id']);
+            })->get()->forget(['province_id', 'city_id', 'district_id']);
 
         foreach ($official_store as $merchant) {
             $merchant['url_deeplink'] = 'https://plnmarketplace.page.link/?link=https://plnmarketplace.page.link/profile-toko-seller?id=' . $merchant->id;
@@ -370,13 +362,12 @@ class MerchantQueries extends Service
 
     public function getOfficialMerchantBySubCategory($category_key, $sub_category_key)
     {
-        $official_store = Merchant::with(['official_store', 'province:id,name', 'city:id,name', 'district:id,name'])
+        $official_store = Merchant::with(['province:id,name', 'city:id,name', 'district:id,name'])
             ->whereHas('official_store', function ($query) use ($category_key, $sub_category_key) {
                 $query->where('category_key', $category_key)
                     ->where('sub_category_key', $sub_category_key)
                     ->where('status', 1);
-            })->get(['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url'])
-                ->forget(['province_id', 'city_id', 'district_id']);
+            })->get()->forget(['province_id', 'city_id', 'district_id']);
 
         foreach ($official_store as $merchant) {
             $merchant['url_deeplink'] = 'https://plnmarketplace.page.link/?link=https://plnmarketplace.page.link/profile-toko-seller?id=' . $merchant->id;
@@ -396,12 +387,12 @@ class MerchantQueries extends Service
             return [
                 'success' => false,
                 'message' => 'Data Banner masih kosong',
-                'data' => null
+                'data' => null,
             ];
         }
 
         $result = [
-            'data' => $data
+            'data' => $data,
         ];
         return $result;
     }

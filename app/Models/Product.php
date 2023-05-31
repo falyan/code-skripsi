@@ -169,6 +169,6 @@ class Product extends Model
 
     public function ev_subsidy()
     {
-        return $this->hasOne(ProductEvSubsidy::class, 'product_id');
+        return $this->hasOne(ProductEvSubsidy::class, 'product_id')->where('status', 1);
     }
 }

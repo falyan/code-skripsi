@@ -5,9 +5,11 @@ namespace App\Http\Services\ManualTransfer;
 use App\Http\Services\Service;
 use App\Models\InquiryToken;
 use App\Models\ManualTransferInquiry;
+use App\Models\MarketplacePaymentLog;
 use App\Models\OrderPayment;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ManualTransferCommands extends Service
@@ -133,5 +135,16 @@ class ManualTransferCommands extends Service
             DB::rollBack();
             throw new Exception($e->getMessage(), $e->getCode());
         }
+    }
+
+    public function addLog($gatheway, $order_id)
+    {
+        MarketplacePaymentLog::create([
+            'customer_id' => Auth::user()->id,
+            'order_id' => $order_id,
+            'code' => $gatheway->code,
+            'name' => $gatheway->name,
+            'created_by' => Auth::user()->full_name,
+        ]);
     }
 }

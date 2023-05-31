@@ -6,21 +6,29 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Banner extends Model
+class PromoRegion extends Model
 {
     use HasFactory, SoftDeletes;
 
-    public $table = 'banner';
+    protected $table = 'promo_region';
 
     protected $guarded = ['id'];
 
     protected $fillable = [
-        'url',
-        'is_video',
-        'type',
+        'promo_master_id',
+        'value_type',
+        'province_ids',
         'status',
-        'link_url',
         'created_by',
         'updated_by',
     ];
+
+    protected $casts = [
+        'province_ids' => 'array',
+    ];
+
+    public function promo_master()
+    {
+        return $this->belongsTo(PromoMaster::class, 'promo_master_id');
+    }
 }
