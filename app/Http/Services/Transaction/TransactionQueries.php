@@ -442,8 +442,8 @@ class TransactionQueries extends Service
         $province_id = City::where('id', $city_id)->first()->province_id;
         $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = 0;
         $total_discount = $total_price_discount = $discount = 0;
-        $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = 0;
         $message_error = '';
+        $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = 0;
 
         $new_merchant = [];
         $ev_subsidies = [];
@@ -1170,6 +1170,12 @@ class TransactionQueries extends Service
         }
 
         return $merchants;
+    }
+
+    public function getTransactionByReference($no_reference)
+    {
+        $orders = Order::with(['detail', 'promo_log_orders', 'progress_active'])->where('no_reference', $no_reference)->get();
+        return $orders;
     }
 
     public function createOrderV3($request)

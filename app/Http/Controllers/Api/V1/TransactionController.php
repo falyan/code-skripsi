@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Exports\TransactionExport;
 use App\Http\Controllers\Controller;
 use App\Http\Services\Manager\IconcashManager;
+use App\Http\Services\Manager\IconpayManager;
 use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Manager\RajaOngkirManager;
 use App\Http\Services\Notification\NotificationCommands;
@@ -18,6 +19,7 @@ use App\Models\IconcashInquiry;
 use App\Models\MasterData;
 use App\Models\Order;
 use App\Models\OrderDelivery;
+use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\VariantStock;
@@ -970,6 +972,13 @@ class TransactionController extends Controller
             $notes = request()->input('notes');
             $response = $this->transactionCommand->updateOrderStatus($order_id, '09', $notes);
             $order = Order::with('detail')->find($order_id);
+            $order->load('promo_log_orders');
+
+            if (count($order->promo_log_orders) > 0) {
+                foreach ($$order->promo_log_orders as $promo_log_order) {
+                    $this->transactionCommand->updatePromoLog($promo_log_order);
+                }
+            }
 
             $evCustomer = CustomerEVSubsidy::where([
                 'order_id' => $order_id,
@@ -1293,40 +1302,48 @@ class TransactionController extends Controller
             }
 
             $status_order = $this->transactionQueries->getStatusOrder($id);
+            $orderByReference = $this->transactionQueries->getTransactionByReference($status_order->no_reference);
 
-            if ($status_order->progress_active->status_code == '00') {
-                $this->transactionCommand->updateOrderStatus($id, '99', request()->get('reason'));
+            foreach ($orderByReference as $key => $order) {
+                if ($order->progress_active->status_code == '00') {
+                    $this->transactionCommand->updateOrderStatus($order->id, '99', request()->get('reason'));
 
-                $order = Order::with('detail')->find($id);
+                    foreach ($order->promo_log_orders as $promo_log_order) {
+                        $this->transactionCommand->updatePromoLog($promo_log_order);
+                    }
 
-                $evCustomer = CustomerEVSubsidy::where([
-                    'order_id' => $id,
-                ])->first();
+                    if ($key == 0) {
+                        $payment_info = OrderPayment::getByRefnum($order->no_reference)->first();
 
-                if ($evCustomer) {
-                    $evCustomer->status_approval = 0;
-                    $evCustomer->save();
+                        IconpayManager::booking($payment_info->no_reference, $payment_info->date_created, $payment_info->date_expired, "99", $payment_info->payment_amount, $payment_info->customer->full_name, $payment_info->customer->email, $payment_info->customer->phone, false);
+                    }
+
+                    $evCustomer = CustomerEVSubsidy::where([
+                        'order_id' => $order->id,
+                    ])->first();
+
+                    if ($evCustomer) {
+                        $evCustomer->status_approval = 0;
+                        $evCustomer->save();
+                    }
+
+                    foreach ($order->detail as $detail) {
+                        $stock = ProductStock::where('product_id', $detail->product_id)
+                            ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
+
+                        $data['amount'] = $stock->amount + $detail->quantity;
+                        $data['uom'] = $stock->uom;
+                        $data['full_name'] = 'system';
+
+                        $productCommand = new ProductCommands();
+                        $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
+                    }
+
+                    $mailSender = new MailSenderManager();
+                    $mailSender->mailorderCanceled($order->id);
                 }
-
-                foreach ($order->detail as $detail) {
-                    $stock = ProductStock::where('product_id', $detail->product_id)
-                        ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
-
-                    $data['amount'] = $stock->amount + $detail->quantity;
-                    $data['uom'] = $stock->uom;
-                    $data['full_name'] = 'system';
-
-                    $productCommand = new ProductCommands();
-                    $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
-                }
-
-                $mailSender = new MailSenderManager();
-                $mailSender->mailorderCanceled($id);
-
-                return $this->respondWithResult(true, 'Pesanan anda berhasil dibatalkan.', 200);
-            } else {
-                return $this->respondWithResult(false, 'Pesanan anda tidak dapat dibatalkan!', 400);
             }
+            return $this->respondWithResult(true, 'Pesanan anda berhasil dibatalkan.', 200);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -1704,7 +1721,7 @@ class TransactionController extends Controller
             $request = request()->all();
             $respond = $this->transactionQueries->countCheckoutPriceV2($customer, $request);
 
-            if (isset($request['customer']) && data_get($request, 'customer') != null) {
+            if (isset($request['customer']) && data_get($request, 'customer') != null){
                 $ev_subsidies = [];
                 foreach ($respond['merchants'] as $merchant) {
                     foreach ($merchant['products'] as $product) {
