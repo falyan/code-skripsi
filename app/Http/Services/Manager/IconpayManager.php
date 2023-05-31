@@ -21,8 +21,8 @@ class IconpayManager
 
   static function init()
   {
-        self::$curl 			= new Client();
-		self::$apiendpoint= config('credentials.iconpay.endpoint');
+        self::$curl         = new Client();
+		self::$apiendpoint  = config('credentials.iconpay.endpoint');
 		self::$appkey 		= config('credentials.iconpay.app_key');
 		self::$clientid 	= config('credentials.iconpay.client_id');
 		self::$productid 	= config('credentials.iconpay.product_id');
