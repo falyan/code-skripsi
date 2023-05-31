@@ -1,15 +1,14 @@
 version: "3.8"
+
 networks:
   loadbalancer:
     external: true
+
 services:
   pln-marketplace-saruman-staging:
     image: $DOCKER_IMAGE_APP
     networks:
       - loadbalancer
-    extra_hosts:
-      - "api-sandbox.plndigital.id:10.14.204.145"
-      - "portalapp.iconpln.co.id:121.100.23.228"
     ports:
       - target: 80
         published: 8892
@@ -17,16 +16,20 @@ services:
         mode: host
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /mnt/nfs-logs/pln-marketplace-saruman-staging:/var/www/html/storage/logs
-    # environment:
-    #   - ELASTIC_APM_ENABLED=false
-    #   - ELASTIC_APM_ENVIRONMENT=staging
-    #   - ELASTIC_APM_LOG_LEVEL_STDERR=INFO
-    #   - ELASTIC_APM_LOG_LEVEL=INFO
-    #   - ELASTIC_APM_SERVER_URL=http://apm-server:8200
-    #   - ELASTIC_APM_SECRET_TOKEN=SuperSecretT0k3n
-    #   - ELASTIC_APM_SERVICE_NAME=plnmkp-core-api
-    #   - ELASTIC_APM_VERIFY_SERVER_CERT=false
+      # - /mnt/nfs-logs/pln-marketplace-saruman-staging:/var/www/html/storage/logs
+    environment:
+      - ELASTIC_APM_ENABLED=true
+      - ELASTIC_APM_LOG_LEVEL_STDERR=INFO
+      - ELASTIC_APM_LOG_LEVEL=INFO
+      - ELASTIC_APM_LOG_LEVEL_SYSLOG=INFO
+      - ELASTIC_APM_SERVER_URL=http://10.14.204.123:9901
+      - ELASTIC_APM_SECRET_TOKEN=yTt4JtctZKbbKfxTUboNWYWSD9jnUds7DQdQ9U9ogtSmTMdyA4mJ7YWg4KoJtMQT
+      - ELASTIC_APM_SERVER_TIMEOUT=30s
+      - ELASTIC_APM_SERVICE_NAME=plnmkp-core-api
+      - ELASTIC_APM_SERVICE_VERSION=0.1
+      - ELASTIC_APM_ENVIRONMENT=staging
+      - ELASTIC_APM_TRANSACTION_MAX_SPANS=1000
+      - ELASTIC_APM_TRANSACTION_SAMPLE_RATE=1.0
     logging:
       driver: loki
       options:
@@ -43,5 +46,5 @@ services:
           - spread: node.labels.ip
       resources:
         limits:
-          memory: 2G
-          cpus: "2"
+          memory: 1G
+          cpus: "1"
