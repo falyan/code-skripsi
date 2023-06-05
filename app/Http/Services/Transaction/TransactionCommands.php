@@ -396,7 +396,7 @@ class TransactionCommands extends Service
                 $order->buyer_id = $customer_id;
                 $order->trx_no = static::invoice_num(static::nextOrderId(), 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
                 $order->order_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now())->setTimezone('Asia/Jakarta')->timestamp);
-                $order->total_amount = data_get($data, 'total_amount');
+                $order->total_amount = data_get($data, 'total_payment');
                 $order->total_weight = data_get($data, 'total_weight');
                 $order->related_pln_mobile_customer_id = null;
                 $order->no_reference = $no_reference;
