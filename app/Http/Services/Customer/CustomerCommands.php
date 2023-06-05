@@ -19,7 +19,6 @@ class CustomerCommands
         $customer_address = new CustomerAddress();
         $customer_address->customer_id = $customer_id;
         $customer_address->address = $data['address'];
-        $customer_address->district_code = $data['district_code'] ?? null;
         $customer_address->location_name = $data['location_name'] ?? null;
         $customer_address->district_id = $data['district_id'] ?? null;
         $customer_address->city_id = $data['city_id'] ?? null;
@@ -61,7 +60,6 @@ class CustomerCommands
         $customer_address = new CustomerAddress();
         $customer_address->customer_id = $customer_id;
         $customer_address->address = $data['address'];
-        $customer_address->district_code = $data['district_code'];
         $customer_address->location_name = $data['location_name'];
         $customer_address->district_id = $data['district_id'] ?? null;
         $customer_address->city_id = $data['city_id'] ?? null;
