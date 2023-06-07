@@ -512,6 +512,23 @@ class TransactionCommands extends Service
                     $value_ongkir = data_get($data, 'delivery_fee');
                 }
 
+                if ($promo_merchant_ongkir != null) {
+                    $customer_limit_count = $promo_merchant_ongkir['promo_master']['customer_limit_count'];
+                    if ($customer_limit_count != null && $customer_limit_count > 0) {
+                        $promo_logs = PromoLog::where('promo_master_id', $promo_merchant_ongkir->promo_master->id)
+                            ->whereHas('order', function ($query) {
+                                $query->where('buyer_id', auth()->user()->id);
+                            })->get();
+
+                        $promo_logs_add = collect($promo_logs)->where('type', 'add')->count();
+                        $promo_logs_sub = collect($promo_logs)->where('type', 'sub')->count();
+
+                        if ($customer_limit_count <= ($promo_logs_sub - $promo_logs_add)) {
+                            $promo_merchant_ongkir = null;
+                        }
+                    }
+                }
+
                 if ($promo_merchant_ongkir != null && $promo_merchant_ongkir['promo_master']['min_order_value'] <= $order->total_amount) {
                     $promo_merchant_ongkir = PromoMerchant::find($promo_merchant_ongkir['id']);
                     $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
@@ -595,6 +612,23 @@ class TransactionCommands extends Service
                 } else {
                     if ($promo_merchant_flash_sale != null) {
                         $min_condition = $promo_merchant_flash_sale['promo_master']['min_order_value'] <= $order->total_amount;
+                    }
+                }
+
+                if ($promo_merchant_flash_sale != null) {
+                    $customer_limit_count = $promo_merchant_flash_sale['promo_master']['customer_limit_count'];
+                    if ($customer_limit_count != null && $customer_limit_count > 0) {
+                        $promo_logs = PromoLog::where('promo_master_id', $promo_merchant_flash_sale->promo_master->id)
+                            ->whereHas('order', function ($query) {
+                                $query->where('buyer_id', auth()->user()->id);
+                            })->get();
+
+                        $promo_logs_add = collect($promo_logs)->where('type', 'add')->count();
+                        $promo_logs_sub = collect($promo_logs)->where('type', 'sub')->count();
+
+                        if ($customer_limit_count <= ($promo_logs_sub - $promo_logs_add)) {
+                            $promo_merchant_flash_sale = null;
+                        }
                     }
                 }
 

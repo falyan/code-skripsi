@@ -28,6 +28,7 @@ class CreatePromoMasterTable extends Migration
             $table->integer('max_value')->nullable();
             $table->integer('max_discount_value')->nullable();
             $table->integer('max_value_merchant')->nullable();
+            $table->integer('customer_limit_count')->nullable();
             $table->integer('status')->default(1);
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
