@@ -1207,12 +1207,6 @@ class TransactionQueries extends Service
         return $merchants;
     }
 
-    public function getTransactionByReference($no_reference)
-    {
-        $orders = Order::with(['detail', 'promo_log_orders', 'progress_active'])->where('no_reference', $no_reference)->get();
-        return $orders;
-    }
-
     public function createOrderV3($request)
     {
         $merchants = [];
