@@ -305,9 +305,13 @@ class IconcashManager
         ]
     ]);
 
-    $response = json_decode($response->getBody());
+        $response = json_decode($response->getBody());
 
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+        Log::info('topupInquiry', [
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
     if ($response->success != true) {
         throw new Exception($response->message, $response->code);
