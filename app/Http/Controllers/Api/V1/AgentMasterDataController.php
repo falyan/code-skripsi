@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Controllers\Controller;
+use App\Http\Services\AgentMasterData\AgentMasterDataQueries;
+use Exception;
+use Illuminate\Http\Request;
+
+class AgentMasterDataController extends Controller
+{
+    protected $queries;
+
+    public function __construct()
+    {
+        $this->queries = new AgentMasterDataQueries();
+    }
+
+    public function getListTokenListrik(Request $request)
+    {
+        try {
+            $limit = $request->limit ?? 15;
+            $page = $request->page ?? 1;
+
+            $data = $this->queries->getListTokenListrik($limit, $page);
+
+            return $this->respondCustom([
+                'message' => $data->count() > 0 ? 'success' : 'empty data',
+                'data' => $data,
+            ]);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+}

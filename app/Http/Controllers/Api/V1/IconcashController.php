@@ -6,11 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Services\Iconcash\IconcashCommands;
 use App\Http\Services\Manager\IconcashManager;
 use App\Models\IconcashInquiry;
+use App\Models\Order;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class IconcashController extends Controller
@@ -95,9 +95,9 @@ class IconcashController extends Controller
             }
 
             return $this->respondWithData([
-                "success"   => true,
-                "phone"     => $response->phoneNumber,
-                "status"    => $response->status
+                "success" => true,
+                "phone" => $response->phoneNumber,
+                "status" => $response->status,
             ], 'Request OTP Berhasil Dikirim!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -141,10 +141,10 @@ class IconcashController extends Controller
             IconcashCommands::login($user, $response);
 
             return $this->respondWithData([
-                "success"                   => true,
-                "iconcash_username"         => $response->username,
-                "iconcash_customer_id"      => $response->customerId,
-                "iconcash_customer_name"    => $response->customerName
+                "success" => true,
+                "iconcash_username" => $response->username,
+                "iconcash_customer_id" => $response->customerId,
+                "iconcash_customer_name" => $response->customerName,
             ], 'Berhasil login!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -182,11 +182,11 @@ class IconcashController extends Controller
 
             return $this->respondWithCollection($response, function ($item) {
                 return [
-                    'id'                        => $item->id,
-                    'name'                      => $item->name,
-                    'account_type'              => $item->accountType,
-                    'account_type_alias_name'   => $item->acountTypeAliasName,
-                    'balance'                   => $item->balance
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'account_type' => $item->accountType,
+                    'account_type_alias_name' => $item->acountTypeAliasName,
+                    'balance' => $item->balance,
                 ];
             });
         } catch (Exception $e) {
@@ -222,18 +222,18 @@ class IconcashController extends Controller
             $response = IconcashInquiry::createWithdrawalInquiry($iconcash, $bank_account_name, $bank_account_no, $bank_id, $nominal, $source_account_id);
 
             return $this->respondWithData([
-                'order_id'              => $response->orderId,
-                'invoice_id'            => $response->invoiceId,
-                'source_account_id'     => $response->sourceAccountId,
-                'source_account_name'   => $response->sourceAccountName,
-                'nominal'               => $response->nominal,
-                'fee'                   => $response->fee,
-                'total'                 => $response->total,
-                'bank_id'               => $response->bankId,
-                'bank_code'             => $response->bankCode,
-                'bank_name'             => $response->bankName,
-                'bank_account_no'       => $response->bankAccountNo,
-                'bank_account_name'     => $response->bankAccountName
+                'order_id' => $response->orderId,
+                'invoice_id' => $response->invoiceId,
+                'source_account_id' => $response->sourceAccountId,
+                'source_account_name' => $response->sourceAccountName,
+                'nominal' => $response->nominal,
+                'fee' => $response->fee,
+                'total' => $response->total,
+                'bank_id' => $response->bankId,
+                'bank_code' => $response->bankCode,
+                'bank_name' => $response->bankName,
+                'bank_account_no' => $response->bankAccountNo,
+                'bank_account_name' => $response->bankAccountName,
             ], 'Proses Inquiry Berhasil!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -266,18 +266,18 @@ class IconcashController extends Controller
             }
 
             return $this->respondWithData([
-                'order_id'              => $response->orderId,
-                'invoice_id'            => $response->invoiceId,
-                'source_account_id'     => $response->sourceAccountId,
-                'source_account_name'   => $response->sourceAccountName,
-                'nominal'               => $response->nominal,
-                'fee'                   => $response->fee,
-                'total'                 => $response->total,
-                'bank_id'               => $response->bankId,
-                'bank_code'             => $response->bankCode,
-                'bank_name'             => $response->bankName,
-                'bank_account_no'       => $response->bankAccountNo,
-                'bank_account_name'     => $response->bankAccountName
+                'order_id' => $response->orderId,
+                'invoice_id' => $response->invoiceId,
+                'source_account_id' => $response->sourceAccountId,
+                'source_account_name' => $response->sourceAccountName,
+                'nominal' => $response->nominal,
+                'fee' => $response->fee,
+                'total' => $response->total,
+                'bank_id' => $response->bankId,
+                'bank_code' => $response->bankCode,
+                'bank_name' => $response->bankName,
+                'bank_account_no' => $response->bankAccountNo,
+                'bank_account_name' => $response->bankAccountName,
             ], 'Withdrawal Berhasil!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -303,19 +303,19 @@ class IconcashController extends Controller
 
             $client_ref = $this->unique_code($iconcash->token);
 
-            $response = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $this->corporate_id);
+            $response = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $this->corporate_id, null);
 
             return $this->respondWithData([
                 'order_id' => $response->orderId,
                 'account_id' => $response->accountId,
                 'phone_number' => $response->phoneNumber,
                 'account_name' => $response->accountName,
-                'corporate_name'    => $response->corporateName,
-                'amount'            => $response->amount,
-                'fee_topup'         => $response->feeTopup,
-                'fee_agent'         => $response->feeAgent,
-                'amount_fee'        => $response->amountFee,
-                'status'            => $response->status
+                'corporate_name' => $response->corporateName,
+                'amount' => $response->amount,
+                'fee_topup' => $response->feeTopup,
+                'fee_agent' => $response->feeAgent,
+                'amount_fee' => $response->amountFee,
+                'status' => $response->status,
             ], 'Berhasil melakukan inquiry topup!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -342,16 +342,16 @@ class IconcashController extends Controller
             $response = IconcashManager::topupConfirm($order_id, $amount);
 
             return $this->respondWithData([
-                'order_id'          => $response->orderId,
-                'account_id'        => $response->accountId,
-                'phone_number'      => $response->phoneNumber,
-                'account_name'      => $response->accountName,
-                'corporate_name'    => $response->corporateName,
-                'amount'            => $response->amount,
-                'fee_topup'         => $response->feeTopup,
-                'fee_agent'         => $response->feeAgent,
-                'amount_fee'        => $response->amountFee,
-                'status'            => $response->status
+                'order_id' => $response->orderId,
+                'account_id' => $response->accountId,
+                'phone_number' => $response->phoneNumber,
+                'account_name' => $response->accountName,
+                'corporate_name' => $response->corporateName,
+                'amount' => $response->amount,
+                'fee_topup' => $response->feeTopup,
+                'fee_agent' => $response->feeAgent,
+                'amount_fee' => $response->amountFee,
+                'status' => $response->status,
             ], 'Berhasil Konfirmasi Topup!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -370,10 +370,10 @@ class IconcashController extends Controller
             $response = IconcashManager::getRefBank($iconcash->token);
             return $this->respondWithCollection($response, function ($bank) {
                 return [
-                    'id'        => $bank->id,
-                    'code'      => $bank->code,
-                    'name'      => $bank->name,
-                    'va_prefix' => $bank->vaPrefix
+                    'id' => $bank->id,
+                    'code' => $bank->code,
+                    'name' => $bank->name,
+                    'va_prefix' => $bank->vaPrefix,
                 ];
             });
         } catch (Exception $e) {
@@ -384,13 +384,13 @@ class IconcashController extends Controller
     public function addCustomerBank()
     {
         if (!$account_name = request()->get('account_name')) {
-        return $this->respondWithResult(false, 'field account_name kosong', 400);
+            return $this->respondWithResult(false, 'field account_name kosong', 400);
         }
         if (!$account_number = request()->get('account_number')) {
-        return $this->respondWithResult(false, 'field account_number kosong', 400);
+            return $this->respondWithResult(false, 'field account_number kosong', 400);
         }
         if (!$bank_id = request()->get('bank_id')) {
-        return $this->respondWithResult(false, 'field bank_id kosong', 400);
+            return $this->respondWithResult(false, 'field bank_id kosong', 400);
         }
 
         try {
@@ -403,18 +403,19 @@ class IconcashController extends Controller
             $response = IconcashManager::addCustomerBank($iconcash->token, $account_name, $account_number, $bank_id);
 
             return $this->respondWithData([
-                'id'                => $response->id,
-                'bank'              => $response->bank,
-                'customer_name'     => $response->customerName,
-                'account_number'    => $response->accountNumber,
-                'account_name'      => $response->accountName,
+                'id' => $response->id,
+                'bank' => $response->bank,
+                'customer_name' => $response->customerName,
+                'account_number' => $response->accountNumber,
+                'account_name' => $response->accountName,
             ], 'Berhasil menyimpan customer bank!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
 
-    public function searchCustomerBank() {
+    public function searchCustomerBank()
+    {
         try {
             $iconcash = Auth::user()->iconcash;
 
@@ -428,11 +429,11 @@ class IconcashController extends Controller
 
             return $this->respondWithCollection(data_get($response, 'content'), function ($bank) {
                 return [
-                    'id'                => $bank->id,
-                    'bank'              => $bank->bank,
-                    'account_name'      => $bank->accountName,
-                    'account_number'    => $bank->accountNumber,
-                    'customer_name'     => $bank->customerName,
+                    'id' => $bank->id,
+                    'bank' => $bank->bank,
+                    'account_name' => $bank->accountName,
+                    'account_number' => $bank->accountNumber,
+                    'customer_name' => $bank->customerName,
                 ];
             });
         } catch (Exception $e) {
@@ -440,7 +441,8 @@ class IconcashController extends Controller
         }
     }
 
-    public function getCustomerBankById($id) {
+    public function getCustomerBankById($id)
+    {
         try {
             $iconcash = Auth::user()->iconcash;
 
@@ -452,11 +454,11 @@ class IconcashController extends Controller
 
             return $this->respondWithItem($response, function ($bank) {
                 return [
-                    'id'                => $bank->id,
-                    'bank'              => $bank->bank,
-                    'account_name'      => $bank->accountName,
-                    'account_number'    => $bank->accountNumber,
-                    'customer_name'     => $bank->customerName,
+                    'id' => $bank->id,
+                    'bank' => $bank->bank,
+                    'account_name' => $bank->accountName,
+                    'account_number' => $bank->accountNumber,
+                    'customer_name' => $bank->customerName,
                 ];
             });
         } catch (Exception $e) {
@@ -464,7 +466,8 @@ class IconcashController extends Controller
         }
     }
 
-    public function deleteCustomerBank($id) {
+    public function deleteCustomerBank($id)
+    {
         try {
             $iconcash = Auth::user()->iconcash;
 
@@ -477,7 +480,7 @@ class IconcashController extends Controller
             return $this->respondWithItem($response, function () {
                 return [
                     'success' => true,
-                    'message' => "Customer Bank Berhasil Dihapus!"
+                    'message' => "Customer Bank Berhasil Dihapus!",
                 ];
             });
         } catch (Exception $e) {
@@ -485,7 +488,8 @@ class IconcashController extends Controller
         }
     }
 
-    public function updateCustomerBank($id) {
+    public function updateCustomerBank($id)
+    {
         try {
             $iconcash = Auth::user()->iconcash;
 
@@ -501,11 +505,11 @@ class IconcashController extends Controller
 
             return $this->respondWithItem($response, function ($bank) {
                 return [
-                    'id'                => $bank->id,
-                    'bank'              => $bank->bank,
-                    'account_name'      => $bank->accountName,
-                    'account_number'    => $bank->accountNumber,
-                    'customer_name'     => $bank->customerName,
+                    'id' => $bank->id,
+                    'bank' => $bank->bank,
+                    'account_name' => $bank->accountName,
+                    'account_number' => $bank->accountNumber,
+                    'customer_name' => $bank->customerName,
                 ];
             });
         } catch (Exception $e) {
@@ -543,7 +547,7 @@ class IconcashController extends Controller
             return $this->respondWithItem($response, function ($item) {
                 return [
                     'success' => $item->success,
-                    'message' => $item->message
+                    'message' => $item->message,
                 ];
             });
         } catch (Exception $e) {
@@ -551,7 +555,8 @@ class IconcashController extends Controller
         }
     }
 
-    public function forgotPin(){
+    public function forgotPin()
+    {
         if (!$otp = request()->get('otp')) {
             return $this->respondWithResult(false, 'field otp kosong', 400);
         }
@@ -580,7 +585,7 @@ class IconcashController extends Controller
             return $this->respondWithItem($response, function ($item) {
                 return [
                     'success' => $item->success,
-                    'message' => $item->message
+                    'message' => $item->message,
                 ];
             });
         } catch (Exception $e) {
@@ -588,7 +593,8 @@ class IconcashController extends Controller
         }
     }
 
-    public function historySaldoPendapatan(){
+    public function historySaldoPendapatan()
+    {
         try {
             $iconcash = Auth::user()->iconcash;
 
@@ -605,31 +611,267 @@ class IconcashController extends Controller
             }
 
             $response = IconcashManager::historySaldo($iconcash->token, $account_type_id);
-
             return $this->respondWithCollection($response, function ($item) {
+                $order_id = IconcashInquiry::select('order_id')->where('client_ref', $item->clientRef)->get()->toArray();
+                if (count($order_id)) {
+                    $order_id = $order_id[0]['order_id'];
+                    $order = Order::with('delivery', 'detail', 'detail.product', 'detail.product.product_photo', 'buyer', 'payment')->find($order_id)->toArray();
+                } else {
+                    $order = null;
+                }
                 return [
-                    'order_id'                  => $item->orderId,
-                    'status'                    => $item->status,
-                    'transaction_type_name'     => $item->transactionTypeName,
-                    'source_account_name'       => $item->sourceAccountName,
-                    'receiver_account_name'     => $item->receiverAccountName,
-                    'receiver_account_type'     => $item->receiverAccountType,
-                    'corporate_name'            => $item->corporateName,
-                    'amount'                    => $item->amount,
-                    'fee'                       => $item->fee,
-                    'amount_fee'                => $item->amountFee,
-                    'transaction_date'          => $item->transactionDate,
-                    'description'               => $item->description,
-                    'beneficiary_account'       => $item->beneficiaryAccount,
-                    'beneficiary_name'          => $item->beneficiaryName,
-                    'bank_name'                 => $item->bankName
+                    'order_id' => $item->orderId,
+                    'client_ref' => $item->clientRef,
+                    'status' => $item->status,
+                    'transaction_type_name' => $item->transactionTypeName,
+                    'source_account_name' => $item->sourceAccountName,
+                    'receiver_account_name' => $item->receiverAccountName,
+                    'receiver_account_type' => $item->receiverAccountType,
+                    'corporate_name' => $item->corporateName,
+                    'amount' => $item->amount,
+                    'fee' => $item->fee,
+                    'amount_fee' => $item->amountFee,
+                    'transaction_date' => $item->transactionDate,
+                    'description' => $item->description,
+                    'beneficiary_account' => $item->beneficiaryAccount,
+                    'beneficiary_name' => $item->beneficiaryName,
+                    'bank_name' => $item->bankName,
+                    'remarks' => $item->remarks,
+                    'additional_info' => $item->additionalInfo,
+                    'order' => $order,
                 ];
             });
-
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
+
+    // Agent Iconcash Services
+
+    public function createOrder()
+    {
+        $validator = Validator::make(request()->all(), [
+            'transaction_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->respondWithResult(false, $validator->errors()->first(), 400);
+        }
+
+        $iconcash = Auth::user()->iconcash;
+
+        if (!isset($iconcash->token)) {
+            return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
+        }
+
+        // $client_ref = $this->unique_code($iconcash->token);
+        $request = request()->all();
+
+        try {
+            $response = IconcashCommands::createOrder($request, $iconcash->token);
+
+            if ($response['status'] == 'success') {
+                return response()->json($response, 200);
+            } else {
+                return [
+                    'status' => 'failed',
+                    'message' => $response['message'],
+                ];
+            }
+        } catch (\Throwable $th) {
+            return $th;
+        }
+    }
+
+    public function orderConfirm()
+    {
+        $validator = Validator::make(request()->all(), [
+            'transaction_id' => 'required',
+            'client_ref' => 'required',
+            'source_account_id' => 'required',
+            'account_pin' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->respondWithResult(false, $validator->errors()->first(), 400);
+        }
+
+        $iconcash = Auth::user()->iconcash;
+
+        if (!isset($iconcash->token)) {
+            return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
+        }
+
+        // $client_ref = $this->unique_code($iconcash->token);
+        $request = request()->all();
+
+        try {
+            return $response = IconcashCommands::orderConfirm($request, $iconcash->token);
+
+            if ($response['status'] == 'success') {
+                return response()->json($response, 200);
+            } else {
+                return [
+                    'status' => 'failed',
+                    'message' => $response['message'],
+                ];
+            }
+        } catch (\Throwable $th) {
+            return $th;
+        }
+    }
+
+    public function orderRefund()
+    {
+        $validator = Validator::make(request()->all(), [
+            'transaction_id' => 'required',
+            'client_ref' => 'required',
+            'source_account_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->respondWithResult(false, $validator->errors()->first(), 400);
+        }
+
+        $iconcash = Auth::user()->iconcash;
+
+        if (!isset($iconcash->token)) {
+            return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
+        }
+
+        // $client_ref = $this->unique_code($iconcash->token);
+        $request = request()->all();
+
+        try {
+            return $response = IconcashCommands::orderRefund($request['transaction_id'], $iconcash->token, $request['client_ref'], $request['source_account_id']);
+
+            if ($response['status'] == 'success') {
+                return response()->json($response, 200);
+            } else {
+                return [
+                    'status' => 'failed',
+                    'message' => $response['message'],
+                ];
+            }
+        } catch (\Throwable $th) {
+            return $th;
+        }
+    }
+
+    public function manualOrderRefund()
+    {
+        $validator = Validator::make(request()->all(), [
+            'transaction_id' => 'required',
+            'client_ref' => 'required',
+            'source_account_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->respondWithResult(false, $validator->errors()->first(), 400);
+        }
+
+        $iconcash = Auth::user()->iconcash;
+
+        if (!isset($iconcash->token)) {
+            return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
+        }
+
+        // $client_ref = $this->unique_code($iconcash->token);
+        $request = request()->all();
+
+        try {
+            return $response = IconcashCommands::manualOrderRefund($request['transaction_id'], $iconcash->token, $request['client_ref'], $request['source_account_id']);
+
+            if ($response['status'] == 'success') {
+                return response()->json($response, 200);
+            } else {
+                return [
+                    'status' => 'failed',
+                    'message' => $response['message'],
+                ];
+            }
+        } catch (\Throwable $th) {
+            return $th;
+        }
+    }
+
+    public function registerDeposit()
+    {
+        $iconcash = Auth::user()->iconcash;
+
+        if (!isset($iconcash->token)) {
+            return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
+        }
+
+        try {
+            $response = IconcashManager::registerDeposit($iconcash->token);
+
+            if ($response['success'] == true) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Berhasil aktivasi saldo deposit',
+                    'data' => $response['data'],
+                ]);
+            } else {
+                return [
+                    'success' => false,
+                    'message' => $response['message'],
+                ];
+            }
+        } catch (\Throwable $th) {
+            return $th;
+        }
+    }
+
+    public function getVADeposit()
+    {
+        $iconcash = Auth::user()->iconcash;
+
+        if (!isset($iconcash->token)) {
+            return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
+        }
+
+        try {
+            $response = IconcashManager::getVADeposit($iconcash->token);
+
+            if ($response['success'] == true) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Berhasil mendapatkan VA deposit',
+                    'data' => $response['data'],
+                ]);
+            } else {
+                return [
+                    'success' => false,
+                    'message' => $response['message'],
+                ];
+            }
+        } catch (\Throwable $th) {
+            return $th;
+        }
+    }
+
+    public function agentHistorySaldo(Request $request)
+    {
+        try {
+            $iconcash = Auth::user()->iconcash;
+
+            if (!isset($iconcash->token)) {
+                return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
+            }
+
+            $limit = $request->limit ?? 10;
+            $page = $request->page ?? 0;
+
+            $response = IconcashManager::agentHistorySaldo($limit, $page, $iconcash->token);
+
+            return $this->respondWithData($response, 'success');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, $request);
+        }
+    }
+
+    // End of Agent Iconcash Services
 
     public function unique_code($value)
     {
@@ -639,17 +881,17 @@ class IconcashController extends Controller
     public function hash_salt_sha256($pin = null, $return = "response")
     {
         if (!$pin) {
-            if($return == "response") {
+            if ($return == "response") {
                 return $this->respondWithResult(false, 'parameter pin not found', 404);
             }
 
             throw new Exception('pin is not defined', 400);
         }
 
-        $user =Auth::user();
+        $user = Auth::user();
         $salted_pin = $user->phone . $pin;
 
-        if($return == "response") {
+        if ($return == "response") {
             return response()->json(['hashed_pin' => hash('sha256', $salted_pin)], 200);
         }
 

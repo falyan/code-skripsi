@@ -2,8 +2,6 @@
 
 namespace App\Http\Services\Manager;
 
-use App\Http\Resources\Rajaongkir\RajaongkirResources;
-use App\Models\Order;
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
@@ -11,299 +9,308 @@ use Illuminate\Support\Facades\Log;
 
 class IconcashManager
 {
-  static $apiendpoint;
-  static $appkey;
-  static $curl;
-  static $header;
-  static $headerTopup;
-  static $appId = 'PLNMOB';
-  static $topupClientId;
-  static $topupApiEndpoint;
-  static $topupSecretKey;
-  static $topupNote = 'Marketplace';
+    static $apiendpoint;
+    static $apiendpointintegrator;
+    static $appkey;
+    static $curl;
+    static $header;
+    static $headerTopup;
+    static $appId = 'PLNMOB';
+    static $topupClientId;
+    static $topupApiEndpoint;
+    static $topupSecretKey;
+    static $topupNote = 'Marketplace';
+    static $appIdTopup = 'marketplace_agent';
+    static $headerAgentTopup;
+    static $keyTopup;
 
-  static function init()
-  {
-    self::$curl         = new Client();
-    self::$apiendpoint  = config('credentials.iconcash.endpoint');
-    self::$appkey       = config('credentials.iconcash.api_key');
+    static $partner_id;
+    static $channel_id;
 
-    self::$topupApiEndpoint = config('credentials.iconcash_topup.endpoint');
-    self::$topupClientId    = config('credentials.iconcash_topup.client_id');
-    self::$topupSecretKey   = config('credentials.iconcash_topup.secret_key');
+    public static function init()
+    {
+        self::$curl = new Client();
+        self::$apiendpoint = config('credentials.iconcash.endpoint');
+        self::$apiendpointintegrator = config('credentials.iconcash.endpoint_integrator');
+        self::$appkey = config('credentials.iconcash.api_key');
+        self::$keyTopup = config('credentials.iconcash.agent_secret_key');
 
-      $timestamp = Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp;
-      $timestamp_topup = Carbon::now('Asia/Jakarta')->timestamp;
+        self::$topupApiEndpoint = config('credentials.iconcash_topup.endpoint');
+        self::$topupClientId = config('credentials.iconcash_topup.client_id');
+        self::$topupSecretKey = config('credentials.iconcash_topup.secret_key');
 
-      self::$header = [
-      'Content-Type'  => 'application/json',
-      'appid'         => self::$appId,
-      'timestamp'     => $timestamp,
-      'token'         => hash_hmac('sha256', self::$appId . $timestamp, self::$appkey)
-    ];
+        $timestamp = Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp;
+        $timestamp_topup = Carbon::now('Asia/Jakarta')->timestamp;
 
-    self::$headerTopup = [
-      'clientId'    => self::$topupClientId,
-      'timestamp'   => $timestamp_topup,
-      'signature'   => hash_hmac('sha256', self::$topupClientId . $timestamp_topup, self::$topupSecretKey),
-      'app_source'  => 'marketplace'
-    ];
-  }
+        self::$header = [
+            'Content-Type' => 'application/json',
+            'appid' => self::$appId,
+            'timestamp' => $timestamp,
+            'token' => hash_hmac('sha256', self::$appId . $timestamp, self::$appkey),
+        ];
 
-  public static function register(string $fullName = "", string $phoneNumber = "", string $pin, int $corporateId = 10, string $email = "")
-  {
-    $param = static::setParamAPI([]);
-
-    $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/register_customer' . $param);
-
-    $response = self::$curl->request('POST', $url, [
-      'headers'     => ['app_source' => 'marketplace'],
-      'http_errors' => false,
-      'json' => [
-        'corporateId' => $corporateId,
-        'email'       => $email,
-        'fullname'    => $fullName,
-        'phoneNumber' => $phoneNumber,
-        'pin'         => $pin,
-        'sendOtp'     => true
-      ]
-    ]);
-
-    $response = json_decode($response->getBody());
-
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
-
-    if ($response->code == 5006) {
-      return $response;
+        self::$headerTopup = [
+            'clientId' => self::$topupClientId,
+            'timestamp' => $timestamp_topup,
+            'signature' => hash_hmac('sha256', self::$topupClientId . $timestamp_topup, self::$topupSecretKey),
+            'app_source' => 'marketplace',
+        ];
     }
 
-    if ($response->success != true) {
-      throw new Exception($response->message, $response->code);
+    public static function register(string $fullName = "", string $phoneNumber = "", string $pin, int $corporateId = 10, string $email = "")
+    {
+        $param = static::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/register_customer' . $param);
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => ['app_source' => 'marketplace'],
+            'http_errors' => false,
+            'json' => [
+                'corporateId' => $corporateId,
+                'email' => $email,
+                'fullname' => $fullName,
+                'phoneNumber' => $phoneNumber,
+                'pin' => $pin,
+                'sendOtp' => true,
+            ],
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->code == 5006) {
+            return $response;
+        }
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return $response;
     }
 
-    return $response;
-  }
+    public static function requestOTP($corporateId = 10, $phoneNumber)
+    {
+        $param = static::setParamAPI([]);
 
-  public static function requestOTP($corporateId = 10, $phoneNumber)
-  {
-    $param = static::setParamAPI([]);
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/otp' . $param);
 
-    $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/otp' . $param);
+        $response = self::$curl->request('POST', $url, [
+            'http_errors' => false,
+            'json' => [
+                'corporateId' => $corporateId,
+                'phoneNumber' => $phoneNumber,
+            ],
+        ]);
 
-    $response = self::$curl->request('POST', $url, [
-      'http_errors' => false,
-      'json' => [
-        'corporateId' => $corporateId,
-        'phoneNumber' => $phoneNumber
-      ]
-    ]);
+        $response = json_decode($response->getBody());
 
-    $response = json_decode($response->getBody());
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+        if ($response->code == 5000 || $response->code == 5006) {
+            return $response;
+        }
 
-    if ($response->code == 5000 || $response->code == 5006) {
-      return $response;
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, "data");
     }
 
-    if ($response->success != true) {
-      throw new Exception($response->message, $response->code);
+    public static function validateOTP(int $corporateId = 10, $phoneNumber = "", $otp = "")
+    {
+        $param = static::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/otp/validate' . $param);
+
+        $response = self::$curl->request('POST', $url, [
+            'http_errors' => false,
+            'json' => [
+                'corporateId' => $corporateId,
+                'phoneNumber' => $phoneNumber,
+                'otp' => $otp,
+            ],
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return $response;
     }
 
-    return data_get($response, "data");
-  }
+    public static function login(int $corporateId = 10, $phoneNumber = "", $pin = "")
+    {
+        $param = static::setParamAPI([]);
 
-  public static function validateOTP(int $corporateId = 10, $phoneNumber = "", $otp = "")
-  {
-    $param = static::setParamAPI([]);
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/auth/login' . $param);
 
-    $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/otp/validate' . $param);
+        $response = self::$curl->request('POST', $url, [
+            'headers' => ['app_source' => 'marketplace'],
+            'http_errors' => false,
+            'json' => [
+                'corporateId' => $corporateId,
+                'phoneNumber' => $phoneNumber,
+                'pin' => $pin,
+            ],
+        ]);
 
-    $response = self::$curl->request('POST', $url, [
-      'http_errors' => false,
-      'json' => [
-        'corporateId' => $corporateId,
-        'phoneNumber' => $phoneNumber,
-        'otp'         => $otp
-      ]
-    ]);
+        $response = json_decode($response->getBody());
 
-    $response = json_decode($response->getBody());
+        if ($response->code == 5001 || $response->code == 5002 || $response->code == 5003 || $response->code == 5004 || $response->code == 5006) {
+            return $response;
+        }
 
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-    if ($response->success != true) {
-      throw new Exception($response->message, $response->code);
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, "data");
     }
 
-    return $response;
-  }
+    public static function logout($token)
+    {
+        $param = self::setParamAPI([]);
 
-  public static function login(int $corporateId = 10, $phoneNumber = "", $pin = "")
-  {
-    $param = static::setParamAPI([]);
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/auth/logout' . $param);
 
-    $url = sprintf('%s/%s', self::$apiendpoint, 'api/auth/login' . $param);
+        $response = self::$curl->request('POST', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+        ]);
 
-    $response = self::$curl->request('POST', $url, [
-      'headers'     => ['app_source' => 'marketplace'],
-      'http_errors' => false,
-      'json' => [
-        'corporateId' => $corporateId,
-        'phoneNumber' => $phoneNumber,
-        'pin'         => $pin
-      ]
-    ]);
+        $response = json_decode($response->getBody());
 
-    $response = json_decode($response->getBody());
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-    if ($response->code == 5001 || $response->code == 5002 || $response->code == 5003 || $response->code == 5004 || $response->code == 5006) {
-      return $response;
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return $response;
     }
 
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+    public static function getCustomerAllBalance($token = "")
+    {
+        $param = self::setParamAPI([]);
 
-    if ($response->success != true) {
-      throw new Exception($response->message, $response->code);
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/balance/customer' . $param);
+
+        $response = self::$curl->request('GET', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
     }
 
-    return data_get($response, "data");
-  }
+    public static function withdrawalInquiry($token, $bankAccountName, $bankAccountNo, $bankId, $nominal, $sourceAccountId)
+    {
+        $param = self::setParamAPI([]);
 
-  public static function logout($token)
-  {
-    $param = self::setParamAPI([]);
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal/inquiry' . $param);
 
-    $url = sprintf('%s/%s', self::$apiendpoint, 'api/auth/logout' . $param);
+        $response = self::$curl->request('POST', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+            'json' => [
+                'bankAccountName' => $bankAccountName,
+                'bankAccountNo' => $bankAccountNo,
+                'bankId' => $bankId,
+                'nominal' => $nominal,
+                'sourceAccountId' => $sourceAccountId,
+            ],
+        ]);
 
-    $response = self::$curl->request('POST', $url, [
-        'headers'   => [
-            'Authorization' => $token,
-            'app_source'    => 'marketplace'
-        ],
-        'http_errors' => false,
-    ]);
+        $response = json_decode($response->getBody());
 
-    $response = json_decode($response->getBody());
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
 
-    if ($response->success != true) {
-        throw new Exception($response->message, $response->code);
+        return data_get($response, 'data');
     }
 
-    return $response;
-}
+    public static function withdrawal($token, $pin, $orderId)
+    {
+        $param = self::setParamAPI([]);
 
-  public static function getCustomerAllBalance($token = "")
-  {
-    $param = self::setParamAPI([]);
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal' . $param);
 
-    $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/balance/customer' . $param);
+        $response = self::$curl->request('POST', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'Credentials' => $pin,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+            'json' => [
+                'orderId' => $orderId,
+            ],
+        ]);
 
-    $response = self::$curl->request('GET', $url, [
-        'headers' => [
-            'Authorization' => $token,
-            'app_source'    => 'marketplace'
-        ],
-        'http_errors' => false,
-    ]);
+        $response = json_decode($response->getBody());
 
-    $response = json_decode($response->getBody());
+        if ($response->code == 5001 || $response->code == 5002 || $response->code == 5003 || $response->code == 5004 || $response->code == 5006) {
+            return $response;
+        }
 
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-    if ($response->success != true) {
-        throw new Exception($response->message, $response->code);
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
     }
 
-    return data_get($response, 'data');
-  }
+    /* Topup Services */
 
-  public static function withdrawalInquiry($token, $bankAccountName, $bankAccountNo, $bankId, $nominal, $sourceAccountId)
-  {
-    $param = self::setParamAPI([]);
+    public static function topupInquiry($phone, $account_type_id, $amount, $client_ref, $corporate_id = 10)
+    {
+        $param = self::setParamAPI([]);
 
-    $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal/inquiry' . $param);
+        $url = sprintf('%s/%s', self::$topupApiEndpoint, 'command/topup-inquiry' . $param);
 
-    $response = self::$curl->request('POST', $url, [
-        'headers' => [
-            'Authorization' => $token,
-            'app_source'    => 'marketplace'
-        ],
-        'http_errors' => false,
-        'json' => [
-          'bankAccountName' => $bankAccountName,
-          'bankAccountNo' => $bankAccountNo,
-          'bankId' => $bankId,
-          'nominal' => $nominal,
-          'sourceAccountId' => $sourceAccountId
-        ]
-    ]);
-
-    $response = json_decode($response->getBody());
-
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
-
-    if ($response->success != true) {
-        throw new Exception($response->message, $response->code);
-    }
-
-    return data_get($response, 'data');
-  }
-
-  public static function withdrawal($token, $pin, $orderId)
-  {
-    $param = self::setParamAPI([]);
-
-    $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal' . $param);
-
-    $response = self::$curl->request('POST', $url, [
-        'headers' => [
-            'Authorization' => $token,
-            'Credentials'   => $pin,
-            'app_source'    => 'marketplace'
-        ],
-        'http_errors' => false,
-        'json' => [
-          'orderId' => $orderId
-        ]
-    ]);
-
-    $response = json_decode($response->getBody());
-
-    if ($response->code == 5001 || $response->code == 5002 || $response->code == 5003 || $response->code == 5004 || $response->code == 5006) {
-      return $response;
-    }
-
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
-
-    if ($response->success != true) {
-        throw new Exception($response->message, $response->code);
-    }
-
-    return data_get($response, 'data');
-  }
-
-  /* Topup Services */
-
-  public static function topupInquiry($phone, $account_type_id, $amount, $client_ref, $corporate_id = 10)
-  {
-    $param = self::setParamAPI([]);
-
-    $url = sprintf('%s/%s', self::$topupApiEndpoint, 'command/topup-inquiry' . $param);
-
-    $response = self::$curl->request('POST', $url, [
-        'headers' => self::$headerTopup,
-        'http_errors' => false,
-        'json' => [
-          'accountTypeId' => $account_type_id,
-          'amount'        => $amount,
-          'clientRef'     => $client_ref,
-          'corporateId'   => $corporate_id,
-          'phoneNumber'   => $phone
-        ]
-    ]);
+        $response = self::$curl->request('POST', $url, [
+            'headers' => self::$headerTopup,
+            'http_errors' => false,
+            'json' => [
+                'accountTypeId' => $account_type_id,
+                'amount' => $amount,
+                'clientRef' => $client_ref,
+                'corporateId' => $corporate_id,
+                'phoneNumber' => $phone,
+            ],
+        ]);
 
         $response = json_decode($response->getBody());
 
@@ -313,30 +320,30 @@ class IconcashManager
 
         throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-    if ($response->success != true) {
-        throw new Exception($response->message, $response->code);
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
     }
 
-    return data_get($response, 'data');
-  }
+    public static function topupConfirm($order_id, $amount)
+    {
+        $param = self::setParamAPI([]);
 
-  public static function topupConfirm($order_id, $amount)
-  {
-    $param = self::setParamAPI([]);
+        $url = sprintf('%s/%s', self::$topupApiEndpoint, 'command/topup-confirm' . $param);
 
-    $url = sprintf('%s/%s', self::$topupApiEndpoint, 'command/topup-confirm' . $param);
+        $response = self::$curl->request('POST', $url, [
+            'headers' => self::$headerTopup,
+            'http_errors' => false,
+            'json' => [
+                'amount' => $amount,
+                'orderId' => $order_id,
+                'note' => self::$topupNote,
+            ],
+        ]);
 
-    $response = self::$curl->request('POST', $url, [
-        'headers' => self::$headerTopup,
-        'http_errors' => false,
-        'json' => [
-          'amount'  => $amount,
-          'orderId' => $order_id,
-          'note'    => self::$topupNote
-        ]
-    ]);
-
-    $response = json_decode($response->getBody());
+        $response = json_decode($response->getBody());
 
         Log::info('topupConfirm', [
             'response' => $response,
@@ -344,183 +351,183 @@ class IconcashManager
 
         throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-    if ($response->success != true) {
-        throw new Exception($response->message, $response->code);
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
     }
 
-    return data_get($response, 'data');
-  }
+    public static function getRefBank($token)
+    {
+        $param = self::setParamAPI([
+            'size' => 9999,
+        ]);
 
-  public static function getRefBank($token)
-  {
-    $param = self::setParamAPI([
-      'size' => 9999
-    ]);
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/ref/bank' . $param);
 
-    $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/ref/bank' . $param);
+        $response = self::$curl->request('GET', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+        ]);
 
-    $response = self::$curl->request('GET', $url, [
-        'headers' => [
-            'Authorization' => $token,
-            'app_source'    => 'marketplace'
-        ],
-        'http_errors' => false
-    ]);
+        $response = json_decode($response->getBody());
 
-    $response = json_decode($response->getBody());
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
 
-    if ($response->success != true) {
-        throw new Exception($response->message, $response->code);
+        return data_get($response, 'data');
     }
 
-    return data_get($response, 'data');
-  }
+    public static function addCustomerBank($token, $account_name, $account_number, $bank_id)
+    {
+        $param = self::setParamAPI([]);
 
-  public static function addCustomerBank($token, $account_name, $account_number, $bank_id)
-  {
-    $param = self::setParamAPI([]);
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/customerbank' . $param);
 
-    $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/customerbank' . $param);
+        $response = self::$curl->request('POST', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+            'json' => [
+                'accountName' => $account_name,
+                'accountNumber' => $account_number,
+                'bankId' => $bank_id,
+                'id' => 0,
+            ],
+        ]);
 
-    $response = self::$curl->request('POST', $url, [
-        'headers' => [
-            'Authorization' => $token,
-            'app_source'    => 'marketplace'
-        ],
-        'http_errors' => false,
-        'json' => [
-          'accountName' => $account_name,
-          'accountNumber' => $account_number,
-          'bankId' => $bank_id,
-          'id' => 0
-        ]
-    ]);
+        $response = json_decode($response->getBody());
 
-    $response = json_decode($response->getBody());
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
 
-    if ($response->success != true) {
-        throw new Exception($response->message, $response->code);
+        return data_get($response, 'data');
     }
 
-    return data_get($response, 'data');
-  }
+    public static function searchCustomerBank($token, $keyword)
+    {
+        $param = self::setParamAPI([
+            'keyword' => $keyword,
+            'size' => 9999,
+        ]);
 
-  public static function searchCustomerBank($token, $keyword)
-  {
-    $param = self::setParamAPI([
-      'keyword' => $keyword,
-      'size' => 9999
-    ]);
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/customerbank/search' . $param);
 
-    $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/customerbank/search' . $param);
+        $response = self::$curl->request('GET', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+        ]);
 
-    $response = self::$curl->request('GET', $url, [
-        'headers' => [
-            'Authorization' => $token,
-            'app_source'    => 'marketplace'
-        ],
-        'http_errors' => false
-    ]);
+        $response = json_decode($response->getBody());
 
-    $response = json_decode($response->getBody());
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
 
-    if ($response->success != true) {
-        throw new Exception($response->message, $response->code);
+        return data_get($response, 'data');
     }
 
-    return data_get($response, 'data');
-  }
+    public static function getCustomerBankById($token, $id)
+    {
+        $param = self::setParamAPI([
+            'id' => $id,
+        ]);
 
-  public static function getCustomerBankById($token, $id)
-  {
-    $param = self::setParamAPI([
-      'id' => $id
-    ]);
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/customerbank/byid' . $param);
 
-    $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/customerbank/byid' . $param);
+        $response = self::$curl->request('GET', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+        ]);
 
-    $response = self::$curl->request('GET', $url, [
-        'headers' => [
-            'Authorization' => $token,
-            'app_source'    => 'marketplace'
-        ],
-        'http_errors' => false
-    ]);
+        $response = json_decode($response->getBody());
 
-    $response = json_decode($response->getBody());
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
 
-    if ($response->success != true) {
-        throw new Exception($response->message, $response->code);
+        return data_get($response, 'data');
     }
 
-    return data_get($response, 'data');
-  }
+    public static function deleteCustomerBank($token, $id)
+    {
+        $param = self::setParamAPI([
+            'id' => $id,
+        ]);
 
-  public static function deleteCustomerBank($token, $id)
-  {
-    $param = self::setParamAPI([
-      'id' => $id
-    ]);
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/customerbank' . $param);
 
-    $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/customerbank' . $param);
+        $response = self::$curl->request('DELETE', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+        ]);
 
-    $response = self::$curl->request('DELETE', $url, [
-        'headers' => [
-            'Authorization' => $token,
-            'app_source'    => 'marketplace'
-        ],
-        'http_errors' => false
-    ]);
+        $response = json_decode($response->getBody());
 
-    $response = json_decode($response->getBody());
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
 
-    if ($response->success != true) {
-        throw new Exception($response->message, $response->code);
+        return $response;
     }
 
-    return $response;
-  }
+    public static function updateCustomerBank($token, $customer_bank_id, $account_name, $account_number, $bank_id)
+    {
+        $param = self::setParamAPI([]);
 
-  public static function updateCustomerBank($token, $customer_bank_id, $account_name, $account_number, $bank_id)
-  {
-    $param = self::setParamAPI([]);
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/customerbank' . $param);
 
-    $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/customerbank' . $param);
+        $response = self::$curl->request('PUT', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+            'json' => [
+                'id' => $customer_bank_id,
+                'accountName' => $account_name,
+                'accountNumber' => $account_number,
+                'bankId' => $bank_id,
+            ],
+        ]);
 
-    $response = self::$curl->request('PUT', $url, [
-        'headers' => [
-            'Authorization' => $token,
-            'app_source'    => 'marketplace'
-        ],
-        'http_errors' => false,
-        'json' => [
-          'id' => $customer_bank_id,
-          'accountName' => $account_name,
-          'accountNumber' => $account_number,
-          'bankId' => $bank_id,
-        ]
-    ]);
+        $response = json_decode($response->getBody());
 
-    $response = json_decode($response->getBody());
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-    throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
 
-    if ($response->success != true) {
-        throw new Exception($response->message, $response->code);
+        return data_get($response, 'data');
     }
-
-    return data_get($response, 'data');
-  }
 
     public static function changePin($token, $old_pin, $new_pin, $confirm_new_pin)
     {
@@ -531,14 +538,14 @@ class IconcashManager
         $response = self::$curl->request('POST', $url, [
             'headers' => [
                 'Authorization' => $token,
-                'app_source'    => 'marketplace'
+                'app_source' => 'marketplace',
             ],
             'http_errors' => false,
             'json' => [
                 'confirmPin' => $confirm_new_pin,
                 'newPin' => $new_pin,
-                'oldPin' => $old_pin
-            ]
+                'oldPin' => $old_pin,
+            ],
         ]);
 
         $response = json_decode($response->getBody());
@@ -561,7 +568,7 @@ class IconcashManager
         $response = self::$curl->request('POST', $url, [
             'headers' => [
                 'Authorization' => $token,
-                'app_source'    => 'marketplace'
+                'app_source' => 'marketplace',
             ],
             'http_errors' => false,
             'json' => [
@@ -569,8 +576,8 @@ class IconcashManager
                 'corporateId' => $corporate_id,
                 'newPin' => $new_pin,
                 'otp' => $otp,
-                'phoneNumber' => $phone
-            ]
+                'phoneNumber' => $phone,
+            ],
         ]);
 
         $response = json_decode($response->getBody());
@@ -593,12 +600,12 @@ class IconcashManager
         $response = self::$curl->request('GET', $url, [
             'headers' => [
                 'Authorization' => $token,
-                'app_source'    => 'marketplace'
+                'app_source' => 'marketplace',
             ],
             'http_errors' => false,
             'json' => [
-                'accountTypeId' => $account_type_id
-            ]
+                'accountTypeId' => $account_type_id,
+            ],
         ]);
 
         $response = json_decode($response->getBody());
@@ -612,24 +619,346 @@ class IconcashManager
         return data_get($response, 'data');
     }
 
-  static function setParamAPI($data = [])
-  {
-    $param = [];
-    $index = 0;
-    $len = count($data);
+    // Agent Iconcash Services
 
-    foreach ($data as $key => $value) {
-      $value = preg_replace('/\s+/', '+', $value);
+    public static function paymentProcess($data, $token, $fee, $amount, $amount_fee)
+    {
+        $param = self::setParamAPI([]);
 
-      if ($index == 0) {
-        $param[] = sprintf('?%s=%s', $key, $value);
-      } else {
-        $param[] = sprintf('&%s=%s', $key, $value);
-      }
+        $url = sprintf('%s/%s', self::$apiendpointintegrator, 'api/command/order/direct' . $param);
 
-      $index++;
+        $kodeKonter = $data['kode_konter'];
+        $kodeGateway = $data['kode_gateway']; // generate by id agent
+        $kodeChanelId = substr(self::$channel_id, -2);
+        $kodeProduct = (string) $data['kode_product'];
+        $kodeBankPenampungan = 'MDR';
+        $parnerId = self::$partner_id;
+        $partnerRefrence = (string) time() . substr($data['transaction_id'], 0, 9);
+
+        // return [
+        //     'kodeKonter' => $kodeKonter,
+        //     'kodeGateway' => $kodeGateway,
+        //     'kodeChanelId' => $kodeChanelId,
+        //     'kodeProduct' => $kodeProduct,
+        //     'kodeBankPenampungan' => $kodeBankPenampungan,
+        //     'parnerId' => $parnerId,
+        //     'partnerRefrence' => strlen($partnerRefrence),
+        // ];
+
+        $client_ref = $kodeKonter . $kodeGateway . $kodeChanelId . $kodeProduct . $kodeBankPenampungan . $parnerId . $partnerRefrence;
+
+        $body = [
+            'amount' => (int) $amount,
+            'fee' => (int) $fee,
+            'amountFee' => (int) $amount_fee,
+            'clientRef' => $client_ref,
+            // 'id' => $trxId,
+            'items' => json_encode([
+                'refid' => $data['transaction_id'],
+                'amount' => $amount,
+            ]),
+            // 'merchantId' => '',
+            // 'merchantName' => '',
+            'storeId' => 102,
+            // 'storeName' => '',
+            'terminalId' => 101,
+        ];
+
+        // $timestamp = time();
+        // $appId = 'ICONCASH';
+        // $key = $appId . 'iconcash123' . $timestamp;
+        // $payload = json_encode($body);
+        // $signature = base64_encode(hash_hmac('sha256', $payload, $key, true));
+
+        $header = [
+            // 'appId' => $appId,
+            // 'timestamp' => $timestamp,
+            // 'signature'    => $signature,
+            'Authorization' => $token,
+            'Content-type' => 'application/json',
+        ];
+
+        // return [
+        //     'url' => $url,
+        //     'header' => $header,
+        //     'body' => $body,
+        // ];
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => $header,
+            'http_errors' => false,
+            'json' => $body,
+        ]);
+
+        $response = json_decode($response->getBody(), true);
+        // return $response;
+
+        Log::info("E00002", [
+            'path_url' => "agent.v2.endpoint/iconcash/api/command/order/direct",
+            'query' => [],
+            'body' => $body,
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        // if ($response->success != true) {
+        //     throw new Exception($response->message, $response->code);
+        // }
+
+        return $response;
     }
 
-    return implode('', $param);
-  }
+    public static function paymentConfirm($accountPin, $sourceAccountId, $client_ref, $paymentRef, $token)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpointintegrator, 'api/command/payment' . $param);
+
+        $body = [
+            // "accounts"  => [
+            //     [
+            //         "amount" => $amount,
+            //         "sourceAccountId" => $sourceAccountId,
+            //     ]
+            // ],
+            "clientRef" => $client_ref,
+            // "customerId"   => $customerId,
+            "orderId" => $paymentRef,
+            "sourceAccountId" => $sourceAccountId,
+        ];
+
+        // $timestamp = time();
+        // $appId = 'ICONCASH';
+        // $key = $appId . 'iconcash123' . $timestamp;
+        // $payload = json_encode($body);
+        // $signature = base64_encode(hash_hmac('sha256', $payload, $key, true));
+
+        $header = [
+            // 'appId' => $appId,
+            // 'timestamp' => $timestamp,
+            // 'signature'    => $signature,
+            'credentials' => $accountPin,
+            'Authorization' => $token,
+            'Content-type' => 'application/json',
+        ];
+
+        // return [
+        //     'url' => $url,
+        //     'header' => $header,
+        //     'body' => $body,
+        // ];
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => $header,
+            'http_errors' => false,
+            'json' => $body,
+        ]);
+
+        $response = json_decode($response->getBody(), true);
+        // return $response;
+
+        Log::info("E00002", [
+            'path_url' => "agent.v2.endpoint/iconcash/api/command/payment",
+            'query' => [],
+            'body' => $body,
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        // if ($response->success != true) {
+        //     throw new Exception($response->message, $response->code);
+        // }
+
+        return $response;
+    }
+
+    public static function paymentRefund($client_ref, $paymentRef, $token, $sourceAccountId)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpointintegrator, 'api/command/refund' . $param);
+
+        $body = [
+            // "accounts"  => [
+            //     [
+            //         "amount" => $amount,
+            //         "sourceAccountId" => $sourceAccountId,
+            //     ]
+            // ],
+            "clientRef" => $client_ref,
+            // "customerId"   => $customerId,
+            "orderId" => $paymentRef,
+            "sourceAccountId" => (int) $sourceAccountId,
+        ];
+
+        // $timestamp = time();
+        // $appId = 'ICONCASH';
+        // $key = $appId . 'iconcash123' . $timestamp;
+        // $payload = json_encode($body);
+        // $signature = base64_encode(hash_hmac('sha256', $payload, $key, true));
+
+        $header = [
+            // 'appId' => $appId,
+            // 'timestamp' => $timestamp,
+            // 'signature'    => $signature,
+            // 'credentials' => '521a99e009e848639fbe45deef9ac803356974b4913187894bcc2a9634ae98ad',
+            'Authorization' => $token,
+            'Content-type' => 'application/json',
+        ];
+
+        // return [
+        //     'url' => $url,
+        //     'header' => $header,
+        //     'body' => $body,
+        // ];
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => $header,
+            'http_errors' => false,
+            'json' => $body,
+        ]);
+
+        $response = json_decode($response->getBody(), true);
+        // return $response;
+
+        Log::info("E00002", [
+            'path_url' => "agent.v2.endpoint/iconcash/api/command/refund",
+            'query' => [],
+            'body' => $body,
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        // if ($response->success != true) {
+        //     throw new Exception($response->message, $response->code);
+        // }
+
+        return $response;
+    }
+
+    public static function agentHistorySaldo($limit, $page, $token)
+    {
+        $param = self::setParamAPI([
+            'size' => $limit,
+            'page' => $page,
+        ]);
+
+        $url = sprintf('%s/%s', self::$apiendpointintegrator, 'api/query/history/customer' . $param);
+
+        $response = self::$curl->request('GET', $url, [
+            'headers' => [
+                'Authorization' => $token,
+            ],
+            'http_errors' => false,
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        Log::info("E00002", [
+            'path_url' => "agent.v2.endpoint/iconcash/api/query/history/customer",
+            'query' => [],
+            'body' => '',
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
+    }
+
+    public static function registerDeposit($token)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpointintegrator, 'api/command/register_plnagent' . $param);
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+            ],
+            'http_errors' => false,
+        ]);
+
+        $response = json_decode($response->getBody(), true);
+
+        Log::info("E00002", [
+            'path_url' => "agent.v2.endpoint/iconcash/api/command/register_plnagent",
+            'query' => [],
+            'body' => '',
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response['success'] != true) {
+            return [
+                'success' => false,
+                'message' => $response['message'],
+            ];
+        }
+
+        return $response;
+    }
+
+    public static function getVADeposit($token)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpointintegrator, 'api/query/getva_plnagent' . $param);
+
+        $response = self::$curl->request('GET', $url, [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+            ],
+            'http_errors' => false,
+        ]);
+
+        $response = json_decode($response->getBody(), true);
+
+        Log::info("E00002", [
+            'path_url' => "agent.v2.endpoint/iconcash/api/command/register_plnagent",
+            'query' => [],
+            'body' => '',
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response['success'] != true) {
+            return [
+                'success' => false,
+                'message' => $response['message'],
+            ];
+        }
+
+        return $response;
+    }
+
+    public static function setParamAPI($data = [])
+    {
+        $param = [];
+        $index = 0;
+        $len = count($data);
+
+        foreach ($data as $key => $value) {
+            $value = preg_replace('/\s+/', '+', $value);
+
+            if ($index == 0) {
+                $param[] = sprintf('?%s=%s', $key, $value);
+            } else {
+                $param[] = sprintf('&%s=%s', $key, $value);
+            }
+
+            $index++;
+        }
+
+        return implode('', $param);
+    }
 }
