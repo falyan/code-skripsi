@@ -39,8 +39,12 @@ class IconcashManager
         self::$topupClientId = config('credentials.iconcash_topup.client_id');
         self::$topupSecretKey = config('credentials.iconcash_topup.secret_key');
 
+        self::$partner_id = config('credentials.agent.v3.partner_id');
+        self::$channel_id = config('credentials.agent.v3.channel_id');
+
         $timestamp = Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp;
         $timestamp_topup = Carbon::now('Asia/Jakarta')->timestamp;
+        $hmacStrTopup = self::$appIdTopup . $timestamp_topup;
 
         self::$header = [
             'Content-Type' => 'application/json',

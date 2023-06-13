@@ -15,6 +15,7 @@ return [
     ],
     'iconcash' => [
         'endpoint' => env('ICONCASH_CREDENTIAL_ENDPOINT'),
+        'endpoint_integrator' => env('ICONCASH_INTEGRATOR_CREDENTIAL_ENDPOINT'),
         'api_key' => env('ICONCASH_CREDENTIAL_APIKEY'),
     ],
     'iconcash_topup' => [
@@ -24,6 +25,7 @@ return [
     ],
     'radagast' => [
         'endpoint' => env('RADAGAST_NOTIFICATION_ENDPOINT'),
+        'endpointagregator' => env('RADAGAST_AGREGATOR_ENDPOINT'),
     ],
     'banner' => [
         'url_flash_popup' => env('BANNER_FLASH_POPUP_URL'),
