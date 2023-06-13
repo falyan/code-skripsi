@@ -13,6 +13,7 @@ use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\Product;
+use App\Models\PromoLog;
 use App\Models\VariantStock;
 use App\Models\VariantValueProduct;
 use Carbon\Carbon;
@@ -575,6 +576,22 @@ class TransactionQueries extends Service
                     $merchant['delivery_discount'] = 0;
                 }
 
+                $customer_limit_count = $promo_merchant_ongkir->promo_master->customer_limit_count;
+                if ($customer_limit_count != null && $customer_limit_count > 0) {
+                    $promo_logs = PromoLog::where('promo_master_id', $promo_merchant_ongkir->promo_master->id)
+                        ->whereHas('order', function ($query) {
+                            $query->where('buyer_id', auth()->user()->id);
+                        })->get();
+
+                    $promo_logs_add = collect($promo_logs)->where('type', 'add')->count();
+                    $promo_logs_sub = collect($promo_logs)->where('type', 'sub')->count();
+
+                    if ($customer_limit_count <= ($promo_logs_sub - $promo_logs_add)) {
+                        $message_error = 'Anda telah melebihi batas penggunaan promo ini';
+                        $merchant['delivery_discount'] = 0;
+                    }
+                }
+
                 $promo_merchant_ongkir->promo_master->usage_value += $merchant['delivery_discount'];
                 foreach ($promo_masters as $key => $promo_master) {
                     if ($promo_master->id == $promo_merchant_ongkir->promo_master->id) {
@@ -659,6 +676,22 @@ class TransactionQueries extends Service
             if ($promo_merchant_flash_sale != null) {
                 if ($promo_merchant_flash_sale->promo_master->min_order_value > $merchant_total_price && $promo_flash_sale_value == null) {
                     $merchant['product_discount'] = 0;
+                }
+
+                $customer_limit_count = $promo_merchant_flash_sale->promo_master->customer_limit_count;
+                if ($customer_limit_count != null && $customer_limit_count > 0) {
+                    $promo_logs = PromoLog::where('promo_master_id', $promo_merchant_flash_sale->promo_master->id)
+                        ->whereHas('order', function ($query) {
+                            $query->where('buyer_id', auth()->user()->id);
+                        })->get();
+
+                    $promo_logs_add = collect($promo_logs)->where('type', 'add')->count();
+                    $promo_logs_sub = collect($promo_logs)->where('type', 'sub')->count();
+
+                    if ($customer_limit_count <= ($promo_logs_sub - $promo_logs_add)) {
+                        $message_error = 'Anda telah melebihi batas penggunaan promo ini';
+                        $merchant['product_discount'] = 0;
+                    }
                 }
 
                 if ($merchant['product_discount'] > $merchant_total_price) {
@@ -1174,12 +1207,6 @@ class TransactionQueries extends Service
         return $merchants;
     }
 
-    public function getTransactionByReference($no_reference)
-    {
-        $orders = Order::with(['detail', 'promo_log_orders', 'progress_active'])->where('no_reference', $no_reference)->get();
-        return $orders;
-    }
-
     public function createOrderV3($request)
     {
         $merchants = [];
@@ -1234,6 +1261,12 @@ class TransactionQueries extends Service
         }
 
         return $merchants;
+    }
+
+    public function getTransactionByReference($no_reference)
+    {
+        $orders = Order::with(['detail', 'promo_log_orders', 'progress_active'])->where('no_reference', $no_reference)->get();
+        return $orders;
     }
 
     public function filter($model, $filter)
