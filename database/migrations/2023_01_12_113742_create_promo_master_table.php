@@ -89,6 +89,7 @@ class CreatePromoMasterTable extends Migration
             $table->unsignedBigInteger('promo_master_id');
             $table->unsignedBigInteger('promo_merchant_id');
             $table->enum('type', ['add', 'sub']);
+            $table->enum('type_usage', ['master', 'merchant'])->default('merchant');
             $table->string('value');
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
