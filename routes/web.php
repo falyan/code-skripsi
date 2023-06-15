@@ -425,6 +425,60 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         });
     });
 
+    $router->group(['prefix' => 'agent'], static function () use ($router) {
+        $router->group(['middleware' => 'auth'], function () use ($router) {
+            $router->group(['prefix' => 'command', 'middleware' => 'auth'], static function () use ($router) {
+                $router->group(['prefix' => 'merchant'], static function () use ($router) {
+                    $router->post('atur-profile', 'MerchantController@aturTokoAgent');
+                    $router->post('atur-margin', 'MerchantAgentController@setMarginDefault');
+                    // Postpaid =======
+                    $router->post('postpaid/tagihan', 'MerchantAgentController@getInfoTagihanPostpaidV3');
+                    $router->post('postpaid/inquiry', 'MerchantAgentController@getInquiryPostpaidV3');
+                    $router->post('postpaid/manual-reversal', 'MerchantAgentController@manualReversalPostpaid');
+                    // Prepaid ========
+                    $router->post('prepaid/tagihan', 'MerchantAgentController@getInfoTagihanPrepaidV3');
+                    $router->post('prepaid/tagihan/manual-advice', 'MerchantAgentController@getInfoManualAdviceV3');
+                    $router->post('prepaid/inquiry', 'MerchantAgentController@getInquiryPrepaidV3');
+                    $router->post('prepaid/manual-advice', 'MerchantAgentController@manualAdvicePrepaid');
+                    // Download Payment Receipt
+                    $router->get('payment-receipt/download', 'MerchantAgentController@downloadAgentReceipt');
+                });
+                $router->group(['prefix' => 'kudo'], static function () use ($router) {
+                    $router->post('payment', 'KudoController@payment');
+                });
+            });
+
+            $router->group(['prefix' => 'query'], static function () use ($router) {
+                $router->group(['prefix' => 'merchant'], static function () use ($router) {
+                    $router->get('menu', 'MerchantAgentController@getMenu');
+                    $router->get('menu/{agent_id}', 'MerchantAgentController@getDetailMenu');
+                    $router->get('transaction', 'MerchantAgentController@getTransaction');
+                    $router->get('transaction/{order_id}', 'MerchantAgentController@getTransactionDetail');
+                    $router->get('history-payment', 'IconcashController@agentHistorySaldo');
+                    $router->post('transaction/filter', 'MerchantAgentController@getTransactionWithFilter');
+
+                    $router->post('order', 'MerchantAgentController@getOrder');
+                });
+
+                $router->group(['prefix' => 'kudo'], static function () use ($router) {
+                    $router->get('product-categories', 'KudoController@getProductCategory');
+                    $router->get('product-groups/{category_id}', 'KudoController@getProductGroupByCategoryId');
+                    $router->get('products/{group_id}', 'KudoController@getProductsByGroupId');
+                    $router->get('transaction/user-invoice', 'KudoController@getUserInvoices');
+                    $router->post('origin-inquiry', 'KudoController@inquiryKudo');
+                    $router->post('invoice/create', 'KudoController@createInvoice');
+                });
+
+                $router->group(['prefix' => 'token'], static function () use ($router) {
+                    $router->get('list', 'AgentMasterDataController@getListTokenListrik');
+                });
+            });
+
+            // Iconpay ========
+            $router->post('iconpay/confirm', 'MerchantAgentController@confirmOrderIconcash');
+        });
+    });
+
     $router->group(['prefix' => 'report', 'middleware' => 'auth'], static function () use ($router) {
         $router->get('reason', 'ReportController@getMasterData');
         $router->post('create', 'ReportController@createReport');
@@ -487,6 +541,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->put('command/customerbank/{id}', 'IconcashController@updateCustomerBank');
             $router->get('hash-salt/generator/{pin}', 'IconcashController@hash_salt_sha256');
             $router->get('history/saldo-pendapatan', 'IconcashController@historySaldoPendapatan');
+
+            $router->post('command/create-order', 'IconcashController@createOrder');
+            $router->post('command/order-confirm', 'IconcashController@orderConfirm');
+            $router->post('command/order-refund', 'IconcashController@manualOrderRefund');
+            $router->post('command/register_plnagent', 'IconcashController@registerDeposit');
+            $router->get('query/getva_plnagent', 'IconcashController@getVADeposit');
 
             $router->group(['prefix' => 'topup', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('command/topup-confirm', 'IconcashController@topupConfirm');
