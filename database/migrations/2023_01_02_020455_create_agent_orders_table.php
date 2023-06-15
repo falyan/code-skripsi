@@ -29,6 +29,9 @@ class CreateAgentOrdersTable extends Migration
             $table->float('total_fee');
             $table->float('total_amount');
             $table->json('order_detail')->nullable();
+            $table->string('meter_number')->nullable();
+            $table->string('blth')->nullable();
+            $table->string('jml_kwh')->nullable();
             // $table->bool('has_receipt')->default(false);
             $table->string('invoice_no')->nullable();
             $table->string('created_by')->nullable();
