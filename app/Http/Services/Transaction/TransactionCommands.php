@@ -549,6 +549,7 @@ class TransactionCommands extends Service
                     $promo_log->promo_master_id = $promo_merchant_ongkir['promo_master']['id'];
                     $promo_log->promo_merchant_id = $promo_merchant_ongkir->id;
                     $promo_log->type = 'sub';
+                    $promo_log->type_usage = $type_usage;
                     $promo_log->value = $value_ongkir;
                     $promo_log->created_by = 'System';
                     $promo_log->save();
