@@ -130,7 +130,7 @@ if (!function_exists('generate_name_secret')) {
                 $result .= substr($word, 0, 1) . str_repeat('*', strlen($word) - 1) . $delimiter;
             }
         } else {
-            $result .= substr($words[0], 0, 3) . str_repeat('*', strlen($words[0]) - 3) . $delimiter;
+            $result .= substr($words[0], 0, 3) . str_repeat('*', strlen($words[0]) - 3);
         }
 
         return $result;
