@@ -244,8 +244,8 @@ class AgentCommands extends Service
                     ]);
                 }
 
+                $response['transaction_detail']['secret_customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']) ?? $response['transaction_detail']['customer_name'];
                 $response['transaction_detail']['denom'] = $list_denom;
-                $response['transaction_detail']['customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
             }
 
             return $response;
