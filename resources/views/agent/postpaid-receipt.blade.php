@@ -88,7 +88,7 @@
     <div class="row">
         <div class="column">
             <p style="font-size:14px">IDPEL: {{ $idpel }}</p>
-            <p style="font-size:14px">NAMA: {{ $order->customer_name }}</p>
+            <p style="font-size:14px">NAMA: {{ generate_name_secret($order->customer_name) }}</p>
             <p style="font-size:14px">TARIF/DAYA: {{ $order->product_value }}</p>
             <p style="font-size:14px">RP TAG PLN: {{ 'Rp ' . number_format($order->payment->amount, 0, ',', '.') }}</p>
             <p style="font-size:14px">NO REF: {{ $partner_reference }}</p>

@@ -117,3 +117,16 @@ if (!function_exists('nama_hari')) {
         return $nama_hari;
     }
 }
+
+if (!function_exists('generate_name_secret')) {
+    function generate_name_secret($name)
+    {
+        $delimiter = ' ';
+        $result = '';
+        $words = explode($delimiter, $name);
+        foreach ($words as $word) {
+            $result .= substr($word, 0, 3) . str_repeat('*', strlen($word) - 3) . $delimiter;
+        }
+        return $result;
+    }
+}
