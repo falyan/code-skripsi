@@ -99,6 +99,9 @@ class AgentCommands extends Service
             $merchant->save();
 
             $response = $this->agentManager->inquiryPostpaidV3($payload);
+            if ($response) {
+                $response['customer_name'] = $this->generateNameSecret($response['customer_name']);
+            }
 
             return $response;
         } catch (Exception $e) {
