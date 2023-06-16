@@ -91,7 +91,7 @@
         </tr>
         <tr>
             <td align="left" style="font-size: 16px; color:grey">NAMA</td>
-            <td align="right" style="font-size: 16px; color:grey">{{ generate_name_secret($order->customer_name) }}</td>
+            <td align="right" style="font-size: 16px; color:grey">{{ $order->customer_name }}</td>
         </tr>
         <tr>
             <td align="left" style="font-size: 16px; color:grey">TARIF/DAYA</td>

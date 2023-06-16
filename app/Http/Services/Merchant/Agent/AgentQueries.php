@@ -61,10 +61,6 @@ class AgentQueries extends Service
         $order = AgentOrder::where('trx_no', $transaction_id)->first()
             ->load(['progress_active', 'payments']);
 
-        if ($order) {
-            $order['customer_name'] = generate_name_secret($order['customer_name']);
-        }
-
         return $order;
     }
 
@@ -76,14 +72,6 @@ class AgentQueries extends Service
             ->orderBy('created_at', 'desc')
             ->paginate($limit);
 
-        if ($orders) {
-            $orders = $orders->map(function ($order) {
-                $order['customer_name'] = generate_name_secret($order['customer_name']);
-
-                return $order;
-            });
-        }
-
         return $orders;
     }
 
@@ -91,10 +79,6 @@ class AgentQueries extends Service
     {
         $order = AgentOrder::where('id', $order_id)->first()
             ->load(['progress_active', 'payments']);
-
-        if ($order) {
-            $order['customer_name'] = generate_name_secret($order['customer_name']);
-        }
 
         return $order;
     }

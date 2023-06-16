@@ -124,8 +124,12 @@ if (!function_exists('generate_name_secret')) {
         $delimiter = ' ';
         $result = '';
         $words = explode($delimiter, $name);
-        foreach ($words as $word) {
-            $result .= substr($word, 0, 3) . str_repeat('*', strlen($word) - 3) . $delimiter;
+        if (count($words) > 1) {
+            foreach ($words as $word) {
+                $result .= substr($word, 0, 1) . str_repeat('*', strlen($word) - 1) . $delimiter;
+            }
+        } else {
+            $result = substr($name, 0, 1) . str_repeat('*', strlen($name) - 1);
         }
         return $result;
     }

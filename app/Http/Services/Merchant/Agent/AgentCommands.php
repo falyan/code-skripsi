@@ -176,7 +176,7 @@ class AgentCommands extends Service
                 'detail' => [
                     'product_name' => $order->product_name,
                     'customer_id' => $order->customer_id,
-                    'customer_name' => generate_name_secret($order->customer_name),
+                    'customer_name' => $order->customer_name,
                     'lembar_tagihan' => $lembar_tagihan,
                     'sisa_lembar_tagihan' => $sisa_lembar_tagihan,
                     'thbl' => $thbl_list,
@@ -319,7 +319,7 @@ class AgentCommands extends Service
                 'detail' => [
                     'product_name' => $order->product_name,
                     'customer_id' => $no_meter,
-                    'customer_name' => generate_name_secret($order->customer_name),
+                    'customer_name' => $order->customer_name,
                     'product_value' => $order->product_value,
                 ],
                 'payment' => [
