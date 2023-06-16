@@ -26,6 +26,7 @@ class IconcashManager
 
     static $partner_id;
     static $channel_id;
+    static $bank_code;
 
     public static function init()
     {
@@ -41,6 +42,7 @@ class IconcashManager
 
         self::$partner_id = config('credentials.agent.v3.partner_id');
         self::$channel_id = config('credentials.agent.v3.channel_id');
+        self::$bank_code = config('credentials.agent.v3.bank_code');
 
         $timestamp = Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp;
         $timestamp_topup = Carbon::now('Asia/Jakarta')->timestamp;
@@ -635,7 +637,7 @@ class IconcashManager
         $kodeGateway = $data['kode_gateway']; // generate by id agent
         $kodeChanelId = substr(self::$channel_id, -2);
         $kodeProduct = (string) $data['kode_product'];
-        $kodeBankPenampungan = 'MDR';
+        $kodeBankPenampungan = self::$bank_code;
         $parnerId = self::$partner_id;
         $partnerRefrence = (string) time() . substr($data['transaction_id'], 0, 9);
 

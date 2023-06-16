@@ -60,6 +60,8 @@ return [
             'client_id' => env('ICONPAY_V3_AGENT_CLIENT_ID'),
             'client_secret' => env('ICONPAY_V3_AGENT_CLIENT_SECRET'),
             'channel_id' => env('ICONPAY_V3_AGENT_CHANNEL_ID'),
+            'gateway_code' => env('ICONPAY_V3_AGENT_GATEWAY_CODE'),
+            'bank_code' => env('ICONPAY_V3_AGENT_BANK_CODE'),
         ],
     ],
     'tiket' => [

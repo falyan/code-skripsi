@@ -29,7 +29,7 @@ class AgentQueries extends Service
             'margin' => function ($query) use ($merchant_id) {
                 $query->where('merchant_id', $merchant_id);
             },
-        ])->where('status', 1)->get();
+        ])->orderBy('id', 'asc')->get();
 
         return $menus;
     }
