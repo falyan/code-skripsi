@@ -99,7 +99,7 @@ class AgentCommands extends Service
             $merchant->save();
 
             $response = $this->agentManager->inquiryPostpaidV3($payload);
-            if ($response) {
+            if ($response['response_code'] == '0000') {
                 $response['customer_name'] = generate_name_secret($response['customer_name']);
             }
 
