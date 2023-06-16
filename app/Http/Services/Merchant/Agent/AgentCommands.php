@@ -69,7 +69,7 @@ class AgentCommands extends Service
 
     public function getInfoTagihanPostpaidV3($request)
     {
-        // try {
+        try {
             $payload = [
                 'customer_id' => $request->idpel,
             ];
@@ -100,16 +100,16 @@ class AgentCommands extends Service
 
             $response = $this->agentManager->inquiryPostpaidV3($payload);
             if ($response['response_code'] == '0000') {
-                $response['customer_name'] = generate_name_secret($response['customer_name']);
+                $response['transaction_detail']['customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
             }
 
             return $response;
-        // } catch (Exception $e) {
-        //     if (in_array($e->getCode(), self::$error_codes)) {
-        //         throw new Exception($e->getMessage(), $e->getCode());
-        //     }
-        //     throw new Exception($e->getMessage(), 500);
-        // }
+        } catch (Exception $e) {
+            if (in_array($e->getCode(), self::$error_codes)) {
+                throw new Exception($e->getMessage(), $e->getCode());
+            }
+            throw new Exception($e->getMessage(), 500);
+        }
     }
 
     public function getInquiryPostpaidV3($request)
@@ -244,7 +244,7 @@ class AgentCommands extends Service
                 }
 
                 $response['transaction_detail']['denom'] = $list_denom;
-                $response['customer_name'] = generate_name_secret($response['customer_name']);
+                $response['transaction_detail']['customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
             }
 
             return $response;
