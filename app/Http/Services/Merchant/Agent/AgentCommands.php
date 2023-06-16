@@ -69,7 +69,7 @@ class AgentCommands extends Service
 
     public function getInfoTagihanPostpaidV3($request)
     {
-        try {
+        // try {
             $payload = [
                 'customer_id' => $request->idpel,
             ];
@@ -104,12 +104,12 @@ class AgentCommands extends Service
             }
 
             return $response;
-        } catch (Exception $e) {
-            if (in_array($e->getCode(), self::$error_codes)) {
-                throw new Exception($e->getMessage(), $e->getCode());
-            }
-            throw new Exception($e->getMessage(), 500);
-        }
+        // } catch (Exception $e) {
+        //     if (in_array($e->getCode(), self::$error_codes)) {
+        //         throw new Exception($e->getMessage(), $e->getCode());
+        //     }
+        //     throw new Exception($e->getMessage(), 500);
+        // }
     }
 
     public function getInquiryPostpaidV3($request)

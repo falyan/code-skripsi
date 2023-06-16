@@ -79,7 +79,7 @@ class MerchantAgentController extends Controller
 
     public function getInfoTagihanPostpaidV3(Request $request)
     {
-        try {
+        // try {
             $validator = Validator::make($request->all(), [
                 'idpel' => 'required',
             ]);
@@ -105,9 +105,9 @@ class MerchantAgentController extends Controller
             }
 
             return $response;
-        } catch (Exception $e) {
-            return $this->respondErrorException($e, $request);
-        }
+        // } catch (Exception $e) {
+        //     return $this->respondErrorException($e, $request);
+        // }
     }
 
     public function getInquiryPostpaidV3(Request $request)
