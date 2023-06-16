@@ -459,6 +459,10 @@ class AgentCommands extends Service
                         'created_by' => 'system',
                     ]);
 
+                    if ($response['transaction_detail'] != null) {
+                        $response['transaction_detail']['customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
+                    }
+
                     AgentPayment::create([
                         'agent_order_id' => $order->id,
                         'payment_id' => $response['transaction_detail']['biller_reference'],
