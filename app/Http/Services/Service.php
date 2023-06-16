@@ -139,4 +139,15 @@ class Service
         $alphabet = range('A', 'Z');
         return $alphabet[$num - 1];
     }
+
+    public static function generateNameSecret($name)
+    {
+        $delimiter = ' ';
+        $result = '';
+        $words = explode($delimiter, $name);
+        foreach ($words as $word) {
+            $result .= substr($word, 0, 3) . str_repeat('*', strlen($word) - 3) . $delimiter;
+        }
+        return $result;
+    }
 }

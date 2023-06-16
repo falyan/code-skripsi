@@ -241,6 +241,7 @@ class AgentCommands extends Service
                 }
 
                 $response['transaction_detail']['denom'] = $list_denom;
+                $response['customer_name'] = $this->generateNameSecret($response['customer_name']);
             }
 
             return $response;
