@@ -125,23 +125,21 @@ if (!function_exists('generate_name_secret')) {
         $result = '';
         $words = explode($delimiter, $name);
 
-        if (count($words) > 1) {
-            foreach ($words as $word) {
-                if (strlen($word) > 1) {
-                    $result .= substr($word, 0, 1) . str_repeat('*', strlen($word) - 1) . $delimiter;
-                } else {
-                    $result .= $word . $delimiter;
+        foreach ($words as $word) {
+            $wordLength = strlen($word);
+
+            if ($wordLength > 0) {
+                $maskedWord = substr($word, 0, 3);
+
+                if ($wordLength > 3) {
+                    $maskedWord .= str_repeat('*', $wordLength - 3);
                 }
-            }
-        } else {
-            if (strlen($words[0]) > 3) {
-                $result .= substr($words[0], 0, 3) . str_repeat('*', strlen($words[0]) - 3);
-            } else {
-                $result .= $words[0];
+
+                $result .= $maskedWord . $delimiter;
             }
         }
 
-        return $result;
+        return rtrim($result, $delimiter);
     }
 
 }
