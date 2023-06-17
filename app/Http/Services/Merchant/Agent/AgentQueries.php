@@ -61,6 +61,8 @@ class AgentQueries extends Service
         $order = AgentOrder::where('trx_no', $transaction_id)->first()
             ->load(['progress_active', 'payments']);
 
+        $order->secret_customer_name = generate_name_secret($order->customer_name) ?? $order->customer_name;
+
         return $order;
     }
 

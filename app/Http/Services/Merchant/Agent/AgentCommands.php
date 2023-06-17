@@ -99,6 +99,10 @@ class AgentCommands extends Service
             $merchant->save();
 
             $response = $this->agentManager->inquiryPostpaidV3($payload);
+            if ($response['response_code'] == '0000') {
+                // $response['transaction_detail']['customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
+                $response['transaction_detail']['secret_customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
+            }
 
             return $response;
         } catch (Exception $e) {
@@ -240,6 +244,7 @@ class AgentCommands extends Service
                     ]);
                 }
 
+                $response['transaction_detail']['secret_customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']) ?? $response['transaction_detail']['customer_name'];
                 $response['transaction_detail']['denom'] = $list_denom;
             }
 
@@ -454,6 +459,10 @@ class AgentCommands extends Service
                         'status_name' => static::$status_agent_order['04'],
                         'created_by' => 'system',
                     ]);
+
+                    if ($response['transaction_detail'] != null) {
+                        $response['transaction_detail']['customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
+                    }
 
                     AgentPayment::create([
                         'agent_order_id' => $order->id,
