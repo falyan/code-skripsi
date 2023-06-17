@@ -367,6 +367,11 @@ class AgentCommands extends Service
                 $query->where('status_code', '09');
             })->whereDate('created_at', Carbon::now())->orderBy('created_at', 'desc')->get();
 
+            // Append data secret_customer_name to $orders
+            foreach ($orders as $key => $order) {
+                $orders[$key]->secret_customer_name = generate_name_secret($order->customer_name) ?? $order->customer_name;
+            }
+
             if (count($orders) == 0) {
                 $response['status'] = 'error';
                 $response['message'] = 'Data transaksi tidak ditemukan';
