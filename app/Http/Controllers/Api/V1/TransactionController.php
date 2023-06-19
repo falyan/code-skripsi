@@ -1242,19 +1242,64 @@ class TransactionController extends Controller
                     $account_type_id = 13;
                 }
 
-                $amount = $order->total_amount - $total_insentif;
+                // Start hitung mdr
+                $ongkir = $order->delivery->delivery_fee;
+                $mdr_total = 0;
+                foreach ($order->detail as $detail) {
+                    $mdrMerchant = MdrMerchant::where('status', 1)->where('category_id', $detail->product->category->parent->parent->id)->where('merchant_id', $order->merchant_id)->first();
+                    if (!empty($mdrMerchant)) {
+                        switch ($mdrMerchant->type_code) {
+                            case 'percentage':
+                                $mdr_price = $detail->price * toPercent($mdrMerchant->value ?? 0);
+                                break;
+
+                            case 'fixed':
+                                $mdr_price = $mdrMerchant->value ?? 0;
+                                break;
+
+                            default:
+                                $mdr_price = 0;
+                                break;
+                        }
+
+                        $mdr_total += $mdr_price * $detail->quantity;
+                    } else {
+                        $mdrCategory = MdrCategory::where('status', 1)->where('category_id', $detail->product->category->parent->parent->id)->first();
+                        if (!empty($mdrCategory)) {
+                            switch ($mdrCategory->type_code) {
+                                case 'percentage':
+                                    $mdr_price = $detail->price * toPercent($mdrCategory->value ?? 0);
+                                    break;
+
+                                case 'fixed':
+                                    $mdr_price = $mdrCategory->value ?? 0;
+                                    break;
+
+                                default:
+                                    $mdr_price = 0;
+                                    break;
+                            }
+
+                            $mdr_total += $mdr_price * $detail->quantity;
+                        }
+                    }
+                }
+                // End hitung mdr
+
+                // $amount = $order->total_amount - $ongkir - $mdr_total - $total_insentif;
+                $amount = $order->total_amount - $total_insentif - $mdr_total;
                 $client_ref = $this->unique_code($iconcash->token);
                 $corporate_id = 10;
 
                 $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
 
-                    $res = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+                $res = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
-                    if (!empty($res) || !is_null($res)) {
-                        $topup_inquiry = IconcashInquiry::where('order_id', $order->id)->first();
-                        $topup_inquiry->confirm_res_json = json_encode($res);
-                        $topup_inquiry->save();
-                    }
+                if (!empty($res) || !is_null($res)) {
+                    $topup_inquiry = IconcashInquiry::where('order_id', $order->id)->first();
+                    $topup_inquiry->confirm_res_json = json_encode($res);
+                    $topup_inquiry->save();
+                }
 
                 $notificationCommand = new NotificationCommands();
                 $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
@@ -1723,7 +1768,7 @@ class TransactionController extends Controller
             $request = request()->all();
             $respond = $this->transactionQueries->countCheckoutPriceV2($customer, $request);
 
-            if (isset($request['customer']) && data_get($request, 'customer') != null){
+            if (isset($request['customer']) && data_get($request, 'customer') != null) {
                 $ev_subsidies = [];
                 foreach ($respond['merchants'] as $merchant) {
                     foreach ($merchant['products'] as $product) {
@@ -1732,7 +1777,7 @@ class TransactionController extends Controller
                                 return array_merge($respond, [
                                     'success' => true,
                                     'status_code' => 400,
-                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif'
+                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
                                 ]);
                             }
 
@@ -1745,7 +1790,7 @@ class TransactionController extends Controller
                     return array_merge($respond, [
                         'success' => true,
                         'status_code' => 400,
-                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif'
+                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
                     ]);
                 }
             }
@@ -1842,7 +1887,7 @@ class TransactionController extends Controller
                             return array_merge($respond, [
                                 'success' => true,
                                 'status_code' => 400,
-                                'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif'
+                                'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
                             ]);
                         }
 
@@ -1855,7 +1900,7 @@ class TransactionController extends Controller
                 return array_merge($respond, [
                     'success' => true,
                     'status_code' => 400,
-                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif'
+                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
                 ]);
             }
 
