@@ -16,13 +16,14 @@ use App\Models\MasterTiket;
 use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\OrderDetail;
+use App\Models\OrderDetailLog;
 use App\Models\OrderPayment;
 use App\Models\OrderProgress;
 use App\Models\Product;
 use App\Models\PromoLog;
 use App\Models\PromoMaster;
 use App\Models\PromoMerchant;
-use App\Models\UserTiket;
+use App\Models\VariantValueProduct;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
@@ -341,11 +342,11 @@ class TransactionCommands extends Service
             // validasi tiket
             $master_tikets = MasterTiket::with(['master_data'])->where('status', 1)->get();
             $customer_tiket = Order::with(['detail', 'detail.product'])->where('buyer_id', $customer->id)
-                ->whereHas('progress_active', function($q) {
-                    $q->whereIn('status_code', ['00', '01', '02', '03','08', '88']);
+                ->whereHas('progress_active', function ($q) {
+                    $q->whereIn('status_code', ['00', '01', '02', '03', '08', '88']);
                 })
-                ->whereHas('detail', function($q) use ($master_tikets) {
-                    $q->whereHas('product', function($q) use ($master_tikets) {
+                ->whereHas('detail', function ($q) use ($master_tikets) {
+                    $q->whereHas('product', function ($q) use ($master_tikets) {
                         $q->whereIn('category_id', collect($master_tikets)->pluck('master_data.id')->toArray());
                     });
                 })->get();
@@ -355,7 +356,7 @@ class TransactionCommands extends Service
                 foreach ($order->detail as $detail) {
                     $tiket = collect($master_tikets)->where('master_data.id', $detail->product->category_id)->first();
 
-                    if($tiket) {
+                    if ($tiket) {
                         $count_tiket += $detail->quantity;
                     }
                 }
@@ -374,7 +375,7 @@ class TransactionCommands extends Service
             foreach ($new_products as $product) {
                 $tiket = collect($master_tikets)->where('master_data.id', $product['category_id'])->first();
 
-                if($tiket) {
+                if ($tiket) {
                     $count_tiket += $product['quantity'];
 
                     $buying_tiket = true;
@@ -677,6 +678,25 @@ class TransactionCommands extends Service
                 // sementara ketika flash sale nempel merchant
                 OrderDetail::insert($order_details);
 
+                // $order_detail_store = OrderDetail::where('order_id', $order->id)
+                //     ->orderBy('id', 'desc')
+                //     ->first();
+
+                $order_detail_logs = [];
+                foreach (data_get($data, 'products') as $product) {
+                    if (data_get($product, 'variant_value_product_id') != null) {
+                        $product_variant_value = VariantValueProduct::where('id', data_get($product, 'variant_value_product_id'))->first();
+                    }
+
+                    $order_detail_logs[] = [
+                        'order_id' => $order->id,
+                        'product_data' => json_encode(array_merge($product, ['product_variant' => $product_variant_value ?? null])),
+                        'created_at' => Carbon::now(),
+                    ];
+                }
+
+                OrderDetailLog::insert($order_detail_logs);
+
                 $order_delivery = new OrderDelivery();
                 $order_delivery->order_id = $order->id;
                 $order_delivery->receiver_name = data_get($datas, 'destination_info.receiver_name');
@@ -731,7 +751,7 @@ class TransactionCommands extends Service
                 throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
             }
 
-            $mailSender = new MailSenderManager();
+            // $mailSender = new MailSenderManager();
 
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
                 $ev_subsidy = $ev_subsidies[0];
@@ -752,9 +772,9 @@ class TransactionCommands extends Service
                     }
                 }
 
-                $mailSender->mailCheckoutSubsidy($this->order_id);
+                // $mailSender->mailCheckoutSubsidy($this->order_id);
             } else {
-                $mailSender->mailCheckout($this->order_id);
+                // $mailSender->mailCheckout($this->order_id);
             }
 
             if ($datas['total_discount'] > 0) {
@@ -883,7 +903,7 @@ class TransactionCommands extends Service
         $new_order_progress = new OrderProgress();
 
         $create_order_progress = [];
-        foreach($status_codes as $status_code) {
+        foreach ($status_codes as $status_code) {
             $create_order_progress[] = [
                 'order_id' => $order_id,
                 'status_code' => $status_code,
