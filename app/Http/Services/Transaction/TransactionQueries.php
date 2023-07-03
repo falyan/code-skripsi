@@ -24,9 +24,7 @@ class TransactionQueries extends Service
     {
         $data = Order::with([
             'detail' => function ($product) {
-                $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
-                }]);
+                $product->with('product');
             }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log', 'review' => function ($r) {
                 $r->with(['review_photo'])->where('status', 1);
             },
@@ -39,25 +37,14 @@ class TransactionQueries extends Service
         $data = $this->filter($data, $filter);
         $data = $data->get();
 
-        // $data = $order->map(function ($item) {
-        //     $item->order_detail_log->each(function ($log) use ($item) {
-        //         $product_data = json_decode($log->product_data);
-        //         $product = $item->detail->firstWhere('order_id', $log->order_id);
-        //         if ($product) {
-        //             $product->product->name = $product_data->name;
-        //             // $product->product->product_photo = $product_data->product_photo;
-        //         }
-        //     });
-
-        //     return $item;
-        // });
         $data = $order->map(function ($item) {
             $item->detail->each(function ($product) {
-                $product_data = json_decode($product->product_data);
+                if ($product->product_data != null) {
+                    unset($product->product);
+                    $product_data = json_decode($product->product_data);
 
-                $product->product->name = $product_data->name ?? $product->product->name;
-                $product->product->price = $product_data->price ?? $product->product->price;
-                $product->product->product_photo = $product_data->product_photo ?? $product->product->product_photo;
+                    $product->product = $product_data;
+                }
             });
 
         return $data;
@@ -69,9 +56,7 @@ class TransactionQueries extends Service
 
         $order = Order::with([
             'detail' => function ($product) {
-                $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
-                }]);
+                $product->with('product');
             }, 'progress_active', 'merchant', 'delivery', 'buyer', 'ev_subsidy', 'order_detail_log', 'review' => function ($r) {
                 $r->with(['review_photo'])->where('status', 1);
             },
@@ -88,9 +73,24 @@ class TransactionQueries extends Service
             ->orderBy('created_at', 'desc');
 
         $order = $this->filter($order, $filter);
-        $order = collect($order->paginate($limit));
+        $order = $order->get();
 
-        return $order;
+        $data = $order->map(function ($item) {
+            $item->detail->each(function ($product) {
+                if ($product->product_data != null) {
+                    unset($product->product);
+                    $product_data = json_decode($product->product_data);
+
+                    $product->product = $product_data;
+                }
+            });
+
+            return $item;
+        });
+
+        $data = static::paginate($order->toArray(), $limit, $page);
+
+        return $data;
     }
 
     public function getTransactionByCategoryKey($column_name, $column_value, $category_key, $limit = 3, $filter = [], $page = 1)
@@ -145,7 +145,7 @@ class TransactionQueries extends Service
         $data = Order::with([
             'detail' => function ($product) {
                 $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
+                    $j->select('id', 'merchant_id', 'name');
                 }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log',
         ])->where(
@@ -173,10 +173,12 @@ class TransactionQueries extends Service
 
         $data = $data->map(function ($item) {
             $item->detail->each(function ($product) {
-                $product_data = json_decode($product->product_data);
+                if ($product->product_data != null) {
+                    unset($product->product);
+                    $product_data = json_decode($product->product_data);
 
-                $product->product->name = $product_data->name ?? $product->product->name;
-                $product->product->product_photo = $product_data->product_photo ?? $product->product->product_photo;
+                    $product->product = $product_data;
+                }
             });
 
             return $item;
@@ -216,9 +218,7 @@ class TransactionQueries extends Service
     {
         $data = Order::with([
             'detail' => function ($product) {
-                $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
-                }]);
+                $product->with('product');
             }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log', 'review' => function ($r) {
                 $r->with(['review_photo']);
             },
@@ -235,25 +235,13 @@ class TransactionQueries extends Service
         $data = $this->filter($data, $filter);
         $data = $data->get();
 
-        // //mapping data product in order detail with data product_data from order_detail_log
-        // $data = $data->map(function ($item) {
-        //     $item->order_detail_log->each(function ($log) use ($item) {
-        //         $product_data = json_decode($log->product_data);
-        //         $product = $item->detail->firstWhere('product_id', $product_data->product_id);
-        //         if ($product) {
-        //             $product->product->name = $product_data->name;
-        //             // $product->product->product_photo = $product_data->product_photo;
-        //         }
-        //     });
-
-        //     return $item;
-        // });
         $data = $data->map(function ($item) {
             $item->detail->each(function ($product) {
-                $product_data = json_decode($product->product_data);
-                if (isset($product->product) && isset($product_data->name) && isset($product_data->product_photo)) {
-                    $product->product->name = $product_data->name;
-                    $product->product->product_photo = $product_data->product_photo;
+                if ($product->product_data != null) {
+                    unset($product->product);
+                    $product_data = json_decode($product->product_data);
+
+                    $product->product = $product_data;
                 }
             });
 
@@ -327,7 +315,7 @@ class TransactionQueries extends Service
         $data = Order::with([
             'detail' => function ($product) {
                 $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
+                    $j->with('product_photo');
                 }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log',
         ])->where('order.' . $column_name, $column_value)

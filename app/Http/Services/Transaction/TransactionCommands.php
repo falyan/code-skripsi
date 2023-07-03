@@ -491,6 +491,7 @@ class TransactionCommands extends Service
                             'strike_price' => data_get($product, 'strike_price'),
                             'condition' => data_get($product, 'condition'),
                             'description' => data_get($product, 'description'),
+                            'merchant_id' => data_get($product, 'merchant_id'),
                             'variant_value_product' => $product_variant_value ?? null,
                             'product_photo' => $product_data->product_photo ?? null,
                         ]),
