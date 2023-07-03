@@ -39,7 +39,26 @@ class TransactionQueries extends Service
         $data = $this->filter($data, $filter);
         $data = $data->get();
 
-        $data = static::paginate($data->toArray(), $limit, $page);
+        // $data = $order->map(function ($item) {
+        //     $item->order_detail_log->each(function ($log) use ($item) {
+        //         $product_data = json_decode($log->product_data);
+        //         $product = $item->detail->firstWhere('order_id', $log->order_id);
+        //         if ($product) {
+        //             $product->product->name = $product_data->name;
+        //             // $product->product->product_photo = $product_data->product_photo;
+        //         }
+        //     });
+
+        //     return $item;
+        // });
+        $data = $order->map(function ($item) {
+            $item->detail->each(function ($product) {
+                $product_data = json_decode($product->product_data);
+
+                $product->product->name = $product_data->name ?? $product->product->name;
+                $product->product->price = $product_data->price ?? $product->product->price;
+                $product->product->product_photo = $product_data->product_photo ?? $product->product->product_photo;
+            });
 
         return $data;
     }
@@ -152,6 +171,17 @@ class TransactionQueries extends Service
         $data = $this->filter($data, $filter);
         $data = $data->get();
 
+        $data = $data->map(function ($item) {
+            $item->detail->each(function ($product) {
+                $product_data = json_decode($product->product_data);
+
+                $product->product->name = $product_data->name ?? $product->product->name;
+                $product->product->product_photo = $product_data->product_photo ?? $product->product->product_photo;
+            });
+
+            return $item;
+        });
+
         $data = static::paginate($data->toArray(), $limit, $page);
 
         return $data;
@@ -205,6 +235,31 @@ class TransactionQueries extends Service
         $data = $this->filter($data, $filter);
         $data = $data->get();
 
+        // //mapping data product in order detail with data product_data from order_detail_log
+        // $data = $data->map(function ($item) {
+        //     $item->order_detail_log->each(function ($log) use ($item) {
+        //         $product_data = json_decode($log->product_data);
+        //         $product = $item->detail->firstWhere('product_id', $product_data->product_id);
+        //         if ($product) {
+        //             $product->product->name = $product_data->name;
+        //             // $product->product->product_photo = $product_data->product_photo;
+        //         }
+        //     });
+
+        //     return $item;
+        // });
+        $data = $data->map(function ($item) {
+            $item->detail->each(function ($product) {
+                $product_data = json_decode($product->product_data);
+                if (isset($product->product) && isset($product_data->name) && isset($product_data->product_photo)) {
+                    $product->product->name = $product_data->name;
+                    $product->product->product_photo = $product_data->product_photo;
+                }
+            });
+
+            return $item;
+        });
+
         $data = static::paginate($data->toArray(), $limit, $page);
 
         return $data;
@@ -231,6 +286,20 @@ class TransactionQueries extends Service
         ])->find($id);
 
         $details = $data->detail;
+
+        foreach ($details as $key => $detail) {
+            $product_data = json_decode($detail->product_data);
+
+            // unset($detail->product);
+            $detail->product->name = $product_data->name ?? $detail->product->name;
+            $detail->product->product_photo = $product_data->product_photo ?? $detail->product->product_photo;
+            $detail->product->price = $product_data->price ?? $detail->product->price;
+            $detail->product->strike_price = $product_data->strike_price ?? $detail->product->strike_price;
+            $detail->product->condition = $product_data->condititon ?? $detail->product->condition;
+            $detail->product->description = $product_data->description ?? $detail->product->description;
+            $details[$key] = $detail;
+        }
+
         foreach ($data->promo_log_orders as $promo_log_order) {
             if ($promo_log_order->promo_merchant->promo_master->event_type == 'ongkir') {
                 $data->delivery->is_shipping_discount = true;
@@ -245,6 +314,8 @@ class TransactionQueries extends Service
         }
 
         unset($data->promo_log_orders);
+        // unset($data->order_detail_log);
+
         $data->detail = $details;
 
         $data->iconpay_product_id = static::$productid;
