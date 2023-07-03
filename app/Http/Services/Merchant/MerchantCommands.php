@@ -68,6 +68,8 @@ class MerchantCommands extends Service
                 'email' => data_get($request, 'email'),
                 'latitude' => data_get($request, 'latitude'),
                 'longitude' => data_get($request, 'longitude'),
+                'mitra_id' => data_get($request, 'mitra_id'),
+                'sbu_icon_id' => data_get($request, 'sbu_icon_id'),
             ]);
 
             DB::commit();
