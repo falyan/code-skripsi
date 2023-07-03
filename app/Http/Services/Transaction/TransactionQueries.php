@@ -270,7 +270,7 @@ class TransactionQueries extends Service
         $data = Order::with([
             'detail' => function ($product) {
                 $product->with(['product' => function ($j) {
-                    $j->with(['product_photo', 'ev_subsidy']);
+                    $j->with('ev_subsidy');
                 }, 'variant_value_product']);
             }, 'progress', 'merchant' => function ($merchant) {
                 $merchant->with(['province', 'city', 'district']);
@@ -290,7 +290,6 @@ class TransactionQueries extends Service
         foreach ($details as $key => $detail) {
             $product_data = json_decode($detail->product_data);
 
-            // unset($detail->product);
             $detail->product->name = $product_data->name ?? $detail->product->name;
             $detail->product->product_photo = $product_data->product_photo ?? $detail->product->product_photo;
             $detail->product->price = $product_data->price ?? $detail->product->price;

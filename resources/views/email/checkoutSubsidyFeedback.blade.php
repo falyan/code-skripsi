@@ -216,8 +216,8 @@
                                     <tbody>
                                         <tr>
                                             <td style="width: 10%">
-                                                <img src="{{ $item->product->product_photo->first()->url }}"
-                                                    alt="" style="max-width: 100px;max-height: 100px;">
+                                                <img src="{{ $item->product_main_photo }}" alt=""
+                                                    style="max-width: 100px;max-height: 100px;">
                                             </td>
                                             <td style="width: 40%">
                                                 <p style="margin: 0px 0px 5px 0px;">{{ $item->product->name }}</p>
