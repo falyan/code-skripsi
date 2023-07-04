@@ -69,7 +69,7 @@ class AgentQueries extends Service
     public function getTransaction($limit = 10, $page = 1)
     {
         $merchant_id = Auth::user()->merchant_id;
-        $orders = AgentOrder::where('merchant_id', $merchant_id)->whereDate('created_at', Carbon::today())
+        $orders = AgentOrder::where('merchant_id', $merchant_id)
             ->with(['progress_active', 'payments'])
             ->orderBy('created_at', 'desc')
             ->paginate($limit);

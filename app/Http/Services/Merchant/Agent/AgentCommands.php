@@ -79,7 +79,7 @@ class AgentCommands extends Service
             if ($merchant->status == 3) {
                 Log::info('Merchant tidak aktif');
                 $data['status'] = 'error';
-                $data['message'] = 'Akun PLN Agen Anda sedang tidak aktif. Hubungi plnagen@pln.co.id untuk mengaktifkan kembali.';
+                $data['message'] = 'Akun Anda sedang tidak aktif. Hubungi admin untuk mengaktifkan kembali.';
                 return $data;
             }
 
@@ -88,10 +88,10 @@ class AgentCommands extends Service
                 $merchant->status = 3;
                 $merchant->save();
 
-                Log::info('Request API melebihi batas, merchant di nonaktifkan');
+                Log::info('Request API melebihi batas, merchant dengan id' . $merchant->id . ' dinonaktifkan');
 
                 $data['status'] = 'error';
-                $data['message'] = 'Akun PLN Agen Anda sedang tidak aktif. Hubungi plnagen@pln.co.id untuk mengaktifkan kembali.';
+                $data['message'] = 'Akun Anda sedang tidak aktif. Hubungi admin untuk mengaktifkan kembali.';
                 return $data;
             }
             $hitCount++;
@@ -218,7 +218,7 @@ class AgentCommands extends Service
             if ($merchant->status == 3) {
                 Log::info('Merchant tidak aktif');
                 $data['status'] = 'error';
-                $data['message'] = 'Akun PLN Agen Anda sedang tidak aktif. Hubungi plnagen@pln.co.id untuk mengaktifkan kembali.';
+                $data['message'] = 'Akun Anda sedang tidak aktif. Hubungi admin untuk mengaktifkan kembali.';
                 return $data;
             }
 
@@ -1288,7 +1288,7 @@ class AgentCommands extends Service
                     $end_time = microtime(true);
                     $execution_time = ($end_time - $start_time);
 
-                    Log:info('3rd Repeat Reversal Started');
+                    Log: info('3rd Repeat Reversal Started');
 
                     //Reversal has been taken -> Set Reversal (refund)
                     if ($third_repeat_reversal['response_code'] == '0094' && $third_repeat_reversal['transaction_detail'] == null && $execution_time <= 20) {
