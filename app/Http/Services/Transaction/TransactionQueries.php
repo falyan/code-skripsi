@@ -24,8 +24,8 @@ class TransactionQueries extends Service
     {
         $data = Order::with([
             'detail' => function ($product) {
-                $product->with(['product', function ($p) {
-                    $p->with(['product_photo']);
+                $product->with(['product' => function ($j) {
+                    $j->with(['product_photo']);
                 }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log', 'review' => function ($r) {
                 $r->with(['review_photo'])->where('status', 1);
@@ -58,7 +58,7 @@ class TransactionQueries extends Service
 
         $order = Order::with([
             'detail' => function ($product) {
-                $product->with(['product', function ($p) {
+                $product->with(['product' => function ($p) {
                     $p->with(['product_photo']);
                 }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer', 'ev_subsidy', 'order_detail_log', 'review' => function ($r) {
