@@ -75,6 +75,32 @@ class MerchantAgentController extends Controller
         }
     }
 
+    public function aturTokoAgent()
+    {
+        $validator = Validator::make(request()->all(), [
+            'slogan' => 'required',
+            'description' => 'required',
+        ], [
+            'required' => ':attribute diperlukan.',
+        ]);
+
+        try {
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+                return $this->respondValidationError($errors, 'Validation Error!');
+            };
+
+            return AgentCommands::aturTokoAgent(request()->all(), Auth::user()->merchant_id);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     // ========= ICONPAY V3 API ==========
 
     public function getInfoTagihanPostpaidV3(Request $request)

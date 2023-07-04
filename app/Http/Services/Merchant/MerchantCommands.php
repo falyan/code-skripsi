@@ -57,35 +57,6 @@ class MerchantCommands extends Service
         }
     }
 
-    public static function aturTokoAgent($request, $merchant_id)
-    {
-        try {
-            DB::beginTransaction();
-            $merchant = Merchant::find($merchant_id);
-            $merchant->update([
-                'slogan' => data_get($request, 'slogan'),
-                'description' => data_get($request, 'description'),
-                'email' => data_get($request, 'email'),
-                'latitude' => data_get($request, 'latitude'),
-                'longitude' => data_get($request, 'longitude'),
-                'mitra_id' => data_get($request, 'mitra_id'),
-                'sbu_icon_id' => data_get($request, 'sbu_icon_id'),
-            ]);
-
-            DB::commit();
-
-            return [
-                'merchant' => $merchant,
-            ];
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            if (in_array($th->getCode(), self::$error_codes)) {
-                throw new Exception($th->getMessage(), $th->getCode());
-            }
-            throw new Exception($th->getMessage(), 500);
-        }
-    }
-
     public static function updateLokasi($request, $merchant_id)
     {
         $merchant = Merchant::findOrFail($merchant_id);

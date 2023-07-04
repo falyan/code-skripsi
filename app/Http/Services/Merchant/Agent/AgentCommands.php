@@ -65,7 +65,36 @@ class AgentCommands extends Service
         }
     }
 
-    // ========== ICONPAY V3 API ===========
+    public static function aturTokoAgent($request, $merchant_id)
+    {
+        try {
+            DB::beginTransaction();
+            $merchant = Merchant::find($merchant_id);
+            $merchant->update([
+                'slogan' => data_get($request, 'slogan') ?? $merchant->slogan,
+                'description' => data_get($request, 'description') ?? $merchant->description,
+                'email' => data_get($request, 'email') ?? $merchant->email,
+                'latitude' => data_get($request, 'latitude') ?? $merchant->latitude,
+                'longitude' => data_get($request, 'longitude') ?? $merchant->longitude,
+                'mitra_id' => data_get($request, 'mitra_id') ?? $merchant->mitra_id,
+                'sbu_icon_id' => data_get($request, 'sbu_icon_id') ?? $merchant->sbu_icon_id,
+            ]);
+
+            DB::commit();
+
+            return [
+                'merchant' => $merchant,
+            ];
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            if (in_array($th->getCode(), self::$error_codes)) {
+                throw new Exception($th->getMessage(), $th->getCode());
+            }
+            throw new Exception($th->getMessage(), 500);
+        }
+    }
+
+    // ========== ICONPAY V3 API TRANSACTION ===========
 
     public function getInfoTagihanPostpaidV3($request)
     {

@@ -399,7 +399,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->group(['middleware' => 'auth'], function () use ($router) {
             $router->group(['prefix' => 'command', 'middleware' => 'auth'], static function () use ($router) {
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {
-                    $router->post('atur-profile', 'MerchantController@aturTokoAgent');
+                    $router->post('atur-profile', 'MerchantAgentController@aturTokoAgent');
                     $router->post('atur-margin', 'MerchantAgentController@setMarginDefault');
                 });
                 $router->group(['prefix' => 'kudo'], static function () use ($router) {
