@@ -129,6 +129,8 @@ class AgentCommands extends Service
         }
         $thbl_list = rtrim($thbl_list, ', ');
 
+        $fee_postpaid = AgentMasterData::where(['type' => 'fee_tagihan_listrik', 'status' => 1])->first();
+
         try {
             DB::beginTransaction();
 
@@ -146,8 +148,10 @@ class AgentCommands extends Service
                 'blth' => $thbl_list,
                 'order_date' => data_get($request, 'data.transaction_date'),
                 'amount' => data_get($request, 'data.amount'),
-                'total_fee' => data_get($request, 'data.total_fee'),
-                'total_amount' => data_get($request, 'data.total_amount'),
+                'fee_agent' => $fee_postpaid->fee,
+                'fee_iconpay' => data_get($request, 'data.total_fee'),
+                'total_fee' => $fee_postpaid->fee + data_get($request, 'data.total_fee'),
+                'total_amount' => data_get($request, 'data.total_amount') + $fee_postpaid->fee,
                 'order_detail' => json_encode(['create' => $request['data']]),
                 'margin' => $request['margin'] ?? 0,
                 'created_by' => Auth::user()->id,
@@ -289,8 +293,10 @@ class AgentCommands extends Service
                 'product_value' => $tarifdaya,
                 'order_date' => data_get($request, 'data.transaction_date'),
                 'amount' => isset($unsold) ? $unsold : $denom->value,
-                'total_fee' => isset($unsold) ? 0 : $denom->fee,
-                'total_amount' => isset($unsold) ? $unsold : $denom->value + $denom->fee,
+                'fee_agent' => isset($unsold) ? 0 : $denom->fee,
+                'fee_iconpay' => isset($unsold) ? 0 : $denom->fee_iconpay,
+                'total_fee' => isset($unsold) ? 0 : $denom->fee + $denom->fee_iconpay,
+                'total_amount' => isset($unsold) ? $unsold : $denom->value + $denom->fee + $denom->fee_iconpay,
                 'order_detail' => json_encode(['create' => $request['data']]),
                 'margin' => $request['margin'] ?? 0,
                 // 'jml_kwh' => number_format($jml_kwh, 2, ',', '.'),
@@ -479,8 +485,10 @@ class AgentCommands extends Service
                         'payment_detail' => json_encode(['create' => null, 'confirm' => $response['transaction_detail']]),
                         'payment_scenario' => $payment_scenario ?? null,
                         'amount' => $response['transaction_detail']['amount'],
-                        'total_fee' => $response['transaction_detail']['total_fee'],
-                        'total_amount' => $response['transaction_detail']['total_amount'],
+                        'fee_agent' => $order->fee_agent,
+                        'fee_iconpay' => $response['transaction_detail']['total_fee'],
+                        'total_fee' => $response['transaction_detail']['total_fee'] + $order->fee_agent,
+                        'total_amount' => $response['transaction_detail']['total_amount'] + $order->fee_agent,
                         'created_by' => 'system',
                     ]);
 
@@ -719,8 +727,10 @@ class AgentCommands extends Service
                 'payment_detail' => json_encode(['create' => null, 'confirm' => $advice['transaction_detail']]),
                 'payment_scenario' => $order->payment->payment_scenario ?? null,
                 'amount' => $advice['transaction_detail']['amount'] ?? null,
-                'total_fee' => $advice['transaction_detail']['total_fee'] ?? null,
-                'total_amount' => $advice['transaction_detail']['total_amount'] ?? null,
+                'fee_agent' => $order->fee_agent ?? null,
+                'fee_iconpay' => $advice['transaction_detail']['total_fee'] ?? null,
+                'total_fee' => $advice['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                'total_amount' => $advice['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                 'created_by' => 'system',
             ]);
 
@@ -755,8 +765,10 @@ class AgentCommands extends Service
                     'payment_detail' => json_encode(['create' => null, 'confirm' => $repeat_advice['transaction_detail']]),
                     'payment_scenario' => $order->payment->payment_scenario ?? null,
                     'amount' => $repeat_advice['transaction_detail']['amount'] ?? null,
-                    'total_fee' => $repeat_advice['transaction_detail']['total_fee'] ?? null,
-                    'total_amount' => $repeat_advice['transaction_detail']['total_amount'] ?? null,
+                    'fee_agent' => $order->fee_agent ?? null,
+                    'fee_iconpay' => $repeat_advice['transaction_detail']['total_fee'] ?? null,
+                    'total_fee' => $repeat_advice['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                    'total_amount' => $repeat_advice['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                     'created_by' => 'system',
                 ]);
 
@@ -785,8 +797,10 @@ class AgentCommands extends Service
                         'trx_reference' => $second_repeat_advice['transaction_detail']['transaction_id'] ?? null,
                         'payment_detail' => json_encode(['create' => null, 'confirm' => $second_repeat_advice['transaction_detail']]),
                         'amount' => $second_repeat_advice['transaction_detail']['amount'] ?? null,
-                        'total_fee' => $second_repeat_advice['transaction_detail']['total_fee'] ?? null,
-                        'total_amount' => $second_repeat_advice['transaction_detail']['total_amount'] ?? null,
+                        'fee_agent' => $order->fee_agent ?? null,
+                        'fee_iconpay' => $second_repeat_advice['transaction_detail']['total_fee'] ?? null,
+                        'total_fee' => $second_repeat_advice['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                        'total_amount' => $second_repeat_advice['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                         'created_by' => 'system',
                     ]);
 
@@ -881,8 +895,10 @@ class AgentCommands extends Service
                 'payment_detail' => json_encode(['create' => null, 'confirm' => $advice['transaction_detail']]),
                 'payment_scenario' => $order->payment->payment_scenario ?? null,
                 'amount' => $advice['transaction_detail']['amount'] ?? null,
-                'total_fee' => $advice['transaction_detail']['total_fee'] ?? null,
-                'total_amount' => $advice['transaction_detail']['total_amount'] ?? null,
+                'fee_agent' => $order->fee_agent ?? null,
+                'fee_iconpay' => $advice['transaction_detail']['total_fee'] ?? null,
+                'total_fee' => $advice['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                'total_amount' => $advice['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                 'created_by' => 'system',
             ]);
 
@@ -916,8 +932,10 @@ class AgentCommands extends Service
                     'payment_detail' => json_encode(['create' => null, 'confirm' => $repeat_advice['transaction_detail']]),
                     'payment_scenario' => $order->payment->payment_scenario ?? null,
                     'amount' => $repeat_advice['transaction_detail']['amount'] ?? null,
-                    'total_fee' => $repeat_advice['transaction_detail']['total_fee'] ?? null,
-                    'total_amount' => $repeat_advice['transaction_detail']['total_amount'] ?? null,
+                    'fee_agent' => $order->fee_agent ?? null,
+                    'fee_iconpay' => $repeat_advice['transaction_detail']['total_fee'] ?? null,
+                    'total_fee' => $repeat_advice['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                    'total_amount' => $repeat_advice['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                     'created_by' => 'system',
                 ]);
 
@@ -1016,8 +1034,10 @@ class AgentCommands extends Service
                 'payment_detail' => json_encode(['create' => null, 'confirm' => $reversal['transaction_detail']]),
                 'payment_scenario' => $order->payment->payment_scenario ?? null,
                 'amount' => $reversal['transaction_detail']['amount'] ?? null,
-                'total_fee' => $reversal['transaction_detail']['total_fee'] ?? null,
-                'total_amount' => $reversal['transaction_detail']['total_amount'] ?? null,
+                'fee_agent' => $order->fee_agent ?? null,
+                'fee_iconpay' => $reversal['transaction_detail']['total_fee'] ?? null,
+                'total_fee' => $reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                'total_amount' => $reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                 'created_by' => 'system',
             ]);
 
@@ -1041,8 +1061,10 @@ class AgentCommands extends Service
                 'trx_reference' => $reversal['transaction_detail']['transaction_id'] ?? null,
                 'payment_detail' => json_encode(['create' => null, 'confirm' => $reversal['transaction_detail']]),
                 'amount' => $reversal['transaction_detail']['amount'] ?? null,
-                'total_fee' => $reversal['transaction_detail']['total_fee'] ?? null,
-                'total_amount' => $reversal['transaction_detail']['total_amount'] ?? null,
+                'fee_agent' => $order->fee_agent ?? null,
+                'fee_iconpay' => $reversal['transaction_detail']['total_fee'] ?? null,
+                'total_fee' => $reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                'total_amount' => $reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                 'created_by' => 'system',
             ]);
 
@@ -1114,8 +1136,10 @@ class AgentCommands extends Service
                     'trx_reference' => $repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                     'payment_detail' => json_encode(['create' => null, 'confirm' => $repeat_reversal['transaction_detail']]),
                     'amount' => $repeat_reversal['transaction_detail']['amount'] ?? null,
-                    'total_fee' => $repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                    'total_amount' => $repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                    'fee_agent' => $order->fee_agent ?? null,
+                    'fee_iconpay' => $repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                    'total_fee' => $repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                    'total_amount' => $repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                     'created_by' => 'system',
                 ]);
 
@@ -1139,8 +1163,10 @@ class AgentCommands extends Service
                     'trx_reference' => $repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                     'payment_detail' => json_encode(['create' => null, 'confirm' => $repeat_reversal['transaction_detail']]),
                     'amount' => $repeat_reversal['transaction_detail']['amount'] ?? null,
-                    'total_fee' => $repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                    'total_amount' => $repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                    'fee_agent' => $order->fee_agent ?? null,
+                    'fee_iconpay' => $repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                    'total_fee' => $repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                    'total_amount' => $repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                     'created_by' => 'system',
                 ]);
 
@@ -1212,8 +1238,10 @@ class AgentCommands extends Service
                         'trx_reference' => $second_repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                         'payment_detail' => json_encode(['create' => null, 'confirm' => $second_repeat_reversal['transaction_detail']]),
                         'amount' => $second_repeat_reversal['transaction_detail']['amount'] ?? null,
-                        'total_fee' => $second_repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                        'total_amount' => $second_repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                        'fee_agent' => $order->fee_agent ?? null,
+                        'fee_iconpay' => $second_repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                        'total_fee' => $second_repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                        'total_amount' => $second_repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                         'created_by' => 'system',
                     ]);
 
@@ -1233,8 +1261,10 @@ class AgentCommands extends Service
                         'trx_reference' => $second_repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                         'payment_detail' => json_encode(['create' => null, 'confirm' => $second_repeat_reversal['transaction_detail']]),
                         'amount' => $second_repeat_reversal['transaction_detail']['amount'] ?? null,
-                        'total_fee' => $second_repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                        'total_amount' => $second_repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                        'fee_agent' => $order->fee_agent ?? null,
+                        'fee_iconpay' => $second_repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                        'total_fee' => $second_repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                        'total_amount' => $second_repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                         'created_by' => 'system',
                     ]);
 
@@ -1302,8 +1332,10 @@ class AgentCommands extends Service
                             'trx_reference' => $third_repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                             'payment_detail' => json_encode(['create' => null, 'confirm' => $third_repeat_reversal['transaction_detail']]),
                             'amount' => $third_repeat_reversal['transaction_detail']['amount'] ?? null,
-                            'total_fee' => $third_repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                            'total_amount' => $third_repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                            'fee_agent' => $order->fee_agent ?? null,
+                            'fee_iconpay' => $third_repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                            'total_fee' => $third_repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                            'total_amount' => $third_repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                             'created_by' => 'system',
                         ]);
 
@@ -1323,8 +1355,10 @@ class AgentCommands extends Service
                             'trx_reference' => $third_repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                             'payment_detail' => json_encode(['create' => null, 'confirm' => $third_repeat_reversal['transaction_detail']]),
                             'amount' => $third_repeat_reversal['transaction_detail']['amount'] ?? null,
-                            'total_fee' => $third_repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                            'total_amount' => $third_repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                            'fee_agent' => $order->fee_agent ?? null,
+                            'fee_iconpay' => $third_repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                            'total_fee' => $third_repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                            'total_amount' => $third_repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                             'created_by' => 'system',
                         ]);
 
@@ -1392,8 +1426,10 @@ class AgentCommands extends Service
                                 'trx_reference' => $fourth_repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                                 'payment_detail' => json_encode(['create' => null, 'confirm' => $fourth_repeat_reversal['transaction_detail']]),
                                 'amount' => $fourth_repeat_reversal['transaction_detail']['amount'] ?? null,
-                                'total_fee' => $fourth_repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                                'total_amount' => $fourth_repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                                'fee_agent' => $order->fee_agent ?? null,
+                                'fee_iconpay' => $fourth_repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                                'total_fee' => $fourth_repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                                'total_amount' => $fourth_repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                                 'created_by' => 'system',
                             ]);
 
@@ -1413,8 +1449,10 @@ class AgentCommands extends Service
                                 'trx_reference' => $fourth_repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                                 'payment_detail' => json_encode(['create' => null, 'confirm' => $fourth_repeat_reversal['transaction_detail']]),
                                 'amount' => $fourth_repeat_reversal['transaction_detail']['amount'] ?? null,
-                                'total_fee' => $fourth_repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                                'total_amount' => $fourth_repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                                'fee_agent' => $order->fee_agent ?? null,
+                                'fee_iconpay' => $fourth_repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                                'total_fee' => $fourth_repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                                'total_amount' => $fourth_repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                                 'created_by' => 'system',
                             ]);
 
