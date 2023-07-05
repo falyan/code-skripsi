@@ -214,9 +214,8 @@ class AgentCommands extends Service
             ];
 
             $merchant = Merchant::find(Auth::user()->merchant_id);
-            $hitCount = $merchant->api_count;
 
-            if ($hitCount >= 5 || $merchant->status == 3) {
+            if ($merchant->status == 3) {
                 Log::info('Merchant tidak aktif');
                 $data['status'] = 'error';
                 $data['message'] = 'Akun PLN Agen Anda sedang tidak aktif. Hubungi plnagen@pln.co.id untuk mengaktifkan kembali.';
