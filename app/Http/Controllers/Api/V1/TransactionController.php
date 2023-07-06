@@ -1242,8 +1242,6 @@ class TransactionController extends Controller
                     $account_type_id = 13;
                 }
 
-                $ongkir = $order->delivery->delivery_fee;
-
                 // Start hitung mdr
                 $ongkir = $order->delivery->delivery_fee;
                 $mdr_total = 0;

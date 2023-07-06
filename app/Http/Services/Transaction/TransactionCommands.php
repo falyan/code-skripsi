@@ -737,11 +737,9 @@ class TransactionCommands extends Service
                 }
                 // End hitung mdr
 
-                // foreach update order detail
-                foreach ($order->detail as $detail) {
-                    $detail->product_mdr_value = $mdr_total;
-                    $detail->save();
-                }
+                // update order table with mdr
+                $order->total_mdr = $mdr_total;
+                $order->save();
 
                 $order_delivery = new OrderDelivery();
                 $order_delivery->order_id = $order->id;
