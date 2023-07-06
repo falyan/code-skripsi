@@ -19,7 +19,6 @@ use App\Models\IconcashInquiry;
 use App\Models\MasterData;
 use App\Models\Order;
 use App\Models\OrderDelivery;
-use App\Models\OrderDetail;
 use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductStock;
@@ -1243,17 +1242,17 @@ class TransactionController extends Controller
                     $account_type_id = 13;
                 }
 
-                $order_detail = OrderDetail::where('order_id', $id)->get();
+                $ongkir = $order->delivery->delivery_fee;
 
                 // Start hitung mdr
                 $ongkir = $order->delivery->delivery_fee;
                 $mdr_total = 0;
-                foreach ($order_detail as $detail) {
-                    $mdr_total += $detail->product_mdr_value;
+                foreach ($order->detail as $item) {
+                    $mdr_total += $item->product_mdr_value;
                 }
                 // End hitung mdr
 
-                // $amount = $order->total_amount - $ongkir - $mdr_total - $total_insentif;
+                // $amount = $order->total_amount - $ongkir - $total_insentif - $mdr_total;
                 $amount = $order->total_amount - $total_insentif - $mdr_total;
                 $client_ref = $this->unique_code($iconcash->token);
                 $corporate_id = 10;

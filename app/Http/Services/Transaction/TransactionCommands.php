@@ -421,49 +421,6 @@ class TransactionCommands extends Service
                 $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
                 $order->save();
 
-                // Start hitung mdr
-                $mdr_total = 0;
-                foreach ($order->detail as $detail) {
-                    $mdrMerchant = MdrMerchant::where('status', 1)->where('category_id', $detail->product->category->parent->parent->id)->where('merchant_id', $order->merchant_id)->first();
-                    if (!empty($mdrMerchant)) {
-                        switch ($mdrMerchant->type_code) {
-                            case 'percentage':
-                                $mdr_price = $detail->price * toPercent($mdrMerchant->value ?? 0);
-                                break;
-
-                            case 'fixed':
-                                $mdr_price = $mdrMerchant->value ?? 0;
-                                break;
-
-                            default:
-                                $mdr_price = 0;
-                                break;
-                        }
-
-                        $mdr_total += $mdr_price * $detail->quantity;
-                    } else {
-                        $mdrCategory = MdrCategory::where('status', 1)->where('category_id', $detail->product->category->parent->parent->id)->first();
-                        if (!empty($mdrCategory)) {
-                            switch ($mdrCategory->type_code) {
-                                case 'percentage':
-                                    $mdr_price = $detail->price * toPercent($mdrCategory->value ?? 0);
-                                    break;
-
-                                case 'fixed':
-                                    $mdr_price = $mdrCategory->value ?? 0;
-                                    break;
-
-                                default:
-                                    $mdr_price = 0;
-                                    break;
-                            }
-
-                            $mdr_total += $mdr_price * $detail->quantity;
-                        }
-                    }
-                }
-                // End hitung mdr
-
                 $order_details = [];
                 foreach (data_get($data, 'products') as $product) {
                     $product_data = Product::with('product_photo')->where('id', data_get($product, 'product_id'))->first();
@@ -496,7 +453,7 @@ class TransactionCommands extends Service
                             'product_photo' => $product_data->product_photo ?? null,
                         ]),
                         'product_main_photo' => $product_data->product_photo[0]['url'] ?? null,
-                        'product_mdr_value' => $mdr_total ?? 0,
+                        'product_mdr_value' => 0,
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
                     ];
@@ -737,31 +694,54 @@ class TransactionCommands extends Service
                 // sementara ketika flash sale nempel merchant
                 OrderDetail::insert($order_details);
 
-                // $order_detail_logs = [];
-                // foreach (data_get($data, 'products') as $product) {
-                //     if (data_get($product, 'variant_value_product_id') != null) {
-                //         $product_variant_value = VariantValueProduct::where('id', data_get($product, 'variant_value_product_id'))->first();
-                //     }
+                // Start hitung mdr
+                $mdr_total = 0;
+                foreach ($order->detail as $detail) {
+                    $mdrMerchant = MdrMerchant::where('status', 1)->where('category_id', $detail->product->category->parent->parent->id)->where('merchant_id', $order->merchant_id)->first();
+                    if (!empty($mdrMerchant)) {
+                        switch ($mdrMerchant->type_code) {
+                            case 'percentage':
+                                $mdr_price = $detail->price * toPercent($mdrMerchant->value ?? 0);
+                                break;
 
-                //     $product_photo = ProductPhoto::where('product_id', data_get($product, 'product_id'))->first()->url;
+                            case 'fixed':
+                                $mdr_price = $mdrMerchant->value ?? 0;
+                                break;
 
-                //     $order_detail_logs[] = [
-                //         'order_id' => $order->id,
-                //         'product_data' => json_encode([
-                //             'name' => data_get($product, 'name'),
-                //             'price' => data_get($product, 'price'),
-                //             'strike_price' => data_get($product, 'strike_price'),
-                //             'condition' => data_get($product, 'condition'),
-                //             'description' => data_get($product, 'description'),
-                //             'variant_value_product' => $product_variant_value ?? null,
-                //         ]),
-                //         'product_mdr_value' => $mdr_total,
-                //         'product_main_photo' => $product_photo ?? null,
-                //         'created_at' => Carbon::now(),
-                //     ];
-                // }
+                            default:
+                                $mdr_price = 0;
+                                break;
+                        }
 
-                // OrderDetailLog::insert($order_detail_logs);
+                        $mdr_total += $mdr_price * $detail->quantity;
+                    } else {
+                        $mdrCategory = MdrCategory::where('status', 1)->where('category_id', $detail->product->category->parent->parent->id)->first();
+                        if (!empty($mdrCategory)) {
+                            switch ($mdrCategory->type_code) {
+                                case 'percentage':
+                                    $mdr_price = $detail->price * toPercent($mdrCategory->value ?? 0);
+                                    break;
+
+                                case 'fixed':
+                                    $mdr_price = $mdrCategory->value ?? 0;
+                                    break;
+
+                                default:
+                                    $mdr_price = 0;
+                                    break;
+                            }
+
+                            $mdr_total += $mdr_price * $detail->quantity;
+                        }
+                    }
+                }
+                // End hitung mdr
+
+                // foreach update order detail
+                foreach ($order->detail as $detail) {
+                    $detail->product_mdr_value = $mdr_total;
+                    $detail->save();
+                }
 
                 $order_delivery = new OrderDelivery();
                 $order_delivery->order_id = $order->id;
