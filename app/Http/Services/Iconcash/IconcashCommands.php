@@ -70,6 +70,23 @@ class IconcashCommands extends Service
         }
     }
 
+    public static function changePin($iconcash)
+    {
+        try {
+            DB::beginTransaction();
+            IconcashCredential::where('id', $iconcash->id)
+                ->where('customer_id', $iconcash->customer_id)
+                ->update([
+                    'status' => 'Inactivated',
+                    'token' => null,
+                ]);
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage(), $e->getCode());
+        }
+    }
+
     public static function createOrder($request, $token)
     {
         $order = AgentOrder::with(['progress_active'])->where('trx_no', $request['transaction_id'])->first();
