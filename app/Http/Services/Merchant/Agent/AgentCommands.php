@@ -96,6 +96,7 @@ class AgentCommands extends Service
 
     // ========== ICONPAY V3 API TRANSACTION ===========
 
+    // PLN Prepaid & Postpaid Product
     public function getInfoTagihanPostpaidV3($request)
     {
         try {
@@ -429,8 +430,128 @@ class AgentCommands extends Service
             throw new Exception($e->getMessage(), 500);
         }
     }
+    // End of PLN Prepaid & Postpaid Product
+
+    // PLN Iconnet Product
+    public function getInfoTagihanIconnetV3($request)
+    {
+        try {
+            $payload = [
+                'customer_id' => $request->idpel,
+            ];
+
+            $response = $this->agentManager->inquiryIconnetV3($payload);
+            if ($response['response_code'] == '0000') {
+                $response['transaction_detail']['secret_customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
+            }
+
+            return $response;
+        } catch (Exception $e) {
+            if (in_array($e->getCode(), self::$error_codes)) {
+                throw new Exception($e->getMessage(), $e->getCode());
+            }
+            throw new Exception($e->getMessage(), 500);
+        }
+    }
+
+    public function getInquiryIconnetV3($request)
+    {
+        $thbl_list = '';
+
+        $items = $request['data']['item_detail'];
+        $email_customer = $items['email'];
+        $phone_number = $items['phone_number'];
+        $product_package = $items['product_package'];
+        $addons = $items['addons'];
+        $no_invoice = $items['no_invoice'];
+        $thbl = $items['thbltag'];
+        $thbl = substr($thbl, 0, 6);
+        $thbl_list .= $thbl . ', ';
+
+        $thbl_list = rtrim($thbl_list, ', ');
+
+        $fee_iconnet_agent = AgentMasterData::where(['type' => 'fee_iconnet', 'status' => 1])->first();
+
+        try {
+            DB::beginTransaction();
+
+            //INSERT TO DB ORDER
+            $order = AgentOrder::create([
+                'merchant_id' => Auth::user()->merchant_id,
+                'customer_id' => data_get($request, 'data.customer_id'),
+                'meter_number' => null,
+                'customer_name' => data_get($request, 'data.customer_name'),
+                'trx_no' => data_get($request, 'data.transaction_id'),
+                'product_id' => data_get($request, 'data.product_id'),
+                'product_name' => data_get($request, 'data.product'),
+                'product_key' => 'ICONNET',
+                'product_value' => $product_package,
+                'product_addons' => $addons,
+                'product_invoice' => $no_invoice,
+                'blth' => $thbl_list,
+                'order_date' => data_get($request, 'data.transaction_date'),
+                'amount' => data_get($request, 'data.amount'),
+                'fee_agent' => $fee_iconnet_agent->fee,
+                'fee_iconpay' => data_get($request, 'data.total_fee'),
+                'total_fee' => $fee_iconnet_agent->fee + data_get($request, 'data.total_fee'),
+                'total_amount' => data_get($request, 'data.total_amount') + $fee_iconnet_agent->fee,
+                'order_detail' => json_encode(['create' => $request['data']]),
+                'margin' => $request['margin'] ?? 0,
+                'created_by' => Auth::user()->id,
+            ]);
+
+            // $order->invoice_no = static::invoice_num($order->id, 4, "INV/" . $order->product_id . "/" . date('Ymd')) . "/";
+            $order->invoice_no = 'INV/' . $order->product_id . '/' . date('Ymd') . '/' . $order->id;
+            $order->save();
+
+            $order_progress = AgentOrderProgres::create([
+                'agent_order_id' => $order->id,
+                'status_code' => '00',
+                'status_name' => 'Menunggu Pembayaran',
+                'created_by' => Auth::user()->id,
+            ]);
+
+            DB::commit();
+
+            $response['status'] = 'success';
+            $response['message'] = 'Berhasil melakukan inquiry';
+            $response['data'] = [
+                'info' => [
+                    'status_name' => $order_progress->status_name,
+                    'trx_no' => $order->trx_no,
+                    'order_date' => $order->order_date,
+                ],
+                'detail' => [
+                    'product_name' => $order->product_name,
+                    'product_value' => $order->product_value,
+                    'product_addons' => $order->product_addons,
+                    'customer_id' => $order->customer_id,
+                    'customer_name' => $order->customer_name,
+                    'secret_customer_name' => generate_name_secret($order->customer_name),
+                    'thbl' => $thbl_list,
+                    'amount' => $order->amount,
+                ],
+                'payment' => [
+                    'amount' => $order->amount,
+                    'total_fee' => $order->total_fee,
+                    'margin' => $order->margin,
+                    'total_amount' => $order->total_amount,
+                ],
+            ];
+
+            return $response;
+        } catch (Exception $e) {
+            DB::rollBack();
+            if (in_array($e->getCode(), self::$error_codes)) {
+                throw new Exception($e->getMessage(), $e->getCode());
+            }
+            throw new Exception($e->getMessage(), 500);
+        }
+    }
 
     // ======= CONFIRM PAYMENT TO ICONPAY PROCESS ======= //
+
+    // Payment for PLN Prepaid & Postpaid Product
     public static function confirmOrderIconcash($trx_no, $token, $client_ref, $source_account_id)
     {
         $order = AgentOrder::with([
@@ -1580,6 +1701,110 @@ class AgentCommands extends Service
         $manual_reversal = $this->reversalPostpaid($order, null, null, null, null, null, $iconcash->token, $client_ref, $source_account_id);
 
         return $manual_reversal;
+    }
+    // End of Payment for Prepaid & Postpaid Product
+
+    // Payment for Iconnet Product
+    public static function confirmOrderIconnet($trx_no, $token, $client_ref, $source_account_id)
+    {
+        $order = AgentOrder::with([
+            'progress_active',
+            'payment' => fn($q) => $q->where('payment_method', 'iconcash')->where('trx_reference', $client_ref),
+        ])
+            ->where('trx_no', $trx_no)
+            ->first();
+
+        if (empty($order)) {
+            return [
+                'status' => 'error',
+                'message' => 'Order tidak ditemukan',
+            ];
+        }
+
+        if ($order->progress_active->status_code != '03') {
+            return [
+                'status' => 'error',
+                'message' => 'Belum melakukan konfirmasi',
+            ];
+        }
+
+        $payment_scenario = $order->payment->payment_scenario;
+
+        $merchant = Merchant::find($order->merchant_id);
+        $merchant->api_count = 0;
+        $merchant->save();
+
+        try {
+            DB::beginTransaction();
+            //Scenario For UAT Only - Normal
+            if ($payment_scenario == 'normal' || $payment_scenario == null) {
+                //Payment Iconnet - Iconpay
+                $response = AgentManager::confirmOrderIconnet(array_merge($order->toArray(), [
+                    'client_ref' => $client_ref,
+                ]));
+
+                if (in_array($response['response_code'], ['5003', '5016', '4007', '408'])) {
+                    return [
+                        'status' => 'error',
+                        'response_code' => $response['response_code'],
+                        'message' => $response['response_message'],
+                    ];
+                } else if ($response['response_code'] == '0000' && $response['transaction_detail'] != null) {
+                    //Payment Success
+                    AgentOrderProgres::where('agent_order_id', $order->id)->update([
+                        'status' => 0,
+                        'updated_by' => 'system',
+                    ]);
+
+                    AgentOrderProgres::create([
+                        'agent_order_id' => $order->id,
+                        'status_code' => '04',
+                        'status_note' => $response['response_message'],
+                        'status_name' => static::$status_agent_order['04'],
+                        'created_by' => 'system',
+                    ]);
+
+                    if ($response['transaction_detail'] != null) {
+                        $response['transaction_detail']['customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
+                    }
+
+                    AgentPayment::create([
+                        'agent_order_id' => $order->id,
+                        'payment_id' => $response['transaction_detail']['biller_reference'],
+                        'payment_method' => 'iconpay',
+                        'trx_reference' => $response['transaction_detail']['transaction_id'],
+                        'payment_detail' => json_encode(['create' => null, 'confirm' => $response['transaction_detail']]),
+                        'payment_scenario' => $payment_scenario ?? null,
+                        'amount' => $response['transaction_detail']['amount'],
+                        'fee_agent' => $order->fee_agent,
+                        'fee_iconpay' => $response['transaction_detail']['total_fee'],
+                        'total_fee' => $response['transaction_detail']['total_fee'] + $order->fee_agent,
+                        'total_amount' => $response['transaction_detail']['total_amount'] + $order->fee_agent,
+                        'created_by' => 'system',
+                    ]);
+
+                    DB::commit();
+                    $data['status'] = 'success';
+                    $data['message'] = 'Transaksi berhasil';
+                    return $data;
+                } else {
+                    static::updateAgentOrderStatus($order->id, '08', $response['response_message']);
+                    DB::commit();
+
+                    IconcashCommands::orderRefund($order->trx_no, $token, $client_ref, $source_account_id);
+
+                    $data['status'] = 'success';
+                    $data['message'] = 'Transaksi gagal - ' . $response['response_code'];
+                    return $data;
+                }
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            if (in_array($e->getCode(), self::$error_codes)) {
+                throw new Exception($e->getMessage(), $e->getCode());
+            }
+            throw new Exception($e->getMessage(), 500);
+        }
     }
 
     public static function updateAgentOrderStatus($agent_order_id, $status_code, $status_note)

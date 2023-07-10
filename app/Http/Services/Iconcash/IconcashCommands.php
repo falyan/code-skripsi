@@ -88,14 +88,23 @@ class IconcashCommands extends Service
         //     ];
         // }
 
-        $data = [
-            'kode_konter' => ($order->total_fee + $order->margin) > 0 ? '0' : '1',
-            'kode_product' => $order->product_id == 'PREPAID' ? 1 : 2,
-            // 'kode_gateway' => static::generateGateway($order->merchant_id), // max 17.576
-            'kode_gateway' => env('ICONPAY_V3_AGENT_GATEWAY_CODE') ? env('ICONPAY_V3_AGENT_GATEWAY_CODE') : static::generateGateway($order->merchant_id), // max 17.576
-            'buying_options' => 1,
-            'transaction_id' => $order->trx_no,
-        ];
+        if ($order->product_id == 'PREPAID' || $order->product_id == 'POSTPAID') {
+            $data = [
+                'kode_konter' => ($order->total_fee + $order->margin) > 0 ? '0' : '1',
+                'kode_product' => $order->product_id == 'PREPAID' ? 1 : 2,
+                // 'kode_gateway' => static::generateGateway($order->merchant_id), // max 17.576
+                'kode_gateway' => env('ICONPAY_V3_AGENT_GATEWAY_CODE') ? env('ICONPAY_V3_AGENT_GATEWAY_CODE') : static::generateGateway($order->merchant_id), // max 17.576
+                'buying_options' => 1,
+                'transaction_id' => $order->trx_no,
+            ];
+        } else if ($order->product_id == 'ICONNET') {
+            $data = [
+                'kode_konter' => ($order->total_fee + $order->margin) > 0 ? '0' : '1',
+                'kode_product' => 4,
+                'kode_gateway' => env('ICONPAY_V3_AGENT_GATEWAY_CODE') ? env('ICONPAY_V3_AGENT_GATEWAY_CODE') : static::generateGateway($order->merchant_id), // max 17.576
+                'transaction_id' => $order->trx_no,
+            ];
+        }
 
         try {
             DB::beginTransaction();

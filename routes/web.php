@@ -440,6 +440,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('prepaid/tagihan/manual-advice', 'MerchantAgentController@getInfoManualAdviceV3');
                     $router->post('prepaid/inquiry', 'MerchantAgentController@getInquiryPrepaidV3');
                     $router->post('prepaid/manual-advice', 'MerchantAgentController@manualAdvicePrepaid');
+                    // Iconnet ========
+                    $router->post('iconnet/tagihan', 'MerchantAgentController@getInfoTagihanIconnetV3');
+                    $router->post('iconnet/inquiry', 'MerchantAgentController@getInquiryIconnetV3');
                     // Download Payment Receipt
                     $router->get('payment-receipt/download', 'MerchantAgentController@downloadAgentReceipt');
                 });
@@ -479,8 +482,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 });
             });
 
-            // Iconpay ========
+            // ======= Confirm Payment for Iconpay Agent ========
+            // Payment Prepaid Postpaid
             $router->post('iconpay/confirm', 'MerchantAgentController@confirmOrderIconcash');
+            // Payment Iconnet
+            $router->post('iconpay/confirm/iconnet', 'MerchantAgentController@confirmOrderIconnet');
         });
 
         $router->group(['prefix' => 'query'], static function () use ($router) {

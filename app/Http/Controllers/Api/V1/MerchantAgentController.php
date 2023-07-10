@@ -103,6 +103,7 @@ class MerchantAgentController extends Controller
 
     // ========= ICONPAY V3 API ==========
 
+    // ==== PLN Prepaid & Postpaid Product
     public function getInfoTagihanPostpaidV3(Request $request)
     {
         try {
@@ -279,6 +280,93 @@ class MerchantAgentController extends Controller
         //     return $this->respondErrorException($e, $request);
         // }
     }
+    // ==== End of PLN Prepaud & Postpaid Product
+
+    // ==== PLN Iconnet Product
+    public function getInfoTagihanIconnetV3(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'idpel' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+                return $this->respondValidationError($errors, 'Validation Error!');
+            };
+
+            $response = $this->agentCommands->getInfoTagihanIconnetV3($request);
+
+            if (isset($response['response_code']) && $response['response_code'] == '0000') {
+                return $this->respondCustom([
+                    'message' => isset($response['response_message']) ? $response['response_message'] : 'success',
+                    'response_code' => isset($response['response_code']) ? $response['response_code'] : '',
+                    'data' => $response['transaction_detail'],
+                ]);
+            }
+
+            return $response;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, $request);
+        }
+    }
+
+    public function getInquiryIconnetV3(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                "idpel" => "required",
+                "margin" => "required|numeric",
+                "data.customer_id" => "required",
+                "data.customer_name" => "required",
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+                return $this->respondValidationError($errors, 'Validation Error!');
+            };
+
+            $response = $this->agentCommands->getInquiryIconnetV3($request);
+
+            return $response;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, $request);
+        }
+    }
+
+    public function confirmOrderIconnet(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'transaction_id' => 'required',
+            'client_ref' => 'required',
+            'source_account_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors, 'Validation Error!');
+        };
+
+        $response = $this->agentCommands->confirmOrderIconnet($request['transaction_id'], Auth::user()->iconcash->token, $request['client_ref'], $request['source_account_id']);
+
+        return $response;
+    }
+    // ==== End of PLN Iconnet Product
 
     public function getOrder(Request $request)
     {
