@@ -482,6 +482,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             // Iconpay ========
             $router->post('iconpay/confirm', 'MerchantAgentController@confirmOrderIconcash');
         });
+
+        $router->group(['prefix' => 'query'], static function () use ($router) {
+            $router->get('master/sbu', 'AgentMasterDataController@getAgentSbu');
+            $router->get('master/mitra', 'AgentMasterDataController@getAgentMitra');
+        });
     });
 
     $router->group(['prefix' => 'report', 'middleware' => 'auth'], static function () use ($router) {
