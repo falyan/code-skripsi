@@ -357,7 +357,7 @@ class AgentManager
 
         $body = [
             'transaction_id' => $request['trx_no'],
-            'biller_reference' => $request['client_ref'],
+            'biller_reference' => $request['biller_reference'],
         ];
 
         $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
