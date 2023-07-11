@@ -356,9 +356,8 @@ class AgentManager
         $url = sprintf('%s/%s', self::$endpointv3, 'iconnet/payment/status' . $params);
 
         $body = [
-            'transaction_id' => data_get($request, 'trx_no'),
-            'partner_reference' => $request['client_ref'],
-            'product_id' => data_get($request, 'product_id'),
+            'transaction_id' => $request['trx_no'],
+            'biller_reference' => $request['client_ref'],
         ];
 
         $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);

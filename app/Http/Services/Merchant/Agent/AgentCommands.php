@@ -456,6 +456,14 @@ class AgentCommands extends Service
 
     public function getInquiryIconnetV3($request)
     {
+        $order = AgentOrder::where('trx_no', data_get($request, 'data.transaction_id'))->first();
+
+        if ($order) {
+            $response['status'] = 'error';
+            $response['message'] = 'Transaksi sudah pernah dilakukan';
+            return $response;
+        }
+
         $thbl_list = '';
 
         $items = $request['data']['item_detail'];
@@ -482,6 +490,7 @@ class AgentCommands extends Service
                 'meter_number' => null,
                 'customer_name' => data_get($request, 'data.customer_name'),
                 'trx_no' => data_get($request, 'data.transaction_id'),
+                'biller_reference' => data_get($request, 'data.biller_reference'), //Biller reference from iconpay v3
                 'product_id' => data_get($request, 'data.product_id'),
                 'product_name' => data_get($request, 'data.product'),
                 'product_key' => 'ICONNET',
@@ -1743,13 +1752,64 @@ class AgentCommands extends Service
                     'client_ref' => $client_ref,
                 ]));
 
-                if (in_array($response['response_code'], ['5003', '5016', '4007', '408'])) {
-                    return [
-                        'status' => 'error',
-                        'response_code' => $response['response_code'],
-                        'message' => $response['response_message'],
-                    ];
-                } else if ($response['response_code'] == '0000' && $response['transaction_detail'] != null) {
+                // Transaction Pending -> Hit Check Payment Status
+                if (in_array($response['response_code'], ['5002', '5010', '408'])) {
+                    // $checkPaymentStatus = AgentManager::checkStatusPaymentIconnet($order->trx_no, $order->biller_reference);
+
+                    // if ($checkPaymentStatus['response_code'] == '0000' && $checkPaymentStatus['transaction_detail'] != null) {
+                    //     //Payment Success
+                    //     AgentOrderProgres::where('agent_order_id', $order->id)->update([
+                    //         'status' => 0,
+                    //         'updated_by' => 'system',
+                    //     ]);
+
+                    //     AgentOrderProgres::create([
+                    //         'agent_order_id' => $order->id,
+                    //         'status_code' => '04',
+                    //         'status_note' => $checkPaymentStatus['response_message'],
+                    //         'status_name' => static::$status_agent_order['04'],
+                    //         'created_by' => 'system',
+                    //     ]);
+
+                    //     if ($checkPaymentStatus['transaction_detail'] != null) {
+                    //         $checkPaymentStatus['transaction_detail']['customer_name'] = generate_name_secret($checkPaymentStatus['transaction_detail']['customer_name']);
+                    //     }
+
+                    //     AgentPayment::create([
+                    //         'agent_order_id' => $order->id,
+                    //         'payment_id' => $checkPaymentStatus['transaction_detail']['biller_reference'] ?? null,
+                    //         'payment_method' => 'iconpay',
+                    //         'trx_reference' => $checkPaymentStatus['transaction_detail']['transaction_id'] ?? null,
+                    //         'payment_detail' => json_encode(['create' => null, 'confirm' => $checkPaymentStatus['transaction_detail']]),
+                    //         'amount' => $checkPaymentStatus['transaction_detail']['amount'] ?? null,
+                    //         'fee_agent' => $order->fee_agent ?? null,
+                    //         'fee_iconpay' => $checkPaymentStatus['transaction_detail']['total_fee'] ?? null,
+                    //         'total_fee' => $checkPaymentStatus['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                    //         'total_amount' => $checkPaymentStatus['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
+                    //         'created_by' => 'system',
+                    //     ]);
+
+                    //     $data['status'] = 'success';
+                    //     $data['message'] = 'Check status payment sukses - ' . $checkPaymentStatus['response_code'];
+                    //     return $data;
+                    // } else {
+                    //     // Pending Transaction -> Set Pending
+                    //     static::updateAgentOrderStatus($order->id, '09', $response['response_message']);
+
+                    //     $data['status'] = 'success';
+                    //     $data['message'] = 'Gagal menerima response, transaksi dalam status pending - ' . $response['response_code'];
+                    //     return $data;
+                    // }
+                    // Pending Transaction Timeout/5002/5010 -> Set Pending
+                    static::updateAgentOrderStatus($order->id, '09', $response['response_message']);
+
+                    $data['status'] = 'success';
+                    $data['message'] = 'Gagal menerima response, transaksi dalam status pending - ' . $response['response_code'];
+                    return $data;
+                }
+
+                // Transaction Success 0000 -> Set Success
+                if ($response['response_code'] == '0000' && $response['transaction_detail'] != null) {
                     //Payment Success
                     AgentOrderProgres::where('agent_order_id', $order->id)->update([
                         'status' => 0,
@@ -1787,9 +1847,49 @@ class AgentCommands extends Service
                     $data['status'] = 'success';
                     $data['message'] = 'Transaksi berhasil';
                     return $data;
+
+                    // Transaction Paid 5003 -> Set Success
+                } else if ($response['response_code'] == '5003') {
+                    static::updateAgentOrderStatus($order->id, '04', $response['response_message']);
+
+                    AgentPayment::create([
+                        'agent_order_id' => $order->id,
+                        'payment_id' => $response['transaction_detail']['biller_reference'] ?? null,
+                        'payment_method' => 'iconpay',
+                        'trx_reference' => $response['transaction_detail']['transaction_id'] ?? null,
+                        'payment_detail' => json_encode(['create' => null, 'confirm' => $response['transaction_detail']]),
+                        'payment_scenario' => $order->payment->payment_scenario ?? null,
+                        'amount' => $response['transaction_detail']['amount'] ?? null,
+                        'fee_agent' => $order->fee_agent ?? null,
+                        'fee_iconpay' => $response['transaction_detail']['total_fee'] ?? null,
+                        'total_fee' => $response['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                        'total_amount' => $response['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
+                        'created_by' => 'system',
+                    ]);
+
+                    $data['status'] = 'success';
+                    $data['message'] = 'Transaksi telah terbayar - ' . $response['response_code'];
+                    return $data;
+
+                    // Transaction Failed 5004 -> Set Failed
+                } else if ($response['response_code'] == '5004') {
+                    static::updateAgentOrderStatus($order->id, '08', $response['response_message']);
+                    IconcashCommands::orderRefund($order->trx_no, $token, $client_ref, $source_account_id);
+
+                    $data['status'] = 'success';
+                    $data['message'] = 'Transaksi gagal - ' . $response['response_code'];
+                    return $data;
+
+                    // Transaction Not Found 4007 -> Set Failed
+                } else if ($response['response_code'] == '4007') {
+                    static::updateAgentOrderStatus($order->id, '08', $response['response_message']);
+                    IconcashCommands::orderRefund($order->trx_no, $token, $client_ref, $source_account_id);
+
+                    $data['status'] = 'success';
+                    $data['message'] = 'Transaksi tidak ditemukan - ' . $response['response_code'];
+                    return $data;
                 } else {
                     static::updateAgentOrderStatus($order->id, '08', $response['response_message']);
-                    DB::commit();
 
                     IconcashCommands::orderRefund($order->trx_no, $token, $client_ref, $source_account_id);
 

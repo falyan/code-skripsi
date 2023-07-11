@@ -18,6 +18,7 @@ class AddNewColumnToAgentOrdersTable extends Migration
             $table->float('fee_iconpay')->nullable()->after('fee_agent');
             $table->string('product_addons')->nullable()->after('product_value');
             $table->string('product_invoice')->nullable()->after('product_addons');
+            $table->string('biller_reference')->nullable()->after('trx_no');
         });
 
         Schema::table('agent_master_data', function (Blueprint $table) {
