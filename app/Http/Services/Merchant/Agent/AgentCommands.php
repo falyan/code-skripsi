@@ -1877,22 +1877,13 @@ class AgentCommands extends Service
                     $data['message'] = 'Transaksi telah terbayar - ' . $response['response_code'];
                     return $data;
 
-                    // Transaction Failed 5004 -> Set Failed
-                } else if ($response['response_code'] == '5004') {
+                    // Transaction Set Failed
+                } else if (in_array($response['response_code'], ['4007', '4010', '4012', '5003', '5004', '5005'])) {
                     static::updateAgentOrderStatus($order->id, '08', $response['response_message']);
                     IconcashCommands::orderRefund($order->trx_no, $token, $client_ref, $source_account_id);
 
                     $data['status'] = 'success';
                     $data['message'] = 'Transaksi gagal - ' . $response['response_code'];
-                    return $data;
-
-                    // Transaction Not Found 4007 -> Set Failed
-                } else if ($response['response_code'] == '4007') {
-                    static::updateAgentOrderStatus($order->id, '08', $response['response_message']);
-                    IconcashCommands::orderRefund($order->trx_no, $token, $client_ref, $source_account_id);
-
-                    $data['status'] = 'success';
-                    $data['message'] = 'Transaksi tidak ditemukan - ' . $response['response_code'];
                     return $data;
                 } else {
                     static::updateAgentOrderStatus($order->id, '08', $response['response_message']);
