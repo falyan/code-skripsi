@@ -128,10 +128,13 @@ class AgentCommands extends Service
             $merchant->api_count = $hitCount;
             $merchant->save();
 
+            $fee_postpaid_agent = AgentMasterData::where(['type' => 'fee_tagihan_listrik', 'status' => 1])->first()->fee;
+
             $response = $this->agentManager->inquiryPostpaidV3($payload);
             if ($response['response_code'] == '0000') {
                 // $response['transaction_detail']['customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
                 $response['transaction_detail']['secret_customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
+                $response['transaction_detail']['fee_agent'] = $fee_postpaid_agent;
             }
 
             return $response;
@@ -255,7 +258,7 @@ class AgentCommands extends Service
             $response = $this->agentManager->inquiryPrepaidV3($payload);
 
             if ($response['response_code'] == '0000' && $response['transaction_detail'] != null) {
-                $list_denom = AgentMasterData::status(1)->type('token_listrik')->orderBy('value', 'ASC')->select('id', 'name', 'key', 'value', 'fee', 'type', 'strike_value', 'status')->get();
+                $list_denom = AgentMasterData::status(1)->type('token_listrik')->orderBy('value', 'ASC')->select('id', 'name', 'key', 'value', 'fee', 'fee_iconpay', 'type', 'strike_value', 'status')->get();
 
                 $unsold1 = $response['transaction_detail']['item_detail'][0]['unsold1'];
                 $unsold2 = $response['transaction_detail']['item_detail'][0]['unsold2'];
@@ -440,9 +443,12 @@ class AgentCommands extends Service
                 'customer_id' => $request->idpel,
             ];
 
+            $fee_iconnet_agent = AgentMasterData::where(['type' => 'fee_iconnet', 'status' => 1])->first()->fee;
+
             $response = $this->agentManager->inquiryIconnetV3($payload);
             if ($response['response_code'] == '0000') {
                 $response['transaction_detail']['secret_customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
+                $response['transaction_detail']['fee_agent'] = $fee_iconnet_agent;
             }
 
             return $response;
