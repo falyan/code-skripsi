@@ -975,7 +975,7 @@ class TransactionController extends Controller
             $order->load('promo_log_orders');
 
             if (count($order->promo_log_orders) > 0) {
-                foreach ($$order->promo_log_orders as $promo_log_order) {
+                foreach ($order->promo_log_orders as $promo_log_order) {
                     $this->transactionCommand->updatePromoLog($promo_log_order);
                 }
             }
