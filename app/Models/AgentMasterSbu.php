@@ -11,4 +11,9 @@ class AgentMasterSbu extends Model
 
     protected $table = 'mst_sbu_icon';
     protected $guarded = ['id'];
+
+    public function merchants()
+    {
+        return $this->hasMany(Merchant::class, 'sbu_id', 'id');
+    }
 }

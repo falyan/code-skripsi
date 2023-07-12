@@ -25,9 +25,8 @@ class ProfileQueries extends Service
             if (empty(Auth::user()->merchant_id)) {
                 return null;
             }
-            $data = Merchant::with(['operationals'])->find(Auth::user()->merchant_id);
+            $data = Merchant::with(['operationals', 'mitra', 'sbu'])->find(Auth::user()->merchant_id);
             $haveSetupMerchant = count($data->operationals) > 0 ? true : false;
-            
             $data = $data->makeHidden('operationals')->toArray();
             $data['haveSetupMerchant'] = $haveSetupMerchant;
         } else {
@@ -42,7 +41,7 @@ class ProfileQueries extends Service
 
         $uppercase = preg_match('@[A-Z]@', $password);
         $lowercase = preg_match('@[a-z]@', $password);
-        $number    = preg_match('@[0-9]@', $password);
+        $number = preg_match('@[0-9]@', $password);
 
         if (!$uppercase || !$lowercase || !$number || strlen($password) < 8) {
             $messages->push("kombinasi password harus berisi minimal 8 karakter yang mengandung huruf besar, huruf kecil, dan angka.");

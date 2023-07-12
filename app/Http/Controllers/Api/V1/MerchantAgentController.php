@@ -52,7 +52,7 @@ class MerchantAgentController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'agent_menu_id' => ['required', Rule::exists('agent_menu', 'id')->whereNull('deleted_at')],
-                'margin' => 'required|numeric|max:2500',
+                'margin' => 'required',
             ], [
                 'required' => ':attribute diperlukan.',
             ]);
