@@ -1760,55 +1760,10 @@ class AgentCommands extends Service
 
                 // Transaction Pending -> Hit Check Payment Status
                 if (in_array($response['response_code'], ['5002', '5010', '408'])) {
-                    // $checkPaymentStatus = AgentManager::checkStatusPaymentIconnet($order->trx_no, $order->biller_reference);
-
-                    // if ($checkPaymentStatus['response_code'] == '0000' && $checkPaymentStatus['transaction_detail'] != null) {
-                    //     //Payment Success
-                    //     AgentOrderProgres::where('agent_order_id', $order->id)->update([
-                    //         'status' => 0,
-                    //         'updated_by' => 'system',
-                    //     ]);
-
-                    //     AgentOrderProgres::create([
-                    //         'agent_order_id' => $order->id,
-                    //         'status_code' => '04',
-                    //         'status_note' => $checkPaymentStatus['response_message'],
-                    //         'status_name' => static::$status_agent_order['04'],
-                    //         'created_by' => 'system',
-                    //     ]);
-
-                    //     if ($checkPaymentStatus['transaction_detail'] != null) {
-                    //         $checkPaymentStatus['transaction_detail']['customer_name'] = generate_name_secret($checkPaymentStatus['transaction_detail']['customer_name']);
-                    //     }
-
-                    //     AgentPayment::create([
-                    //         'agent_order_id' => $order->id,
-                    //         'payment_id' => $checkPaymentStatus['transaction_detail']['biller_reference'] ?? null,
-                    //         'payment_method' => 'iconpay',
-                    //         'trx_reference' => $checkPaymentStatus['transaction_detail']['transaction_id'] ?? null,
-                    //         'payment_detail' => json_encode(['create' => null, 'confirm' => $checkPaymentStatus['transaction_detail']]),
-                    //         'amount' => $checkPaymentStatus['transaction_detail']['amount'] ?? null,
-                    //         'fee_agent' => $order->fee_agent ?? null,
-                    //         'fee_iconpay' => $checkPaymentStatus['transaction_detail']['total_fee'] ?? null,
-                    //         'total_fee' => $checkPaymentStatus['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
-                    //         'total_amount' => $checkPaymentStatus['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
-                    //         'created_by' => 'system',
-                    //     ]);
-
-                    //     $data['status'] = 'success';
-                    //     $data['message'] = 'Check status payment sukses - ' . $checkPaymentStatus['response_code'];
-                    //     return $data;
-                    // } else {
-                    //     // Pending Transaction -> Set Pending
-                    //     static::updateAgentOrderStatus($order->id, '09', $response['response_message']);
-
-                    //     $data['status'] = 'success';
-                    //     $data['message'] = 'Gagal menerima response, transaksi dalam status pending - ' . $response['response_code'];
-                    //     return $data;
-                    // }
                     // Pending Transaction Timeout/5002/5010 -> Set Pending
                     static::updateAgentOrderStatus($order->id, '09', $response['response_message']);
 
+                    DB::commit();
                     $data['status'] = 'success';
                     $data['message'] = 'Gagal menerima response, transaksi dalam status pending - ' . $response['response_code'];
                     return $data;
@@ -1873,6 +1828,7 @@ class AgentCommands extends Service
                         'created_by' => 'system',
                     ]);
 
+                    DB::commit();
                     $data['status'] = 'success';
                     $data['message'] = 'Transaksi telah terbayar - ' . $response['response_code'];
                     return $data;
@@ -1882,14 +1838,15 @@ class AgentCommands extends Service
                     static::updateAgentOrderStatus($order->id, '08', $response['response_message']);
                     IconcashCommands::orderRefund($order->trx_no, $token, $client_ref, $source_account_id);
 
+                    DB::commit();
                     $data['status'] = 'success';
                     $data['message'] = 'Transaksi gagal - ' . $response['response_code'];
                     return $data;
                 } else {
                     static::updateAgentOrderStatus($order->id, '08', $response['response_message']);
-
                     IconcashCommands::orderRefund($order->trx_no, $token, $client_ref, $source_account_id);
 
+                    DB::commit();
                     $data['status'] = 'success';
                     $data['message'] = 'Transaksi gagal - ' . $response['response_code'];
                     return $data;
