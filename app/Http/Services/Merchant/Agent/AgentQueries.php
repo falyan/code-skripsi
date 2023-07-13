@@ -7,6 +7,7 @@ use App\Http\Services\Manager\KudoManager;
 use App\Http\Services\Service;
 use App\Models\AgentMenu;
 use App\Models\AgentOrder;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 
@@ -68,7 +69,7 @@ class AgentQueries extends Service
     public function getTransaction($limit = 10, $page = 1)
     {
         $merchant_id = Auth::user()->merchant_id;
-        $orders = AgentOrder::where('merchant_id', $merchant_id)
+        $orders = AgentOrder::where('merchant_id', $merchant_id)->whereDate('created_at', Carbon::today())
             ->with(['progress_active', 'payments'])
             ->orderBy('created_at', 'desc')
             ->paginate($limit);
@@ -89,7 +90,7 @@ class AgentQueries extends Service
     {
         $merchant_id = Auth::user()->merchant_id;
         $agentOrders = new AgentOrder();
-        $orders = $agentOrders->where('merchant_id', $merchant_id)
+        $orders = $agentOrders->where('merchant_id', $merchant_id)->whereDate('created_at', '>=', Carbon::now()->subDays(7))
             ->with(['progress_active', 'payments'])
             ->orderBy('created_at', 'desc');
 
