@@ -1860,7 +1860,7 @@ class ProductQueries extends Service
             })->whereHas('ev_subsidy', function ($merchant) {
                 $merchant->where('status', 1);
             })->whereHas('product_stock', function ($stock) {
-                $stock->where('stock', '>', 0);
+                $stock->where('amount', '>', 0);
             })->whereIn('category_id', $cat_child_id);
 
         $filtered_data = $this->filter($products, $filter);
