@@ -968,7 +968,7 @@ class IconcashManager
         return $response;
     }
 
-    public static function topupDeposit($token, $amount, $clientRef, $pspId)
+    public static function topupDeposit($token, $amount, $clientRef)
     {
         $param = self::setParamAPI([]);
 
@@ -982,13 +982,86 @@ class IconcashManager
             'json' => [
                 'amount' => $amount,
                 'clientRef' => $clientRef,
-                'pspId' => $pspId,
             ],
         ]);
 
         $response = json_decode($response->getBody());
 
         Log::info('topupDeposit', [
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
+    }
+
+    public static function checkFeeTopupDeposit($token, $orderId, $pspId, $amount)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$topupDepositApiEndpoint, 'api/command/topup/check-fee' . $param);
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => array_merge([
+                'Authorization' => 'Bearer ' . $token,
+            ], self::$headerTopupDeposit),
+            'http_errors' => false,
+            'json' => [
+                'orderId' => $orderId,
+                'paymentMethods' => [
+                    [
+                        'pspId' => $pspId,
+                        'amount' => $amount,
+                    ],
+                ],
+            ],
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        Log::info('checkFeeTopupDeposit', [
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
+    }
+
+    public static function confirmTopupDeposit($token, $orderId, $pspId, $amount)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$topupDepositApiEndpoint, 'api/command/topup/confirm-payment' . $param);
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => array_merge([
+                'Authorization' => 'Bearer ' . $token,
+            ], self::$headerTopupDeposit),
+            'http_errors' => false,
+            'json' => [
+                'orderId' => $orderId,
+                'paymentMethods' => [
+                    [
+                        'pspId' => $pspId,
+                        'amount' => $amount,
+                    ],
+                ],
+            ],
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        Log::info('confirmPaymentTopupDeposit', [
             'response' => $response,
         ]);
 

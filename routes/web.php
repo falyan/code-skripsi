@@ -576,6 +576,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->post('command/v2/topup-inquiry', 'IconcashController@topupInquiryV2');
                 $router->post('command/v2/topup-confirm', 'IconcashController@topupConfirmV2');
                 $router->post('command/topup-deposit', 'IconcashController@topupDeposit');
+                $router->post('command/topup-deposit/check-fee', 'IconcashController@checkFeeTopupDeposit');
+                $router->post('command/topup-deposit/confirm', 'IconcashController@confirmTopupDeposit');
             });
         });
     });

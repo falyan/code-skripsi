@@ -912,10 +912,6 @@ class IconcashController extends Controller
     {
         $iconcash = Auth::user()->iconcash;
 
-        if (!$pspId = request()->get('pspId')) {
-            return $this->respondWithResult(false, 'field pspId kosong', 400);
-        }
-
         if (!$amount = request()->get('amount')) {
             return $this->respondWithResult(false, 'field amount kosong', 400);
         }
@@ -927,13 +923,72 @@ class IconcashController extends Controller
                 return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
             }
 
-            $response = IconcashManager::topupDeposit($iconcash->token, $amount, $client_ref, $pspId);
+            $response = IconcashManager::topupDeposit($iconcash->token, $amount, $client_ref);
 
             return $this->respondWithData($response, 'success');
         } catch (\Throwable $th) {
             return $th;
         }
+    }
 
+    public function checkFeeTopupDeposit()
+    {
+        $iconcash = Auth::user()->iconcash;
+
+        if (!$order_id = request()->get('order_id')) {
+            return $this->respondWithResult(false, 'field order_id kosong', 400);
+        }
+
+        if (!$psp_id = request()->get('psp_id')) {
+            return $this->respondWithResult(false, 'field psp_id kosong', 400);
+        }
+
+        if (!$amount = request()->get('amount')) {
+            return $this->respondWithResult(false, 'field amount kosong', 400);
+        }
+
+        try {
+
+            if (!isset($iconcash->token)) {
+                return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
+            }
+
+            $response = IconcashManager::checkFeeTopupDeposit($iconcash->token, $order_id, $psp_id, $amount);
+
+            return $this->respondWithData($response, 'success');
+        } catch (\Throwable $th) {
+            return $th;
+        }
+    }
+
+    public function confirmTopupDeposit()
+    {
+        $iconcash = Auth::user()->iconcash;
+
+        if (!$order_id = request()->get('order_id')) {
+            return $this->respondWithResult(false, 'field order_id kosong', 400);
+        }
+
+        if (!$psp_id = request()->get('psp_id')) {
+            return $this->respondWithResult(false, 'field psp_id kosong', 400);
+        }
+
+        if (!$amount = request()->get('amount')) {
+            return $this->respondWithResult(false, 'field amount kosong', 400);
+        }
+
+        try {
+
+            if (!isset($iconcash->token)) {
+                return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
+            }
+
+            $response = IconcashManager::confirmTopupDeposit($iconcash->token, $order_id, $psp_id, $amount);
+
+            return $this->respondWithData($response, 'success');
+        } catch (\Throwable $th) {
+            return $th;
+        }
     }
 
     // End of Agent Iconcash Services
