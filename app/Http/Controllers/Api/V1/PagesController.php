@@ -6,10 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Services\Pages\PagesCommands;
 use App\Http\Services\Pages\PagesQueries;
 use Exception;
-use Illuminate\Support\Facades\Validator;
 
 class PagesController extends Controller
 {
+    protected $pagesQueries, $pagesCommands;
+
     public function __construct()
     {
         $this->pagesQueries = new PagesQueries();
@@ -47,6 +48,24 @@ class PagesController extends Controller
     {
         try {
             return $this->pagesQueries->privacyPolicyPage();
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function termConditionAgent()
+    {
+        try {
+            return $this->pagesQueries->termConditionAgentPage();
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function privacyPolicyAgent()
+    {
+        try {
+            return $this->pagesQueries->privacyPolicyAgentPage();
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

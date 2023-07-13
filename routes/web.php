@@ -489,6 +489,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->post('iconpay/confirm/iconnet', 'MerchantAgentController@confirmOrderIconnet');
         });
 
+        $router->group(['prefix' => 'pages'], static function () use ($router) {
+            $router->get('term-condition', 'PagesController@termConditionAgent');
+            $router->get('privacy-policy', 'PagesController@privacyPolicyAgent');
+        });
+
         $router->group(['prefix' => 'query'], static function () use ($router) {
             $router->get('master/sbu', 'AgentMasterDataController@getAgentSbu');
             $router->get('master/mitra', 'AgentMasterDataController@getAgentMitra');
