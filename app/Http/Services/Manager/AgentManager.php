@@ -29,6 +29,7 @@ class AgentManager
     static $client_id;
     static $client_secret;
     static $channel_id;
+    static $iconnet_channel_id;
     static $timestamp;
     static $radagast_endpoint;
     static $radagast_agregator;
@@ -43,6 +44,7 @@ class AgentManager
         self::$client_id = config('credentials.agent.v3.client_id');
         self::$client_secret = config('credentials.agent.v3.client_secret');
         self::$channel_id = config('credentials.agent.v3.channel_id');
+        self::$iconnet_channel_id = config('credentials.agent.v3.iconnet_channel_id');
         // self::$timestamp = self::$now->format('Y-m-d') . 'T' . self::$now->format('H:i:s.u');
         //get 3 digit milisecond
         $milisecond = substr((string) self::$now->format('u'), 0, 3);
@@ -253,7 +255,7 @@ class AgentManager
         $url = sprintf('%s/%s', self::$endpointv3, 'iconnet/inquiry' . $params);
         $body = [
             'customer_id' => data_get($request, 'customer_id'),
-            'channel_id' => self::$channel_id,
+            'channel_id' => self::$iconnet_channel_id,
             'product_id' => 'ICONNET',
         ];
 
