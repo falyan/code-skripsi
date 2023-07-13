@@ -19,9 +19,13 @@ class IconcashManager
     static $topupClientId;
     static $topupApiEndpoint;
     static $topupSecretKey;
+    static $topupDepositClientId;
+    static $topupDepositApiEndpoint;
+    static $topupDepositSecretKey;
     static $topupNote = 'Marketplace';
     static $appIdTopup = 'marketplace_agent';
     static $headerAgentTopup;
+    static $headerTopupDeposit;
     static $keyTopup;
 
     static $partner_id;
@@ -39,6 +43,10 @@ class IconcashManager
         self::$topupApiEndpoint = config('credentials.iconcash_topup.endpoint');
         self::$topupClientId = config('credentials.iconcash_topup.client_id');
         self::$topupSecretKey = config('credentials.iconcash_topup.secret_key');
+
+        self::$topupDepositApiEndpoint = config('credentials.iconcash_topup_deposit.endpoint');
+        self::$topupDepositClientId = config('credentials.iconcash_topup_deposit.client_id');
+        self::$topupDepositSecretKey = config('credentials.iconcash_topup_deposit.secret_key');
 
         self::$partner_id = config('credentials.agent.v3.partner_id');
         self::$channel_id = config('credentials.agent.v3.channel_id');
@@ -60,6 +68,19 @@ class IconcashManager
             'timestamp' => $timestamp_topup,
             'signature' => hash_hmac('sha256', self::$topupClientId . $timestamp_topup, self::$topupSecretKey),
             'app_source' => 'marketplace',
+        ];
+
+        self::$headerTopup = [
+            'clientId' => self::$topupClientId,
+            'timestamp' => $timestamp_topup,
+            'signature' => hash_hmac('sha256', self::$topupClientId . $timestamp_topup, self::$topupSecretKey),
+            'app_source' => 'marketplace',
+        ];
+
+        self::$headerTopupDeposit = [
+            'clientId' => self::$topupDepositClientId,
+            'timestamp' => $timestamp_topup,
+            'signature' => hash_hmac('sha256', self::$topupDepositClientId . $timestamp_topup, self::$topupDepositSecretKey),
         ];
     }
 
@@ -945,6 +966,39 @@ class IconcashManager
         }
 
         return $response;
+    }
+
+    public static function topupDeposit($token, $amount, $clientRef, $pspId)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$topupDepositApiEndpoint, 'api/command/topup/push-order' . $param);
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => array_merge([
+                'Authorization' => 'Bearer ' . $token,
+            ], self::$headerTopupDeposit),
+            'http_errors' => false,
+            'json' => [
+                'amount' => $amount,
+                'clientRef' => $clientRef,
+                'pspId' => $pspId,
+            ],
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        Log::info('topupDeposit', [
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
     }
 
     public static function setParamAPI($data = [])

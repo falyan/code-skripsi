@@ -871,6 +871,34 @@ class IconcashController extends Controller
         }
     }
 
+    public function topupDeposit()
+    {
+        $iconcash = Auth::user()->iconcash;
+
+        if (!$pspId = request()->get('pspId')) {
+            return $this->respondWithResult(false, 'field pspId kosong', 400);
+        }
+
+        if (!$amount = request()->get('amount')) {
+            return $this->respondWithResult(false, 'field amount kosong', 400);
+        }
+
+        try {
+            $client_ref = $this->unique_code($iconcash->token);
+
+            if (!isset($iconcash->token)) {
+                return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
+            }
+
+            $response = IconcashManager::topupDeposit($iconcash->token, $amount, $client_ref, $pspId);
+
+            return $this->respondWithData($response, 'success');
+        } catch (\Throwable $th) {
+            return $th;
+        }
+
+    }
+
     // End of Agent Iconcash Services
 
     public function unique_code($value)
