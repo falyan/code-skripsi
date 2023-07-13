@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Services\Iconcash\IconcashCommands;
+use App\Http\Services\Iconcash\IconcashQueries;
 use App\Http\Services\Manager\IconcashManager;
+use App\Models\AgentMasterPsp;
 use App\Models\IconcashInquiry;
 use App\Models\Order;
 use App\Models\User;
@@ -16,6 +18,12 @@ use Illuminate\Support\Facades\Validator;
 class IconcashController extends Controller
 {
     protected $corporate_id = 10;
+    protected $queries;
+
+    public function __construct()
+    {
+        $this->queries = new IconcashQueries();
+    }
 
     public function activation()
     {
@@ -868,6 +876,35 @@ class IconcashController extends Controller
             return $this->respondWithData($response, 'success');
         } catch (Exception $e) {
             return $this->respondErrorException($e, $request);
+        }
+    }
+
+    public function getGatewayAgentPayment()
+    {
+        try {
+
+            $data = $this->queries->getGatewayAgentPayment();
+
+            return $this->respondWithData($data, 'success');
+
+        } catch (\Throwable $th) {
+            return $th;
+        }
+    }
+
+    public function getGatewayAgentPaymentByCode(Request $request)
+    {
+        try {
+
+            $data = AgentMasterPsp::where([
+                'status' => 1,
+                'code' => $request->code,
+            ])->get();
+
+            return $this->respondWithData($data, 'success');
+
+        } catch (\Throwable $th) {
+            return $th;
         }
     }
 

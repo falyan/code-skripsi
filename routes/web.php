@@ -568,6 +568,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->post('command/order-refund', 'IconcashController@manualOrderRefund');
             $router->post('command/register_plnagent', 'IconcashController@registerDeposit');
             $router->get('query/getva_plnagent', 'IconcashController@getVADeposit');
+            $router->get('query/list-psp', 'IconcashController@getGatewayAgentPayment');
 
             $router->group(['prefix' => 'topup', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('command/topup-confirm', 'IconcashController@topupConfirm');
