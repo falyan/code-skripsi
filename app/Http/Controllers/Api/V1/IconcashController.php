@@ -188,15 +188,28 @@ class IconcashController extends Controller
 
             $response = IconcashManager::getCustomerAllBalance($iconcash->token);
 
-            return $this->respondWithCollection($response, function ($item) {
-                return [
-                    'id' => $item->id,
-                    'name' => $item->name,
-                    'account_type' => $item->accountType,
-                    'account_type_alias_name' => $item->acountTypeAliasName,
-                    'balance' => $item->balance,
+            // return $this->respondWithCollection($response, function ($item) {
+            //     return [
+            //         'id' => $item->id,
+            //         'name' => $item->name,
+            //         'account_type' => $item->accountType,
+            //         'account_type_alias_name' => $item->acountTypeAliasName,
+            //         'balance' => $item->balance,
+            //     ];
+            // });
+
+            $data = [];
+            foreach ($response as $key => $value) {
+                $data[] = [
+                    'id' => $value->id,
+                    'name' => $value->name,
+                    'account_type' => $value->accountType,
+                    'account_type_alias_name' => $value->acountTypeAliasName,
+                    'balance' => $value->balance,
                 ];
-            });
+            }
+
+            return $this->respondWithData($data, 'Berhasil mendapatkan data balance!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
