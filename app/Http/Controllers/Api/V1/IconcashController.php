@@ -991,6 +991,12 @@ class IconcashController extends Controller
             return $this->respondWithResult(false, 'field amount kosong', 400);
         }
 
+        if ($amount < 10000) {
+            $response['success'] = false;
+            $response['message'] = 'Minimal Topup Deposit Rp. 10.000';
+            return $response;
+        }
+
         try {
             $client_ref = $this->unique_code($iconcash->token);
 
