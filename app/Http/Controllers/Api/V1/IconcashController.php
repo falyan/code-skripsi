@@ -1064,12 +1064,13 @@ class IconcashController extends Controller
                 return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
             }
 
-            $pspDesc = AgentMasterPsp::where('code', $psp_id)->first()->description;
+            $psp = AgentMasterPsp::where('code', $psp_id)->first();
 
             $response = IconcashManager::confirmTopupDeposit($iconcash->token, $order_id, $psp_id, $total_amount);
 
             // add new data to response
-            $response->psp_descriptions = json_decode($pspDesc);
+            $response->psp_descriptions = json_decode($psp->description);
+            $response->psp_photo_url = $psp->photo_url;
 
             return $this->respondWithData($response, 'success');
         } catch (Exception $e) {
