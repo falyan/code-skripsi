@@ -389,14 +389,27 @@ class IconcashController extends Controller
             }
 
             $response = IconcashManager::getRefBank($iconcash->token);
-            return $this->respondWithCollection($response, function ($bank) {
-                return [
-                    'id' => $bank->id,
-                    'code' => $bank->code,
-                    'name' => $bank->name,
-                    'va_prefix' => $bank->vaPrefix,
+            // return $this->respondWithCollection($response, function ($bank) {
+            //     return [
+            //         'id' => $bank->id,
+            //         'code' => $bank->code,
+            //         'name' => $bank->name,
+            //         'va_prefix' => $bank->vaPrefix,
+            //     ];
+            // });
+
+            // change to new format
+            $data = [];
+            foreach ($response as $key => $value) {
+                $data[] = [
+                    'id' => $value->id,
+                    'code' => $value->code,
+                    'name' => $value->name,
+                    'va_prefix' => $value->vaPrefix,
                 ];
-            });
+            }
+
+            return $this->respondWithData($data, 'Berhasil mendapatkan data bank!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -448,15 +461,29 @@ class IconcashController extends Controller
 
             $response = IconcashManager::searchCustomerBank($iconcash->token, $query);
 
-            return $this->respondWithCollection(data_get($response, 'content'), function ($bank) {
-                return [
-                    'id' => $bank->id,
-                    'bank' => $bank->bank,
-                    'account_name' => $bank->accountName,
-                    'account_number' => $bank->accountNumber,
-                    'customer_name' => $bank->customerName,
+            // return $this->respondWithCollection(data_get($response, 'content'), function ($bank) {
+            //     return [
+            //         'id' => $bank->id,
+            //         'bank' => $bank->bank,
+            //         'account_name' => $bank->accountName,
+            //         'account_number' => $bank->accountNumber,
+            //         'customer_name' => $bank->customerName,
+            //     ];
+            // });
+
+            // change to new format
+            $data = [];
+            foreach ($response as $key => $value) {
+                $data[] = [
+                    'id' => $value->id,
+                    'bank' => $value->bank,
+                    'account_name' => $value->accountName,
+                    'account_number' => $value->accountNumber,
+                    'customer_name' => $value->customerName,
                 ];
-            });
+            }
+
+            return $this->respondWithData($data, 'Berhasil mendapatkan data customer bank!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -632,36 +659,71 @@ class IconcashController extends Controller
             }
 
             $response = IconcashManager::historySaldo($iconcash->token, $account_type_id);
-            return $this->respondWithCollection($response, function ($item) {
-                $order_id = IconcashInquiry::select('order_id')->where('client_ref', $item->clientRef)->get()->toArray();
+            // return $this->respondWithCollection($response, function ($item) {
+            //     $order_id = IconcashInquiry::select('order_id')->where('client_ref', $item->clientRef)->get()->toArray();
+            //     if (count($order_id)) {
+            //         $order_id = $order_id[0]['order_id'];
+            //         $order = Order::with('delivery', 'detail', 'detail.product', 'detail.product.product_photo', 'buyer', 'payment')->find($order_id)->toArray();
+            //     } else {
+            //         $order = null;
+            //     }
+            //     return [
+            //         'order_id' => $item->orderId,
+            //         'client_ref' => $item->clientRef,
+            //         'status' => $item->status,
+            //         'transaction_type_name' => $item->transactionTypeName,
+            //         'source_account_name' => $item->sourceAccountName,
+            //         'receiver_account_name' => $item->receiverAccountName,
+            //         'receiver_account_type' => $item->receiverAccountType,
+            //         'corporate_name' => $item->corporateName,
+            //         'amount' => $item->amount,
+            //         'fee' => $item->fee,
+            //         'amount_fee' => $item->amountFee,
+            //         'transaction_date' => $item->transactionDate,
+            //         'description' => $item->description,
+            //         'beneficiary_account' => $item->beneficiaryAccount,
+            //         'beneficiary_name' => $item->beneficiaryName,
+            //         'bank_name' => $item->bankName,
+            //         'remarks' => $item->remarks,
+            //         'additional_info' => $item->additionalInfo,
+            //         'order' => $order,
+            //     ];
+            // });
+
+            // change to new format response
+            $data = [];
+            foreach ($response as $key => $value) {
+                $order_id = IconcashInquiry::select('order_id')->where('client_ref', $value->clientRef)->get()->toArray();
                 if (count($order_id)) {
                     $order_id = $order_id[0]['order_id'];
                     $order = Order::with('delivery', 'detail', 'detail.product', 'detail.product.product_photo', 'buyer', 'payment')->find($order_id)->toArray();
                 } else {
                     $order = null;
                 }
-                return [
-                    'order_id' => $item->orderId,
-                    'client_ref' => $item->clientRef,
-                    'status' => $item->status,
-                    'transaction_type_name' => $item->transactionTypeName,
-                    'source_account_name' => $item->sourceAccountName,
-                    'receiver_account_name' => $item->receiverAccountName,
-                    'receiver_account_type' => $item->receiverAccountType,
-                    'corporate_name' => $item->corporateName,
-                    'amount' => $item->amount,
-                    'fee' => $item->fee,
-                    'amount_fee' => $item->amountFee,
-                    'transaction_date' => $item->transactionDate,
-                    'description' => $item->description,
-                    'beneficiary_account' => $item->beneficiaryAccount,
-                    'beneficiary_name' => $item->beneficiaryName,
-                    'bank_name' => $item->bankName,
-                    'remarks' => $item->remarks,
-                    'additional_info' => $item->additionalInfo,
+                $data[] = [
+                    'order_id' => $value->orderId,
+                    'client_ref' => $value->clientRef,
+                    'status' => $value->status,
+                    'transaction_type_name' => $value->transactionTypeName,
+                    'source_account_name' => $value->sourceAccountName,
+                    'receiver_account_name' => $value->receiverAccountName,
+                    'receiver_account_type' => $value->receiverAccountType,
+                    'corporate_name' => $value->corporateName,
+                    'amount' => $value->amount,
+                    'fee' => $value->fee,
+                    'amount_fee' => $value->amountFee,
+                    'transaction_date' => $value->transactionDate,
+                    'description' => $value->description,
+                    'beneficiary_account' => $value->beneficiaryAccount,
+                    'beneficiary_name' => $value->beneficiaryName,
+                    'bank_name' => $value->bankName,
+                    'remarks' => $value->remarks,
+                    'additional_info' => $value->additionalInfo,
                     'order' => $order,
                 ];
-            });
+            }
+
+            return $this->respondWithData($data, 'Berhasil mendapatkan data history saldo pendapatan!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -956,7 +1018,7 @@ class IconcashController extends Controller
             return $this->respondWithResult(false, 'field psp_id kosong', 400);
         }
 
-        if (!$amount = request()->get('amount')) {
+        if (!$total_amount = request()->get('total_amount')) {
             return $this->respondWithResult(false, 'field amount kosong', 400);
         }
 
@@ -966,7 +1028,7 @@ class IconcashController extends Controller
                 return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
             }
 
-            $response = IconcashManager::checkFeeTopupDeposit($iconcash->token, $order_id, $psp_id, $amount);
+            $response = IconcashManager::checkFeeTopupDeposit($iconcash->token, $order_id, $psp_id, $total_amount);
 
             return $this->respondWithData($response, 'success');
         } catch (\Throwable $th) {
@@ -986,7 +1048,7 @@ class IconcashController extends Controller
             return $this->respondWithResult(false, 'field psp_id kosong', 400);
         }
 
-        if (!$amount = request()->get('amount')) {
+        if (!$total_amount = request()->get('total_amount')) {
             return $this->respondWithResult(false, 'field amount kosong', 400);
         }
 
@@ -996,7 +1058,7 @@ class IconcashController extends Controller
                 return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
             }
 
-            $response = IconcashManager::confirmTopupDeposit($iconcash->token, $order_id, $psp_id, $amount);
+            $response = IconcashManager::confirmTopupDeposit($iconcash->token, $order_id, $psp_id, $total_amount);
 
             return $this->respondWithData($response, 'success');
         } catch (\Throwable $th) {

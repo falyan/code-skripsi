@@ -1000,7 +1000,7 @@ class IconcashManager
         return data_get($response, 'data');
     }
 
-    public static function checkFeeTopupDeposit($token, $orderId, $pspId, $amount)
+    public static function checkFeeTopupDeposit($token, $orderId, $pspId, $totalAmount)
     {
         $param = self::setParamAPI([]);
 
@@ -1016,7 +1016,7 @@ class IconcashManager
                 'paymentMethods' => [
                     [
                         'pspId' => $pspId,
-                        'amount' => $amount,
+                        'totalAmount' => $totalAmount,
                     ],
                 ],
             ],
@@ -1037,7 +1037,7 @@ class IconcashManager
         return data_get($response, 'data');
     }
 
-    public static function confirmTopupDeposit($token, $orderId, $pspId, $amount)
+    public static function confirmTopupDeposit($token, $orderId, $pspId, $totalAmount)
     {
         $param = self::setParamAPI([]);
 
@@ -1050,12 +1050,8 @@ class IconcashManager
             'http_errors' => false,
             'json' => [
                 'orderId' => $orderId,
-                'paymentMethods' => [
-                    [
-                        'pspId' => $pspId,
-                        'amount' => $amount,
-                    ],
-                ],
+                'pspId' => $pspId,
+                'totalAmount' => $totalAmount,
             ],
         ]);
 
