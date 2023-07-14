@@ -962,8 +962,8 @@ class IconcashController extends Controller
 
             return $this->respondWithData($data, 'success');
 
-        } catch (\Throwable $th) {
-            return $th;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -1001,8 +1001,8 @@ class IconcashController extends Controller
             $response = IconcashManager::topupDeposit($iconcash->token, $amount, $client_ref);
 
             return $this->respondWithData($response, 'success');
-        } catch (\Throwable $th) {
-            return $th;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -1031,8 +1031,8 @@ class IconcashController extends Controller
             $response = IconcashManager::checkFeeTopupDeposit($iconcash->token, $order_id, $psp_id, $total_amount);
 
             return $this->respondWithData($response, 'success');
-        } catch (\Throwable $th) {
-            return $th;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
@@ -1058,11 +1058,16 @@ class IconcashController extends Controller
                 return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
             }
 
+            $pspDesc = AgentMasterPsp::where('code', $psp_id)->first()->description;
+
             $response = IconcashManager::confirmTopupDeposit($iconcash->token, $order_id, $psp_id, $total_amount);
 
+            // add new data to response
+            $response->psp_descriptions = json_decode($pspDesc);
+
             return $this->respondWithData($response, 'success');
-        } catch (\Throwable $th) {
-            return $th;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
         }
     }
 
