@@ -77,7 +77,6 @@ class AgentCommands extends Service
                 'latitude' => data_get($request, 'latitude') ?? $merchant->latitude,
                 'longitude' => data_get($request, 'longitude') ?? $merchant->longitude,
                 'mitra_id' => data_get($request, 'mitra_id') ?? $merchant->mitra_id,
-                'sbu_icon_id' => data_get($request, 'sbu_icon_id') ?? $merchant->sbu_icon_id,
             ]);
 
             DB::commit();

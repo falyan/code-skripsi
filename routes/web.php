@@ -475,11 +475,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->group(['prefix' => 'token'], static function () use ($router) {
                     $router->get('list', 'AgentMasterDataController@getListTokenListrik');
                 });
-
-                $router->group(['prefix' => 'master'], static function () use ($router) {
-                    $router->get('sbu', 'AgentMasterDataController@getAgentSbu');
-                    $router->get('mitra', 'AgentMasterDataController@getAgentMitra');
-                });
             });
 
             // ======= Confirm Payment for Iconpay Agent ========
@@ -495,7 +490,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         });
 
         $router->group(['prefix' => 'query'], static function () use ($router) {
-            $router->get('master/sbu', 'AgentMasterDataController@getAgentSbu');
             $router->get('master/mitra', 'AgentMasterDataController@getAgentMitra');
         });
     });

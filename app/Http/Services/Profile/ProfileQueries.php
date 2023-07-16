@@ -25,7 +25,7 @@ class ProfileQueries extends Service
             if (empty(Auth::user()->merchant_id)) {
                 return null;
             }
-            $data = Merchant::with(['operationals', 'mitra', 'sbu'])->find(Auth::user()->merchant_id);
+            $data = Merchant::with(['operationals', 'mitra'])->find(Auth::user()->merchant_id);
             $haveSetupMerchant = count($data->operationals) > 0 ? true : false;
             $data = $data->makeHidden('operationals')->toArray();
             $data['haveSetupMerchant'] = $haveSetupMerchant;

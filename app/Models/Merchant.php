@@ -194,9 +194,4 @@ class Merchant extends Model
     {
         return $this->belongsTo(AgentMasterMitra::class);
     }
-
-    public function sbu()
-    {
-        return $this->belongsTo(AgentMasterSbu::class);
-    }
 }

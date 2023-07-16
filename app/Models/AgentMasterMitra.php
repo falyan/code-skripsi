@@ -12,11 +12,6 @@ class AgentMasterMitra extends Model
     protected $table = 'mst_mitra';
     protected $guarded = ['id'];
 
-    public function sbu()
-    {
-        return $this->belongsTo(AgentMasterSbu::class, 'sbu_id', 'id');
-    }
-
     public function merchants()
     {
         return $this->hasMany(Merchant::class, 'mitra_id', 'id');

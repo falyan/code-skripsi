@@ -33,17 +33,6 @@ class AgentMasterDataController extends Controller
         }
     }
 
-    public function getAgentSbu()
-    {
-        try {
-            $agent_sbu = $this->queries->getAgentSbu();
-
-            return $this->respondWithData($agent_sbu, 'success');
-        } catch (Exception $e) {
-            return $this->respondErrorException($e, request());
-        }
-    }
-
     public function getAgentMitra()
     {
         try {
