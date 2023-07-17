@@ -361,7 +361,7 @@ class IconcashManager
         //     throw new Exception($response->message, $response->code);
         // }
 
-        return $response;
+        return data_get($response, 'data');
     }
 
     public static function getRefBank($token)

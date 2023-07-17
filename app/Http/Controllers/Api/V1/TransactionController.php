@@ -1259,15 +1259,19 @@ class TransactionController extends Controller
                     $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
                     $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
+                    $confirm_status = false;
+                    $topup_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
+
                     if (!empty($resConfrim) || !is_null($resConfrim)) {
-                        $topup_inquiry = IconcashInquiry::where('iconcash_order_id', $resConfrim->orderId)->first();
-                        $topup_inquiry->confirm_res_json = json_encode($resConfrim->data);
-                        $topup_inquiry->confirm_status = $resConfrim->status;
-                        $topup_inquiry->save();
+                        $confirm_status = true;
+                        $topup_inquiry->confirm_res_json = json_encode($resConfrim);
                     }
 
-                $notificationCommand = new NotificationCommands();
-                $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
+                    $topup_inquiry->confirm_status = $confirm_status;
+                    $topup_inquiry->save();
+
+                    $notificationCommand = new NotificationCommands();
+                    $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
 
                 $customer = Customer::where('merchant_id', $data->merchant_id)->first();
                 $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
