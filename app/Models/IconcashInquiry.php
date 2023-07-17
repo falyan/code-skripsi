@@ -84,7 +84,7 @@ class IconcashInquiry extends Model
         }
     }
 
-    public static  function createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order = null)
+    public static function createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order)
     {
         $model = new self;
 
@@ -105,6 +105,8 @@ class IconcashInquiry extends Model
         $resConfrim = IconcashManager::topupConfirm($response->orderId, $response->amount);
 
         if ($resConfrim) {
+            $model = new self;
+            $model = $model->where('iconcash_order_id', $response->orderId)->first();
             $model->confirm_res_json = json_encode($resConfrim->data);
             $model->confirm_status = $resConfrim->success;
             $model->save();
