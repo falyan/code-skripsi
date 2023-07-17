@@ -1256,19 +1256,7 @@ class TransactionController extends Controller
                 $corporate_id = 10;
 
                 if ($order->payment->payment_method != 'bni-fleksi' || $order->payment->payment_method != 'adira') {
-                    $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
-                    $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
-
-                    $confirm_status = false;
-                    $topup_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
-
-                    if (!empty($resConfrim) || !is_null($resConfrim)) {
-                        $confirm_status = true;
-                        $topup_inquiry->confirm_res_json = json_encode($resConfrim);
-                    }
-
-                    $topup_inquiry->confirm_status = $confirm_status;
-                    $topup_inquiry->save();
+                    IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
 
                     $notificationCommand = new NotificationCommands();
                     $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
