@@ -22,7 +22,7 @@ class TransactionQueries extends Service
 {
     public function getTransaction($column_name, $column_value, $limit = 10, $filter = [], $page = 1)
     {
-        $data = Order::with([
+        $order = Order::with([
             'detail' => function ($product) {
                 $product->with(['product' => function ($j) {
                     $j->with(['product_photo']);
@@ -36,8 +36,8 @@ class TransactionQueries extends Service
             });
         })->orderBy('created_at', 'desc');
 
-        $data = $this->filter($data, $filter);
-        $data = $data->get();
+        $order = $this->filter($order, $filter);
+        $order = $order->get();
 
         $data = $order->map(function ($item) {
             $item->detail->each(function ($product) {
@@ -48,6 +48,11 @@ class TransactionQueries extends Service
                     $product->product = $product_data;
                 }
             });
+
+            return $item;
+        });
+
+        $data = static::paginate($order->toArray(), $limit, $page);
 
         return $data;
     }
