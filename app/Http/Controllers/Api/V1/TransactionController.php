@@ -1260,9 +1260,9 @@ class TransactionController extends Controller
                     $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
                     if (!empty($resConfrim) || !is_null($resConfrim)) {
-                        $topup_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry['orderId'])->first();
-                        $topup_inquiry->confirm_res_json = json_encode($resConfrim['data']);
-                        $topup_inquiry->confirm_status = $resConfrim['status'];
+                        $topup_inquiry = IconcashInquiry::where('iconcash_order_id', data_get($resConfrim, 'orderId'))->first();
+                        $topup_inquiry->confirm_res_json = json_encode(data_get($resConfrim, 'data'));
+                        $topup_inquiry->confirm_status = data_get($resConfrim, 'status');
                         $topup_inquiry->save();
                     }
 
