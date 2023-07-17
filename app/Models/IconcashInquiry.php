@@ -104,14 +104,11 @@ class IconcashInquiry extends Model
 
         $resConfrim = IconcashManager::topupConfirm($response->orderId, $response->amount);
 
-        $confirm_status = false;
         if ($resConfrim) {
-            $confirm_status = true;
-            $model->confirm_res_json = json_encode($resConfrim);
+            $model->confirm_res_json = json_encode($resConfrim->data);
+            $model->confirm_status = $resConfrim->status;
+            $model->save();
         }
-
-        $model->confirm_status = $confirm_status;
-        $model->save();
 
         return $resConfrim;
     }
