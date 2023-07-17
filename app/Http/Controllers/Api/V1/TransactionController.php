@@ -1255,11 +1255,10 @@ class TransactionController extends Controller
                 $client_ref = $this->unique_code($iconcash->token);
                 $corporate_id = 10;
 
-                if ($order->payment->payment_method != 'bni-fleksi' || $order->payment->payment_method != 'adira') {
-                    IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
+                IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
 
-                    $notificationCommand = new NotificationCommands();
-                    $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
+                $notificationCommand = new NotificationCommands();
+                $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
 
                 $customer = Customer::where('merchant_id', $data->merchant_id)->first();
                 $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
