@@ -106,7 +106,7 @@ class IconcashInquiry extends Model
 
         if ($resConfrim) {
             $model->confirm_res_json = json_encode($resConfrim->data);
-            $model->confirm_status = $resConfrim->status;
+            $model->confirm_status = $resConfrim->success;
             $model->save();
         }
 
