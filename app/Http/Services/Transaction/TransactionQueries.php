@@ -27,7 +27,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log', 'review' => function ($r) {
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
                 $r->with(['review_photo'])->where('status', 1);
             },
         ])->where($column_name, $column_value)->when($column_name == 'merchant_id', function ($query) {
@@ -66,7 +66,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($p) {
                     $p->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'ev_subsidy', 'order_detail_log', 'review' => function ($r) {
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'ev_subsidy', 'review' => function ($r) {
                 $r->with(['review_photo'])->where('status', 1);
             },
         ])
@@ -125,7 +125,7 @@ class TransactionQueries extends Service
                         $product->with(['product' => function ($j) {
                             $j->with(['product_photo']);
                         }]);
-                    }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log', 'review' => function ($r) {
+                    }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
                         $r->with(['review_photo']);
                     },
                 ])->where($column_name, $column_value)
@@ -156,7 +156,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->select('id', 'merchant_id', 'name')->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log',
+            }, 'progress_active', 'merchant', 'delivery', 'buyer',
         ])->where(
             $column_name, $column_value,
         )->whereHas('progress_active', function ($j) use ($status_code) {
@@ -206,7 +206,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->select('id', 'merchant_id', 'name')->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log',
+            }, 'progress_active', 'merchant', 'delivery', 'buyer',
         ])->where(
             $column_name,
             $column_value,
@@ -230,7 +230,7 @@ class TransactionQueries extends Service
                 $product->with(['product', function ($j) {
                     $j->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log', 'review' => function ($r) {
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
                 $r->with(['review_photo']);
             },
         ])->where([
@@ -281,7 +281,7 @@ class TransactionQueries extends Service
             'promo_log_orders' => function ($promo) {
                 $promo->with(['promo_merchant.promo_master']);
             },
-            'order_detail_log',
+    ,
         ])->find($id);
 
         $details = $data->detail;
@@ -312,7 +312,6 @@ class TransactionQueries extends Service
         }
 
         unset($data->promo_log_orders);
-        // unset($data->order_detail_log);
 
         $data->detail = $details;
 
@@ -328,7 +327,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log',
+            }, 'progress_active', 'merchant', 'delivery', 'buyer',
         ])->where('order.' . $column_name, $column_value)
             ->where(function ($q) use ($keyword, $column_name) {
                 $q
@@ -354,7 +353,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log',
+            }, 'progress_active', 'merchant', 'delivery', 'buyer',
         ])->where('order.' . $column_name, $column_value)
             ->where(function ($q) use ($keyword, $column_name) {
                 $q
@@ -1343,7 +1342,7 @@ class TransactionQueries extends Service
 
     public function getTransactionByReference($no_reference)
     {
-        $orders = Order::with(['detail', 'promo_log_orders', 'progress_active', 'order_detail_log'])->where('no_reference', $no_reference)->get();
+        $orders = Order::with(['detail', 'promo_log_orders', 'progress_active'])->where('no_reference', $no_reference)->get();
         return $orders;
     }
 

@@ -870,7 +870,7 @@ class TransactionCommands extends Service
             DB::commit();
 
             // $product_name = OrderDetail::with('product')->where('order_id', $this->order_id)->first()->product->name;
-            // Get product name from product_data json order_detail_log
+
             $product_name = json_decode(OrderDetail::where('order_id', $this->order_id)->first()->product_data)->name;
             //add order id to response
             $response->order_id = $this->order_id;
