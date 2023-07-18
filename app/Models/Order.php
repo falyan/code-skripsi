@@ -84,9 +84,4 @@ class Order extends Model
     {
         return $this->hasOne(CustomerTiket::class, 'order_id');
     }
-
-    public function order_detail_log()
-    {
-        return $this->hasMany(OrderDetailLog::class);
-    }
 }

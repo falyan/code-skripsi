@@ -18,14 +18,12 @@ use App\Models\MdrMerchant;
 use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\OrderDetail;
-use App\Models\OrderDetailLog;
 use App\Models\OrderPayment;
 use App\Models\OrderProgress;
 use App\Models\Product;
 use App\Models\PromoLog;
 use App\Models\PromoMaster;
 use App\Models\PromoMerchant;
-use App\Models\VariantValueProduct;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
@@ -1947,22 +1945,6 @@ class TransactionCommands extends Service
                     }
                 }
                 // End hitung mdr
-
-                $order_detail_logs = [];
-                foreach (data_get($data, 'products') as $product) {
-                    if (data_get($product, 'variant_value_product_id') != null) {
-                        $product_variant_value = VariantValueProduct::where('id', data_get($product, 'variant_value_product_id'))->first();
-                    }
-
-                    $order_detail_logs[] = [
-                        'order_id' => $order->id,
-                        'product_data' => json_encode(array_merge($product, ['product_variant' => $product_variant_value ?? null])),
-                        'product_mdr_value' => $mdr_total,
-                        'created_at' => Carbon::now(),
-                    ];
-                }
-
-                OrderDetailLog::insert($order_detail_logs);
 
                 $order_delivery = new OrderDelivery();
                 $order_delivery->order_id = $order->id;
