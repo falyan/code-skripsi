@@ -277,11 +277,9 @@ class TransactionQueries extends Service
                 $region->with(['city', 'district']);
             }, 'buyer', 'ev_subsidy', 'payment', 'review' => function ($review) {
                 $review->with(['review_photo']);
-            },
-            'promo_log_orders' => function ($promo) {
+            }, 'promo_log_orders' => function ($promo) {
                 $promo->with(['promo_merchant.promo_master']);
             },
-    ,
         ])->find($id);
 
         $details = $data->detail;
