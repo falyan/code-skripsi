@@ -5,7 +5,6 @@ namespace App\Http\Services\Transaction;
 use App\Http\Services\Service;
 use App\Models\City;
 use App\Models\CustomerDiscount;
-use App\Models\CustomerTiket;
 use App\Models\DeliveryDiscount;
 use App\Models\MasterData;
 use App\Models\MasterTiket;
@@ -23,12 +22,12 @@ class TransactionQueries extends Service
 {
     public function getTransaction($column_name, $column_value, $limit = 10, $filter = [], $page = 1)
     {
-        $data = Order::with([
+        $order = Order::with([
             'detail' => function ($product) {
                 $product->with(['product' => function ($j) {
                     $j->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log', 'review' => function ($r) {
                 $r->with(['review_photo'])->where('status', 1);
             },
         ])->where($column_name, $column_value)->when($column_name == 'merchant_id', function ($query) {
@@ -37,10 +36,23 @@ class TransactionQueries extends Service
             });
         })->orderBy('created_at', 'desc');
 
-        $data = $this->filter($data, $filter);
-        $data = $data->get();
+        $order = $this->filter($order, $filter);
+        $order = $order->get();
 
-        $data = static::paginate($data->toArray(), $limit, $page);
+        $data = $order->map(function ($item) {
+            $item->detail->each(function ($product) {
+                if ($product->product_data != null && isset($product->product_data)) {
+                    unset($product->product);
+                    $product_data = json_decode($product->product_data);
+
+                    $product->product = $product_data;
+                }
+            });
+
+            return $item;
+        });
+
+        $data = static::paginate($order->toArray(), $limit, $page);
 
         return $data;
     }
@@ -51,10 +63,10 @@ class TransactionQueries extends Service
 
         $order = Order::with([
             'detail' => function ($product) {
-                $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
+                $product->with(['product' => function ($p) {
+                    $p->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'ev_subsidy', 'review' => function ($r) {
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'ev_subsidy', 'order_detail_log', 'review' => function ($r) {
                 $r->with(['review_photo'])->where('status', 1);
             },
         ])
@@ -70,9 +82,24 @@ class TransactionQueries extends Service
             ->orderBy('created_at', 'desc');
 
         $order = $this->filter($order, $filter);
-        $order = collect($order->paginate($limit));
+        $order = $order->get();
 
-        return $order;
+        $data = $order->map(function ($item) {
+            $item->detail->each(function ($product) {
+                if ($product->product_data != null) {
+                    unset($product->product);
+                    $product_data = json_decode($product->product_data);
+
+                    $product->product = $product_data;
+                }
+            });
+
+            return $item;
+        });
+
+        $data = static::paginate($order->toArray(), $limit, $page);
+
+        return $data;
     }
 
     public function getTransactionByCategoryKey($column_name, $column_value, $category_key, $limit = 3, $filter = [], $page = 1)
@@ -98,7 +125,7 @@ class TransactionQueries extends Service
                         $product->with(['product' => function ($j) {
                             $j->with(['product_photo']);
                         }]);
-                    }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
+                    }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log', 'review' => function ($r) {
                         $r->with(['review_photo']);
                     },
                 ])->where($column_name, $column_value)
@@ -127,14 +154,20 @@ class TransactionQueries extends Service
         $data = Order::with([
             'detail' => function ($product) {
                 $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
+                    $j->select('id', 'merchant_id', 'name')->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer',
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log',
         ])->where(
             $column_name, $column_value,
         )->whereHas('progress_active', function ($j) use ($status_code) {
-            if (count($status_code) > 1) $j->whereIn('status_code', $status_code);
-            if (count($status_code) == 1) $j->where('status_code', $status_code[0]);
+            if (count($status_code) > 1) {
+                $j->whereIn('status_code', $status_code);
+            }
+
+            if (count($status_code) == 1) {
+                $j->where('status_code', $status_code[0]);
+            }
+
         })
             ->when($column_name == 'merchant_id', function ($query) {
                 $query->whereHas('progress_active', function ($q) {
@@ -146,6 +179,19 @@ class TransactionQueries extends Service
 
         $data = $this->filter($data, $filter);
         $data = $data->get();
+
+        $data = $data->map(function ($item) {
+            $item->detail->each(function ($product) {
+                if ($product->product_data != null && isset($product->product_data)) {
+                    unset($product->product);
+                    $product_data = json_decode($product->product_data);
+
+                    $product->product = $product_data;
+                }
+            });
+
+            return $item;
+        });
 
         $data = static::paginate($data->toArray(), $limit, $page);
 
@@ -160,7 +206,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->select('id', 'merchant_id', 'name')->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer',
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log',
         ])->where(
             $column_name,
             $column_value,
@@ -181,10 +227,10 @@ class TransactionQueries extends Service
     {
         $data = Order::with([
             'detail' => function ($product) {
-                $product->with(['product' => function ($j) {
+                $product->with(['product', function ($j) {
                     $j->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log', 'review' => function ($r) {
                 $r->with(['review_photo']);
             },
         ])->where([
@@ -200,6 +246,19 @@ class TransactionQueries extends Service
         $data = $this->filter($data, $filter);
         $data = $data->get();
 
+        $data = $data->map(function ($item) {
+            $item->detail->each(function ($product) {
+                if ($product->product_data != null) {
+                    unset($product->product);
+                    $product_data = json_decode($product->product_data);
+
+                    $product->product = $product_data;
+                }
+            });
+
+            return $item;
+        });
+
         $data = static::paginate($data->toArray(), $limit, $page);
 
         return $data;
@@ -210,7 +269,7 @@ class TransactionQueries extends Service
         $data = Order::with([
             'detail' => function ($product) {
                 $product->with(['product' => function ($j) {
-                    $j->with(['product_photo', 'ev_subsidy']);
+                    $j->with('ev_subsidy');
                 }, 'variant_value_product']);
             }, 'progress', 'merchant' => function ($merchant) {
                 $merchant->with(['province', 'city', 'district']);
@@ -219,9 +278,26 @@ class TransactionQueries extends Service
             }, 'buyer', 'ev_subsidy', 'payment', 'review' => function ($review) {
                 $review->with(['review_photo']);
             },
+            'promo_log_orders' => function ($promo) {
+                $promo->with(['promo_merchant.promo_master']);
+            },
+            'order_detail_log',
         ])->find($id);
 
         $details = $data->detail;
+
+        foreach ($details as $key => $detail) {
+            $product_data = json_decode($detail->product_data);
+
+            $detail->product->name = $product_data->name ?? $detail->product->name;
+            $detail->product->product_photo = $product_data->product_photo ?? $detail->product->product_photo;
+            $detail->product->price = $product_data->price ?? $detail->product->price;
+            $detail->product->strike_price = $product_data->strike_price ?? $detail->product->strike_price;
+            $detail->product->condition = $product_data->condititon ?? $detail->product->condition;
+            $detail->product->description = $product_data->description ?? $detail->product->description;
+            $details[$key] = $detail;
+        }
+
         foreach ($data->promo_log_orders as $promo_log_order) {
             if ($promo_log_order->promo_merchant->promo_master->event_type == 'ongkir') {
                 $data->delivery->is_shipping_discount = true;
@@ -236,6 +312,8 @@ class TransactionQueries extends Service
         }
 
         unset($data->promo_log_orders);
+        // unset($data->order_detail_log);
+
         $data->detail = $details;
 
         $data->iconpay_product_id = static::$productid;
@@ -250,7 +328,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer',
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log',
         ])->where('order.' . $column_name, $column_value)
             ->where(function ($q) use ($keyword, $column_name) {
                 $q
@@ -276,7 +354,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer',
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'order_detail_log',
         ])->where('order.' . $column_name, $column_value)
             ->where(function ($q) use ($keyword, $column_name) {
                 $q
@@ -567,7 +645,7 @@ class TransactionQueries extends Service
             }
 
             $merchant_total_price_with_delivery = $merchant_total_price + $merchant['delivery_fee'];
-            $merchant['total_amount'] =  $merchant_total_price;
+            $merchant['total_amount'] = $merchant_total_price;
             $merchant['total_payment'] = $merchant_total_payment = $merchant_total_price_with_delivery - $merchant['delivery_discount'];
 
             if ($promo_merchant_ongkir != null) {
@@ -850,21 +928,21 @@ class TransactionQueries extends Service
         // validasi tiket
         $master_tikets = MasterTiket::with(['master_data'])->where('status', 1)->get();
         $customer_tiket = Order::with(['detail', 'detail.product'])->where('buyer_id', $customer->id)
-        ->whereHas('progress_active', function($q) {
-            $q->whereIn('status_code', ['00', '01', '02', '03','08', '88']);
-        })
-        ->whereHas('detail', function($q) use ($master_tikets) {
-            $q->whereHas('product', function($q) use ($master_tikets) {
-                $q->whereIn('category_id', collect($master_tikets)->pluck('master_data.id')->toArray());
-            });
-        })->get();
+            ->whereHas('progress_active', function ($q) {
+                $q->whereIn('status_code', ['00', '01', '02', '03', '08', '88']);
+            })
+            ->whereHas('detail', function ($q) use ($master_tikets) {
+                $q->whereHas('product', function ($q) use ($master_tikets) {
+                    $q->whereIn('category_id', collect($master_tikets)->pluck('master_data.id')->toArray());
+                });
+            })->get();
 
         $count_tiket = 0;
         foreach ($customer_tiket as $order) {
             foreach ($order->detail as $detail) {
                 $tiket = collect($master_tikets)->where('master_data.id', $detail->product->category_id)->first();
 
-                if($tiket) {
+                if ($tiket) {
                     $count_tiket += $detail->quantity;
                 }
             }
@@ -874,7 +952,7 @@ class TransactionQueries extends Service
         foreach ($new_product as $product) {
             $tiket = collect($master_tikets)->where('master_data.id', $product['category_id'])->first();
 
-            if($tiket) {
+            if ($tiket) {
                 $count_tiket += $product['quantity'];
 
                 $buying_tiket = true;
@@ -1167,7 +1245,7 @@ class TransactionQueries extends Service
     public function createOrderV2($request)
     {
         $merchants = [];
-        foreach(data_get($request, 'merchants') as $merchant) {
+        foreach (data_get($request, 'merchants') as $merchant) {
             $get_merchant = Merchant::find(data_get($merchant, 'merchant_id'));
 
             if (data_get($merchant, 'delivery_method') == 'custom') {
@@ -1177,7 +1255,7 @@ class TransactionQueries extends Service
                 data_set($merchant, 'delivery_method', 'Pengiriman oleh Seller');
             }
 
-            foreach(data_get($merchant, 'products') as $item) {
+            foreach (data_get($merchant, 'products') as $item) {
                 if (!$product = Product::find(data_get($item, 'product_id'))) {
                     throw new Exception('Produk dengan id ' . data_get($item, 'product_id') . ' tidak ditemukan', 404);
                 }
@@ -1265,7 +1343,7 @@ class TransactionQueries extends Service
 
     public function getTransactionByReference($no_reference)
     {
-        $orders = Order::with(['detail', 'promo_log_orders', 'progress_active'])->where('no_reference', $no_reference)->get();
+        $orders = Order::with(['detail', 'promo_log_orders', 'progress_active', 'order_detail_log'])->where('no_reference', $no_reference)->get();
         return $orders;
     }
 
@@ -1308,7 +1386,7 @@ class TransactionQueries extends Service
 
         $itemsTransformed = $itemsPaginated->getCollection()->toArray();
 
-        $itemsTransformedAndPaginated = new \Illuminate\Pagination\LengthAwarePaginator (
+        $itemsTransformedAndPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
             $itemsTransformed,
             $itemsPaginated->total(),
             $itemsPaginated->perPage(),

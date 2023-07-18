@@ -16,7 +16,8 @@
     style="padding: 0; margin: 0; border: none; border-spacing: 0px; border-collapse: collapse;vertical-align: top; font-family: 'Roboto';">
     <div class="wrapper" width="600" align="center">
         <!-- header -->
-        <table style="background-image: url('https://api-central.air.id/plnmp-sauron-staging/api/firebase/file/load/Marketplace~merchants~163833338096dc97f2-01f0-444a-aff1-7156f4349ab3.png');
+        <table
+            style="background-image: url('https://api-central.air.id/plnmp-sauron-staging/api/firebase/file/load/Marketplace~merchants~163833338096dc97f2-01f0-444a-aff1-7156f4349ab3.png');
         background-repeat: no-repeat;
         background-size: contain;
         background-position: right top;
@@ -27,7 +28,8 @@
                         <tbody>
                             <tr>
                                 <td>
-                                    <a style="margin: 50px 0px 50px 0px;
+                                    <a
+                                        style="margin: 50px 0px 50px 0px;
                                     padding-left: 20px;
                                     display: inline;
                                     position: relative;">
@@ -37,11 +39,13 @@
                                 </td>
                                 <td>
                                     <div style="margin-top: 45px;">
-                                        <h3 style="display: inline;
+                                        <h3
+                                            style="display: inline;
                                         padding: 50px 0px 0px 10px;
                                         font-family: 'Poppins', sans-serif;
                                         text-align: top;
-                                        position: relative;">MARKETPLACE</h3>
+                                        position: relative;">
+                                            MARKETPLACE</h3>
                                     </div>
                                 </td>
                             </tr>
@@ -60,7 +64,8 @@
                             <tr>
                                 <td align="left" style="padding-left:30px;">
                                     <p style="font-size: small;font-weight: bold;">Halo {{ $destination_name }},</p>
-                                    <h2 style="color: #00A2B9;margin: 0; padding: 0;
+                                    <h2
+                                        style="color: #00A2B9;margin: 0; padding: 0;
                                     line-height: 1.6;">
                                         Pesanan Anda sedang dikirim!
                                     </h2>
@@ -173,7 +178,7 @@
                                         <td style="padding: 5px 0px 5px 0px;font-size: 14px;color:#666;width: 50%;">
                                             Asuransi Pengiriman</td>
                                         <td style="font-weight:bold;text-align:right;">
-                                            {{ $order->detail->sum('total_insurance_cost')? 'Rp ' . number_format($order->detail->sum('total_insurance_cost'), 2, ',', '.'): 'Rp 0' }}
+                                            {{ $order->detail->sum('total_insurance_cost') ? 'Rp ' . number_format($order->detail->sum('total_insurance_cost'), 2, ',', '.') : 'Rp 0' }}
                                         </td>
                                     </tr>
                                     <tr>
@@ -229,7 +234,7 @@
                                     <tbody>
                                         <tr>
                                             <td style="width: 10%">
-                                                <img src="{{ $item->product->product_photo->first()->url }}" alt=""
+                                                <img src="{{ $item->product_main_photo }}" alt=""
                                                     style="max-width: 100px;">
                                             </td>
                                             <td style="width: 40%">
@@ -272,7 +277,8 @@
             <tr>
                 <td>
                     <div style="padding-left: 30px; padding-right: 30px;">
-                        <div style="margin-bottom: 30px;
+                        <div
+                            style="margin-bottom: 30px;
                         box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
                         transition: 0.3s;
                         width: 100%;
@@ -306,7 +312,8 @@
                                                         <td align="left">
                                                             <h5 style="color: #fff;padding: 0;margin: 10px 0px;">PERLU
                                                                 DIPERHATIKAN</h5>
-                                                            <p style="font-size: x-small;color: #fff;padding: 0;">Jangan
+                                                            <p style="font-size: x-small;color: #fff;padding: 0;">
+                                                                Jangan
                                                                 menyebar luaskan informasi akun Anda, dan ganti kata
                                                                 sandi secara berkala untuk menghindari aktivitas
                                                                 pencurian akun.</p>

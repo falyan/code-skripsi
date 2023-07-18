@@ -13,11 +13,12 @@ class AddColumnInBannerTable extends Migration
      */
     public function up()
     {
-        Schema::table('banner', function (Blueprint $table) {
-            $table->string('link_url')->nullable();
-            $table->string('title')->nullable();
-            $table->longText('content')->nullable();
-            $table->string('button_label')->nullable();
+        Schema::table('iconcash_inquiry', function (Blueprint $table) {
+            $table->string('client_ref')->nullable();
+            $table->string('iconcash_order_id')->nullable();
+            $table->json('res_json')->nullable();
+            $table->json('confirm_res_json')->nullable();
+            $table->boolean('confirm_status')->nullable();
         });
     }
 
@@ -28,8 +29,12 @@ class AddColumnInBannerTable extends Migration
      */
     public function down()
     {
-        Schema::table('banner', function (Blueprint $table) {
-            //
+        Schema::table('iconcash_inquiry', function (Blueprint $table) {
+            $table->dropColumn('client_ref');
+            $table->dropColumn('iconcash_order_id');
+            $table->dropColumn('res_json');
+            $table->dropColumn('confirm_res_json');
+            $table->dropColumn('confirm_status');
         });
     }
 }

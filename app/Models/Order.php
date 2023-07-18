@@ -27,7 +27,7 @@ class Order extends Model
 
     public function progress_active()
     {
-        return $this->hasOne(OrderProgress::class)->where('status',1);
+        return $this->hasOne(OrderProgress::class)->where('status', 1);
     }
 
     public function progress_done()
@@ -83,5 +83,10 @@ class Order extends Model
     public function customer_tiket()
     {
         return $this->hasOne(CustomerTiket::class, 'order_id');
+    }
+
+    public function order_detail_log()
+    {
+        return $this->hasMany(OrderDetailLog::class);
     }
 }
