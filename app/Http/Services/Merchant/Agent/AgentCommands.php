@@ -93,6 +93,33 @@ class AgentCommands extends Service
         }
     }
 
+    public static function updateLokasiAgent($request, $merchant_id)
+    {
+        try {
+            DB::beginTransaction();
+            $merchant = Merchant::find($merchant_id);
+            $merchant->update([
+                'address' => data_get($request, 'address') ?? $merchant->address,
+                'province_id' => data_get($request, 'province_id') ?? $merchant->province_id,
+                'city_id' => data_get($request, 'city_id') ?? $merchant->city_id,
+                'district_id' => data_get($request, 'district_id') ?? $merchant->district_id,
+                'postal_code' => data_get($request, 'postal_code') ?? $merchant->postal_code,
+            ]);
+
+            DB::commit();
+
+            return [
+                'merchant' => $merchant,
+            ];
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            if (in_array($th->getCode(), self::$error_codes)) {
+                throw new Exception($th->getMessage(), $th->getCode());
+            }
+            throw new Exception($th->getMessage(), 500);
+        }
+    }
+
     // ========== ICONPAY V3 API TRANSACTION ===========
 
     // PLN Prepaid & Postpaid Product

@@ -101,6 +101,46 @@ class MerchantAgentController extends Controller
         }
     }
 
+    public function aturLokasiAgent(Request $request)
+    {
+        $validator = Validator::make(
+            request()->all(),
+            [
+                'address' => 'required|min:3',
+                'province_id' => 'required',
+                'city_id' => 'required',
+                'district_id' => 'required',
+                'postal_code' => 'required|max:5',
+            ],
+            [
+                'exists' => 'ID :attribute tidak ditemukan.',
+                'required' => ':attribute diperlukan.',
+                'max' => 'panjang :attribute maksimum :max karakter.',
+                'min' => 'panjang :attribute minimum :min karakter.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            request()->request->add([
+                'full_name' => Auth::user()->full_name,
+            ]);
+            $data = AgentCommands::updateLokasiAgent($request, Auth::user()->merchant_id);
+            return $this->respondWithData($data, 'Data lokasi berhasil disimpan');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     // ========= ICONPAY V3 API ==========
 
     // ==== PLN Prepaid & Postpaid Product

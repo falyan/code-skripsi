@@ -401,36 +401,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {
                     $router->post('atur-profile', 'MerchantAgentController@aturTokoAgent');
                     $router->post('atur-margin', 'MerchantAgentController@setMarginDefault');
-                });
-                $router->group(['prefix' => 'kudo'], static function () use ($router) {
-                    $router->post('payment', 'KudoController@payment');
-                });
-            });
-
-            $router->group(['prefix' => 'query'], static function () use ($router) {
-                $router->group(['prefix' => 'merchant'], static function () use ($router) {
-                    $router->get('menu', 'MerchantAgentController@getMenu');
-                    $router->get('menu/{agent_id}', 'MerchantAgentController@getDetailMenu');
-                });
-
-                $router->group(['prefix' => 'kudo'], static function () use ($router) {
-                    $router->get('product-categories', 'KudoController@getProductCategory');
-                    $router->get('product-groups/{category_id}', 'KudoController@getProductGroupByCategoryId');
-                    $router->get('products/{group_id}', 'KudoController@getProductsByGroupId');
-                    $router->get('transaction/user-invoice', 'KudoController@getUserInvoices');
-                    $router->post('origin-inquiry', 'KudoController@inquiryKudo');
-                    $router->post('invoice/create', 'KudoController@createInvoice');
-                });
-            });
-        });
-    });
-
-    $router->group(['prefix' => 'agent'], static function () use ($router) {
-        $router->group(['middleware' => 'auth'], function () use ($router) {
-            $router->group(['prefix' => 'command', 'middleware' => 'auth'], static function () use ($router) {
-                $router->group(['prefix' => 'merchant'], static function () use ($router) {
-                    $router->post('atur-profile', 'MerchantController@aturTokoAgent');
-                    $router->post('atur-margin', 'MerchantAgentController@setMarginDefault');
+                    $router->post('atur-alamat', 'MerchantAgentController@aturLokasiAgent');
                     // Postpaid =======
                     $router->post('postpaid/tagihan', 'MerchantAgentController@getInfoTagihanPostpaidV3');
                     $router->post('postpaid/inquiry', 'MerchantAgentController@getInquiryPostpaidV3');
