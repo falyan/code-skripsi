@@ -686,9 +686,9 @@ class IconcashManager
             ]),
             // 'merchantId' => '',
             // 'merchantName' => '',
-            'storeId' => 102,
+            'storeId' => $data['store_id'],
             // 'storeName' => '',
-            'terminalId' => 101,
+            'terminalId' => $data['terminal_id'],
         ];
 
         // $timestamp = time();

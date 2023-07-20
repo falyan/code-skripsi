@@ -96,6 +96,8 @@ class IconcashCommands extends Service
                 'kode_gateway' => env('ICONPAY_V3_AGENT_GATEWAY_CODE') ? env('ICONPAY_V3_AGENT_GATEWAY_CODE') : static::generateGateway($order->merchant_id), // max 17.576
                 'buying_options' => 1,
                 'transaction_id' => $order->trx_no,
+                'store_id' => env('ICONPAY_V3_AGENT_PLN_STORE_ID'),
+                'terminal_id' => env('ICONPAY_V3_AGENT_PLN_TERMINAL_ID'),
             ];
         } else if ($order->product_id == 'ICONNET') {
             $data = [
@@ -103,6 +105,8 @@ class IconcashCommands extends Service
                 'kode_product' => 4,
                 'kode_gateway' => env('ICONPAY_V3_AGENT_GATEWAY_CODE') ? env('ICONPAY_V3_AGENT_GATEWAY_CODE') : static::generateGateway($order->merchant_id), // max 17.576
                 'transaction_id' => $order->trx_no,
+                'store_id' => env('ICONPAY_V3_AGENT_ICONNET_STORE_ID'),
+                'terminal_id' => env('ICONPAY_V3_AGENT_ICONNET_TERMINAL_ID'),
             ];
         }
 
