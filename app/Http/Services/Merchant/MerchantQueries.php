@@ -215,8 +215,9 @@ class MerchantQueries extends Service
             $data['on_progress'] = (static::getTotalTrx($merchant_id, '03', $daterange));
             $data['ready_to_deliver'] = (static::getTotalTrx($merchant_id, '02', $daterange));
             $data['complained_order'] = $reviewQueries->getCountReviewDoneByRate('merchant_id', $merchant_id, 2, '<=', $daterange);
-            $data['new_review'] = $reviewQueries->getCountReviewDoneByRate('merchant_id', $merchant_id, null, null, $daterange);
-            $data['new_discussion'] = count($discussionQueries->getListDiscussionDoneByUnread($merchant_id, 'unread', $daterange)['data']);
+            $data['new_review'] = count($reviewQueries->getCountReviewUnreply('merchant_id', $merchant_id, null, null, $daterange));
+            $data['new_discussion'] = count($discussionQueries->getListDiscussionDoneByUnread($merchant_id, 'unread', $daterange)['data'] ?? []);
+            $data['order_delivered'] = static::getTotalTrx($merchant_id, '08', $daterange);
             $data['success_order'] = static::getTotalTrx($merchant_id, '88', $daterange);
             $data['canceled_order'] = static::getTotalTrx($merchant_id, '09', $daterange);
 
