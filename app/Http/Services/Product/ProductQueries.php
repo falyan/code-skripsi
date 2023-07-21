@@ -578,44 +578,44 @@ class ProductQueries extends Service
     {
         $product = new Product();
         $product = $product
-        // ->withCount(['order_details' => function ($details) {
-        //     $details->whereHas('order', function ($order) {
-        //         $order->whereHas('progress_done');
-        //     });
-        // }])
-        ->with([
-            'product_stock',
-            'product_photo',
-            'is_wishlist',
-            'merchant' => function ($merchant) {
-                $merchant->with(['province', 'city', 'district', 'expedition']);
-                $merchant->with('orders', function ($orders) {
-                    $orders->whereHas('progress_active', function ($progress) {
-                        $progress->whereIn('status_code', ['01', '02']);
+            // ->withCount(['order_details' => function ($details) {
+            //     $details->whereHas('order', function ($order) {
+            //         $order->whereHas('progress_done');
+            //     });
+            // }])
+            ->with([
+                'product_stock',
+                'product_photo',
+                'is_wishlist',
+                'merchant' => function ($merchant) {
+                    $merchant->with(['province', 'city', 'district', 'expedition', ]);
+                    $merchant->with('orders', function ($orders) {
+                        $orders->whereHas('progress_active', function ($progress) {
+                            $progress->whereIn('status_code', ['01', '02']);
+                        });
                     });
-                });
-            },
-            'merchant.promo_merchant' => function ($pd) {
-                $pd->where(function ($query) {
-                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
-                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
-                });
-            },
-            'merchant.promo_merchant.promo_master',
-            'merchant.promo_merchant.promo_master.promo_values',
-            'etalase', 'category', 'order_details' => function ($order_details) {
-                $order_details->whereHas('order', function ($order) {
-                    $order->whereHas('progress_done');
-                });
-            },
-            'reviews' => function ($reviews) {
-                $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo'])->where('status', 1);
-            },
-            'discussion_master' => function ($master) {
-                $master->orderBy('created_at', 'desc')->limit(2)->with(['discussion_response']);
-            },
-            'ev_subsidy',
-        ])
+                },
+                'merchant.promo_merchant' => function ($pd) {
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                },
+                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_values',
+                'etalase', 'category', 'order_details' => function ($order_details) {
+                    $order_details->whereHas('order', function ($order) {
+                        $order->whereHas('progress_done');
+                    });
+                },
+                'reviews' => function ($reviews) {
+                    $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo'])->where('status', 1);
+                },
+                'discussion_master' => function ($master) {
+                    $master->orderBy('created_at', 'desc')->limit(2)->with(['discussion_response']);
+                },
+                'ev_subsidy',
+            ])
             ->where('id', $id)->first();
 
         $master_variants = MasterVariant::whereHas('variants', function ($v) use ($id) {
@@ -754,6 +754,9 @@ class ProductQueries extends Service
         $item['is_flash_sale_discount'] = $is_flash_sale_discount;
         $item['promo_value'] = $promo_value;
         $item['promo_type'] = $promo_type;
+
+        $item['merchant']['order_count'] = count($item['merchant']['orders']);
+        unset($item['merchant']['orders']);
 
         if ($promo_value != 0) {
             $master_data = MasterData::whereIn('key', ['promo_wording_title', 'promo_wording_subtitle'])->get();

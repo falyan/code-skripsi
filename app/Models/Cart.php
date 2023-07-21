@@ -100,7 +100,10 @@ class Cart extends Model
 
     public static function findByRelatedId($buyer_id)
     {
-        $cart = static::whereNotNull('buyer_id')->where('buyer_id', $buyer_id)->get();
+        $cart = static::whereNotNull('buyer_id')
+            ->where('buyer_id', $buyer_id)
+            ->with(['cart_detail'])->get();
+
         throw_if(!$cart, new Exception('List cart tidak ditemukan'));
         return $cart;
     }
