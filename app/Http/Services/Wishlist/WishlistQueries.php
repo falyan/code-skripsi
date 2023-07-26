@@ -53,13 +53,12 @@ class WishlistQueries extends Service
         return [
             'success' => true,
             'message' => 'Berhasil mendapatkan data wishlist!',
-            'data' => static::wishlistPaginate($collect_data->toArray(), $limit, $page)
+            'data' => static::wishlistPaginate($collect_data->toArray(), $limit, $page),
         ];
     }
 
-    public function searchListWishlistByName($data, $limit = 10, $page = 1, $sortby = null)
+    public function searchListWishlistByName($customer_id, $limit = 10, $page = 1, $sortby = null, $keyword)
     {
-        $keyword = $data['keyword'];
         $wishlist = Wishlist::with(['customer', 'merchant' => function ($merchant) {
             $merchant->with(['province', 'city', 'district', 'expedition']);
         }, 'product' => function ($product) use ($keyword) {
@@ -68,11 +67,18 @@ class WishlistQueries extends Service
                     $order->whereHas('progress_done');
                 });
             }])->with(['product_stock', 'product_photo', 'ev_subsidy']);
-        }])->whereHas('product', function ($query) use ($keyword) {
-            $query->where('name', 'ILIKE', '%' . $keyword . '%')->orWhereHas('merchant', function ($query) use ($keyword) {
-                $query->where('name', 'ILIKE', '%' . $keyword . '%');
-            });
-        })->where('customer_id', $data['customer_id'])->where('is_valid', true);
+        }])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->where('customer_id', $customer_id)->where('is_valid', true);
+
+        if (!empty($keyword)) {
+            $keywords = explode(' ', $keyword);
+            foreach ($keywords as $key) {
+                $wishlist->whereHas('product', function ($product) use ($key) {
+                    $product->where('name', 'ilike', '%' . $key . '%');
+                });
+            }
+        }
 
         $collect_data = collect($wishlist->get());
 
@@ -89,7 +95,7 @@ class WishlistQueries extends Service
         return [
             'success' => true,
             'message' => 'Berhasil mendapatkan data wishlist!',
-            'data' => static::wishlistPaginate($collect_data->toArray(), $limit, $page)
+            'data' => static::wishlistPaginate($collect_data->toArray(), $limit, $page),
         ];
     }
 

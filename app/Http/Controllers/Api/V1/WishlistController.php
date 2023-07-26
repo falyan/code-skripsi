@@ -69,7 +69,8 @@ class WishlistController extends Controller
 
     public function searchListWishlistByName(Request $request)
     {
-        $request['customer_id'] = Auth::id();
+        $customerId = Auth::id();
+
         try {
             $rules = [
                 'keyword' => 'required|min:3',
@@ -94,8 +95,9 @@ class WishlistController extends Controller
             $limit = $request->limit ?? 10;
             $page = $request->page ?? 1;
             $sortby = $request->sortby ?? null;
+            $keyword = $request->keyword;
 
-            return $this->wishlistQueries->searchListWishlistByName($request, $limit, $page, $sortby);
+            return $this->wishlistQueries->searchListWishlistByName($customerId, $limit, $page, $sortby, $keyword);
         } catch (Exception $e) {
             return $this->respondErrorException($e, $request);
         }

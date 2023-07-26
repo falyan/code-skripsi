@@ -9,9 +9,9 @@ use App\Models\MasterTiket;
 use App\Models\MasterVariant;
 use App\Models\Merchant;
 use App\Models\Product;
+use App\Models\ProductEvSubsidy;
 use App\Models\Review;
 use App\Models\VariantValueProduct;
-use App\Models\ProductEvSubsidy;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -21,12 +21,12 @@ class ProductQueries extends Service
     {
         $product = new Product();
         $products = $product
-            // ->withCount(['order_details' => function ($details) {
-            //     $details->whereHas('order', function ($order) {
-            //         $order->whereHas('progress_done');
-            //     });
-            // }])
-            ->where('status', 1)
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->where('status', 1)
             ->with([
                 'product_stock',
                 'product_photo',
@@ -61,6 +61,82 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function checkProductByMerchantSeller()
+    {
+        $merchant_id = auth()->user()->merchant_id;
+
+        $products = Product::where('merchant_id', $merchant_id)->get();
+
+        if ($products->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Anda belum memiliki produk!';
+            return $response;
+        }
+
+        $message = 'Berhasil cek data produk!';
+        $description = null;
+        $status_code = 200;
+        $data = [];
+        foreach ($products as $product) {
+            if ($product->height == null || $product->width == null || $product->length == null) {
+                $message = 'Anda belum melengkapi data produk!';
+                $description = 'Data produk anda belum lengkap, silahkan lengkapi data produk Anda';
+                $status_code = 400;
+            }
+            if ($product->status != 1) {
+                $message = 'Produk anda sedang diarsipkan!';
+                $description = 'Produk anda sedang diarsipkan, aktifasi kembali dengan cara melakukan pembaruan data produk Anda';
+                $status_code = 400;
+                break;
+            }
+        }
+
+        $response['success'] = true;
+        $response['status_code'] = $status_code;
+        $response['message'] = $message;
+        $response['description'] = $description;
+        // $response['data'] = $data;
+        return $response;
+    }
+
+    public function checkProductIdByMerchantSeller($id)
+    {
+        $merchant_id = auth()->user()->merchant_id;
+
+        $product = Product::where([
+            'id' => $id,
+            'merchant_id' => $merchant_id,
+        ])->first();
+
+        if (!$product) {
+            $response['success'] = false;
+            $response['message'] = 'Produk tidak ditemukan';
+            return $response;
+        }
+
+        $message = 'Berhasil cek data produk!';
+        $description = null;
+        $status_code = 200;
+        $data = [];
+        if ($product->height == null || $product->width == null || $product->length == null) {
+            $message = 'Anda belum melengkapi data produk!';
+            $description = 'Data produk anda belum lengkap, silahkan lengkapi data produk Anda';
+            $status_code = 400;
+        }
+        if ($product->status != 1) {
+            $message = 'Produk anda sedang diarsipkan!';
+            $description = 'Produk anda sedang diarsipkan, aktifasi kembali dengan cara melakukan pembaruan data produk Anda';
+            $status_code = 400;
+        }
+
+        $response['success'] = true;
+        $response['status_code'] = $status_code;
+        $response['message'] = $message;
+        $response['description'] = $description;
+        // $response['data'] = $data;
+        return $response;
+    }
+
     public function getProductByMerchantIdSeller($merchant_id, $filter = [], $sortby = null, $current_page = 1, $limit, $featured)
     {
         $product = new Product();
@@ -81,8 +157,8 @@ class ProductQueries extends Service
                 },
                 'ev_subsidy',
             ])->when($featured == true, function ($query) {
-                $query->where('is_featured_product', true);
-            });
+            $query->where('is_featured_product', true);
+        });
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -263,10 +339,22 @@ class ProductQueries extends Service
                         $merchant->where('city_id', 'LIKE', $location);
                     }
                 }
-            })->where('product.name', 'ILIKE', '%' . $keyword . '%');
+            });
         // ->orWhereHas('merchant', function ($query) use ($keyword) {
         //     $query->where('name', 'ILIKE', '%' . $keyword . '%')->where('status', 1);
         // });
+
+        if (!empty($keyword)) {
+            // handle search with keyword if there more than 1 words with space
+            if (strpos($keyword, ' ')) {
+                $keyword = explode(' ', $keyword);
+                foreach ($keyword as $key) {
+                    $products = $products->where('name', 'ILIKE', '%' . $key . '%');
+                }
+            } else {
+                $products = $products->where('name', 'ILIKE', '%' . $keyword . '%');
+            }
+        }
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -495,34 +583,39 @@ class ProductQueries extends Service
         //         $order->whereHas('progress_done');
         //     });
         // }])
-            ->with([
-                'product_stock',
-                'product_photo',
-                'is_wishlist',
-                'merchant' => function ($region) {
-                    $region->with(['province', 'city', 'district', 'expedition']);
-                },
-                'merchant.promo_merchant' => function ($pd) {
-                    $pd->where(function ($query) {
-                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
-                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+        ->with([
+            'product_stock',
+            'product_photo',
+            'is_wishlist',
+            'merchant' => function ($merchant) {
+                $merchant->with(['province', 'city', 'district', 'expedition']);
+                $merchant->with('orders', function ($orders) {
+                    $orders->whereHas('progress_active', function ($progress) {
+                        $progress->whereIn('status_code', ['01', '02']);
                     });
-                },
-                'merchant.promo_merchant.promo_master',
-                'merchant.promo_merchant.promo_master.promo_values',
-                'etalase', 'category', 'order_details' => function ($order_details) {
-                    $order_details->whereHas('order', function ($order) {
-                        $order->whereHas('progress_done');
-                    });
-                },
-                'reviews' => function ($reviews) {
-                    $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo'])->where('status', 1);
-                },
-                'discussion_master' => function ($master) {
-                    $master->orderBy('created_at', 'desc')->limit(2)->with(['discussion_response']);
-                },
-                'ev_subsidy',
-            ])
+                });
+            },
+            'merchant.promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                });
+            },
+            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_values',
+            'etalase', 'category', 'order_details' => function ($order_details) {
+                $order_details->whereHas('order', function ($order) {
+                    $order->whereHas('progress_done');
+                });
+            },
+            'reviews' => function ($reviews) {
+                $reviews->orderBy('created_at', 'desc')->limit(3)->with(['customer', 'review_photo'])->where('status', 1);
+            },
+            'discussion_master' => function ($master) {
+                $master->orderBy('created_at', 'desc')->limit(2)->with(['discussion_response']);
+            },
+            'ev_subsidy',
+        ])
             ->where('id', $id)->first();
 
         $master_variants = MasterVariant::whereHas('variants', function ($v) use ($id) {
@@ -740,8 +833,8 @@ class ProductQueries extends Service
         ]);
 
         $categories = MasterData::with([
-            'child' => fn ($j) => $j->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeda_listrik']),
-            'child.child' => fn ($q) => $q->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_mobil_listrik_', 'prodcat_sepeda_listrik_']),
+            'child' => fn($j) => $j->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeda_listrik']),
+            'child.child' => fn($q) => $q->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_mobil_listrik_', 'prodcat_sepeda_listrik_']),
         ])->where([
             'type' => 'product_category',
             'key' => 'prodcat_electric_vehicle',
@@ -822,8 +915,8 @@ class ProductQueries extends Service
                 },
                 'ev_subsidy',
             ])->whereHas('merchant', function ($merchant) {
-                $merchant->where('status', 1);
-            })->orderBy('order_details_count', 'DESC');
+            $merchant->where('status', 1);
+        })->orderBy('order_details_count', 'DESC');
 
         $itemsPaginated = $products->paginate($limit);
 
@@ -989,8 +1082,8 @@ class ProductQueries extends Service
         ]);
 
         $categories = MasterData::with([
-            'child' => fn ($j) => $j->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeda_listrik']),
-            'child.child' => fn ($q) => $q->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_mobil_listrik_', 'prodcat_sepeda_listrik_']),
+            'child' => fn($j) => $j->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeda_listrik']),
+            'child.child' => fn($q) => $q->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_mobil_listrik_', 'prodcat_sepeda_listrik_']),
         ])->where([
             'type' => 'product_category',
             'key' => 'prodcat_electric_vehicle',
@@ -1193,7 +1286,7 @@ class ProductQueries extends Service
         //         $order->whereHas('progress_done');
         //     });
         // }])
-            ->with(['product_stock', 'product_photo', 'is_wishlist', 'ev_subsidy'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']]);
+        ->with(['product_stock', 'product_photo', 'is_wishlist', 'ev_subsidy'])->where([['merchant_id', $merchant_id], ['name', 'ILIKE', '%' . $keyword . '%']]);
 
         $products = $this->filter($products, $filter);
         $products = $this->sorting($products, $sortby);
@@ -1317,11 +1410,11 @@ class ProductQueries extends Service
 
         $products = new Product();
         $products = $products
-        ->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
         ->with([
             'product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name',
             'merchant.promo_merchant' => function ($pd) {
@@ -1358,9 +1451,9 @@ class ProductQueries extends Service
     public function getElectricVehicleByCategory($category_key, $sub_category_key, $sortby = null, $limit = 10)
     {
         $products = Product::where('status', 1)
-            // ->withCount([
-            //     'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
-            // ])
+        // ->withCount([
+        //     'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
+        // ])
             ->with([
                 'product_stock',
                 'product_photo',
@@ -1376,10 +1469,10 @@ class ProductQueries extends Service
                 },
                 'merchant.promo_merchant.promo_master',
                 'merchant.promo_merchant.promo_master.promo_values',
-                'varian_product' => fn ($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
+                'varian_product' => fn($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
                 'ev_subsidy',
             ])
-            ->whereHas('merchant.official_store', fn ($m) => $m->where([
+            ->whereHas('merchant.official_store', fn($m) => $m->where([
                 'category_key' => $category_key,
                 'sub_category_key' => $sub_category_key,
             ]));
@@ -1404,9 +1497,9 @@ class ProductQueries extends Service
     public function getElectricVehicleWithCategoryById($category_key, $sub_category_key, $id)
     {
         $product = Product::where('status', 1)
-            // ->withCount([
-            //     'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
-            // ])
+        // ->withCount([
+        //     'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
+        // ])
             ->with([
                 'product_stock',
                 'product_photo',
@@ -1422,10 +1515,10 @@ class ProductQueries extends Service
                 },
                 'merchant.promo_merchant.promo_master',
                 'merchant.promo_merchant.promo_master.promo_values',
-                'varian_product' => fn ($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
+                'varian_product' => fn($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
                 'ev_subsidy',
             ])
-            ->whereHas('merchant.official_store', fn ($m) => $m->where([
+            ->whereHas('merchant.official_store', fn($m) => $m->where([
                 'category_key' => $category_key,
                 'sub_category_key' => $sub_category_key,
             ]))
@@ -1450,16 +1543,16 @@ class ProductQueries extends Service
         $merchantEV = collect($merchantEV)->pluck('merchant')->pluck('id');
 
         $products = Product::where('status', 1)
-            // ->withCount([
-            //     'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
-            // ])
+        // ->withCount([
+        //     'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
+        // ])
             ->with([
                 'product_stock', 'product_photo', 'merchant.city', 'category', 'is_wishlist',
-                'varian_product' => fn ($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
+                'varian_product' => fn($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
                 'ev_subsidy',
             ])
             ->whereIn('merchant_id', $merchantEV)
-            ->whereHas('category', fn ($c) => $c->where('key', $master_data_key));
+            ->whereHas('category', fn($c) => $c->where('key', $master_data_key));
 
         $filtered_data = $this->filter($products);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -1489,15 +1582,15 @@ class ProductQueries extends Service
         // ->withCount([
         //     'order_details' => fn ($d) => $d->whereHas('order', fn ($o) => $o->whereHas('progress_done')),
         // ])
-            ->with([
-                'product_stock', 'product_photo', 'merchant.city', 'category', 'is_wishlist',
-                'varian_product' => function ($query) {
-                    $query->with(['variant_stock'])->where('main_variant', true);
-                },
-                'ev_subsidy',
-            ])
+        ->with([
+            'product_stock', 'product_photo', 'merchant.city', 'category', 'is_wishlist',
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+            'ev_subsidy',
+        ])
             ->whereIn('merchant_id', $merchantEV)
-            ->whereHas('category', fn ($c) => $c->where('key', $master_data_key))
+            ->whereHas('category', fn($c) => $c->where('key', $master_data_key))
             ->where([
                 'id' => $id,
                 'status' => 1,
@@ -1520,18 +1613,18 @@ class ProductQueries extends Service
     {
         if (!$category_id) {
             $categories = MasterData::with([
-                'child' => fn ($j) => $j->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeda_listrik']),
-                'child.child' => fn ($q) => $q->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_mobil_listrik_', 'prodcat_sepeda_listrik_']),
+                'child' => fn($j) => $j->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_motor_listrik', 'prodcat_sepeda_listrik']),
+                'child.child' => fn($q) => $q->whereNotIn('key', ['prodcat_mobil_listrik', 'prodcat_mobil_listrik_', 'prodcat_sepeda_listrik_']),
             ])->where([
                 'type' => 'product_category',
                 'key' => 'prodcat_electric_vehicle',
             ])->get();
         } else {
             $categories = MasterData::with([
-                'child' => fn ($j) => $j->whereHas('child', fn ($q) => $q->where('id', $category_id)),
-                'child.child' => fn ($q) => $q->where('id', $category_id),
+                'child' => fn($j) => $j->whereHas('child', fn($q) => $q->where('id', $category_id)),
+                'child.child' => fn($q) => $q->where('id', $category_id),
             ])
-                ->whereHas('child.child', fn ($q) => $q->where('id', $category_id))
+                ->whereHas('child.child', fn($q) => $q->where('id', $category_id))
                 ->where([
                     'type' => 'product_category',
                     'key' => 'prodcat_electric_vehicle',
@@ -1592,7 +1685,7 @@ class ProductQueries extends Service
         //         $order->whereHas('progress_done');
         //     });
         // }])
-            ->where('status', 1)
+        ->where('status', 1)
             ->with([
                 'product_stock',
                 'product_photo',
@@ -1646,31 +1739,31 @@ class ProductQueries extends Service
     {
         $product = new Product();
         $products = $product
-            // ->withCount([
-            //     'order_details' => function ($details) {
-            //         $details->whereHas('order', function ($order) {
-            //             $order->whereHas('progress_done');
-            //         });
-            //     },
-            // ])
-            ->with([
-                'product_stock',
-                'product_photo',
-                'is_wishlist',
-                'varian_product' => function ($query) {
-                    $query->with(['variant_stock'])->where('main_variant', true);
-                },
-                'merchant.city:id,name',
-                'merchant.promo_merchant' => function ($pd) {
-                    $pd->where(function ($query) {
-                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
-                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
-                    });
-                },
-                'merchant.promo_merchant.promo_master',
-                'merchant.promo_merchant.promo_master.promo_values',
-                'ev_subsidy',
-            ])
+        // ->withCount([
+        //     'order_details' => function ($details) {
+        //         $details->whereHas('order', function ($order) {
+        //             $order->whereHas('progress_done');
+        //         });
+        //     },
+        // ])
+        ->with([
+            'product_stock',
+            'product_photo',
+            'is_wishlist',
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+            'merchant.city:id,name',
+            'merchant.promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                });
+            },
+            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_values',
+            'ev_subsidy',
+        ])
             ->where([
                 'merchant_id' => $merchant_id,
                 'etalase_id' => $etalase_id,
@@ -1680,10 +1773,10 @@ class ProductQueries extends Service
                 $merchant->where('status', 1);
             });
 
-        $filtered_data = static::filter($products, $filter);
-        $sorted_data = static::sorting($filtered_data, $sortby);
+        $filtered_data = $this->filter($products, $filter);
+        $sorted_data = $this->sorting($filtered_data, $sortby);
 
-        $data = static::productPaginate($sorted_data, $limit);
+        $data = $this->productPaginate($sorted_data, $limit);
 
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data produk!';
@@ -1713,32 +1806,32 @@ class ProductQueries extends Service
 
         $product = new Product();
         $products = $product
-            // ->withCount(['order_details' => function ($details) {
-            //     $details->whereHas('order', function ($order) {
-            //         $order->whereHas('progress_done');
-            //     });
-            // }])
-            ->where([
-                'status' => 1,
-                'merchant_id' => auth()->user()->merchant_id,
-            ])->with([
-                'product_stock', 'product_photo', 'is_wishlist',
-                'merchant.city:id,name',
-                'merchant.promo_merchant' => function ($pd) {
-                    $pd->where(function ($query) {
-                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
-                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
-                    });
-                },
-                'merchant.promo_merchant.promo_master',
-                'merchant.promo_merchant.promo_master.promo_values',
-                'varian_product' => function ($query) {
-                    $query->with(['variant_stock'])->where('main_variant', true);
-                },
-                'ev_subsidy',
-            ])->whereHas('merchant', function ($merchant) {
-                $merchant->where('status', 1);
-            })->whereIn('category_id', $cat_child_id)
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->where([
+            'status' => 1,
+            'merchant_id' => auth()->user()->merchant_id,
+        ])->with([
+            'product_stock', 'product_photo', 'is_wishlist',
+            'merchant.city:id,name',
+            'merchant.promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                });
+            },
+            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_values',
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+            'ev_subsidy',
+        ])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereIn('category_id', $cat_child_id)
             ->whereHas('product_stock', function ($stock) {
                 $stock->where('amount', '>', 0);
             })
@@ -1836,35 +1929,35 @@ class ProductQueries extends Service
 
         $product = new Product();
         $products = $product
-            // ->withCount(['order_details' => function ($details) {
-            //     $details->whereHas('order', function ($order) {
-            //         $order->whereHas('progress_done');
-            //     });
-            // }])
-            ->where([
-                'status' => 1,
-            ])->with([
-                'product_stock', 'product_photo', 'is_wishlist',
-                'merchant.city:id,name',
-                'merchant.promo_merchant' => function ($pd) {
-                    $pd->where(function ($query) {
-                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
-                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
-                    });
-                },
-                'merchant.promo_merchant.promo_master',
-                'merchant.promo_merchant.promo_master.promo_values',
-                'varian_product' => function ($query) {
-                    $query->with(['variant_stock'])->where('main_variant', true);
-                },
-                'ev_subsidy',
-            ])->whereHas('merchant', function ($merchant) {
-                $merchant->where('status', 1);
-            })->whereHas('ev_subsidy', function ($merchant) {
-                $merchant->where('status', 1);
-            })->whereHas('product_stock', function ($stock) {
-                $stock->where('amount', '>', 0);
-            })->whereIn('category_id', $cat_child_id);
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->where([
+            'status' => 1,
+        ])->with([
+            'product_stock', 'product_photo', 'is_wishlist',
+            'merchant.city:id,name',
+            'merchant.promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                });
+            },
+            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_values',
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+            'ev_subsidy',
+        ])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereHas('ev_subsidy', function ($merchant) {
+            $merchant->where('status', 1);
+        })->whereHas('product_stock', function ($stock) {
+            $stock->where('amount', '>', 0);
+        })->whereIn('category_id', $cat_child_id);
 
         $filtered_data = $this->filter($products, $filter);
         $sorted_data = $this->sorting($filtered_data, $sortby);
@@ -1881,12 +1974,12 @@ class ProductQueries extends Service
     {
         $product = new Product();
         $products = $product
-            // ->withCount(['order_details' => function ($details) {
-            //     $details->whereHas('order', function ($order) {
-            //         $order->whereHas('progress_done');
-            //     });
-            // }])
-            ->where('status', 1)
+        // ->withCount(['order_details' => function ($details) {
+        //     $details->whereHas('order', function ($order) {
+        //         $order->whereHas('progress_done');
+        //     });
+        // }])
+        ->where('status', 1)
             ->with([
                 'product_stock',
                 'product_photo',
@@ -1947,7 +2040,7 @@ class ProductQueries extends Service
         //         $order->whereHas('progress_done');
         //     });
         // }])
-            ->where('status', 1)
+        ->where('status', 1)
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
             });
@@ -1996,7 +2089,15 @@ class ProductQueries extends Service
             $status = $filter['status'] ?? null;
 
             $data = $model->when(!empty($keyword), function ($query) use ($keyword) {
-                $query->where('name', 'ILIKE', "%{$keyword}%");
+                // handle search product if there is more than one word
+                $explode = explode(' ', $keyword);
+                if (count($explode) > 1) {
+                    foreach ($explode as $value) {
+                        $query->where('name', 'ILIKE', "%{$value}%");
+                    }
+                } else {
+                    $query->where('name', 'ILIKE', "%{$keyword}%");
+                }
             })->when(!empty($category), function ($query) use ($category) {
                 if (strpos($category, ',')) {
                     $query->whereIn('category_id', explode(',', $category));
