@@ -29,6 +29,11 @@ class WishlistQueries extends Service
                 },
                 'promo_merchant.promo_master',
                 'promo_merchant.promo_master.promo_values',
+                'orders' => function ($orders) {
+                    $orders->whereHas('progress_active', function ($progress) {
+                        $progress->whereIn('status_code', ['01', '02']);
+                    });
+                }
             ]);
         }, 'product' => function ($product) {
             $product->withCount(['order_details' => function ($details) {
@@ -50,10 +55,17 @@ class WishlistQueries extends Service
             $collect_data = $collect_data->sortByDesc('items_sold');
         }
 
+        $data = $collect_data->map(function ($item) {
+            $item['merchant']['order_count'] = count($item['merchant']['orders']);
+            unset($item['merchant']['orders']);
+
+            return $item;
+        })->toArray();
+
         return [
             'success' => true,
             'message' => 'Berhasil mendapatkan data wishlist!',
-            'data' => static::wishlistPaginate($collect_data->toArray(), $limit, $page),
+            'data' => static::wishlistPaginate($data, $limit, $page),
         ];
     }
 
@@ -61,6 +73,11 @@ class WishlistQueries extends Service
     {
         $wishlist = Wishlist::with(['customer', 'merchant' => function ($merchant) {
             $merchant->with(['province', 'city', 'district', 'expedition']);
+            $merchant->with('orders', function ($orders) {
+                $orders->whereHas('progress_active', function ($progress) {
+                    $progress->whereIn('status_code', ['01', '02']);
+                });
+            });
         }, 'product' => function ($product) use ($keyword) {
             $product->withCount(['order_details' => function ($details) {
                 $details->whereHas('order', function ($order) {
@@ -92,10 +109,17 @@ class WishlistQueries extends Service
             $collect_data = $collect_data->sortByDesc('items_sold');
         }
 
+        $data = $collect_data->map(function ($item) {
+            $item['merchant']['order_count'] = count($item['merchant']['orders']);
+            unset($item['merchant']['orders']);
+
+            return $item;
+        })->toArray();
+
         return [
             'success' => true,
             'message' => 'Berhasil mendapatkan data wishlist!',
-            'data' => static::wishlistPaginate($collect_data->toArray(), $limit, $page),
+            'data' => static::wishlistPaginate($data, $limit, $page),
         ];
     }
 
