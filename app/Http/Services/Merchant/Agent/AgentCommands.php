@@ -1835,30 +1835,15 @@ class AgentCommands extends Service
                     $data['message'] = 'Transaksi berhasil';
                     return $data;
 
-                    // Transaction Paid 5003 -> Set Success
+                    // Transaction Paid 5003 -> Set Gagal
                 } else if ($response['response_code'] == '5003') {
-                    static::updateAgentOrderStatus($order->id, '04', $response['response_message']);
-
-                    AgentPayment::create([
-                        'agent_order_id' => $order->id,
-                        'payment_id' => $response['transaction_detail']['biller_reference'] ?? null,
-                        'payment_method' => 'iconpay',
-                        'trx_reference' => $response['transaction_detail']['transaction_id'] ?? null,
-                        'payment_detail' => json_encode(['create' => null, 'confirm' => $response['transaction_detail']]),
-                        'payment_scenario' => $order->payment->payment_scenario ?? null,
-                        'amount' => $response['transaction_detail']['amount'] ?? null,
-                        'fee_agent' => $order->fee_agent ?? null,
-                        'fee_iconpay' => $response['transaction_detail']['total_fee'] ?? null,
-                        'total_fee' => $response['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
-                        'total_amount' => $response['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
-                        'created_by' => 'system',
-                    ]);
+                    static::updateAgentOrderStatus($order->id, '08', $response['response_message']);
+                    IconcashCommands::orderRefund($order->trx_no, $token, $client_ref, $source_account_id);
 
                     DB::commit();
                     $data['status'] = 'success';
-                    $data['message'] = 'Transaksi telah terbayar - ' . $response['response_code'];
+                    $data['message'] = 'Transaksi gagal - ' . $response['response_code'];
                     return $data;
-
                     // Transaction Set Failed
                 } else if (in_array($response['response_code'], ['4007', '4010', '4012', '5003', '5004', '5005'])) {
                     static::updateAgentOrderStatus($order->id, '08', $response['response_message']);
