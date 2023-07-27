@@ -18,8 +18,8 @@ class CreateAgentMasterPspTable extends Migration
             $table->string('name');
             $table->string('code');
             $table->string('type')->nullable();
-            $table->string('status');
-            $table->string('description')->nullable();
+            $table->integer('status');
+            $table->json('description')->nullable();
             $table->string('photo_url')->nullable();
             $table->timestamps();
         });
