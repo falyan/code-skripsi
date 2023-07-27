@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Exports\TransactionExport;
 use App\Http\Controllers\Controller;
+use App\Http\Services\Manager\GamificationManager;
 use App\Http\Services\Manager\IconcashManager;
 use App\Http\Services\Manager\IconpayManager;
 use App\Http\Services\Manager\MailSenderManager;
@@ -980,6 +981,15 @@ class TransactionController extends Controller
                 }
             }
 
+            // refund claim bonus voucher gami
+            if ($order->voucher_bonus_code != null && $order->bonus_discount != null) {
+                GamificationManager::claimBonusRefund($order->voucher_bonus_code);
+
+                $order->voucher_bonus_code = 'RF_' . $order->voucher_bonus_code;
+                $order->save();
+                Log::info('Succeeded Hit Refund Bonus Voucher Gami - Reject Order ' . $order_id);
+            }
+
             $evCustomer = CustomerEVSubsidy::where([
                 'order_id' => $order_id,
             ])->first();
@@ -1310,6 +1320,16 @@ class TransactionController extends Controller
             foreach ($orderByReference as $key => $order) {
                 if ($order->progress_active->status_code == '00') {
                     $this->transactionCommand->updateOrderStatus($order->id, '99', request()->get('reason'));
+
+                    // refund claim bonus voucher gami
+                    if ($order->voucher_bonus_code != null && $order->bonus_discount != null) {
+                        GamificationManager::claimBonusRefund($order->voucher_bonus_code);
+
+                        $order = Order::find($order->id);
+                        $order->voucher_bonus_code = 'RF_' . $order->voucher_bonus_code;
+                        $order->save();
+                        Log::info('Succeded Hit Refund Bonus Voucher Gami - Cancel Order ' . $order->id);
+                    }
 
                     foreach ($order->promo_log_orders as $promo_log_order) {
                         $this->transactionCommand->updatePromoLog($promo_log_order);

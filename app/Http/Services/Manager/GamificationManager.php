@@ -167,12 +167,15 @@ class GamificationManager
 
         $url = sprintf('%s/%s', self::$endpoint, 'v1/ext/plnm/bonus/claim/refund' . $params);
 
-        $payload = [
+        $body = [
             'claimId' => $claimId,
         ];
 
-        $payload = json_encode($payload, JSON_UNESCAPED_SLASHES);
-        $signature = hash_hmac('sha256', $payload . self::$timestamp, self::$secret_key);
+        $payload = json_encode($body, JSON_UNESCAPED_SLASHES);
+
+        $prehash = self::$timestamp . $payload;
+
+        $signature = hash_hmac('sha256', $prehash, self::$secret_key);
 
         $headers = [
             'Content-Type' => 'application/json',
@@ -183,7 +186,7 @@ class GamificationManager
         $response = self::$curl->request('POST', $url, [
             'headers' => $headers,
             'http_errors' => false,
-            'json' => $payload,
+            'json' => $body,
         ]);
 
         $response = json_decode($response->getBody()->getContents(), true);
