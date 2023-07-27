@@ -993,10 +993,6 @@ class IconcashManager
 
         throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-        if ($response->status == 500) {
-            throw new Exception($response->error);
-        }
-
         return data_get($response, 'data');
     }
 
@@ -1030,10 +1026,6 @@ class IconcashManager
 
         throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-        if ($response->status == 500) {
-            throw new Exception($response->error);
-        }
-
         return data_get($response, 'data');
     }
 
@@ -1062,10 +1054,6 @@ class IconcashManager
         ]);
 
         throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
-
-        if ($response->status == 500) {
-            throw new Exception($response->error);
-        }
 
         return data_get($response, 'data');
     }
