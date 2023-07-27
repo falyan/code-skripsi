@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Http\Resources\Etalase\EtalaseCollection;
 use App\Http\Services\Manager\AgentManager;
+use App\Http\Services\Manager\GamificationManager;
 use App\Http\Services\Manager\IconcashManager;
 use App\Http\Services\Manager\IconpayManager;
 use App\Http\Services\Manager\KudoManager;
@@ -39,5 +40,6 @@ class AppServiceProvider extends ServiceProvider
         NotificationCommands::init();
         KudoManager::init();
         AgentManager::init();
+        GamificationManager::init();
     }
 }

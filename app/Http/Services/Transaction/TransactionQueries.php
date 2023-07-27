@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\Transaction;
 
+use App\Http\Services\Manager\GamificationManager;
 use App\Http\Services\Service;
 use App\Models\City;
 use App\Models\CustomerDiscount;
@@ -517,7 +518,7 @@ class TransactionQueries extends Service
     {
         $city_id = data_get($datas, 'destination_info.city_id');
         $province_id = City::where('id', $city_id)->first()->province_id;
-        $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = 0;
+        $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = $total_discount_payment = 0;
         $total_price_discount = 0;
         $message_error = '';
 
@@ -904,13 +905,89 @@ class TransactionQueries extends Service
         //     $new_merchant2[] = $merchant;
         // }
 
+        // discount payment - GAMI
+        // $new_merchant = [];
+        // foreach (data_get($datas, 'merchants') as $merchant) {
+        //     // payment discount
+        //     $discount_payment = 0;
+        //     $discount_type = null;
+        //     // cek jika di env gamification_bonus_discount nya true, maka jalankan perhitungan discount ini
+        //     if (config('credentials.gamification.bonus_discount.activation') === true) {
+        //         // cek jika total price minimal 50000
+        //         if ($merchant_total_price >= 50000) {
+        //             $bonus_amount = 0;
+        //             // $userId = auth()->user()->pln_mobile_customer_id;
+        //             $userId = 98; //dummy
+        //             // cek jika customer memiliki bonus discount, jika tidak maka tidak dapat discount payment
+        //             $checkBonusDiscount = GamificationManager::claimBonusHold($userId, $merchant_total_price);
+
+        //             // jika customer memiliki bonus discount, validasi apakah bonus discount nya valid atau tidak. Jika valid, maka discount payment nya di set sesuai dengan bonus discount nya
+        //             if ($checkBonusDiscount['success'] === true) {
+        //                 $validateBonusDiscount = GamificationManager::claimBonusValidate($checkBonusDiscount['data']['id'], $merchant_total_price);
+
+        //                 if ($validateBonusDiscount['success'] === true) {
+        //                     $bonus_amount += $validateBonusDiscount['data']['bonusAmount'];
+        //                 }
+        //             }
+
+        //             $discount_payment += $bonus_amount;
+        //             $discount_type = 'GAMI-BONUS-DISCOUNT';
+        //         }
+        //     }
+
+        //     $merchant['discount_payment'] = $discount_payment;
+        //     $merchant['total_payment'] -= $discount_payment;
+
+        //     $total_discount_payment += $discount_payment;
+
+        //     $new_merchant[] = $merchant;
+        // }
+
+        // payment discount
+        $discount_payment = 0;
+        $discount_type = null;
+        $discount_claim_id = null;
+        // cek jika di env gamification_bonus_discount nya true, maka jalankan perhitungan discount ini
+        if (config('credentials.gamification.bonus_discount.activation') === true) {
+            // cek jika total price minimal 50000
+            if ($merchant_total_price >= 50000) {
+                $bonus_amount = 0;
+                $userId = auth()->user()->pln_mobile_customer_id;
+
+                if ($userId == null) {
+                    $userId = auth()->user()->id;
+                }
+                // $userId = 982; //dummy
+                // cek jika customer memiliki bonus discount, jika tidak maka tidak dapat discount payment
+                $checkBonusDiscount = GamificationManager::claimBonusHold($userId, $merchant_total_price);
+
+                // jika customer memiliki bonus discount, validasi apakah bonus discount nya valid atau tidak. Jika valid, maka discount payment nya di set sesuai dengan bonus discount nya
+                if ($checkBonusDiscount['success'] === true) {
+                    $validateBonusDiscount = GamificationManager::claimBonusValidate($checkBonusDiscount['data']['id'], $merchant_total_price);
+
+                    if ($validateBonusDiscount['success'] === true) {
+                        $bonus_amount += $validateBonusDiscount['data']['bonusAmount'];
+                    }
+
+                    $discount_payment += $bonus_amount;
+                    $discount_type = 'GAMI-BONUS-DISCOUNT';
+                    $discount_claim_id = $checkBonusDiscount['data']['id'];
+                }
+            }
+        }
+
+        $total_discount_payment += $discount_payment;
+
         // $datas['merchants'] = $new_merchant2;
         $datas['buyer_npwp'] = auth()->user()->npwp;
         $datas['merchants'] = $new_merchant;
-        $datas['total_discount'] = $total_price_discount;
+        $datas['discount_type'] = $discount_type;
+        $datas['discount_claim_id'] = $discount_claim_id;
+        $datas['total_discount'] = $total_price_discount + $total_discount_payment;
         $datas['total_insentif'] = $total_insentif;
         $datas['total_payment'] -= $total_price_discount;
         $datas['total_payment'] -= $total_insentif;
+        $datas['total_payment'] -= $total_discount_payment;
 
         if ($message_error != '') {
             $datas['success'] = false;
