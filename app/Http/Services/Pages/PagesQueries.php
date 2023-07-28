@@ -15,13 +15,13 @@ class PagesQueries extends Service
             return response()->json([
                 'success' => false,
                 'message' => 'Page type Not Found!',
-                'data' => []
+                'data' => [],
             ], 400);
         } else {
             return response()->json([
                 'success' => true,
                 'message' => 'Data page berhasil ditampilkan',
-                'data' => $data
+                'data' => $data,
             ], 200);
         }
     }
@@ -34,13 +34,13 @@ class PagesQueries extends Service
             return response()->json([
                 'success' => false,
                 'message' => 'Page type Not Found!',
-                'data' => []
+                'data' => [],
             ], 400);
         } else {
             return response()->json([
                 'success' => true,
                 'message' => 'Data page berhasil ditampilkan',
-                'data' => $data
+                'data' => $data,
             ], 200);
         }
     }
@@ -53,13 +53,13 @@ class PagesQueries extends Service
             return response()->json([
                 'success' => false,
                 'message' => 'Page type Not Found!',
-                'data' => []
+                'data' => [],
             ], 400);
         } else {
             return response()->json([
                 'success' => true,
                 'message' => 'Data page berhasil ditampilkan',
-                'data' => $data
+                'data' => $data,
             ], 200);
         }
     }
@@ -72,13 +72,51 @@ class PagesQueries extends Service
             return response()->json([
                 'success' => false,
                 'message' => 'Page type Not Found!',
-                'data' => []
+                'data' => [],
             ], 400);
         } else {
             return response()->json([
                 'success' => true,
                 'message' => 'Data page berhasil ditampilkan',
-                'data' => $data
+                'data' => $data,
+            ], 200);
+        }
+    }
+
+    public static function termConditionAgentPage()
+    {
+        $data = Pages::where('page_type', 'agent_term_condition')->first();
+
+        if (!$data) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Page type Not Found!',
+                'data' => [],
+            ], 400);
+        } else {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data page berhasil ditampilkan',
+                'data' => $data,
+            ], 200);
+        }
+    }
+
+    public static function privacyPolicyAgentPage()
+    {
+        $data = Pages::where('page_type', 'agent_privacy_policy')->first();
+
+        if (!$data) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Page type Not Found!',
+                'data' => [],
+            ], 400);
+        } else {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data page berhasil ditampilkan',
+                'data' => $data,
             ], 200);
         }
     }

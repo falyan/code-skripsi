@@ -65,8 +65,64 @@ class AgentCommands extends Service
         }
     }
 
-    // ========== ICONPAY V3 API ===========
+    public static function aturTokoAgent($request, $merchant_id)
+    {
+        try {
+            DB::beginTransaction();
+            $merchant = Merchant::find($merchant_id);
+            $merchant->update([
+                'slogan' => data_get($request, 'slogan') ?? $merchant->slogan,
+                'description' => data_get($request, 'description') ?? $merchant->description,
+                'email' => data_get($request, 'email') ?? $merchant->email,
+                'latitude' => data_get($request, 'latitude') ?? $merchant->latitude,
+                'longitude' => data_get($request, 'longitude') ?? $merchant->longitude,
+                'mitra_id' => data_get($request, 'mitra_id') ?? $merchant->mitra_id,
+            ]);
 
+            DB::commit();
+
+            return [
+                'merchant' => $merchant,
+            ];
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            if (in_array($th->getCode(), self::$error_codes)) {
+                throw new Exception($th->getMessage(), $th->getCode());
+            }
+            throw new Exception($th->getMessage(), 500);
+        }
+    }
+
+    public static function updateLokasiAgent($request, $merchant_id)
+    {
+        try {
+            DB::beginTransaction();
+            $merchant = Merchant::find($merchant_id);
+            $merchant->update([
+                'address' => data_get($request, 'address') ?? $merchant->address,
+                'province_id' => data_get($request, 'province_id') ?? $merchant->province_id,
+                'city_id' => data_get($request, 'city_id') ?? $merchant->city_id,
+                'district_id' => data_get($request, 'district_id') ?? $merchant->district_id,
+                'postal_code' => data_get($request, 'postal_code') ?? $merchant->postal_code,
+            ]);
+
+            DB::commit();
+
+            return [
+                'merchant' => $merchant,
+            ];
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            if (in_array($th->getCode(), self::$error_codes)) {
+                throw new Exception($th->getMessage(), $th->getCode());
+            }
+            throw new Exception($th->getMessage(), 500);
+        }
+    }
+
+    // ========== ICONPAY V3 API TRANSACTION ===========
+
+    // PLN Prepaid & Postpaid Product
     public function getInfoTagihanPostpaidV3($request)
     {
         try {
@@ -79,7 +135,7 @@ class AgentCommands extends Service
             if ($merchant->status == 3) {
                 Log::info('Merchant tidak aktif');
                 $data['status'] = 'error';
-                $data['message'] = 'Akun PLN Agen Anda sedang tidak aktif. Hubungi plnagen@pln.co.id untuk mengaktifkan kembali.';
+                $data['message'] = 'Akun Anda sedang tidak aktif. Hubungi admin untuk mengaktifkan kembali.';
                 return $data;
             }
 
@@ -88,20 +144,23 @@ class AgentCommands extends Service
                 $merchant->status = 3;
                 $merchant->save();
 
-                Log::info('Request API melebihi batas, merchant di nonaktifkan');
+                Log::info('Request API melebihi batas, merchant dengan id' . $merchant->id . ' dinonaktifkan');
 
                 $data['status'] = 'error';
-                $data['message'] = 'Akun PLN Agen Anda sedang tidak aktif. Hubungi plnagen@pln.co.id untuk mengaktifkan kembali.';
+                $data['message'] = 'Akun Anda sedang tidak aktif. Hubungi admin untuk mengaktifkan kembali.';
                 return $data;
             }
             $hitCount++;
             $merchant->api_count = $hitCount;
             $merchant->save();
 
+            $fee_postpaid_agent = AgentMasterData::where(['type' => 'fee_tagihan_listrik', 'status' => 1])->first()->fee;
+
             $response = $this->agentManager->inquiryPostpaidV3($payload);
             if ($response['response_code'] == '0000') {
                 // $response['transaction_detail']['customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
                 $response['transaction_detail']['secret_customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
+                $response['transaction_detail']['fee_agent'] = $fee_postpaid_agent;
             }
 
             return $response;
@@ -129,6 +188,8 @@ class AgentCommands extends Service
         }
         $thbl_list = rtrim($thbl_list, ', ');
 
+        $fee_postpaid = AgentMasterData::where(['type' => 'fee_tagihan_listrik', 'status' => 1])->first();
+
         try {
             DB::beginTransaction();
 
@@ -146,8 +207,10 @@ class AgentCommands extends Service
                 'blth' => $thbl_list,
                 'order_date' => data_get($request, 'data.transaction_date'),
                 'amount' => data_get($request, 'data.amount'),
-                'total_fee' => data_get($request, 'data.total_fee'),
-                'total_amount' => data_get($request, 'data.total_amount'),
+                'fee_agent' => $fee_postpaid->fee,
+                'fee_iconpay' => data_get($request, 'data.total_fee'),
+                'total_fee' => $fee_postpaid->fee + data_get($request, 'data.total_fee'),
+                'total_amount' => data_get($request, 'data.total_amount') + $fee_postpaid->fee,
                 'order_detail' => json_encode(['create' => $request['data']]),
                 'margin' => $request['margin'] ?? 0,
                 'created_by' => Auth::user()->id,
@@ -210,19 +273,18 @@ class AgentCommands extends Service
             ];
 
             $merchant = Merchant::find(Auth::user()->merchant_id);
-            $hitCount = $merchant->api_count;
 
-            if ($hitCount >= 5 || $merchant->status == 3) {
+            if ($merchant->status == 3) {
                 Log::info('Merchant tidak aktif');
                 $data['status'] = 'error';
-                $data['message'] = 'Akun PLN Agen Anda sedang tidak aktif. Hubungi plnagen@pln.co.id untuk mengaktifkan kembali.';
+                $data['message'] = 'Akun Anda sedang tidak aktif. Hubungi admin untuk mengaktifkan kembali.';
                 return $data;
             }
 
             $response = $this->agentManager->inquiryPrepaidV3($payload);
 
             if ($response['response_code'] == '0000' && $response['transaction_detail'] != null) {
-                $list_denom = AgentMasterData::status(1)->type('token_listrik')->orderBy('value', 'ASC')->select('id', 'name', 'key', 'value', 'fee', 'type', 'strike_value', 'status')->get();
+                $list_denom = AgentMasterData::status(1)->type('token_listrik')->orderBy('value', 'ASC')->select('id', 'name', 'key', 'value', 'fee', 'fee_iconpay', 'type', 'strike_value', 'status')->get();
 
                 $unsold1 = $response['transaction_detail']['item_detail'][0]['unsold1'];
                 $unsold2 = $response['transaction_detail']['item_detail'][0]['unsold2'];
@@ -289,8 +351,10 @@ class AgentCommands extends Service
                 'product_value' => $tarifdaya,
                 'order_date' => data_get($request, 'data.transaction_date'),
                 'amount' => isset($unsold) ? $unsold : $denom->value,
-                'total_fee' => isset($unsold) ? 0 : $denom->fee,
-                'total_amount' => isset($unsold) ? $unsold : $denom->value + $denom->fee,
+                'fee_agent' => isset($unsold) ? 0 : $denom->fee,
+                'fee_iconpay' => isset($unsold) ? 0 : $denom->fee_iconpay,
+                'total_fee' => isset($unsold) ? 0 : $denom->fee + $denom->fee_iconpay,
+                'total_amount' => isset($unsold) ? $unsold : $denom->value + $denom->fee + $denom->fee_iconpay,
                 'order_detail' => json_encode(['create' => $request['data']]),
                 'margin' => $request['margin'] ?? 0,
                 // 'jml_kwh' => number_format($jml_kwh, 2, ',', '.'),
@@ -395,8 +459,140 @@ class AgentCommands extends Service
             throw new Exception($e->getMessage(), 500);
         }
     }
+    // End of PLN Prepaid & Postpaid Product
+
+    // PLN Iconnet Product
+    public function getInfoTagihanIconnetV3($request)
+    {
+        try {
+            $payload = [
+                'customer_id' => $request->idpel,
+            ];
+
+            $fee_iconnet_agent = AgentMasterData::where(['type' => 'fee_iconnet', 'status' => 1])->first()->fee;
+
+            $response = $this->agentManager->inquiryIconnetV3($payload);
+            if ($response['response_code'] == '0000') {
+                $response['transaction_detail']['secret_customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
+                $response['transaction_detail']['fee_agent'] = $fee_iconnet_agent;
+            }
+
+            return $response;
+        } catch (Exception $e) {
+            if (in_array($e->getCode(), self::$error_codes)) {
+                throw new Exception($e->getMessage(), $e->getCode());
+            }
+            throw new Exception($e->getMessage(), 500);
+        }
+    }
+
+    public function getInquiryIconnetV3($request)
+    {
+        $order = AgentOrder::where('trx_no', data_get($request, 'data.transaction_id'))->first();
+
+        if ($order) {
+            $response['status'] = 'error';
+            $response['message'] = 'Transaksi sudah pernah dilakukan';
+            return $response;
+        }
+
+        $thbl_list = '';
+
+        $items = $request['data']['item_detail'];
+        $email_customer = $items['email'];
+        $phone_number = $items['phone_number'];
+        $product_package = $items['product_package'];
+        $addons = $items['addons'];
+        $no_invoice = $items['no_invoice'];
+        $thbl = $items['thbltag'];
+        $thbl = substr($thbl, 0, 6);
+        $thbl_list .= $thbl . ', ';
+
+        $thbl_list = rtrim($thbl_list, ', ');
+
+        $fee_iconnet_agent = AgentMasterData::where(['type' => 'fee_iconnet', 'status' => 1])->first();
+
+        try {
+            DB::beginTransaction();
+
+            //INSERT TO DB ORDER
+            $order = AgentOrder::create([
+                'merchant_id' => Auth::user()->merchant_id,
+                'customer_id' => data_get($request, 'data.customer_id'),
+                'meter_number' => null,
+                'customer_name' => data_get($request, 'data.customer_name'),
+                'trx_no' => data_get($request, 'data.transaction_id'),
+                'biller_reference' => data_get($request, 'data.biller_reference'), //Biller reference from iconpay v3
+                'product_id' => data_get($request, 'data.product_id'),
+                'product_name' => data_get($request, 'data.product'),
+                'product_key' => 'ICONNET',
+                'product_value' => $product_package,
+                'product_addons' => $addons,
+                'product_invoice' => $no_invoice,
+                'blth' => $thbl_list,
+                'order_date' => data_get($request, 'data.transaction_date'),
+                'amount' => data_get($request, 'data.amount'),
+                'fee_agent' => $fee_iconnet_agent->fee,
+                'fee_iconpay' => data_get($request, 'data.total_fee'),
+                'total_fee' => $fee_iconnet_agent->fee + data_get($request, 'data.total_fee'),
+                'total_amount' => data_get($request, 'data.total_amount') + $fee_iconnet_agent->fee,
+                'order_detail' => json_encode(['create' => $request['data']]),
+                'margin' => $request['margin'] ?? 0,
+                'created_by' => Auth::user()->id,
+            ]);
+
+            // $order->invoice_no = static::invoice_num($order->id, 4, "INV/" . $order->product_id . "/" . date('Ymd')) . "/";
+            $order->invoice_no = 'INV/' . $order->product_id . '/' . date('Ymd') . '/' . $order->id;
+            $order->save();
+
+            $order_progress = AgentOrderProgres::create([
+                'agent_order_id' => $order->id,
+                'status_code' => '00',
+                'status_name' => 'Menunggu Pembayaran',
+                'created_by' => Auth::user()->id,
+            ]);
+
+            DB::commit();
+
+            $response['status'] = 'success';
+            $response['message'] = 'Berhasil melakukan inquiry';
+            $response['data'] = [
+                'info' => [
+                    'status_name' => $order_progress->status_name,
+                    'trx_no' => $order->trx_no,
+                    'order_date' => $order->order_date,
+                ],
+                'detail' => [
+                    'product_name' => $order->product_name,
+                    'product_value' => $order->product_value,
+                    'product_addons' => $order->product_addons,
+                    'customer_id' => $order->customer_id,
+                    'customer_name' => $order->customer_name,
+                    'secret_customer_name' => generate_name_secret($order->customer_name),
+                    'thbl' => $thbl_list,
+                    'amount' => $order->amount,
+                ],
+                'payment' => [
+                    'amount' => $order->amount,
+                    'total_fee' => $order->total_fee,
+                    'margin' => $order->margin,
+                    'total_amount' => $order->total_amount,
+                ],
+            ];
+
+            return $response;
+        } catch (Exception $e) {
+            DB::rollBack();
+            if (in_array($e->getCode(), self::$error_codes)) {
+                throw new Exception($e->getMessage(), $e->getCode());
+            }
+            throw new Exception($e->getMessage(), 500);
+        }
+    }
 
     // ======= CONFIRM PAYMENT TO ICONPAY PROCESS ======= //
+
+    // Payment for PLN Prepaid & Postpaid Product
     public static function confirmOrderIconcash($trx_no, $token, $client_ref, $source_account_id)
     {
         $order = AgentOrder::with([
@@ -479,8 +675,10 @@ class AgentCommands extends Service
                         'payment_detail' => json_encode(['create' => null, 'confirm' => $response['transaction_detail']]),
                         'payment_scenario' => $payment_scenario ?? null,
                         'amount' => $response['transaction_detail']['amount'],
-                        'total_fee' => $response['transaction_detail']['total_fee'],
-                        'total_amount' => $response['transaction_detail']['total_amount'],
+                        'fee_agent' => $order->fee_agent,
+                        'fee_iconpay' => $response['transaction_detail']['total_fee'],
+                        'total_fee' => $response['transaction_detail']['total_fee'] + $order->fee_agent,
+                        'total_amount' => $response['transaction_detail']['total_amount'] + $order->fee_agent,
                         'created_by' => 'system',
                     ]);
 
@@ -719,8 +917,10 @@ class AgentCommands extends Service
                 'payment_detail' => json_encode(['create' => null, 'confirm' => $advice['transaction_detail']]),
                 'payment_scenario' => $order->payment->payment_scenario ?? null,
                 'amount' => $advice['transaction_detail']['amount'] ?? null,
-                'total_fee' => $advice['transaction_detail']['total_fee'] ?? null,
-                'total_amount' => $advice['transaction_detail']['total_amount'] ?? null,
+                'fee_agent' => $order->fee_agent ?? null,
+                'fee_iconpay' => $advice['transaction_detail']['total_fee'] ?? null,
+                'total_fee' => $advice['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                'total_amount' => $advice['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                 'created_by' => 'system',
             ]);
 
@@ -755,8 +955,10 @@ class AgentCommands extends Service
                     'payment_detail' => json_encode(['create' => null, 'confirm' => $repeat_advice['transaction_detail']]),
                     'payment_scenario' => $order->payment->payment_scenario ?? null,
                     'amount' => $repeat_advice['transaction_detail']['amount'] ?? null,
-                    'total_fee' => $repeat_advice['transaction_detail']['total_fee'] ?? null,
-                    'total_amount' => $repeat_advice['transaction_detail']['total_amount'] ?? null,
+                    'fee_agent' => $order->fee_agent ?? null,
+                    'fee_iconpay' => $repeat_advice['transaction_detail']['total_fee'] ?? null,
+                    'total_fee' => $repeat_advice['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                    'total_amount' => $repeat_advice['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                     'created_by' => 'system',
                 ]);
 
@@ -785,8 +987,10 @@ class AgentCommands extends Service
                         'trx_reference' => $second_repeat_advice['transaction_detail']['transaction_id'] ?? null,
                         'payment_detail' => json_encode(['create' => null, 'confirm' => $second_repeat_advice['transaction_detail']]),
                         'amount' => $second_repeat_advice['transaction_detail']['amount'] ?? null,
-                        'total_fee' => $second_repeat_advice['transaction_detail']['total_fee'] ?? null,
-                        'total_amount' => $second_repeat_advice['transaction_detail']['total_amount'] ?? null,
+                        'fee_agent' => $order->fee_agent ?? null,
+                        'fee_iconpay' => $second_repeat_advice['transaction_detail']['total_fee'] ?? null,
+                        'total_fee' => $second_repeat_advice['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                        'total_amount' => $second_repeat_advice['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                         'created_by' => 'system',
                     ]);
 
@@ -881,8 +1085,10 @@ class AgentCommands extends Service
                 'payment_detail' => json_encode(['create' => null, 'confirm' => $advice['transaction_detail']]),
                 'payment_scenario' => $order->payment->payment_scenario ?? null,
                 'amount' => $advice['transaction_detail']['amount'] ?? null,
-                'total_fee' => $advice['transaction_detail']['total_fee'] ?? null,
-                'total_amount' => $advice['transaction_detail']['total_amount'] ?? null,
+                'fee_agent' => $order->fee_agent ?? null,
+                'fee_iconpay' => $advice['transaction_detail']['total_fee'] ?? null,
+                'total_fee' => $advice['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                'total_amount' => $advice['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                 'created_by' => 'system',
             ]);
 
@@ -916,8 +1122,10 @@ class AgentCommands extends Service
                     'payment_detail' => json_encode(['create' => null, 'confirm' => $repeat_advice['transaction_detail']]),
                     'payment_scenario' => $order->payment->payment_scenario ?? null,
                     'amount' => $repeat_advice['transaction_detail']['amount'] ?? null,
-                    'total_fee' => $repeat_advice['transaction_detail']['total_fee'] ?? null,
-                    'total_amount' => $repeat_advice['transaction_detail']['total_amount'] ?? null,
+                    'fee_agent' => $order->fee_agent ?? null,
+                    'fee_iconpay' => $repeat_advice['transaction_detail']['total_fee'] ?? null,
+                    'total_fee' => $repeat_advice['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                    'total_amount' => $repeat_advice['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                     'created_by' => 'system',
                 ]);
 
@@ -1016,8 +1224,10 @@ class AgentCommands extends Service
                 'payment_detail' => json_encode(['create' => null, 'confirm' => $reversal['transaction_detail']]),
                 'payment_scenario' => $order->payment->payment_scenario ?? null,
                 'amount' => $reversal['transaction_detail']['amount'] ?? null,
-                'total_fee' => $reversal['transaction_detail']['total_fee'] ?? null,
-                'total_amount' => $reversal['transaction_detail']['total_amount'] ?? null,
+                'fee_agent' => $order->fee_agent ?? null,
+                'fee_iconpay' => $reversal['transaction_detail']['total_fee'] ?? null,
+                'total_fee' => $reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                'total_amount' => $reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                 'created_by' => 'system',
             ]);
 
@@ -1041,8 +1251,10 @@ class AgentCommands extends Service
                 'trx_reference' => $reversal['transaction_detail']['transaction_id'] ?? null,
                 'payment_detail' => json_encode(['create' => null, 'confirm' => $reversal['transaction_detail']]),
                 'amount' => $reversal['transaction_detail']['amount'] ?? null,
-                'total_fee' => $reversal['transaction_detail']['total_fee'] ?? null,
-                'total_amount' => $reversal['transaction_detail']['total_amount'] ?? null,
+                'fee_agent' => $order->fee_agent ?? null,
+                'fee_iconpay' => $reversal['transaction_detail']['total_fee'] ?? null,
+                'total_fee' => $reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                'total_amount' => $reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                 'created_by' => 'system',
             ]);
 
@@ -1114,8 +1326,10 @@ class AgentCommands extends Service
                     'trx_reference' => $repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                     'payment_detail' => json_encode(['create' => null, 'confirm' => $repeat_reversal['transaction_detail']]),
                     'amount' => $repeat_reversal['transaction_detail']['amount'] ?? null,
-                    'total_fee' => $repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                    'total_amount' => $repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                    'fee_agent' => $order->fee_agent ?? null,
+                    'fee_iconpay' => $repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                    'total_fee' => $repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                    'total_amount' => $repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                     'created_by' => 'system',
                 ]);
 
@@ -1139,8 +1353,10 @@ class AgentCommands extends Service
                     'trx_reference' => $repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                     'payment_detail' => json_encode(['create' => null, 'confirm' => $repeat_reversal['transaction_detail']]),
                     'amount' => $repeat_reversal['transaction_detail']['amount'] ?? null,
-                    'total_fee' => $repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                    'total_amount' => $repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                    'fee_agent' => $order->fee_agent ?? null,
+                    'fee_iconpay' => $repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                    'total_fee' => $repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                    'total_amount' => $repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                     'created_by' => 'system',
                 ]);
 
@@ -1212,8 +1428,10 @@ class AgentCommands extends Service
                         'trx_reference' => $second_repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                         'payment_detail' => json_encode(['create' => null, 'confirm' => $second_repeat_reversal['transaction_detail']]),
                         'amount' => $second_repeat_reversal['transaction_detail']['amount'] ?? null,
-                        'total_fee' => $second_repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                        'total_amount' => $second_repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                        'fee_agent' => $order->fee_agent ?? null,
+                        'fee_iconpay' => $second_repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                        'total_fee' => $second_repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                        'total_amount' => $second_repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                         'created_by' => 'system',
                     ]);
 
@@ -1233,8 +1451,10 @@ class AgentCommands extends Service
                         'trx_reference' => $second_repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                         'payment_detail' => json_encode(['create' => null, 'confirm' => $second_repeat_reversal['transaction_detail']]),
                         'amount' => $second_repeat_reversal['transaction_detail']['amount'] ?? null,
-                        'total_fee' => $second_repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                        'total_amount' => $second_repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                        'fee_agent' => $order->fee_agent ?? null,
+                        'fee_iconpay' => $second_repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                        'total_fee' => $second_repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                        'total_amount' => $second_repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                         'created_by' => 'system',
                     ]);
 
@@ -1259,7 +1479,7 @@ class AgentCommands extends Service
                     $end_time = microtime(true);
                     $execution_time = ($end_time - $start_time);
 
-                    Log:info('3rd Repeat Reversal Started');
+                    Log: info('3rd Repeat Reversal Started');
 
                     //Reversal has been taken -> Set Reversal (refund)
                     if ($third_repeat_reversal['response_code'] == '0094' && $third_repeat_reversal['transaction_detail'] == null && $execution_time <= 20) {
@@ -1302,8 +1522,10 @@ class AgentCommands extends Service
                             'trx_reference' => $third_repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                             'payment_detail' => json_encode(['create' => null, 'confirm' => $third_repeat_reversal['transaction_detail']]),
                             'amount' => $third_repeat_reversal['transaction_detail']['amount'] ?? null,
-                            'total_fee' => $third_repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                            'total_amount' => $third_repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                            'fee_agent' => $order->fee_agent ?? null,
+                            'fee_iconpay' => $third_repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                            'total_fee' => $third_repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                            'total_amount' => $third_repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                             'created_by' => 'system',
                         ]);
 
@@ -1323,8 +1545,10 @@ class AgentCommands extends Service
                             'trx_reference' => $third_repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                             'payment_detail' => json_encode(['create' => null, 'confirm' => $third_repeat_reversal['transaction_detail']]),
                             'amount' => $third_repeat_reversal['transaction_detail']['amount'] ?? null,
-                            'total_fee' => $third_repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                            'total_amount' => $third_repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                            'fee_agent' => $order->fee_agent ?? null,
+                            'fee_iconpay' => $third_repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                            'total_fee' => $third_repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                            'total_amount' => $third_repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                             'created_by' => 'system',
                         ]);
 
@@ -1392,8 +1616,10 @@ class AgentCommands extends Service
                                 'trx_reference' => $fourth_repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                                 'payment_detail' => json_encode(['create' => null, 'confirm' => $fourth_repeat_reversal['transaction_detail']]),
                                 'amount' => $fourth_repeat_reversal['transaction_detail']['amount'] ?? null,
-                                'total_fee' => $fourth_repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                                'total_amount' => $fourth_repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                                'fee_agent' => $order->fee_agent ?? null,
+                                'fee_iconpay' => $fourth_repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                                'total_fee' => $fourth_repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                                'total_amount' => $fourth_repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                                 'created_by' => 'system',
                             ]);
 
@@ -1413,8 +1639,10 @@ class AgentCommands extends Service
                                 'trx_reference' => $fourth_repeat_reversal['transaction_detail']['transaction_id'] ?? null,
                                 'payment_detail' => json_encode(['create' => null, 'confirm' => $fourth_repeat_reversal['transaction_detail']]),
                                 'amount' => $fourth_repeat_reversal['transaction_detail']['amount'] ?? null,
-                                'total_fee' => $fourth_repeat_reversal['transaction_detail']['total_fee'] ?? null,
-                                'total_amount' => $fourth_repeat_reversal['transaction_detail']['total_amount'] ?? null,
+                                'fee_agent' => $order->fee_agent ?? null,
+                                'fee_iconpay' => $fourth_repeat_reversal['transaction_detail']['total_fee'] ?? null,
+                                'total_fee' => $fourth_repeat_reversal['transaction_detail']['total_fee'] + $order->fee_agent ?? null,
+                                'total_amount' => $fourth_repeat_reversal['transaction_detail']['total_amount'] + $order->fee_agent ?? null,
                                 'created_by' => 'system',
                             ]);
 
@@ -1514,6 +1742,134 @@ class AgentCommands extends Service
         $manual_reversal = $this->reversalPostpaid($order, null, null, null, null, null, $iconcash->token, $client_ref, $source_account_id);
 
         return $manual_reversal;
+    }
+    // End of Payment for Prepaid & Postpaid Product
+
+    // Payment for Iconnet Product
+    public static function confirmOrderIconnet($trx_no, $token, $client_ref, $source_account_id)
+    {
+        $order = AgentOrder::with([
+            'progress_active',
+            'payment' => fn($q) => $q->where('payment_method', 'iconcash')->where('trx_reference', $client_ref),
+        ])
+            ->where('trx_no', $trx_no)
+            ->first();
+
+        if (empty($order)) {
+            return [
+                'status' => 'error',
+                'message' => 'Order tidak ditemukan',
+            ];
+        }
+
+        if ($order->progress_active->status_code != '03') {
+            return [
+                'status' => 'error',
+                'message' => 'Belum melakukan konfirmasi',
+            ];
+        }
+
+        $payment_scenario = $order->payment->payment_scenario;
+
+        $merchant = Merchant::find($order->merchant_id);
+        $merchant->api_count = 0;
+        $merchant->save();
+
+        try {
+            DB::beginTransaction();
+            //Scenario For UAT Only - Normal
+            if ($payment_scenario == 'normal' || $payment_scenario == null) {
+                //Payment Iconnet - Iconpay
+                $response = AgentManager::confirmOrderIconnet(array_merge($order->toArray(), [
+                    'client_ref' => $client_ref,
+                ]));
+
+                // Transaction Pending -> Hit Check Payment Status
+                if (in_array($response['response_code'], ['5002', '5010', '408'])) {
+                    // Pending Transaction Timeout/5002/5010 -> Set Pending
+                    static::updateAgentOrderStatus($order->id, '09', $response['response_message']);
+
+                    DB::commit();
+                    $data['status'] = 'success';
+                    $data['message'] = 'Gagal menerima response, transaksi dalam status pending - ' . $response['response_code'];
+                    return $data;
+                }
+
+                // Transaction Success 0000 -> Set Success
+                if ($response['response_code'] == '0000' && $response['transaction_detail'] != null) {
+                    //Payment Success
+                    AgentOrderProgres::where('agent_order_id', $order->id)->update([
+                        'status' => 0,
+                        'updated_by' => 'system',
+                    ]);
+
+                    AgentOrderProgres::create([
+                        'agent_order_id' => $order->id,
+                        'status_code' => '04',
+                        'status_note' => $response['response_message'],
+                        'status_name' => static::$status_agent_order['04'],
+                        'created_by' => 'system',
+                    ]);
+
+                    if ($response['transaction_detail'] != null) {
+                        $response['transaction_detail']['customer_name'] = generate_name_secret($response['transaction_detail']['customer_name']);
+                    }
+
+                    AgentPayment::create([
+                        'agent_order_id' => $order->id,
+                        'payment_id' => $response['transaction_detail']['biller_reference'],
+                        'payment_method' => 'iconpay',
+                        'trx_reference' => $response['transaction_detail']['transaction_id'],
+                        'payment_detail' => json_encode(['create' => null, 'confirm' => $response['transaction_detail']]),
+                        'payment_scenario' => $payment_scenario ?? null,
+                        'amount' => $response['transaction_detail']['amount'],
+                        'fee_agent' => $order->fee_agent,
+                        'fee_iconpay' => $response['transaction_detail']['total_fee'],
+                        'total_fee' => $response['transaction_detail']['total_fee'] + $order->fee_agent,
+                        'total_amount' => $response['transaction_detail']['total_amount'] + $order->fee_agent,
+                        'created_by' => 'system',
+                    ]);
+
+                    DB::commit();
+                    $data['status'] = 'success';
+                    $data['message'] = 'Transaksi berhasil';
+                    return $data;
+
+                    // Transaction Paid 5003 -> Set Gagal
+                } else if ($response['response_code'] == '5003') {
+                    static::updateAgentOrderStatus($order->id, '08', $response['response_message']);
+                    IconcashCommands::orderRefund($order->trx_no, $token, $client_ref, $source_account_id);
+
+                    DB::commit();
+                    $data['status'] = 'success';
+                    $data['message'] = 'Transaksi gagal - ' . $response['response_code'];
+                    return $data;
+                    // Transaction Set Failed
+                } else if (in_array($response['response_code'], ['4007', '4010', '4012', '5003', '5004', '5005'])) {
+                    static::updateAgentOrderStatus($order->id, '08', $response['response_message']);
+                    IconcashCommands::orderRefund($order->trx_no, $token, $client_ref, $source_account_id);
+
+                    DB::commit();
+                    $data['status'] = 'success';
+                    $data['message'] = 'Transaksi gagal - ' . $response['response_code'];
+                    return $data;
+                } else {
+                    static::updateAgentOrderStatus($order->id, '08', $response['response_message']);
+                    IconcashCommands::orderRefund($order->trx_no, $token, $client_ref, $source_account_id);
+
+                    DB::commit();
+                    $data['status'] = 'success';
+                    $data['message'] = 'Transaksi gagal - ' . $response['response_code'];
+                    return $data;
+                }
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            if (in_array($e->getCode(), self::$error_codes)) {
+                throw new Exception($e->getMessage(), $e->getCode());
+            }
+            throw new Exception($e->getMessage(), 500);
+        }
     }
 
     public static function updateAgentOrderStatus($agent_order_id, $status_code, $status_note)

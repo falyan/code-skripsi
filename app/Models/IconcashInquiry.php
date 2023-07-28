@@ -48,7 +48,7 @@ class IconcashInquiry extends Model
      */
     protected $dates = [
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 
     /**
@@ -75,7 +75,7 @@ class IconcashInquiry extends Model
                 'customer_id' => $iconcash->customer_id,
                 'iconcash_id' => $iconcash->id,
                 'type' => 'withdrawal',
-                'source_account_id' => $source_account_id
+                'source_account_id' => $source_account_id,
             ]);
 
             return $response;
@@ -85,11 +85,32 @@ class IconcashInquiry extends Model
     }
 
     public static function createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order)
+    public static function createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order)
     {
         $model = new self;
 
         $response = IconcashManager::topupInquiry($iconcash->phone, $account_type_id, $amount, $client_ref, $corporate_id);
 
+        $model->create([
+            'customer_id' => $iconcash->customer_id,
+            'iconcash_id' => $iconcash->id,
+            'type' => 'topup',
+            'source_account_id' => $response->accountId,
+            'order_id' => $order->id,
+            'amount' => $order->total_amount,
+            'client_ref' => $client_ref,
+            'iconcash_order_id' => $response->orderId,
+            'res_json' => json_encode($response),
+        ]);
+
+        return $response;
+    }
+
+    public static function createTopupDepositInquiry($iconcash, $amount, $client_ref, $pspId, $order)
+    {
+        $model = new self;
+
+        $response = IconcashManager::topupDeposit($iconcash->token, $amount, $client_ref, $pspId);
         $model->create([
             'customer_id' => $iconcash->customer_id,
             'iconcash_id' => $iconcash->id,

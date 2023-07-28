@@ -90,8 +90,9 @@ class AgentQueries extends Service
     {
         $merchant_id = Auth::user()->merchant_id;
         $agentOrders = new AgentOrder();
-        $orders = $agentOrders->where('merchant_id', $merchant_id)->whereDate('created_at', Carbon::today())
-            ->with(['progress_active', 'payments']);
+        $orders = $agentOrders->where('merchant_id', $merchant_id)->whereDate('created_at', '>=', Carbon::now()->subDays(7))
+            ->with(['progress_active', 'payments'])
+            ->orderBy('created_at', 'desc');
 
         if ($keyword) {
             $orders = $orders->where(function ($query) use ($keyword) {

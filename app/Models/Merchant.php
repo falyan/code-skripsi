@@ -169,4 +169,29 @@ class Merchant extends Model
     {
         return $this->hasMany(PromoMerchant::class, 'merchant_id')->where('status', 1);
     }
+
+    public function subdistrict_logistic()
+    {
+        return $this->belongsTo(SubdistrictLogistic::class, 'subdistrict_id', 'id');
+    }
+
+    public function district_logistic()
+    {
+        return $this->belongsTo(DistrictLogistic::class, 'district_id', 'id');
+    }
+
+    public function city_logistic()
+    {
+        return $this->belongsTo(CityLogistic::class, 'city_id', 'id');
+    }
+
+    public function province_logistic()
+    {
+        return $this->belongsTo(ProvinceLogistic::class, 'province_id', 'id');
+    }
+
+    public function mitra()
+    {
+        return $this->belongsTo(AgentMasterMitra::class);
+    }
 }

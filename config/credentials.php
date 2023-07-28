@@ -23,6 +23,11 @@ return [
         'client_id' => env('ICONCASH_TOPUP_CREDENTIAL_CLIENT_ID'),
         'secret_key' => env('ICONCASH_TOPUP_CREDENTIAL_SECRET_KEY'),
     ],
+    'iconcash_topup_deposit' => [
+        'endpoint' => env('ICONCASH_TOPUP_DEPOSIT_CREDENTIAL_ENDPOINT'),
+        'client_id' => env('ICONCASH_TOPUP_DEPOSIT_CREDENTIAL_CLIENT_ID'),
+        'secret_key' => env('ICONCASH_TOPUP_DEPOSIT_CREDENTIAL_SECRET_KEY'),
+    ],
     'radagast' => [
         'endpoint' => env('RADAGAST_NOTIFICATION_ENDPOINT'),
         'endpointagregator' => env('RADAGAST_AGREGATOR_ENDPOINT'),
@@ -60,6 +65,7 @@ return [
             'client_id' => env('ICONPAY_V3_AGENT_CLIENT_ID'),
             'client_secret' => env('ICONPAY_V3_AGENT_CLIENT_SECRET'),
             'channel_id' => env('ICONPAY_V3_AGENT_CHANNEL_ID'),
+            'iconnet_channel_id' => env('ICONPAY_V3_AGENT_ICONNET_CHANNEL_ID'),
             'gateway_code' => env('ICONPAY_V3_AGENT_GATEWAY_CODE'),
             'bank_code' => env('ICONPAY_V3_AGENT_BANK_CODE'),
         ],

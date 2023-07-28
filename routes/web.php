@@ -399,38 +399,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->group(['middleware' => 'auth'], function () use ($router) {
             $router->group(['prefix' => 'command', 'middleware' => 'auth'], static function () use ($router) {
                 $router->group(['prefix' => 'merchant'], static function () use ($router) {
-                    $router->post('atur-profile', 'MerchantController@aturTokoAgent');
+                    $router->post('atur-profile', 'MerchantAgentController@aturTokoAgent');
                     $router->post('atur-margin', 'MerchantAgentController@setMarginDefault');
-                });
-                $router->group(['prefix' => 'kudo'], static function () use ($router) {
-                    $router->post('payment', 'KudoController@payment');
-                });
-            });
-
-            $router->group(['prefix' => 'query'], static function () use ($router) {
-                $router->group(['prefix' => 'merchant'], static function () use ($router) {
-                    $router->get('menu', 'MerchantAgentController@getMenu');
-                    $router->get('menu/{agent_id}', 'MerchantAgentController@getDetailMenu');
-                });
-
-                $router->group(['prefix' => 'kudo'], static function () use ($router) {
-                    $router->get('product-categories', 'KudoController@getProductCategory');
-                    $router->get('product-groups/{category_id}', 'KudoController@getProductGroupByCategoryId');
-                    $router->get('products/{group_id}', 'KudoController@getProductsByGroupId');
-                    $router->get('transaction/user-invoice', 'KudoController@getUserInvoices');
-                    $router->post('origin-inquiry', 'KudoController@inquiryKudo');
-                    $router->post('invoice/create', 'KudoController@createInvoice');
-                });
-            });
-        });
-    });
-
-    $router->group(['prefix' => 'agent'], static function () use ($router) {
-        $router->group(['middleware' => 'auth'], function () use ($router) {
-            $router->group(['prefix' => 'command', 'middleware' => 'auth'], static function () use ($router) {
-                $router->group(['prefix' => 'merchant'], static function () use ($router) {
-                    $router->post('atur-profile', 'MerchantController@aturTokoAgent');
-                    $router->post('atur-margin', 'MerchantAgentController@setMarginDefault');
+                    $router->post('atur-alamat', 'MerchantAgentController@aturLokasiAgent');
                     // Postpaid =======
                     $router->post('postpaid/tagihan', 'MerchantAgentController@getInfoTagihanPostpaidV3');
                     $router->post('postpaid/inquiry', 'MerchantAgentController@getInquiryPostpaidV3');
@@ -440,6 +411,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('prepaid/tagihan/manual-advice', 'MerchantAgentController@getInfoManualAdviceV3');
                     $router->post('prepaid/inquiry', 'MerchantAgentController@getInquiryPrepaidV3');
                     $router->post('prepaid/manual-advice', 'MerchantAgentController@manualAdvicePrepaid');
+                    // Iconnet ========
+                    $router->post('iconnet/tagihan', 'MerchantAgentController@getInfoTagihanIconnetV3');
+                    $router->post('iconnet/inquiry', 'MerchantAgentController@getInquiryIconnetV3');
                     // Download Payment Receipt
                     $router->get('payment-receipt/download', 'MerchantAgentController@downloadAgentReceipt');
                 });
@@ -474,8 +448,20 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 });
             });
 
-            // Iconpay ========
+            // ======= Confirm Payment for Iconpay Agent ========
+            // Payment Prepaid Postpaid
             $router->post('iconpay/confirm', 'MerchantAgentController@confirmOrderIconcash');
+            // Payment Iconnet
+            $router->post('iconpay/confirm/iconnet', 'MerchantAgentController@confirmOrderIconnet');
+        });
+
+        $router->group(['prefix' => 'pages'], static function () use ($router) {
+            $router->get('term-condition', 'PagesController@termConditionAgent');
+            $router->get('privacy-policy', 'PagesController@privacyPolicyAgent');
+        });
+
+        $router->group(['prefix' => 'query'], static function () use ($router) {
+            $router->get('master/mitra', 'AgentMasterDataController@getAgentMitra');
         });
     });
 
@@ -547,10 +533,16 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->post('command/order-refund', 'IconcashController@manualOrderRefund');
             $router->post('command/register_plnagent', 'IconcashController@registerDeposit');
             $router->get('query/getva_plnagent', 'IconcashController@getVADeposit');
+            $router->get('query/list-psp', 'IconcashController@getGatewayAgentPayment');
 
             $router->group(['prefix' => 'topup', 'middleware' => 'auth'], static function () use ($router) {
                 $router->post('command/topup-confirm', 'IconcashController@topupConfirm');
                 $router->post('command/topup-inquiry', 'IconcashController@topupInquiry');
+                $router->post('command/v2/topup-inquiry', 'IconcashController@topupInquiryV2');
+                $router->post('command/v2/topup-confirm', 'IconcashController@topupConfirmV2');
+                $router->post('command/topup-deposit', 'IconcashController@topupDeposit');
+                $router->post('command/topup-deposit/check-fee', 'IconcashController@checkFeeTopupDeposit');
+                $router->post('command/topup-deposit/confirm', 'IconcashController@confirmTopupDeposit');
             });
         });
     });

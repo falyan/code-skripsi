@@ -52,7 +52,7 @@ class MerchantAgentController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'agent_menu_id' => ['required', Rule::exists('agent_menu', 'id')->whereNull('deleted_at')],
-                'margin' => 'required|numeric|max:2500',
+                'margin' => 'required',
             ], [
                 'required' => ':attribute diperlukan.',
             ]);
@@ -75,8 +75,75 @@ class MerchantAgentController extends Controller
         }
     }
 
+    public function aturTokoAgent()
+    {
+        $validator = Validator::make(request()->all(), [
+            'slogan' => 'required',
+            'description' => 'required',
+        ], [
+            'required' => ':attribute diperlukan.',
+        ]);
+
+        try {
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+                return $this->respondValidationError($errors, 'Validation Error!');
+            };
+
+            return AgentCommands::aturTokoAgent(request()->all(), Auth::user()->merchant_id);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function aturLokasiAgent(Request $request)
+    {
+        $validator = Validator::make(
+            request()->all(),
+            [
+                'address' => 'required|min:3',
+                'province_id' => 'required',
+                'city_id' => 'required',
+                'district_id' => 'required',
+                'postal_code' => 'required|max:5',
+            ],
+            [
+                'exists' => 'ID :attribute tidak ditemukan.',
+                'required' => ':attribute diperlukan.',
+                'max' => 'panjang :attribute maksimum :max karakter.',
+                'min' => 'panjang :attribute minimum :min karakter.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            request()->request->add([
+                'full_name' => Auth::user()->full_name,
+            ]);
+            $data = AgentCommands::updateLokasiAgent($request, Auth::user()->merchant_id);
+            return $this->respondWithData($data, 'Data lokasi berhasil disimpan');
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     // ========= ICONPAY V3 API ==========
 
+    // ==== PLN Prepaid & Postpaid Product
     public function getInfoTagihanPostpaidV3(Request $request)
     {
         try {
@@ -253,6 +320,93 @@ class MerchantAgentController extends Controller
         //     return $this->respondErrorException($e, $request);
         // }
     }
+    // ==== End of PLN Prepaud & Postpaid Product
+
+    // ==== PLN Iconnet Product
+    public function getInfoTagihanIconnetV3(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'idpel' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+                return $this->respondValidationError($errors, 'Validation Error!');
+            };
+
+            $response = $this->agentCommands->getInfoTagihanIconnetV3($request);
+
+            if (isset($response['response_code']) && $response['response_code'] == '0000') {
+                return $this->respondCustom([
+                    'message' => isset($response['response_message']) ? $response['response_message'] : 'success',
+                    'response_code' => isset($response['response_code']) ? $response['response_code'] : '',
+                    'data' => $response['transaction_detail'],
+                ]);
+            }
+
+            return $response;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, $request);
+        }
+    }
+
+    public function getInquiryIconnetV3(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                "idpel" => "required",
+                "margin" => "required|numeric",
+                "data.customer_id" => "required",
+                "data.customer_name" => "required",
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+                return $this->respondValidationError($errors, 'Validation Error!');
+            };
+
+            $response = $this->agentCommands->getInquiryIconnetV3($request);
+
+            return $response;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, $request);
+        }
+    }
+
+    public function confirmOrderIconnet(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'transaction_id' => 'required',
+            'client_ref' => 'required',
+            'source_account_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors, 'Validation Error!');
+        };
+
+        $response = $this->agentCommands->confirmOrderIconnet($request['transaction_id'], Auth::user()->iconcash->token, $request['client_ref'], $request['source_account_id']);
+
+        return $response;
+    }
+    // ==== End of PLN Iconnet Product
 
     public function getOrder(Request $request)
     {

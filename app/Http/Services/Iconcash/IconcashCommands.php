@@ -88,14 +88,27 @@ class IconcashCommands extends Service
         //     ];
         // }
 
-        $data = [
-            'kode_konter' => ($order->total_fee + $order->margin) > 0 ? '0' : '1',
-            'kode_product' => $order->product_id == 'PREPAID' ? 1 : 2,
-            // 'kode_gateway' => static::generateGateway($order->merchant_id), // max 17.576
-            'kode_gateway' => env('ICONPAY_V3_AGENT_GATEWAY_CODE') ? env('ICONPAY_V3_AGENT_GATEWAY_CODE') : static::generateGateway($order->merchant_id), // max 17.576
-            'buying_options' => 1,
-            'transaction_id' => $order->trx_no,
-        ];
+        if ($order->product_id == 'PREPAID' || $order->product_id == 'POSTPAID') {
+            $data = [
+                'kode_konter' => ($order->total_fee + $order->margin) > 0 ? '0' : '1',
+                'kode_product' => $order->product_id == 'PREPAID' ? 1 : 2,
+                // 'kode_gateway' => static::generateGateway($order->merchant_id), // max 17.576
+                'kode_gateway' => env('ICONPAY_V3_AGENT_GATEWAY_CODE') ? env('ICONPAY_V3_AGENT_GATEWAY_CODE') : static::generateGateway($order->merchant_id), // max 17.576
+                'buying_options' => 1,
+                'transaction_id' => $order->trx_no,
+                'store_id' => env('ICONPAY_V3_AGENT_PLN_STORE_ID'),
+                'terminal_id' => env('ICONPAY_V3_AGENT_PLN_TERMINAL_ID'),
+            ];
+        } else if ($order->product_id == 'ICONNET') {
+            $data = [
+                'kode_konter' => ($order->total_fee + $order->margin) > 0 ? '0' : '1',
+                'kode_product' => 4,
+                'kode_gateway' => env('ICONPAY_V3_AGENT_GATEWAY_CODE') ? env('ICONPAY_V3_AGENT_GATEWAY_CODE') : static::generateGateway($order->merchant_id), // max 17.576
+                'transaction_id' => $order->trx_no,
+                'store_id' => env('ICONPAY_V3_AGENT_ICONNET_STORE_ID'),
+                'terminal_id' => env('ICONPAY_V3_AGENT_ICONNET_TERMINAL_ID'),
+            ];
+        }
 
         try {
             DB::beginTransaction();
@@ -121,6 +134,8 @@ class IconcashCommands extends Service
                     'trx_reference' => $createOrder['data']['clientRef'],
                     'payment_detail' => json_encode(['create' => $createOrder['data']]),
                     'amount' => $createOrder['data']['amount'],
+                    'fee_agent' => $order->fee_agent,
+                    'fee_iconpay' => $order->fee_iconpay,
                     'total_fee' => $createOrder['data']['fee'],
                     'total_amount' => $createOrder['data']['amountFee'],
                     'created_by' => Auth::user()->id,
@@ -301,6 +316,8 @@ class IconcashCommands extends Service
                     'trx_reference' => $confirmOrder['data']['clientRef'],
                     'payment_detail' => json_encode(['create' => $confirmOrder['data']]),
                     'amount' => $confirmOrder['data']['amount'],
+                    'fee_agent' => $order->fee_agent,
+                    'fee_iconpay' => $order->fee_iconpay,
                     'total_fee' => $confirmOrder['data']['fee'],
                     'total_amount' => $confirmOrder['data']['amountFee'],
                     'payment_scenario' => 'refund_success',
@@ -321,6 +338,8 @@ class IconcashCommands extends Service
                     'trx_reference' => null,
                     'payment_detail' => json_encode(['create' => $confirmOrder['message']]),
                     'amount' => null,
+                    'fee_agent' => null,
+                    'fee_iconpay' => null,
                     'total_fee' => null,
                     'total_amount' => null,
                     'payment_scenario' => 'refund_anomaly',
@@ -341,6 +360,8 @@ class IconcashCommands extends Service
                     'trx_reference' => null,
                     'payment_detail' => json_encode(['create' => $confirmOrder['message']]),
                     'amount' => null,
+                    'fee_agent' => null,
+                    'fee_iconpay' => null,
                     'total_fee' => null,
                     'total_amount' => null,
                     'payment_scenario' => 'refund_failed',
@@ -364,6 +385,8 @@ class IconcashCommands extends Service
                 'trx_reference' => null,
                 'payment_detail' => json_encode(['create' => $th->getMessage()]),
                 'amount' => null,
+                'fee_agent' => null,
+                'fee_iconpay' => null,
                 'total_fee' => null,
                 'total_amount' => null,
                 'payment_scenario' => 'refund_failed',

@@ -29,6 +29,7 @@ class AgentManager
     static $client_id;
     static $client_secret;
     static $channel_id;
+    static $iconnet_channel_id;
     static $timestamp;
     static $radagast_endpoint;
     static $radagast_agregator;
@@ -43,6 +44,7 @@ class AgentManager
         self::$client_id = config('credentials.agent.v3.client_id');
         self::$client_secret = config('credentials.agent.v3.client_secret');
         self::$channel_id = config('credentials.agent.v3.channel_id');
+        self::$iconnet_channel_id = config('credentials.agent.v3.iconnet_channel_id');
         // self::$timestamp = self::$now->format('Y-m-d') . 'T' . self::$now->format('H:i:s.u');
         //get 3 digit milisecond
         $milisecond = substr((string) self::$now->format('u'), 0, 3);
@@ -84,8 +86,9 @@ class AgentManager
         }
     }
 
-    // ========== API ICONPAY V3 ===========
+    // ========== API ICONPAY V3 =========== //
 
+    // ==== PLN Postpaid & Prepaid Product
     public static function inquiryPostpaidV3($request)
     {
         $params = static::setParamAPI([]);
@@ -175,6 +178,7 @@ class AgentManager
         return $response;
     }
 
+    // Payment for PLN Postpaid & Prepaid
     public static function confirmOrderIconcash($request, $timeout = null, $set_delay = null)
     {
         $order = AgentOrder::where('trx_no', $request['trx_no'])->first();
@@ -240,6 +244,154 @@ class AgentManager
             ];
         }
     }
+    // ==== End of PLN Postpaid & Prepaid
+
+    // ==== Iconnet Product
+    // Inquiry for Iconnet
+    public static function inquiryIconnetV3($request)
+    {
+        $params = static::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$endpointv3, 'iconnet/inquiry' . $params);
+        $body = [
+            'customer_id' => data_get($request, 'customer_id'),
+            'channel_id' => self::$iconnet_channel_id,
+            'product_id' => 'ICONNET',
+        ];
+
+        $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
+
+        $key = sha1(self::$client_secret);
+        $payload = $encode_body . self::$client_id . self::$timestamp;
+        // dd($payload);
+
+        $headers = static::headers([
+            'timestamp' => self::$timestamp,
+            'signature' => hash_hmac('sha256', $payload, $key),
+        ]);
+
+        // dd($headers);
+
+        $response = static::$curl->request('POST', $url, [
+            'headers' => $headers,
+            'http_errors' => false,
+            'json' => $body,
+        ]);
+
+        $response = json_decode($response->getBody(), true);
+
+        Log::info("E00002", [
+            'path_url' => "agent.v3.endpoint/inquiry/iconnet",
+            'query' => [],
+            'body' => $body,
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        return $response;
+    }
+
+    // Payment for Iconnet
+    public static function confirmOrderIconnet($request, $timeout = null, $set_delay = null)
+    {
+        $params = static::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$endpointv3, 'iconnet/payment' . $params);
+
+        $body = [
+            'transaction_id' => data_get($request, 'trx_no'),
+            'partner_reference' => $request['client_ref'],
+            'channel_id' => self::$channel_id,
+            'amount' => (int) $request['amount'],
+        ];
+
+        $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
+
+        $key = sha1(self::$client_secret);
+        $payload = $encode_body . self::$client_id . self::$timestamp;
+
+        $headers = static::headers([
+            'timestamp' => self::$timestamp,
+            'signature' => hash_hmac('sha256', $payload, $key),
+        ]);
+
+        $http = [
+            'headers' => $headers,
+            'http_errors' => false,
+            'json' => $body,
+        ];
+
+        try {
+            $response = static::$curl->request('POST', $url, !is_null($timeout) ? array_merge($http, ['delay' => $set_delay, 'timeout' => $timeout]) : $http);
+
+            $response = json_decode($response->getBody(), true);
+            // return $response;
+
+            Log::info("E00002", [
+                'path_url' => "agent.v3.endpoint/iconpay/iconnet/payment",
+                'query' => [],
+                'body' => $body,
+                'response' => $response,
+            ]);
+
+            throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+            // if ($response->success != true) {
+            //     throw new Exception($response->message, $response->code);
+            // }
+
+            return $response;
+        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+            return [
+                'response_code' => '408',
+                'transaction_detail' => null,
+            ];
+        }
+    }
+
+    // Check Status Payment for Iconnet
+    public static function checkStatusPaymentIconnet($request)
+    {
+        $params = static::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$endpointv3, 'iconnet/payment/status' . $params);
+
+        $body = [
+            'transaction_id' => $request['trx_no'],
+            'biller_reference' => $request['biller_reference'],
+        ];
+
+        $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
+
+        $key = sha1(self::$client_secret);
+        $payload = $encode_body . self::$client_id . self::$timestamp;
+
+        $headers = static::headers([
+            'timestamp' => self::$timestamp,
+            'signature' => hash_hmac('sha256', $payload, $key),
+        ]);
+
+        $response = static::$curl->request('POST', $url, [
+            'headers' => $headers,
+            'http_errors' => false,
+            'json' => $body,
+        ]);
+
+        $response = json_decode($response->getBody(), true);
+
+        Log::info("E00002", [
+            'path_url' => "agent.v3.endpoint/iconnet/payment/status",
+            'query' => [],
+            'body' => $body,
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        return $response;
+    }
+    // ==== End of Iconnet Product
 
     public static function reversalPostpaidV3($request, $timeout = null)
     {

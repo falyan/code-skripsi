@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 
 class AgentMasterDataController extends Controller
 {
-    protected $queries;
+    protected $queries, $agentQueries;
 
     public function __construct()
     {
@@ -28,6 +28,17 @@ class AgentMasterDataController extends Controller
                 'message' => $data->count() > 0 ? 'success' : 'empty data',
                 'data' => $data,
             ]);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getAgentMitra()
+    {
+        try {
+            $agent_mitra = $this->queries->getAgentMitra();
+
+            return $this->respondWithData($agent_mitra, 'success');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
