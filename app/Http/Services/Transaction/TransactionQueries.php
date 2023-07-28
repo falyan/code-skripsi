@@ -1444,10 +1444,10 @@ class TransactionQueries extends Service
                 $bonus_amount = 0;
                 $userId = auth()->user()->pln_mobile_customer_id;
 
-                if ($userId == null) {
-                    $userId = auth()->user()->id;
-                }
-                // $userId = 982; //dummy
+                // if ($userId == null) {
+                //     $userId = auth()->user()->id;
+                // }
+                // $userId = 981; //dummy
                 // cek jika customer memiliki bonus discount, jika tidak maka tidak dapat discount payment
                 $checkBonusDiscount = GamificationManager::claimBonusHold($userId, $merchant_total_price);
 

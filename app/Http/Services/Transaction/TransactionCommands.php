@@ -1248,29 +1248,41 @@ class TransactionCommands extends Service
 
             // Bonus Claim Apply
             if (isset($datas['discount_type']) && $datas['discount_type'] === 'GAMI-BONUS-DISCOUNT' && $datas['discount_type'] != null) {
-                Log::info('Hit Claim Bonus Apply');
-                $claimApplyDiscount = GamificationManager::claimBonusApply($datas['discount_claim_id'], $order->no_reference, $datas['total_amount_without_delivery']);
 
-                if ($claimApplyDiscount['success'] == true) {
-                    Log::info('Claim Bonus Apply Success');
-                    $newOrder = Order::where('id', $order->id)->first();
-                    $newOrder->bonus_discount = $claimApplyDiscount['data']['bonusAmount'] ?? 0;
-                    $newOrder->voucher_bonus_code = $claimApplyDiscount['data']['claimId'] ?? null;
-                    $newOrder->total_amount = $newOrder->total_amount - $newOrder->bonus_discount;
-                    $newOrder->save();
+                $userId = auth()->user()->pln_mobile_customer_id;
+                // $userId = 981; //dummy
+                $checkBonusDiscount = GamificationManager::claimBonusHold($userId, $datas['total_amount_without_delivery']);
 
-                    // update order detail
-                    $order_detail = OrderDetail::where('order_id', $newOrder->id)->first();
-                    $order_detail->total_discount = $order_detail->total_discount + $newOrder->bonus_discount;
-                    $order_detail->total_amount = $order_detail->total_amount - $newOrder->bonus_discount;
-                    $order_detail->save();
+                if ($checkBonusDiscount['success'] == true) {
+                    Log::info('Claim Bonus Hold Success');
+                    $claimId = $checkBonusDiscount['data']['id'];
 
-                    // update order payment
-                    $order_payment = OrderPayment::where('id', $newOrder->payment_id)->first();
-                    $order_payment->payment_amount = $order_payment->payment_amount - $newOrder->bonus_discount;
-                    $order_payment->save();
+                    Log::info('Hit Claim Bonus Apply');
+                    $claimApplyDiscount = GamificationManager::claimBonusApply($claimId, $order->no_reference, $datas['total_amount_without_delivery']);
+
+                    if ($claimApplyDiscount['success'] == true) {
+                        Log::info('Claim Bonus Apply Success');
+                        $newOrder = Order::where('id', $order->id)->first();
+                        $newOrder->bonus_discount = $claimApplyDiscount['data']['bonusAmount'] ?? 0;
+                        $newOrder->voucher_bonus_code = $claimApplyDiscount['data']['claimId'] ?? null;
+                        $newOrder->total_amount = $newOrder->total_amount - $newOrder->bonus_discount;
+                        $newOrder->save();
+
+                        // update order detail
+                        $order_detail = OrderDetail::where('order_id', $newOrder->id)->first();
+                        $order_detail->total_discount = $order_detail->total_discount + $newOrder->bonus_discount;
+                        $order_detail->total_amount = $order_detail->total_amount - $newOrder->bonus_discount;
+                        $order_detail->save();
+
+                        // update order payment
+                        $order_payment = OrderPayment::where('id', $newOrder->payment_id)->first();
+                        $order_payment->payment_amount = $order_payment->payment_amount - $newOrder->bonus_discount;
+                        $order_payment->save();
+                    } else {
+                        Log::info('Claim Bonus Apply Failed');
+                    }
                 } else {
-                    Log::info('Claim Bonus Apply Failed');
+                    Log::info('Claim Bonus Hold Failed');
                 }
             } else {
                 Log::info('No Claim Bonus Apply');
