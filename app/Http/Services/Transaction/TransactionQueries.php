@@ -5,6 +5,7 @@ namespace App\Http\Services\Transaction;
 use App\Http\Services\Manager\GamificationManager;
 use App\Http\Services\Service;
 use App\Models\City;
+use App\Models\CustomerAddress;
 use App\Models\CustomerDiscount;
 use App\Models\DeliveryDiscount;
 use App\Models\MasterData;
@@ -273,14 +274,14 @@ class TransactionQueries extends Service
                     $j->with('ev_subsidy');
                 }, 'variant_value_product']);
             }, 'progress', 'merchant' => function ($merchant) {
-                $merchant->with(['province', 'city', 'district']);
+                $merchant->with(['province', 'city', 'district', 'subdistrict']);
             }, 'delivery' => function ($region) {
                 $region->with(['city', 'district']);
             }, 'buyer', 'ev_subsidy', 'payment', 'review' => function ($review) {
                 $review->with(['review_photo']);
             }, 'promo_log_orders' => function ($promo) {
                 $promo->with(['promo_merchant.promo_master']);
-            },
+            }, 'order_detail_log',
         ])->find($id);
 
         $details = $data->detail;
@@ -297,6 +298,26 @@ class TransactionQueries extends Service
             $details[$key] = $detail;
         }
 
+        $delivery = json_decode($data->delivery->merchant_data);
+        if ($delivery != null) {
+            $city = City::find($delivery->merchant_city_id);
+            $data->merchant->address = $delivery->merchant_address;
+            $data->merchant->province_id = $delivery->merchant_province_id;
+            $data->merchant->city_id = $delivery->merchant_city_id;
+            $data->merchant->city->id = $city->id;
+            $data->merchant->city->name = $city->name;
+            $data->merchant->district_id = $delivery->merchant_district_id;
+            $data->merchant->subdistrict_id = $delivery->merchant_subdistrict_id;
+            $data->merchant->postal_code = $delivery->merchant_postal_code;
+            $data->merchant->latitude = $delivery->merchant_latitude;
+            $data->merchant->longitude = $delivery->merchant_longitude;
+
+            $data->merchant->phone_office = $delivery->merchant_phone_office;
+            $data->merchant->name = $delivery->merchant_name;
+
+            unset($data->delivery->merchant_data);
+        }
+
         foreach ($data->promo_log_orders as $promo_log_order) {
             if ($promo_log_order->promo_merchant->promo_master->event_type == 'ongkir') {
                 $data->delivery->is_shipping_discount = true;
@@ -311,9 +332,7 @@ class TransactionQueries extends Service
         }
 
         unset($data->promo_log_orders);
-
         $data->detail = $details;
-
         $data->iconpay_product_id = static::$productid;
 
         return $data;
