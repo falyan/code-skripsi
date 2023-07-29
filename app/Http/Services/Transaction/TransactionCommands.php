@@ -3,6 +3,7 @@
 namespace App\Http\Services\Transaction;
 
 use App\Http\Services\Manager\GamificationManager;
+use App\Http\Services\Manager\LogisticManager;
 use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Service;
@@ -2504,20 +2505,49 @@ class TransactionCommands extends Service
         return true;
     }
 
-    public function generateResi($order_id)
+    public function generateResi($order_id, $expect_time)
     {
-        $delivery = OrderDelivery::where('order_id', $order_id)->first();
+        $order = Order::where('id', $order_id)->with(['delivery'])->first();
+        $delivery = $order->delivery;
 
-        Carbon::setLocale('id');
-        $date = Carbon::now('Asia/Jakarta')->isoFormat('YMMDD');
-        $id = str_pad($order_id, 4, '0', STR_PAD_LEFT);
-        $resi = "CLG/{$date}/{$id}";
+        if ($delivery->delivery_method != 'Pengiriman oleh Seller' && $delivery->delivery_setting == 'shipper') {
+            $resi = LogisticManager::preorder($order->id);
 
-        $delivery->awb_number = $resi;
-        if (!$delivery->save()) {
-            $response['success'] = false;
-            $response['message'] = 'Gagal menambahkan nomor resi';
-            return $response;
+            if (!isset($resi['data'])) {
+                $response['success'] = false;
+                $response['message'] = 'Gagal menambahkan nomor resi.';
+                return $response;
+            }
+
+            $delivery->awb_number = $resi['data']['awb_number'];
+            $delivery->no_reference = $resi['data']['no_reference'];
+            $delivery->image_logistic = $resi['data']['courier_image'];
+
+            if (!$delivery->save()) {
+                $response['success'] = false;
+                $response['message'] = 'Gagal menambahkan nomor resi';
+                return $response;
+            }
+
+            $requestPickup = LogisticManager::requestPickup($order->trx_no, $expect_time);
+
+            if (isset($requestPickup) && !$requestPickup['success']) {
+                $response['success'] = false;
+                $response['message'] = $requestPickup['message'];
+                return $response;
+            }
+        } else {
+            Carbon::setLocale('id');
+            $date = Carbon::now('Asia/Jakarta')->isoFormat('YMMDD');
+            $id = str_pad($order_id, 4, '0', STR_PAD_LEFT);
+            $resi = "CLG/{$date}/{$id}";
+
+            $delivery->awb_number = $resi;
+            if (!$delivery->save()) {
+                $response['success'] = false;
+                $response['message'] = 'Gagal menambahkan nomor resi';
+                return $response;
+            }
         }
 
         $response['success'] = true;
