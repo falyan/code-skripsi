@@ -486,12 +486,36 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('logout', 'SettingProfileController@logout');
     });
 
+    $router->group(['prefix' => 'location'], static function () use ($router) {
+        $router->get('province', 'LocationController@getProvince');
+        $router->get('province/{id}/city', 'LocationController@getCity');
+        $router->get('city/{id}/district', 'LocationController@getDistrict');
+        $router->get('district/{id}/subdistrict', 'LocationController@getSubDistrict');
+        $router->post('subdistrict-with-latlng', 'LocationController@getSubDistrictWithLatLng');
+    });
+
     $router->group(['prefix' => 'rajaongkir'], static function () use ($router) {
         $router->get('province', 'RajaOngkirController@getProvince');
         $router->get('district', 'RajaOngkirController@getDistrict');
         $router->post('ongkir', 'RajaOngkirController@ongkir');
         $router->get('couriers', 'RajaOngkirController@couriers');
         $router->post('track', 'RajaOngkirController@trackOrder');
+    });
+
+    $router->group(['prefix' => 'logistic'], static function () use ($router) {
+        $router->get('province', 'LogisticController@getProvince');
+        $router->get('province/{id}/city', 'LogisticController@getCity');
+        $router->get('city/{id}/district', 'LogisticController@getDistrict');
+        $router->get('district/{id}/subdistrict', 'LogisticController@getSubDistrict');
+        $router->post('webhook', 'LogisticController@webhook');
+
+        $router->group(['middleware' => 'auth'], static function () use ($router) {
+            $router->post('ongkir', 'LogisticController@ongkirLogistic');
+            // $router->post('order', 'LogisticController@order');
+            // $router->post('pickup', 'LogisticController@pickup');
+            $router->get('track/{order_id}', 'LogisticController@track');
+            // $router->post('cancel', 'LogisticController@cancel');
+        });
     });
 
     $router->group(['prefix' => 'order'], static function () use ($router) {

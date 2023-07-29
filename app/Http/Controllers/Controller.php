@@ -108,7 +108,7 @@ class Controller extends BaseController
         return $this->respondWithResult(true, 'Logout Successfull', 200);
     }
 
-    public function respondWithData($data, $message, int $statusCode = 200)
+    public function respondWithData($data, $message = 'Success', int $statusCode = 200)
     {
         return response()->json([
             'status' => $statusCode,

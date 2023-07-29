@@ -2648,4 +2648,17 @@ class TransactionCommands extends Service
         $response['data'] = $user_tikets;
         return $response;
     }
+
+    public function updateAwb($trx_no, $awb)
+    {
+        $order = Order::where('trx_no', $trx_no)->first();
+        $delivery = OrderDelivery::where('order_id', $order->id)->first();
+
+        $delivery->awb_number = $awb;
+        $delivery->save();
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil update awb';
+        return $response;
+    }
 }
