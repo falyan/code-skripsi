@@ -1459,7 +1459,9 @@ class TransactionQueries extends Service
         // cek jika di env gamification_bonus_discount nya true, maka jalankan perhitungan discount ini
         if (config('credentials.gamification.bonus_discount.activation') === true) {
             // cek jika total price minimal 50000
-            if ($merchant_total_price >= 50000) {
+            $totalProductPrice = $total_price - $total_delivery_fee;
+
+            if ($totalProductPrice >= 50000) {
                 $bonus_amount = 0;
                 $userId = auth()->user()->pln_mobile_customer_id;
 
@@ -1468,11 +1470,11 @@ class TransactionQueries extends Service
                 // }
                 // $userId = 981; //dummy
                 // cek jika customer memiliki bonus discount, jika tidak maka tidak dapat discount payment
-                $checkBonusDiscount = GamificationManager::claimBonusHold($userId, $merchant_total_price);
+                $checkBonusDiscount = GamificationManager::claimBonusHold($userId, $totalProductPrice);
 
                 // jika customer memiliki bonus discount, validasi apakah bonus discount nya valid atau tidak. Jika valid, maka discount payment nya di set sesuai dengan bonus discount nya
                 if ($checkBonusDiscount['success'] === true) {
-                    $validateBonusDiscount = GamificationManager::claimBonusValidate($checkBonusDiscount['data']['id'], $merchant_total_price);
+                    $validateBonusDiscount = GamificationManager::claimBonusValidate($checkBonusDiscount['data']['id'], $totalProductPrice);
 
                     if ($validateBonusDiscount['success'] === true) {
                         $bonus_amount += $validateBonusDiscount['data']['bonusAmount'];
