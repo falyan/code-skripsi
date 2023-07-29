@@ -413,7 +413,7 @@ class LogisticController extends Controller
                     'data' => isset($tracking_data['data']) ? $tracking_data['data'] : null,
                 ]);
             } else {
-                $tracking_data = $this->rajaongkirManager->trackOrder($order);
+                $tracking_data = $this->rajaongkirManager->trackOrderSameLogistic($order);
 
                 return $this->respondCustom([
                     'status' => 200,

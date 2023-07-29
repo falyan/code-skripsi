@@ -3,6 +3,7 @@
 namespace App\Http\Services\Manager;
 
 use App\Http\Resources\Rajaongkir\RajaongkirResources;
+use App\Http\Resources\Rajaongkir\RajaongkirSameLogisticResources;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
@@ -304,7 +305,7 @@ class RajaOngkirManager
         $transactionQueries = new TransactionQueries();
         $response->delivery_discount = $transactionQueries->getDeliveryDiscount();
 
-        return new RajaongkirResources($response);
+        return new RajaongkirSameLogisticResources($response);
     }
 
     public static function trackOrderSameLogistic($order)
