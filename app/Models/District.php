@@ -79,6 +79,11 @@ class District extends Model
         return $this->belongsTo(City::class);
     }
 
+    public function subdistrict()
+    {
+        return $this->hasMany(Subdistrict::class);
+    }
+
     public function merchant(){
         return $this->hasMany(Merchant::class);
     }

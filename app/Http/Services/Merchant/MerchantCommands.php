@@ -64,9 +64,12 @@ class MerchantCommands extends Service
         $merchant->phone_office = $merchant->phone_office;
         $merchant->corporate_id = $merchant->corporate_id;
         $merchant->address = $request->address == null ? $merchant->address : $request->address;
+        // $merchant->district_code = $request->district_code == null ? $merchant->district_code : $request->district_code;
+        // $merchant->location_name = $request->location_name == null ? $merchant->location_name : $request->location_name;
         $merchant->province_id = $request->province_id == null ? $merchant->province_id : $request->province_id;
         $merchant->city_id = $request->city_id == null ? $merchant->city_id : $request->city_id;
         $merchant->district_id = $request->district_id == null ? $merchant->district_id : $request->district_id;
+        $merchant->subdistrict_id = $request->subdistrict_id == null ? $merchant->subdistrict_id : $request->subdistrict_id;
         $merchant->postal_code = $request->postal_code == null ? $merchant->postal_code : $request->postal_code;
         $merchant->longitude = $request->longitude == null ? $merchant->longitude : $request->longitude;
         $merchant->latitude = $request->latitude == null ? $merchant->latitude : $request->latitude;
@@ -80,6 +83,10 @@ class MerchantCommands extends Service
         $merchant->created_by = $merchant->created_by;
         $merchant->updated_by = $request->full_name;
         $merchant->reference_customer_id = $merchant->reference_customer_id;
+
+        // $logisticManager = new LogisticManager();
+        // $location = (array) $logisticManager->searchLocationByCode(['kode' => $merchant->district_code]);
+        // $merchant->location_name = $location['nama'];
 
         if ($merchant->save()) {
             return $merchant;

@@ -8,6 +8,7 @@ use App\Http\Services\Service;
 use App\Models\Merchant;
 use App\Models\MerchantBanner;
 use App\Models\Order;
+use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -19,9 +20,16 @@ class MerchantQueries extends Service
     public static function homepageProfile($merchant_id, $date = [])
     {
         try {
-            $merchant = Merchant::with(['operationals', 'district', 'city', 'province', 'expedition'])->find($merchant_id);
+            $merchant = Merchant::with([
+                'operationals',
+                'province:id,name',
+                'city:id,name',
+                'district:id,name',
+                'subdistrict:id,name',
+                'expedition'
+            ])->find($merchant_id);
+            $user = User::where('merchant_id', $merchant_id)->first();
             $orders = [];
-            $order_before = [];
 
             $orders['success'] = static::getTotalTrx($merchant_id, '88', $date['daterange']);
             $orders['canceled'] = static::getTotalTrx($merchant_id, '09', $date['daterange']);
@@ -100,6 +108,7 @@ class MerchantQueries extends Service
             return [
                 'data' => [
                     'merchant' => $merchant,
+                    'user' => $user,
                     'transactions' => [
                         'total_transaction' => $orders['total'],
                         'total_success' => $orders['success'],

@@ -12,11 +12,8 @@ use Illuminate\Support\Facades\Validator;
 
 class CustomerController extends Controller
 {
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
+    protected $customerQueries, $customerCommands;
+
     public function __construct()
     {
         $this->customerQueries = new CustomerQueries();
@@ -139,6 +136,76 @@ class CustomerController extends Controller
             if (Auth::check()) {
                 return $this->customerCommands->updateCustomerProfile(Auth::id(), $request);
             }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+
+
+    public function createCustomerAddressV2()
+    {
+        $validator = Validator::make(request()->all(), [
+            'address' => 'required',
+            'subdistrict_id' => 'required',
+            'district_id' => 'required',
+            'city_id' => 'required',
+            'province_id' => 'required',
+            'postal_code' => 'required',
+            'receiver_name' => 'required',
+            'receiver_phone' => 'required',
+            'title' => 'required',
+            'is_default' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            $customer_id = Auth::id();
+            return $this->customerCommands->createCustomerAddressV2($customer_id, request()->all());
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function updateCustomerAddressV2($id)
+    {
+        $validator = Validator::make(request()->all(), [
+            'address' => 'required',
+            'subdistrict_id' => 'required',
+            'district_id' => 'required',
+            'city_id' => 'required',
+            'province_id' => 'required',
+            'postal_code' => 'required',
+            'receiver_name' => 'required',
+            'receiver_phone' => 'required',
+            'title' => 'required',
+            'is_default' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            $customer_id = Auth::id();
+            return $this->customerCommands->updateCustomerAddressV2($id, $customer_id, request()->all());
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
