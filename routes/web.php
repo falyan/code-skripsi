@@ -106,6 +106,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 });
 
                 $router->group(['prefix' => 'product'], static function () use ($router) {
+                    $router->get('check', 'ProductController@checkProductByMerchantSeller');
+                    $router->get('check/{id}', 'ProductController@checkProductIdByMerchantSeller');
                     $router->get('merchant', 'ProductController@getProductByMerchantSeller');
                     $router->get('best-selling', 'ProductController@getBestSellingProductByMerchant');
                     $router->get('almost-running-out', 'ProductController@getProductAlmostRunningOut');

@@ -190,6 +190,25 @@ class ProductController extends Controller
     }
 
     //Get Produk Berdasarkan Merchant Seller
+    public function checkProductByMerchantSeller()
+    {
+        try {
+            return $this->productQueries->checkProductByMerchantSeller();
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function checkProductIdByMerchantSeller($id)
+    {
+        try {
+            return $this->productQueries->checkProductIdByMerchantSeller($id);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    //Get Produk Berdasarkan Merchant Seller
     public function getProductByMerchantSeller(Request $request)
     {
         try {
