@@ -355,7 +355,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->post('checkout', 'TransactionController@checkout');
                 $router->post('checkoutv2', 'TransactionController@checkoutV2');
                 $router->post('checkoutv3', 'TransactionController@checkoutV3');
-                $router->post('checkoutv4', 'TransactionController@checkoutV4');
             });
 
             $router->group(['prefix' => 'cart', 'middleware' => 'auth'], static function () use ($router) {

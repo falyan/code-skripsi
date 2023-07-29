@@ -247,6 +247,96 @@ class TransactionController extends Controller
         }
     }
 
+    // Checkout V3
+    public function checkoutV3()
+    {
+        $rules = [
+            'customer_address_id' => 'required',
+            'merchants' => 'required|array',
+            'merchants.*.merchant_id' => 'required',
+            // 'merchants.*.must_use_insurance' => 'required',
+            'merchants.*.total_weight' => 'required',
+            'merchants.*.delivery_method' => 'required',
+            'merchants.*.delivery_service' => 'required',
+            'merchants.*.delivery_setting' => 'required',
+            'merchants.*.total_amount' => 'required',
+            'merchants.*.total_payment' => 'required',
+            'merchants.*.products' => 'required',
+            'merchants.*.products.*.product_id' => 'required',
+            'merchants.*.products.*.quantity' => 'required',
+            'merchants.*.products.*.price' => 'required',
+            'merchants.*.products.*.weight' => 'required',
+            'merchants.*.products.*.insurance_cost' => 'required',
+            'merchants.*.products.*.discount' => 'required',
+            'merchants.*.products.*.total_price' => 'required',
+            'merchants.*.products.*.total_weight' => 'required',
+            'merchants.*.products.*.total_discount' => 'required',
+            'merchants.*.products.*.total_insurance_cost' => 'required',
+            'merchants.*.products.*.total_amount' => 'required',
+            'merchants.*.products.*.payment_note' => 'sometimes',
+            // "npwp" => 'nullable|string',
+            // 'save_npwp' => 'nullable|boolean|required_with:npwp',
+        ];
+
+        if (isset(request()->all()['customer'])) {
+            $rules['customer.nik'] = 'required';
+        }
+
+        $validator = Validator::make(request()->all(), $rules, [
+            'required' => ':attribute diperlukan.',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            $customer = Auth::user();
+            $request = request()->all();
+
+            $request['merchants'] = $this->transactionQueries->createOrderV3($request);
+            $response = $this->transactionCommand->createOrderV3($request, $customer);
+
+            if ($response['success'] == true) {
+                foreach ($request['merchants'] as $merchant) {
+                    foreach ($merchant['products'] as $item) {
+                        $productCommand = new ProductCommands();
+
+                        if (data_get($item, 'variant_value_product_id') != null) {
+                            $variant_stock = VariantStock::where('variant_value_product_id', data_get($item, 'variant_value_product_id'))
+                                ->where('status', 1)->first();
+
+                            $data['amount'] = $variant_stock['amount'] - data_get($item, 'quantity');
+                            $data['full_name'] = Auth::user()->full_name;
+
+                            $productCommand->updateStockVariantProduct(data_get($item, 'variant_value_product_id'), $data);
+                        }
+
+                        $stock = ProductStock::where('product_id', data_get($item, 'product_id'))
+                            ->where('merchant_id', data_get($merchant, 'merchant_id'))->where('status', 1)->first();
+
+                        $data['amount'] = $stock['amount'] - data_get($item, 'quantity');
+                        $data['uom'] = $stock['uom'];
+                        $data['full_name'] = Auth::user()->full_name;
+
+                        $productCommand->updateStockProduct(data_get($item, 'product_id'), data_get($merchant, 'merchant_id'), $data);
+                    }
+                }
+            }
+
+            return $response;
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     #region Buyer
     public function buyerIndex($related_id, Request $request)
     {
@@ -1788,53 +1878,15 @@ class TransactionController extends Controller
 
     public function countCheckoutPriceV3()
     {
-        $validator = Validator::make(request()->all(), [
-            'merchants' => 'required|array',
-            'merchants.*.merchant_id' => 'required',
-            // 'merchants.*.delivery_method' => 'required',
-            'merchants.*.delivery_fee' => 'required',
-            'merchants.*.delivery_discount' => 'required',
-            'merchants.*.products' => 'required|array',
-            'merchants.*.products.*.product_id' => 'required',
-            'merchants.*.products.*.quantity' => 'required',
-            'merchants.*.products.*.payment_note' => 'sometimes',
-            // 'destination_info.province_id' => 'required'
-        ], [
-            'required' => ':attribute diperlukan.',
-        ]);
-
-        if ($validator->fails()) {
-            $errors = collect();
-            foreach ($validator->errors()->getMessages() as $key => $value) {
-                foreach ($value as $error) {
-                    $errors->push($error);
-                }
-            }
-
-            return $this->respondValidationError($errors, 'Validation Error!');
-        }
-
-        try {
-            $customer = Auth::user();
-
-            // $response['success'] = true;
-            // $response['message'] = 'Berhasil resend email';
-            // $response['data'] = $this->transactionQueries->countCheckoutPriceV3($customer, request()->all());
-
-            return $this->transactionQueries->countCheckoutPriceV3($customer, request()->all());
-        } catch (Exception $e) {
-            return $this->respondErrorException($e, request());
-        }
-    }
-
-    public function countCheckoutPriceV4()
-    {
         $rules = [
+            'customer_address_id' => 'required',
             'merchants' => 'required|array',
             'merchants.*.merchant_id' => 'required',
-            // 'merchants.*.delivery_method' => 'required',
             'merchants.*.delivery_fee' => 'required',
             'merchants.*.delivery_discount' => 'required',
+            'merchants.*.delivery_method' => 'nullable|string',
+            'merchants.*.delivery_service' => 'nullable|string',
+            'merchants.*.delivery_setting' => 'nullable|string',
             'merchants.*.products' => 'required|array',
             'merchants.*.products.*.product_id' => 'required',
             'merchants.*.products.*.quantity' => 'required',
@@ -1862,31 +1914,34 @@ class TransactionController extends Controller
 
         try {
             $customer = Auth::user();
-            $respond = $this->transactionQueries->countCheckoutPriceV2($customer, request()->all());
+            $request = request()->all();
+            $respond = $this->transactionQueries->countCheckoutPriceV3($customer, $request);
 
-            $ev_subsidies = [];
-            foreach ($respond['merchants'] as $merchant) {
-                foreach ($merchant['products'] as $product) {
-                    if ($product['ev_subsidy'] != null) {
-                        if ($product['quantity'] > 1) {
-                            return array_merge($respond, [
-                                'success' => true,
-                                'status_code' => 400,
-                                'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
-                            ]);
+            if (isset($request['customer']) && data_get($request, 'customer') != null) {
+                $ev_subsidies = [];
+                foreach ($respond['merchants'] as $merchant) {
+                    foreach ($merchant['products'] as $product) {
+                        if ($product['ev_subsidy'] != null) {
+                            if ($product['quantity'] > 1) {
+                                return array_merge($respond, [
+                                    'success' => true,
+                                    'status_code' => 400,
+                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                                ]);
+                            }
+
+                            $ev_subsidies[] = $product['ev_subsidy'];
                         }
-
-                        $ev_subsidies[] = $product['ev_subsidy'];
                     }
                 }
-            }
 
-            if (count($ev_subsidies) > 1) {
-                return array_merge($respond, [
-                    'success' => true,
-                    'status_code' => 400,
-                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
-                ]);
+                if (count($ev_subsidies) > 1) {
+                    return array_merge($respond, [
+                        'success' => true,
+                        'status_code' => 400,
+                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                    ]);
+                }
             }
 
             return $respond;
