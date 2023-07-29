@@ -1265,7 +1265,16 @@ class TransactionController extends Controller
                 $client_ref = $this->unique_code($iconcash->token);
                 $corporate_id = 10;
 
-                IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
+                $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
+
+                $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+
+                if ($resConfrim) {
+                    $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
+                    $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
+                    $iconcash_inquiry->confirm_status = $resConfrim->success;
+                    $iconcash_inquiry->save();
+                }
 
                 $notificationCommand = new NotificationCommands();
                 $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
@@ -1956,7 +1965,15 @@ class TransactionController extends Controller
 
             $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
 
-            IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+            $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+
+            if ($resConfrim) {
+                $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
+                $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
+                $iconcash_inquiry->confirm_status = $resConfrim->success;
+                $iconcash_inquiry->save();
+            }
+
             DB::commit();
             return $this->respondWithResult(true, 'Topup refund ongkir berhasil!', 200);
         } catch (Exception $e) {
