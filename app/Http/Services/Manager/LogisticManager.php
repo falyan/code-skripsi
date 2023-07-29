@@ -233,14 +233,14 @@ class LogisticManager
             'json' => $body,
         ]);
 
+        $response = json_decode($response->getBody(), true);
+
         Log::info("E00002", [
             'path_url' => "hedwig.endpoint/v2/service/rates",
             'query' => [],
             'body' => $body,
             'response' => $response,
         ]);
-
-        $response = json_decode($response->getBody(), true);
 
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
@@ -337,14 +337,14 @@ class LogisticManager
             'json' => $body,
         ]);
 
+        $response = json_decode($response->getBody(), true);
+
         Log::info("E00002", [
             'path_url' => "hedwig.endpoint/v2/tracking",
             'query' => [],
             'body' => $body,
             'response' => $response,
         ]);
-
-        $response = json_decode($response->getBody(), true);
 
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
@@ -489,15 +489,15 @@ class LogisticManager
             'json' => $body,
         ]);
 
+        $response = json_decode($response->getBody(), true);
+        // return $response;
+
         Log::info("E00002", [
             'path_url' => "hedwig.endpoint/v2/preorder",
             'query' => [],
             'body' => $body,
             'response' => $response,
         ]);
-
-        $response = json_decode($response->getBody(), true);
-        // return $response;
 
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
@@ -523,15 +523,15 @@ class LogisticManager
             'json' => $body,
         ]);
 
+        $response = json_decode($response->getBody(), true);
+        // return $response;
+
         Log::info("E00002", [
             'path_url' => "hedwig.endpoint/v2/request-pickup",
             'query' => [],
             'body' => $body,
             'response' => $response,
         ]);
-
-        $response = json_decode($response->getBody(), true);
-        // return $response;
 
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
