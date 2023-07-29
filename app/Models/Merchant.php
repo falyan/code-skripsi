@@ -130,6 +130,11 @@ class Merchant extends Model
         return $this->belongsTo(District::class);
     }
 
+    public function subdistrict()
+    {
+        return $this->belongsTo(Subdistrict::class);
+    }
+
     public function review()
     {
         return $this->hasMany(Review::class);
@@ -163,31 +168,6 @@ class Merchant extends Model
     public function banner()
     {
         return $this->hasMany(MerchantBanner::class, 'merchant_id', 'id')->where('status', 1);
-    }
-
-    public function promo_merchant()
-    {
-        return $this->hasMany(PromoMerchant::class, 'merchant_id')->where('status', 1);
-    }
-
-    public function subdistrict_logistic()
-    {
-        return $this->belongsTo(SubdistrictLogistic::class, 'subdistrict_id', 'id');
-    }
-
-    public function district_logistic()
-    {
-        return $this->belongsTo(DistrictLogistic::class, 'district_id', 'id');
-    }
-
-    public function city_logistic()
-    {
-        return $this->belongsTo(CityLogistic::class, 'city_id', 'id');
-    }
-
-    public function province_logistic()
-    {
-        return $this->belongsTo(ProvinceLogistic::class, 'province_id', 'id');
     }
 
     public function mitra()
