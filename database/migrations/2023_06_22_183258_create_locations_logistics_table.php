@@ -60,6 +60,12 @@ class CreateLocationsLogisticsTable extends Migration
         Schema::table('customer_address', function (Blueprint $table) {
             $table->softDeletes();
         });
+
+        Schema::table('product', function (Blueprint $table) {
+            $table->string('length')->nullable();
+            $table->string('width')->nullable();
+            $table->string('height')->nullable();
+        });
     }
 
     /**
@@ -103,6 +109,12 @@ class CreateLocationsLogisticsTable extends Migration
 
         Schema::table('customer_address', function (Blueprint $table) {
             $table->dropSoftDeletes();
+        });
+
+        Schema::table('product', function (Blueprint $table) {
+            $table->dropColumn('length');
+            $table->dropColumn('width');
+            $table->dropColumn('height');
         });
     }
 }
