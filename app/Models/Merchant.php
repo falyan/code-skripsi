@@ -170,6 +170,11 @@ class Merchant extends Model
         return $this->hasMany(MerchantBanner::class, 'merchant_id', 'id')->where('status', 1);
     }
 
+    public function promo_merchant()
+    {
+        return $this->hasMany(PromoMerchant::class, 'merchant_id')->where('status', 1);
+    }
+
     public function mitra()
     {
         return $this->belongsTo(AgentMasterMitra::class);
