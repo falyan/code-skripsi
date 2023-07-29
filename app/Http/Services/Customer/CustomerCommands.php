@@ -208,7 +208,6 @@ class CustomerCommands
         $customer_address = CustomerAddress::findOrFail($id);
         $customer_address->title = $data['title'] == null ? ($customer_address->title) : ($data['title']);
         $customer_address->address = $data['address'] == null ? ($customer_address->address) : ($data['address']);
-        $customer_address->location_name = $data['location_name'] == null ? ($customer_address->location_name) : ($data['location_name']);
         $customer_address->province_id = !isset($data['province_id']) ? ($customer_address->province_id) : ($data['province_id']);
         $customer_address->city_id = !isset($data['city_id']) ? ($customer_address->city_id) : ($data['city_id']);
         $customer_address->district_id = !isset($data['district_id']) ? ($customer_address->district_id) : ($data['district_id']);
