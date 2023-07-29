@@ -1487,18 +1487,18 @@ class TransactionCommands extends Service
                         $newOrder = Order::where('id', $order->id)->first();
                         $newOrder->bonus_discount = 'APPLIED';
                         $newOrder->voucher_bonus_code = $claimApplyDiscount['data']['claimId'] ?? null;
-                        $newOrder->total_amount = $newOrder->total_amount - $newOrder->bonus_discount;
+                        $newOrder->total_amount = $newOrder->total_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $newOrder->save();
 
                         // update order detail
                         $order_detail = OrderDetail::where('order_id', $newOrder->id)->first();
-                        $order_detail->total_discount = $order_detail->total_discount + $newOrder->bonus_discount;
-                        $order_detail->total_amount = $order_detail->total_amount - $newOrder->bonus_discount;
+                        $order_detail->total_discount = $order_detail->total_discount + $claimApplyDiscount['data']['bonusAmount'];
+                        $order_detail->total_amount = $order_detail->total_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $order_detail->save();
 
                         // update order payment
                         $order_payment = OrderPayment::where('id', $newOrder->payment_id)->first();
-                        $order_payment->payment_amount = $order_payment->payment_amount - $newOrder->bonus_discount;
+                        $order_payment->payment_amount = $order_payment->payment_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $order_payment->save();
                     } else {
                         Log::info('Claim Bonus Apply Failed');
