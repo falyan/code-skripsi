@@ -11,10 +11,10 @@ class CustomerQueries extends Service
     {
         $customer_address = CustomerAddress::with([
             'customer',
-            'province:id,name',
-            'city:id,name',
-            'district:id,name',
-            'subdistrict:id,name',
+            'province',
+            'city',
+            'district',
+            'subdistrict',
         ])
             ->where('customer_id', $customer_id)
             ->orderBy('is_default', 'DESC')
@@ -28,10 +28,10 @@ class CustomerQueries extends Service
     {
         $customer_address = CustomerAddress::with([
             'customer',
-            'province:id,name',
-            'city:id,name',
-            'district:id,name',
-            'subdistrict:id,name',
+            'province',
+            'city',
+            'district',
+            'subdistrict',
         ])
             ->where('customer_id', $customer_id)
             ->where('is_default', true)
