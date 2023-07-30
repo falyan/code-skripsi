@@ -1485,7 +1485,7 @@ class TransactionCommands extends Service
                     if ($claimApplyDiscount['success'] == true) {
                         Log::info('Claim Bonus Apply Success');
                         $newOrder = Order::where('id', $order->id)->first();
-                        $newOrder->bonus_discount = 'APPLIED';
+                        $newOrder->bonus_discount = $claimApplyDiscount['data']['bonusAmount'];
                         $newOrder->voucher_bonus_code = $claimApplyDiscount['data']['claimId'] ?? null;
                         $newOrder->total_amount = $newOrder->total_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $newOrder->save();
