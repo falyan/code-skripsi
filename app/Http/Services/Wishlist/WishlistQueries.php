@@ -29,6 +29,11 @@ class WishlistQueries extends Service
                 },
                 'promo_merchant.promo_master',
                 'promo_merchant.promo_master.promo_values',
+                'orders' => function ($orders) {
+                    $orders->whereHas('progress_active', function ($progress) {
+                        $progress->whereIn('status_code', ['01', '02']);
+                    });
+                }
             ]);
         }, 'product' => function ($product) {
             $product->withCount(['order_details' => function ($details) {
@@ -50,29 +55,47 @@ class WishlistQueries extends Service
             $collect_data = $collect_data->sortByDesc('items_sold');
         }
 
+        $data = $collect_data->map(function ($item) {
+            $item['merchant']['order_count'] = count($item['merchant']['orders']);
+            unset($item['merchant']['orders']);
+
+            return $item;
+        })->toArray();
+
         return [
             'success' => true,
             'message' => 'Berhasil mendapatkan data wishlist!',
-            'data' => static::wishlistPaginate($collect_data->toArray(), $limit, $page)
+            'data' => static::wishlistPaginate($data, $limit, $page),
         ];
     }
 
-    public function searchListWishlistByName($data, $limit = 10, $page = 1, $sortby = null)
+    public function searchListWishlistByName($customer_id, $limit = 10, $page = 1, $sortby = null, $keyword)
     {
-        $keyword = $data['keyword'];
         $wishlist = Wishlist::with(['customer', 'merchant' => function ($merchant) {
             $merchant->with(['province', 'city', 'district', 'expedition']);
+            $merchant->with('orders', function ($orders) {
+                $orders->whereHas('progress_active', function ($progress) {
+                    $progress->whereIn('status_code', ['01', '02']);
+                });
+            });
         }, 'product' => function ($product) use ($keyword) {
             $product->withCount(['order_details' => function ($details) {
                 $details->whereHas('order', function ($order) {
                     $order->whereHas('progress_done');
                 });
             }])->with(['product_stock', 'product_photo', 'ev_subsidy']);
-        }])->whereHas('product', function ($query) use ($keyword) {
-            $query->where('name', 'ILIKE', '%' . $keyword . '%')->orWhereHas('merchant', function ($query) use ($keyword) {
-                $query->where('name', 'ILIKE', '%' . $keyword . '%');
-            });
-        })->where('customer_id', $data['customer_id'])->where('is_valid', true);
+        }])->whereHas('merchant', function ($merchant) {
+            $merchant->where('status', 1);
+        })->where('customer_id', $customer_id)->where('is_valid', true);
+
+        if (!empty($keyword)) {
+            $keywords = explode(' ', $keyword);
+            foreach ($keywords as $key) {
+                $wishlist->whereHas('product', function ($product) use ($key) {
+                    $product->where('name', 'ilike', '%' . $key . '%');
+                });
+            }
+        }
 
         $collect_data = collect($wishlist->get());
 
@@ -86,10 +109,17 @@ class WishlistQueries extends Service
             $collect_data = $collect_data->sortByDesc('items_sold');
         }
 
+        $data = $collect_data->map(function ($item) {
+            $item['merchant']['order_count'] = count($item['merchant']['orders']);
+            unset($item['merchant']['orders']);
+
+            return $item;
+        })->toArray();
+
         return [
             'success' => true,
             'message' => 'Berhasil mendapatkan data wishlist!',
-            'data' => static::wishlistPaginate($collect_data->toArray(), $limit, $page)
+            'data' => static::wishlistPaginate($data, $limit, $page),
         ];
     }
 

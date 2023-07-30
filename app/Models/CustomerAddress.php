@@ -3,10 +3,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CustomerAddress extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * @var string The database table used by the model.
@@ -29,16 +30,19 @@ class CustomerAddress extends Model
     protected $fillable = [
         'customer_id',
         'address',
-        'district_id',
-        'city_id',
         'province_id',
+        'city_id',
+        'district_id',
+        'subdistrict_id',
         'postal_code',
         'longitude',
         'latitude',
         'receiver_name',
         'receiver_phone',
         'title',
-        'is_default'
+        'is_default',
+        'district_code',
+        'location_name'
     ];
 
     /**
@@ -89,6 +93,11 @@ class CustomerAddress extends Model
         return $date->format('Y-m-d H:i:s');
     }
 
+    public function province()
+    {
+        return $this->belongsTo(Province::class);
+    }
+
     public function city()
     {
         return $this->belongsTo(City::class);
@@ -99,9 +108,9 @@ class CustomerAddress extends Model
         return $this->belongsTo(District::class);
     }
 
-    public function province()
+    public function subdistrict()
     {
-        return $this->belongsTo(Province::class);
+        return $this->belongsTo(Subdistrict::class);
     }
 
     public function customer()

@@ -48,6 +48,9 @@ class ProductController extends Controller
                 'category_id' => [Rule::exists('master_data', 'id')->where('type', 'product_category')->where('deleted_at', null)],
                 'condition' => 'required',
                 'weight' => 'required',
+                'length' => 'required',
+                'width' => 'required',
+                'height' => 'required',
                 'is_shipping_insurance' => 'required',
                 'shipping_service' => 'nullable',
                 'url.*' => 'required',
@@ -184,6 +187,25 @@ class ProductController extends Controller
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
             return $this->productQueries->getAllProduct($limit, $filter, $sorting, request()->input('page') ?? 1);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    //Get Produk Berdasarkan Merchant Seller
+    public function checkProductByMerchantSeller()
+    {
+        try {
+            return $this->productQueries->checkProductByMerchantSeller();
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function checkProductIdByMerchantSeller($id)
+    {
+        try {
+            return $this->productQueries->checkProductIdByMerchantSeller($id);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

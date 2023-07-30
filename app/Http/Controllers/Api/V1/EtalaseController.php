@@ -3,21 +3,25 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Etalase\EtalaseCollection;
 use App\Http\Resources\Etalase\EtalaseResource;
 use App\Http\Services\Etalase\EtalaseCommands;
 use App\Http\Services\Etalase\EtalaseQueries;
-use App\Http\Services\Manager\RajaOngkirManager;
 use App\Http\Services\Product\ProductQueries;
-use App\Models\Etalase;
 use App\Models\Merchant;
-use Exception, Input;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class EtalaseController extends Controller
 {
+    protected $productQueries;
+
+    public function __construct()
+    {
+        $this->productQueries = new ProductQueries();
+    }
+
     public function index()
     {
         try {
@@ -43,7 +47,8 @@ class EtalaseController extends Controller
         $sorting = $request->sortby ?? null;
 
         try {
-            return ProductQueries::getproductMerchantEtalaseId($merchant_id, $etalase_id, $filter, $sorting, $limit);
+            // return ProductQueries::getproductMerchantEtalaseId($merchant_id, $etalase_id, $filter, $sorting, $limit);
+            return $this->productQueries->getproductMerchantEtalaseId($merchant_id, $etalase_id, $filter, $sorting, $limit);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -55,7 +60,7 @@ class EtalaseController extends Controller
             request()->all(),
             [
                 'merchant_id' => 'required',
-                'name' => 'required'
+                'name' => 'required',
             ],
             [
                 'required' => ':attribute diperlukan.',
@@ -63,7 +68,7 @@ class EtalaseController extends Controller
         );
 
         request()->request->add([
-            'full_name' => Auth::user()->full_name
+            'full_name' => Auth::user()->full_name,
         ]);
 
         try {
@@ -91,7 +96,7 @@ class EtalaseController extends Controller
             $validator = Validator::make(
                 request()->all(),
                 [
-                    'name' => 'required'
+                    'name' => 'required',
                 ],
                 [
                     'exists' => 'ID :attribute tidak ditemukan.',

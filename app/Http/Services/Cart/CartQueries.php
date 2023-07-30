@@ -34,41 +34,43 @@ class CartQueries extends Service
         ];
     }
 
-    public static function getDetailCart($buyer_id = null, $related_id){
-        if ($buyer_id != null){
-            $cart = Cart::with(['merchants' => function ($merchant) {
-                $merchant->with(['expedition', 'city']);
-            }, 'cart_detail' => function($cart_detail) {
-                $cart_detail->with(['product' => function($product) {
-                    $product->with(['product_stock', 'product_photo']);
-                }, 'variant_value_product']);
-            }])->where('buyer_id', $buyer_id)->get();
+    public static function getDetailCart($buyer_id = null, $related_id)
+    {
+        $cart = Cart::with(['merchants' => function ($merchant) {
+            $merchant->with(['expedition', 'city']);
+            $merchant->with('orders', function ($orders) {
+                $orders->whereHas('progress_active', function ($progress) {
+                    $progress->whereIn('status_code', ['01', '02']);
+                });
+            });
+        }, 'cart_detail' => function ($cart_detail) {
+            $cart_detail->with(['product' => function ($product) {
+                $product->with(['product_stock', 'product_photo']);
+            }, 'variant_value_product']);
+        }])
+            ->whereHas('merchants', function ($merchant) {
+                $merchant->where('status', 1);
+            })
+            ->when($buyer_id != null, function ($query) use ($buyer_id) {
+                $query->where('buyer_id', $buyer_id);
+            })
+            ->when($buyer_id == null, function ($query) use ($related_id) {
+                $query->where('related_pln_mobile_customer_id', $related_id);
+            })
+            ->get();
 
-//            if ($cart->isEmpty()){
-//                $response['success'] = false;
-//                $response['message'] = 'Gagal mendapatkan data keranjang.';
-//                return $response;
-//            }
+        if (count($cart) > 0) {
+            $cart = array_map(function ($item) {
+                $item['merchants']['order_count'] = count($item['merchants']['orders']);
+                unset($item['merchants']['orders']);
 
-            $response['success'] = true;
-            $response['message'] = 'Berhasil mendapatkan data keranjang.';
-            $response['data'] = $cart;
-            return $response;
-        }else{
-
-            $cart = Cart::with(['merchants' => function ($merchant) {
-                $merchant->with('expedition', 'city');
-            }, 'cart_detail' => function($cart_detail) {
-                $cart_detail->with(['product' => function($product) {
-                    $product->with(['product_stock', 'product_photo']);
-                }, 'variant_value_product']);
-            }])->where('related_pln_mobile_customer_id', $related_id)->get();
-
-            $response['success'] = true;
-            $response['message'] = 'Berhasil mendapatkan data keranjang.';
-            $response['data'] = $cart;
-
-            return $response;
+                return $item;
+            }, $cart->toArray());
         }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data keranjang.';
+        $response['data'] = $cart;
+        return $response;
     }
 }

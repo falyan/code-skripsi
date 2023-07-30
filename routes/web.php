@@ -106,6 +106,8 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 });
 
                 $router->group(['prefix' => 'product'], static function () use ($router) {
+                    $router->get('check', 'ProductController@checkProductByMerchantSeller');
+                    $router->get('check/{id}', 'ProductController@checkProductIdByMerchantSeller');
                     $router->get('merchant', 'ProductController@getProductByMerchantSeller');
                     $router->get('best-selling', 'ProductController@getBestSellingProductByMerchant');
                     $router->get('almost-running-out', 'ProductController@getProductAlmostRunningOut');
@@ -355,7 +357,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->post('checkout', 'TransactionController@checkout');
                 $router->post('checkoutv2', 'TransactionController@checkoutV2');
                 $router->post('checkoutv3', 'TransactionController@checkoutV3');
-                $router->post('checkoutv4', 'TransactionController@checkoutV4');
             });
 
             $router->group(['prefix' => 'cart', 'middleware' => 'auth'], static function () use ($router) {
@@ -486,6 +487,14 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('logout', 'SettingProfileController@logout');
     });
 
+    $router->group(['prefix' => 'location'], static function () use ($router) {
+        $router->get('province', 'LocationController@getProvince');
+        $router->get('province/{id}/city', 'LocationController@getCity');
+        $router->get('city/{id}/district', 'LocationController@getDistrict');
+        $router->get('district/{id}/subdistrict', 'LocationController@getSubDistrict');
+        $router->post('subdistrict-with-latlng', 'LocationController@getSubDistrictWithLatLng');
+    });
+
     $router->group(['prefix' => 'rajaongkir'], static function () use ($router) {
         $router->get('province', 'RajaOngkirController@getProvince');
         $router->get('district', 'RajaOngkirController@getDistrict');
@@ -494,13 +503,34 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('track', 'RajaOngkirController@trackOrder');
     });
 
+    $router->group(['prefix' => 'logistic'], static function () use ($router) {
+        $router->get('province', 'LogisticController@getProvince');
+        $router->get('province/{id}/city', 'LogisticController@getCity');
+        $router->get('city/{id}/district', 'LogisticController@getDistrict');
+        $router->get('district/{id}/subdistrict', 'LogisticController@getSubDistrict');
+        $router->post('webhook', 'LogisticController@webhook');
+
+        $router->group(['middleware' => 'auth'], static function () use ($router) {
+            $router->post('ongkir', 'LogisticController@ongkirLogistic');
+            // $router->post('order', 'LogisticController@order');
+            // $router->post('pickup', 'LogisticController@pickup');
+            $router->get('track/{order_id}', 'LogisticController@track');
+            // $router->post('cancel', 'LogisticController@cancel');
+        });
+    });
+
+    $router->group(['middleware' => 'auth'], static function () use ($router) {
+        $router->post('ongkir', 'LogisticController@getOngkir');
+        $router->get('track/{order_id}', 'LogisticController@trackOrder');
+    });
+
     $router->group(['prefix' => 'order'], static function () use ($router) {
         $router->group(['middleware' => 'auth'], static function () use ($router) {
             $router->post('/{id}/request-cancel', 'TransactionController@requestCancelOrder');
         });
         $router->post('/{id}/cancel', 'TransactionController@cancelOrder');
         $router->post('/{id}/finish', 'TransactionController@finishOrder');
-        $router->post('/{id}/refund-ongkir', 'TransactionController@refundOngkir');
+        // $router->post('/{id}/refund-ongkir', 'TransactionController@refundOngkir');
     });
 
     $router->group(['prefix' => 'merchant'], static function () use ($router) {

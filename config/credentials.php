@@ -39,6 +39,12 @@ return [
         'endpoint' => env('GAMIFICATION_ENDPOINT'),
         'key_id' => env('GAMIFICATION_KEY_ID'),
         'secret_key' => env('GAMIFICATION_SECRET_KEY'),
+        'bonus_discount' => [
+            'endpoint' => env('GAMIFICATION_BONUS_DISCOUNT_ENDPOINT'),
+            'secret_key' => env('GAMIFICATION_BONUS_DISCOUNT_SECRET_KEY'),
+            'activation' => env('GAMIFICATION_BONUS_DISCOUNT_ACTIVATION'),
+            'bonus_id' => env('GAMIFICATION_BONUS_DISCOUNT_ID'),
+        ],
     ],
     'plnmobile' => [
         'endpoint' => env('PLNMOBILE_ENDPOINT'),

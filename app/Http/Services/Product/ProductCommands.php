@@ -66,6 +66,9 @@ class ProductCommands extends Service
                 'etalase_id' => $data->etalase_id,
                 'condition' => $data->condition,
                 'weight' => $data->weight,
+                'length' => $data->length,
+                'height' => $data->height,
+                'width' => $data->width,
                 'description' => $data->description,
                 'is_shipping_insurance' => $data->is_shipping_insurance,
                 'shipping_service' => $data->shipping_service,
@@ -179,6 +182,9 @@ class ProductCommands extends Service
             $product->etalase_id = ($data->etalase_id == null) ? ($product->etalase_id) : ($data->etalase_id);
             $product->condition = ($data->condition == null) ? ($product->condition) : ($data->condition);
             $product->weight = ($data->weight == null) ? ($product->weight) : ($data->weight);
+            $product->length = ($data->length == null) ? ($product->length) : ($data->length);
+            $product->width = ($data->width == null) ? ($product->width) : ($data->width);
+            $product->height = ($data->height == null) ? ($product->height) : ($data->height);
             $product->description = ($data->description == null) ? ($product->description) : ($data->description);
             $product->is_shipping_insurance = ($data->is_shipping_insurance == null) ? ($product->is_shipping_insurance) : ($data->is_shipping_insurance);
             $product->is_featured_product = ($data->is_featured_product == null && $data->is_featured_product != false) ? ($product->is_featured_product) : ($data->is_featured_product);
