@@ -52,7 +52,7 @@ class CreateLocationsLogisticsTable extends Migration
         Schema::table('order_delivery', function (Blueprint $table) {
             $table->integer('subdistrict_id')->nullable();
             $table->string('delivery_type')->nullable();
-            $table->string('delivery_setting')->nullable();
+            $table->string('delivery_setting')->default('rajaongkir');
             $table->json('merchant_data')->nullable();
             $table->boolean('must_use_insurance')->default(false);
         });
