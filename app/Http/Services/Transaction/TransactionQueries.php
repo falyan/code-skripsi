@@ -1452,12 +1452,13 @@ class TransactionQueries extends Service
         //     $new_merchant2[] = $merchant;
         // }
 
+        $bonus_activation = MasterData::where('key', 'gami_bonus_activation')->select('value')->first();
         // payment discount
         $discount_payment = 0;
         $discount_type = null;
         $discount_claim_id = null;
-        // cek jika di env gamification_bonus_discount nya true, maka jalankan perhitungan discount ini
-        if (config('credentials.gamification.bonus_discount.activation') === true) {
+        // cek jika di setting db bgami_bonus_activation nya active, maka jalankan perhitungan discount ini
+        if ($bonus_activation->value === 'ACTIVE') {
             // cek jika total price minimal 50000
             $totalProductPrice = $total_price - $total_delivery_fee;
 
