@@ -1076,7 +1076,6 @@ class TransactionController extends Controller
                 GamificationManager::claimBonusRefund($order->voucher_bonus_code);
 
                 $order->voucher_bonus_code = 'RF_' . $order->voucher_bonus_code;
-                $order->bonus_discount = 'REFUND';
                 $order->save();
                 Log::info('Succeeded Hit Refund Bonus Voucher Gami - Reject Order ' . $order_id);
             }
@@ -1426,7 +1425,6 @@ class TransactionController extends Controller
                         GamificationManager::claimBonusRefund($order->voucher_bonus_code);
 
                         $order = Order::find($order->id);
-                        $order->bonus_discount = 'REFUND';
                         $order->voucher_bonus_code = 'RF_' . $order->voucher_bonus_code;
                         $order->save();
                         Log::info('Succeded Hit Refund Bonus Voucher Gami - Cancel Order ' . $order->id);
