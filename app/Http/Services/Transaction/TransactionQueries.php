@@ -281,7 +281,7 @@ class TransactionQueries extends Service
                 $review->with(['review_photo']);
             }, 'promo_log_orders' => function ($promo) {
                 $promo->with(['promo_merchant.promo_master']);
-            }, 'order_detail_log',
+            },
         ])->find($id);
 
         $details = $data->detail;
