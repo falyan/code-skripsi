@@ -58,6 +58,7 @@ class CreateLocationsLogisticsTable extends Migration
         });
 
         Schema::table('customer_address', function (Blueprint $table) {
+            $table->integer('subdistrict_id')->nullable();
             $table->softDeletes();
         });
 
@@ -108,6 +109,7 @@ class CreateLocationsLogisticsTable extends Migration
         });
 
         Schema::table('customer_address', function (Blueprint $table) {
+            $table->dropColumn('subdistrict_id');
             $table->dropSoftDeletes();
         });
 
