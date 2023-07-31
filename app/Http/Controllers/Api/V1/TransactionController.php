@@ -994,17 +994,7 @@ class TransactionController extends Controller
                         }
                     }
 
-                    $title = 'Pesanan Dikonfirmasi';
-                    $message = 'Pesanan anda sedang diproses oleh penjual.';
-                    $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-                    if (empty($order)) {
-                        $response['success'] = false;
-                        $response['message'] = 'Gagal mendapatkan data pesanan';
-                        return $response;
-                    }
-                    // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
-                    $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
-
+                    $order = Order::with(['buyer', 'merchant', 'detail', 'progress_active', 'payment'])->find($order_id);
                     $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
                     $total_amount_trx = $total_delivery_fee_trx = 0;
 
@@ -1017,7 +1007,7 @@ class TransactionController extends Controller
                     $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
                     $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
 
-                    if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value) {
+                    if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && $order->merchant->is_voucher_ubah_daya) {
                         if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
                             $res_generate = $this->voucherCommand->generateVoucher($order);
 
@@ -1032,6 +1022,16 @@ class TransactionController extends Controller
                     }
 
                     DB::commit();
+
+                    $title = 'Pesanan Dikonfirmasi';
+                    $message = 'Pesanan anda sedang diproses oleh penjual.';
+                    if (empty($order)) {
+                        $response['success'] = false;
+                        $response['message'] = 'Gagal mendapatkan data pesanan';
+                        return $response;
+                    }
+                    // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+                    $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
                     $mailSender = new MailSenderManager();
                     if ($data->merchant->official_store_tiket) {
