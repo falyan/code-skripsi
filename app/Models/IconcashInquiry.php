@@ -87,7 +87,6 @@ class IconcashInquiry extends Model
     public static function createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order)
     {
         $model = new self;
-
         $response = IconcashManager::topupInquiry($iconcash->phone, $account_type_id, $amount, $client_ref, $corporate_id);
 
         $model->create([

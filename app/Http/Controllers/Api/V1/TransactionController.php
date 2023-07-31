@@ -1325,8 +1325,10 @@ class TransactionController extends Controller
                 $message = 'Transaksi sudah selesai, silakan memeriksa saldo ICONCASH anda.';
                 $url_path = 'v1/seller/query/transaction/detail/' . $id;
 
-                $order = Order::find($id);
-                $iconcash = Customer::where('merchant_id', $order->merchant_id)->first()->iconcash;
+                $order = Order::with(['delivery', 'detail'])->where('id', $id)->first();
+                $customer = Customer::with('iconcash')->where('merchant_id', $order->merchant_id)->first();
+                $iconcash = $customer->iconcash;
+                $account_type_id = null;
 
                 $total_insentif = 0;
                 foreach ($order->detail as $item) {
@@ -1343,20 +1345,22 @@ class TransactionController extends Controller
                 }
 
                 // Start hitung mdr
-                $ongkir = $order->delivery->delivery_fee;
                 $mdr_total = 0;
                 foreach ($order->detail as $item) {
                     $mdr_total += $item->product_mdr_value;
                 }
                 // End hitung mdr
 
-                // $amount = $order->total_amount - $ongkir - $total_insentif - $mdr_total;
-                $amount = $order->total_amount - $total_insentif - $mdr_total;
+                if ($order->delivery->delivery_setting == 'shipper') {
+                    $amount = $order->total_amount - $total_insentif - $mdr_total - $order->delivery->delivery_fee;
+                } else {
+                    $amount = $order->total_amount - $total_insentif - $mdr_total;
+                }
+
                 $client_ref = $this->unique_code($iconcash->token);
                 $corporate_id = 10;
 
                 $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
-
                 $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
                 if ($resConfrim) {
@@ -2019,6 +2023,14 @@ class TransactionController extends Controller
             $corporate_id = 10;
 
             $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
+            $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+
+            if ($resConfrim) {
+                $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
+                $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
+                $iconcash_inquiry->confirm_status = $resConfrim->success;
+                $iconcash_inquiry->save();
+            }
 
             $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
