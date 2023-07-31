@@ -1001,13 +1001,14 @@ class TransactionController extends Controller
                     foreach ($orders as $o) {
                         $total_amount_trx += $o->total_amount;
                         $total_delivery_fee_trx += $o->delivery->delivery_fee;
+                        $check_voucher_ubah_daya_code = $o->voucher_ubah_daya_code;
                     }
 
                     $master_data = MasterData::whereIn('key', ['ubah_daya_min_transaction', 'ubah_daya_implementation_period'])->get();
                     $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
                     $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
 
-                    if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && $order->merchant->is_voucher_ubah_daya) {
+                    if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && $order->merchant->is_voucher_ubah_daya) {
                         if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
                             $res_generate = $this->voucherCommand->generateVoucher($order);
 
