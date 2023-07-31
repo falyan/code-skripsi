@@ -62,6 +62,10 @@ class CreateLocationsLogisticsTable extends Migration
             $table->softDeletes();
         });
 
+        Schema::table('merchant', function (Blueprint $table) {
+            $table->boolean('is_voucher_ubah_daya')->default();
+        });
+
         Schema::table('product', function (Blueprint $table) {
             $table->string('length')->nullable();
             $table->string('width')->nullable();
@@ -111,6 +115,10 @@ class CreateLocationsLogisticsTable extends Migration
         Schema::table('customer_address', function (Blueprint $table) {
             $table->dropColumn('subdistrict_id');
             $table->dropSoftDeletes();
+        });
+
+        Schema::table('merchant', function (Blueprint $table) {
+            $table->dropColumn('is_voucher_ubah_daya');
         });
 
         Schema::table('product', function (Blueprint $table) {
