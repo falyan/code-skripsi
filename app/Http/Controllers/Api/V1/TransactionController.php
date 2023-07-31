@@ -994,30 +994,21 @@ class TransactionController extends Controller
                         }
                     }
 
-                    $title = 'Pesanan Dikonfirmasi';
-                    $message = 'Pesanan anda sedang diproses oleh penjual.';
-                    $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-                    if (empty($order)) {
-                        $response['success'] = false;
-                        $response['message'] = 'Gagal mendapatkan data pesanan';
-                        return $response;
-                    }
-                    // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
-                    $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
-
+                    $order = Order::with(['buyer', 'merchant', 'detail', 'progress_active', 'payment'])->find($order_id);
                     $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
                     $total_amount_trx = $total_delivery_fee_trx = 0;
 
                     foreach ($orders as $o) {
                         $total_amount_trx += $o->total_amount;
                         $total_delivery_fee_trx += $o->delivery->delivery_fee;
+                        $check_voucher_ubah_daya_code = $o->voucher_ubah_daya_code;
                     }
 
                     $master_data = MasterData::whereIn('key', ['ubah_daya_min_transaction', 'ubah_daya_implementation_period'])->get();
                     $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
                     $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
 
-                    if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value) {
+                    if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && $order->merchant->is_voucher_ubah_daya) {
                         if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
                             $res_generate = $this->voucherCommand->generateVoucher($order);
 
@@ -1032,6 +1023,16 @@ class TransactionController extends Controller
                     }
 
                     DB::commit();
+
+                    $title = 'Pesanan Dikonfirmasi';
+                    $message = 'Pesanan anda sedang diproses oleh penjual.';
+                    if (empty($order)) {
+                        $response['success'] = false;
+                        $response['message'] = 'Gagal mendapatkan data pesanan';
+                        return $response;
+                    }
+                    // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+                    $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
                     $mailSender = new MailSenderManager();
                     if ($data->merchant->official_store_tiket) {
@@ -1325,8 +1326,10 @@ class TransactionController extends Controller
                 $message = 'Transaksi sudah selesai, silakan memeriksa saldo ICONCASH anda.';
                 $url_path = 'v1/seller/query/transaction/detail/' . $id;
 
-                $order = Order::find($id);
-                $iconcash = Customer::where('merchant_id', $order->merchant_id)->first()->iconcash;
+                $order = Order::with(['delivery', 'detail'])->where('id', $id)->first();
+                $customer = Customer::with('iconcash')->where('merchant_id', $order->merchant_id)->first();
+                $iconcash = $customer->iconcash;
+                $account_type_id = null;
 
                 $total_insentif = 0;
                 foreach ($order->detail as $item) {
@@ -1343,20 +1346,22 @@ class TransactionController extends Controller
                 }
 
                 // Start hitung mdr
-                $ongkir = $order->delivery->delivery_fee;
                 $mdr_total = 0;
                 foreach ($order->detail as $item) {
                     $mdr_total += $item->product_mdr_value;
                 }
                 // End hitung mdr
 
-                // $amount = $order->total_amount - $ongkir - $total_insentif - $mdr_total;
-                $amount = $order->total_amount - $total_insentif - $mdr_total;
+                if ($order->delivery->delivery_setting == 'shipper') {
+                    $amount = $order->total_amount - $total_insentif - $mdr_total - $order->delivery->delivery_fee;
+                } else {
+                    $amount = $order->total_amount - $total_insentif - $mdr_total;
+                }
+
                 $client_ref = $this->unique_code($iconcash->token);
                 $corporate_id = 10;
 
                 $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
-
                 $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
                 if ($resConfrim) {
@@ -2019,6 +2024,14 @@ class TransactionController extends Controller
             $corporate_id = 10;
 
             $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
+            $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+
+            if ($resConfrim) {
+                $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
+                $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
+                $iconcash_inquiry->confirm_status = $resConfrim->success;
+                $iconcash_inquiry->save();
+            }
 
             $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 

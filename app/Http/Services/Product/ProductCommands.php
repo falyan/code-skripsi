@@ -56,27 +56,13 @@ class ProductCommands extends Service
                 $needApproval = !$approval->isEmpty();
             }
 
-            $product = Product::create([
-                'merchant_id' => $data->merchant_id,
-                'name' => $data->name,
-                'price' => $data->price,
-                'strike_price' => $data->strike_price,
-                'minimum_purchase' => $data->minimum_purchase,
-                'category_id' => $data->category_id,
-                'etalase_id' => $data->etalase_id,
-                'condition' => $data->condition,
-                'weight' => $data->weight,
-                'length' => $data->length,
-                'height' => $data->height,
-                'width' => $data->width,
-                'description' => $data->description,
-                'is_shipping_insurance' => $data->is_shipping_insurance,
-                'shipping_service' => $data->shipping_service,
-                'is_featured_product' => $data->is_featured_product,
+            $dataCreated = array_merge($data->toArray(), [
                 'created_by' => $data->full_name,
                 'updated_by' => $data->full_name,
                 'status' => $needApproval ? 0 : 1,
             ]);
+
+            $product = Product::create($dataCreated);
 
             if (!$product) {
                 $response['success'] = false;
@@ -174,22 +160,11 @@ class ProductCommands extends Service
                 }
             }
 
-            $product->name = ($data->name == null) ? ($product->name) : ($data->name);
-            $product->price = ($data->price == null) ? ($product->price) : ($data->price);
-            $product->strike_price = ($data->strike_price == null || $data->strike_price == 0) ? null : ($data->strike_price);
-            $product->minimum_purchase = ($data->minimum_purchase == null) ? ($product->minimum_purchase) : ($data->minimum_purchase);
-            $product->category_id = ($data->category_id == null) ? ($product->category_id) : ($data->category_id);
-            $product->etalase_id = ($data->etalase_id == null) ? ($product->etalase_id) : ($data->etalase_id);
-            $product->condition = ($data->condition == null) ? ($product->condition) : ($data->condition);
-            $product->weight = ($data->weight == null) ? ($product->weight) : ($data->weight);
-            $product->length = ($data->length == null) ? ($product->length) : ($data->length);
-            $product->width = ($data->width == null) ? ($product->width) : ($data->width);
-            $product->height = ($data->height == null) ? ($product->height) : ($data->height);
-            $product->description = ($data->description == null) ? ($product->description) : ($data->description);
-            $product->is_shipping_insurance = ($data->is_shipping_insurance == null) ? ($product->is_shipping_insurance) : ($data->is_shipping_insurance);
-            $product->is_featured_product = ($data->is_featured_product == null && $data->is_featured_product != false) ? ($product->is_featured_product) : ($data->is_featured_product);
-            $product->shipping_service = ($data->shipping_service == null) ? ($product->shipping_service) : ($data->shipping_service);
-            $product->updated_by = $data->full_name;
+            $dataUpdated = array_merge($data->toArray(), [
+                'updated_by' => $data->full_name,
+            ]);
+
+            $product->fill($dataUpdated);
 
             if (!$product->save()) {
                 $response['success'] = false;
