@@ -190,6 +190,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('list/read', 'DiscussionController@getListReadDiscussionBySeller');
                     $router->get('detail/{id}', 'DiscussionController@getDiscussionByMasterId');
                 });
+
+                $router->group(['prefix' => 'pages'], static function () use ($router) {
+                    $router->get('term-condition', 'PagesController@termConditionSeller');
+                    $router->get('privacy-policy', 'PagesController@privacyPolicySeller');
+                });
             });
         });
     });
