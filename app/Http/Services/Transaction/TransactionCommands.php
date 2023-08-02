@@ -963,6 +963,25 @@ class TransactionCommands extends Service
                 }
             }
 
+            $check_orders = Merchant::with([
+                'orders' => function ($orders) {
+                    $orders->whereHas('progress_active', function ($progress) {
+                        $progress->whereIn('status_code', ['01', '02']);
+                    });
+                },
+            ])->whereIn('id', array_column($datas['merchants'], 'merchant_id'))->get();
+
+            foreach ($check_orders as $check_order) {
+                if (count($check_order->orders) > 50) {
+                    return [
+                        'success' => false,
+                        'status' => "Bad request",
+                        'status_code' => 400,
+                        'message' => 'Mohon maaf, saat ini merchant tidak dapat melakukan transaksi',
+                    ];
+                }
+            }
+
             $ev_subsidies = [];
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
                 foreach ($datas['merchants'] as $merchant) {
