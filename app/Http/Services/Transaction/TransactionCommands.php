@@ -16,8 +16,6 @@ use App\Models\CustomerTiket;
 use App\Models\District;
 use App\Models\MasterData;
 use App\Models\MasterTiket;
-use App\Models\MdrCategory;
-use App\Models\MdrMerchant;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\OrderDelivery;
@@ -310,6 +308,25 @@ class TransactionCommands extends Service
                             ],
                         ];
                     }
+                }
+            }
+
+            $check_orders = Merchant::with([
+                'orders' => function ($orders) {
+                    $orders->whereHas('progress_active', function ($progress) {
+                        $progress->whereIn('status_code', ['01', '02']);
+                    });
+                },
+            ])->whereIn('id', array_column($datas['merchants'], 'merchant_id'))->get();
+
+            foreach ($check_orders as $check_order) {
+                if (count($check_order->orders) > 50) {
+                    return [
+                        'success' => false,
+                        'status' => "Bad request",
+                        'status_code' => 400,
+                        'message' => 'Mohon maaf, saat ini merchant tidak dapat melakukan transaksi',
+                    ];
                 }
             }
 
@@ -698,50 +715,53 @@ class TransactionCommands extends Service
                 OrderDetail::insert($order_details);
 
                 // Start hitung mdr
-                $mdr_total = 0;
-                foreach ($order->detail as $detail) {
-                    $mdrMerchant = MdrMerchant::where('status', 1)->where('category_id', $detail->product->category->parent->parent->id)->where('merchant_id', $order->merchant_id)->first();
-                    if (!empty($mdrMerchant)) {
-                        switch ($mdrMerchant->type_code) {
-                            case 'percentage':
-                                $mdr_price = $detail->price * toPercent($mdrMerchant->value ?? 0);
-                                break;
+                // $mdr_total = 0;
+                // foreach ($order->detail as $detail) {
+                //     $mdrMerchant = MdrMerchant::where('status', 1)->where('category_id', $detail->product->category->parent->parent->id)->where('merchant_id', $order->merchant_id)->first();
+                //     if (!empty($mdrMerchant)) {
+                //         switch ($mdrMerchant->type_code) {
+                //             case 'percentage':
+                //                 $mdr_price = $detail->price * toPercent($mdrMerchant->value ?? 0);
+                //                 break;
 
-                            case 'fixed':
-                                $mdr_price = $mdrMerchant->value ?? 0;
-                                break;
+                //             case 'fixed':
+                //                 $mdr_price = $mdrMerchant->value ?? 0;
+                //                 break;
 
-                            default:
-                                $mdr_price = 0;
-                                break;
-                        }
+                //             default:
+                //                 $mdr_price = 0;
+                //                 break;
+                //         }
 
-                        $mdr_total += $mdr_price * $detail->quantity;
-                    } else {
-                        $mdrCategory = MdrCategory::where('status', 1)->where('category_id', $detail->product->category->parent->parent->id)->first();
-                        if (!empty($mdrCategory)) {
-                            switch ($mdrCategory->type_code) {
-                                case 'percentage':
-                                    $mdr_price = $detail->price * toPercent($mdrCategory->value ?? 0);
-                                    break;
+                //         $mdr_total += $mdr_price * $detail->quantity;
+                //     } else {
+                //         $mdrCategory = MdrCategory::where('status', 1)->where('category_id', $detail->product->category->parent->parent->id)->first();
+                //         if (!empty($mdrCategory)) {
+                //             switch ($mdrCategory->type_code) {
+                //                 case 'percentage':
+                //                     $mdr_price = $detail->price * toPercent($mdrCategory->value ?? 0);
+                //                     break;
 
-                                case 'fixed':
-                                    $mdr_price = $mdrCategory->value ?? 0;
-                                    break;
+                //                 case 'fixed':
+                //                     $mdr_price = $mdrCategory->value ?? 0;
+                //                     break;
 
-                                default:
-                                    $mdr_price = 0;
-                                    break;
-                            }
+                //                 default:
+                //                     $mdr_price = 0;
+                //                     break;
+                //             }
 
-                            $mdr_total += $mdr_price * $detail->quantity;
-                        }
-                    }
-                }
+                //             $mdr_total += $mdr_price * $detail->quantity;
+                //         }
+                //     }
+                // }
                 // End hitung mdr
 
+                // Start hitung mdr V2 (urgent)
+                $mdr_total = MasterData::where('key', 'mdr_global_value')->first()->value ?? 0;
+
                 // update order table with mdr
-                $order->total_mdr = $mdr_total;
+                $order->total_mdr = (int) $mdr_total;
                 $order->save();
 
                 $order_delivery = new OrderDelivery();
@@ -796,29 +816,41 @@ class TransactionCommands extends Service
 
             // Bonus Claim Apply
             if (isset($datas['discount_type']) && $datas['discount_type'] === 'GAMI-BONUS-DISCOUNT' && $datas['discount_type'] != null) {
-                Log::info('Hit Claim Bonus Apply');
-                $claimApplyDiscount = GamificationManager::claimBonusApply($datas['discount_claim_id'], $order->no_reference, $datas['total_amount_without_delivery']);
 
-                if ($claimApplyDiscount['success'] == true) {
-                    Log::info('Claim Bonus Apply Success');
-                    $newOrder = Order::where('id', $order->id)->first();
-                    $newOrder->bonus_discount = $claimApplyDiscount['data']['bonusAmount'] ?? 0;
-                    $newOrder->voucher_bonus_code = $claimApplyDiscount['data']['claimId'] ?? null;
-                    $newOrder->total_amount = $newOrder->total_amount - $newOrder->bonus_discount;
-                    $newOrder->save();
+                $userId = auth()->user()->pln_mobile_customer_id;
+                // $userId = 981; //dummy
+                $checkBonusDiscount = GamificationManager::claimBonusHold($userId, $datas['total_amount_without_delivery']);
 
-                    // update order detail
-                    $order_detail = OrderDetail::where('order_id', $newOrder->id)->first();
-                    $order_detail->total_discount = $order_detail->total_discount + $newOrder->bonus_discount;
-                    $order_detail->total_amount = $order_detail->total_amount - $newOrder->bonus_discount;
-                    $order_detail->save();
+                if ($checkBonusDiscount['success'] == true) {
+                    Log::info('Claim Bonus Hold Success');
+                    $claimId = $checkBonusDiscount['data']['id'];
 
-                    // update order payment
-                    $order_payment = OrderPayment::where('id', $newOrder->payment_id)->first();
-                    $order_payment->payment_amount = $order_payment->payment_amount - $newOrder->bonus_discount;
-                    $order_payment->save();
+                    Log::info('Hit Claim Bonus Apply');
+                    $claimApplyDiscount = GamificationManager::claimBonusApply($claimId, $order->no_reference, $datas['total_amount_without_delivery']);
+
+                    if ($claimApplyDiscount['success'] == true) {
+                        Log::info('Claim Bonus Apply Success');
+                        $newOrder = Order::where('id', $order->id)->first();
+                        $newOrder->bonus_discount = $claimApplyDiscount['data']['bonusAmount'];
+                        $newOrder->voucher_bonus_code = $claimApplyDiscount['data']['claimId'] ?? null;
+                        $newOrder->total_amount = $newOrder->total_amount - $claimApplyDiscount['data']['bonusAmount'];
+                        $newOrder->save();
+
+                        // update order detail
+                        $order_detail = OrderDetail::where('order_id', $newOrder->id)->first();
+                        $order_detail->total_discount = $order_detail->total_discount + $claimApplyDiscount['data']['bonusAmount'];
+                        $order_detail->total_amount = $order_detail->total_amount - $claimApplyDiscount['data']['bonusAmount'];
+                        $order_detail->save();
+
+                        // update order payment
+                        $order_payment = OrderPayment::where('id', $newOrder->payment_id)->first();
+                        $order_payment->payment_amount = $order_payment->payment_amount - $claimApplyDiscount['data']['bonusAmount'];
+                        $order_payment->save();
+                    } else {
+                        Log::info('Claim Bonus Apply Failed');
+                    }
                 } else {
-                    Log::info('Claim Bonus Apply Failed');
+                    Log::info('Claim Bonus Hold Failed');
                 }
             } else {
                 Log::info('No Claim Bonus Apply');

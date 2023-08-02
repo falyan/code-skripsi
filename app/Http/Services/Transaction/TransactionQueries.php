@@ -566,6 +566,11 @@ class TransactionQueries extends Service
                 },
                 'promo_merchant.promo_master.promo_regions',
                 'promo_merchant.promo_master.promo_values',
+                'orders' => function ($orders) {
+                    $orders->whereHas('progress_active', function ($progress) {
+                        $progress->whereIn('status_code', ['01', '02']);
+                    });
+                },
             ])->findOrFail($merchant['merchant_id']);
 
             $new_product = [];
@@ -810,8 +815,11 @@ class TransactionQueries extends Service
             $total_delivery_discount += $merchant['delivery_discount'];
             $total_price_discount += $merchant['product_discount'];
 
+            $data_merchant['order_count'] = count($data_merchant['orders']);
+
             unset($data_merchant->promo_merchant);
             unset($merchant['promo_merchant']);
+            unset($data_merchant['orders']);
 
             $new_merchant[] = array_merge($merchant, $data_merchant->toArray());
         }
@@ -1056,6 +1064,15 @@ class TransactionQueries extends Service
             $datas['success'] = false;
             $datas['status_code'] = 400;
             $datas['message'] = 'Anda telah melebihi batas pembelian tiket';
+        }
+
+        foreach ($datas['merchants'] as $merchant) {
+
+            if ($merchant['order_count'] > 50) {
+                $datas['success'] = false;
+                $datas['status_code'] = 400;
+                $datas['message'] = 'Mohon maaf, saat ini merchant tidak dapat melakukan transaksi';
+            }
         }
 
         return $datas;
