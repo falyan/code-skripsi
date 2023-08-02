@@ -1551,6 +1551,15 @@ class TransactionQueries extends Service
             $datas['message'] = 'Anda telah melebihi batas pembelian tiket';
         }
 
+        foreach ($datas['merchants'] as $merchant) {
+
+            if ($merchant['order_count'] > 50) {
+                $datas['success'] = false;
+                $datas['status_code'] = 400;
+                $datas['message'] = 'Mohon maaf, saat ini merchant tidak dapat melakukan transaksi';
+            }
+        }
+
         return $datas;
     }
 
