@@ -754,6 +754,7 @@ class ProductQueries extends Service
         $item['is_flash_sale_discount'] = $is_flash_sale_discount;
         $item['promo_value'] = $promo_value;
         $item['promo_type'] = $promo_type;
+        $item['tiket'] = $master_tiket;
         $item['strike_price'] = $item['strike_price'] == 0 ? null : $item['strike_price'];
 
         $item['merchant']['order_count'] = count($item['merchant']['orders']);
@@ -1272,6 +1273,7 @@ class ProductQueries extends Service
             $product['promo_value'] = $promo_value;
             $product['promo_type'] = $promo_type;
             $product['reviews'] = null;
+            $product['tiket'] = null;
             $product['strike_price'] = $product['strike_price'] == 0 ? null : $product['strike_price'];
             return $product;
         });
