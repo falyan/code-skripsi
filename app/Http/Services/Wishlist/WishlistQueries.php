@@ -29,12 +29,12 @@ class WishlistQueries extends Service
                 },
                 'promo_merchant.promo_master',
                 'promo_merchant.promo_master.promo_values',
-                'orders' => function ($orders) {
-                    $orders->whereHas('progress_active', function ($progress) {
-                        $progress->whereIn('status_code', ['01', '02']);
-                    });
-                }
             ]);
+            $merchant->with('orders', function ($orders) {
+                $orders->whereHas('progress_active', function ($progress) {
+                    $progress->whereIn('status_code', ['01', '02']);
+                });
+            });
         }, 'product' => function ($product) {
             $product->withCount(['order_details' => function ($details) {
                 $details->whereHas('order', function ($order) {
@@ -57,6 +57,7 @@ class WishlistQueries extends Service
 
         $data = $collect_data->map(function ($item) {
             $item['merchant']['order_count'] = count($item['merchant']['orders']);
+            $item['product']['strike_price'] = $item['product']['strike_price'] == 0 ? null : $item['product']['strike_price'];
             unset($item['merchant']['orders']);
 
             return $item;
@@ -111,6 +112,7 @@ class WishlistQueries extends Service
 
         $data = $collect_data->map(function ($item) {
             $item['merchant']['order_count'] = count($item['merchant']['orders']);
+            $item['product']['strike_price'] = $item['product']['strike_price'] == 0 ? null : $item['product']['strike_price'];
             unset($item['merchant']['orders']);
 
             return $item;
