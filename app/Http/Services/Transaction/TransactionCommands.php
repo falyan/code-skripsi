@@ -1355,50 +1355,53 @@ class TransactionCommands extends Service
                 OrderDetail::insert($order_details);
 
                 // Start hitung mdr
-                $mdr_total = 0;
-                foreach ($order->detail as $detail) {
-                    $mdrMerchant = MdrMerchant::where('status', 1)->where('category_id', $detail->product->category->parent->parent->id)->where('merchant_id', $order->merchant_id)->first();
-                    if (!empty($mdrMerchant)) {
-                        switch ($mdrMerchant->type_code) {
-                            case 'percentage':
-                                $mdr_price = $detail->price * toPercent($mdrMerchant->value ?? 0);
-                                break;
+                // $mdr_total = 0;
+                // foreach ($order->detail as $detail) {
+                //     $mdrMerchant = MdrMerchant::where('status', 1)->where('category_id', $detail->product->category->parent->parent->id)->where('merchant_id', $order->merchant_id)->first();
+                //     if (!empty($mdrMerchant)) {
+                //         switch ($mdrMerchant->type_code) {
+                //             case 'percentage':
+                //                 $mdr_price = $detail->price * toPercent($mdrMerchant->value ?? 0);
+                //                 break;
 
-                            case 'fixed':
-                                $mdr_price = $mdrMerchant->value ?? 0;
-                                break;
+                //             case 'fixed':
+                //                 $mdr_price = $mdrMerchant->value ?? 0;
+                //                 break;
 
-                            default:
-                                $mdr_price = 0;
-                                break;
-                        }
+                //             default:
+                //                 $mdr_price = 0;
+                //                 break;
+                //         }
 
-                        $mdr_total += $mdr_price * $detail->quantity;
-                    } else {
-                        $mdrCategory = MdrCategory::where('status', 1)->where('category_id', $detail->product->category->parent->parent->id)->first();
-                        if (!empty($mdrCategory)) {
-                            switch ($mdrCategory->type_code) {
-                                case 'percentage':
-                                    $mdr_price = $detail->price * toPercent($mdrCategory->value ?? 0);
-                                    break;
+                //         $mdr_total += $mdr_price * $detail->quantity;
+                //     } else {
+                //         $mdrCategory = MdrCategory::where('status', 1)->where('category_id', $detail->product->category->parent->parent->id)->first();
+                //         if (!empty($mdrCategory)) {
+                //             switch ($mdrCategory->type_code) {
+                //                 case 'percentage':
+                //                     $mdr_price = $detail->price * toPercent($mdrCategory->value ?? 0);
+                //                     break;
 
-                                case 'fixed':
-                                    $mdr_price = $mdrCategory->value ?? 0;
-                                    break;
+                //                 case 'fixed':
+                //                     $mdr_price = $mdrCategory->value ?? 0;
+                //                     break;
 
-                                default:
-                                    $mdr_price = 0;
-                                    break;
-                            }
+                //                 default:
+                //                     $mdr_price = 0;
+                //                     break;
+                //             }
 
-                            $mdr_total += $mdr_price * $detail->quantity;
-                        }
-                    }
-                }
+                //             $mdr_total += $mdr_price * $detail->quantity;
+                //         }
+                //     }
+                // }
                 // End hitung mdr
 
+                // Start hitung mdr V2 (urgent)
+                $mdr_total = MasterData::where('key', 'mdr_global_value')->first()->value ?? 0;
+
                 // update order table with mdr
-                $order->total_mdr = $mdr_total;
+                $order->total_mdr = (int) $mdr_total;
                 $order->save();
 
                 $merchant_data = Merchant::find($order->merchant_id);
