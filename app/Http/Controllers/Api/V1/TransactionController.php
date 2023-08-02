@@ -1345,18 +1345,16 @@ class TransactionController extends Controller
                     $account_type_id = 13;
                 }
 
-                // Start hitung mdr
-                $mdr_total = 0;
-                foreach ($order->detail as $item) {
-                    $mdr_total += $item->product_mdr_value;
-                }
-                // End hitung mdr
+                $mdr_total = $order->total_mdr;
 
                 if ($order->delivery->delivery_setting == 'shipper') {
                     $amount = $order->total_amount - $total_insentif - $mdr_total - $order->delivery->delivery_fee;
                 } else {
                     $amount = $order->total_amount - $total_insentif - $mdr_total;
                 }
+
+                $order->total_amount_iconcash = $amount;
+                $order->save();
 
                 $client_ref = $this->unique_code($iconcash->token);
                 $corporate_id = 10;

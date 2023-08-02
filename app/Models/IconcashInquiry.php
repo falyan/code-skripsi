@@ -55,10 +55,10 @@ class IconcashInquiry extends Model
      * @var void Relations
      */
 
-     public function iconcash()
-     {
-         return $this->belongsTo(IconcashCredential::class);
-     }
+    public function iconcash()
+    {
+        return $this->belongsTo(IconcashCredential::class);
+    }
 
     /**
      * @var void Custom Static Functions
@@ -95,7 +95,7 @@ class IconcashInquiry extends Model
             'type' => 'topup',
             'source_account_id' => $response->accountId,
             'order_id' => $order->id,
-            'amount' => $order->total_amount,
+            'amount' => $amount,
             'client_ref' => $client_ref,
             'iconcash_order_id' => $response->orderId,
             'res_json' => json_encode($response),
