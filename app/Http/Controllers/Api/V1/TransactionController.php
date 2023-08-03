@@ -1353,9 +1353,6 @@ class TransactionController extends Controller
                     $amount = $order->total_amount - $total_insentif - $mdr_total;
                 }
 
-                $order->total_amount_iconcash = $amount;
-                $order->save();
-
                 $client_ref = $this->unique_code($iconcash->token);
                 $corporate_id = 10;
 
