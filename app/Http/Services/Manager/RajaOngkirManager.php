@@ -299,7 +299,7 @@ class RajaOngkirManager
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
         if ($response->rajaongkir->status->code != 200) {
-            throw new Exception($response->rajaongkir->status->description, $response->rajaongkir->status->code);
+            return [];
         }
 
         $transactionQueries = new TransactionQueries();
