@@ -1582,15 +1582,6 @@ class TransactionQueries extends Service
         }
 
         foreach ($datas['merchants'] as $merchant) {
-            if ($merchant['order_count'] > 4) {
-                $datas['success'] = false;
-                $datas['status_code'] = 400;
-                $datas['message'] = 'Mohon maaf, saat ini merchant tidak dapat melakukan transaksi';
-            }
-        }
-
-        foreach ($datas['merchants'] as $merchant) {
-
             if ($merchant['order_count'] > 50) {
                 $datas['success'] = false;
                 $datas['status_code'] = 400;
