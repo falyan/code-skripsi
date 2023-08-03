@@ -473,7 +473,7 @@ class IconcashController extends Controller
 
             // change to new format
             $data = [];
-            foreach ($response as $key => $value) {
+            foreach ($response->content as $key => $value) {
                 $data[] = [
                     'id' => $value->id,
                     'bank' => $value->bank,
