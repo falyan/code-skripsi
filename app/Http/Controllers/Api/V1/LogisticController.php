@@ -299,8 +299,8 @@ class LogisticController extends Controller
                     }
                 }
 
-                if ($merchant->subdistrict_id == null) {
-                    throw new Exception('Mohon maaf, alamat toko belum lengkap.', 400);
+                if ($merchant->subdistrict_id == null || $customer_address->subdistrict_id == null) {
+                    return $this->respondWithData($ongkir, 'Mohon maaf, alamat toko belum lengkap.', 200);
                 }
 
                 $logistic = $merchant->expedition == null ? [] : $this->logisticManager->getOngkir($customer_address, $merchant, $request['weight'], rtrim($s_courier, ':'), $request['price']);
