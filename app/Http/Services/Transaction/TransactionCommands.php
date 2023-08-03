@@ -1014,7 +1014,6 @@ class TransactionCommands extends Service
                 }
             }
 
-
             $ev_subsidies = [];
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
                 foreach ($datas['merchants'] as $merchant) {
