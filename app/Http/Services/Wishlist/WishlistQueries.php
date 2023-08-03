@@ -3,6 +3,7 @@
 namespace App\Http\Services\Wishlist;
 
 use App\Http\Services\Service;
+use App\Models\Merchant;
 use App\Models\Wishlist;
 
 class WishlistQueries extends Service
@@ -30,11 +31,6 @@ class WishlistQueries extends Service
                 'promo_merchant.promo_master',
                 'promo_merchant.promo_master.promo_values',
             ]);
-            $merchant->with('orders', function ($orders) {
-                $orders->whereHas('progress_active', function ($progress) {
-                    $progress->whereIn('status_code', ['01', '02']);
-                });
-            });
         }, 'product' => function ($product) {
             $product->withCount(['order_details' => function ($details) {
                 $details->whereHas('order', function ($order) {
@@ -44,6 +40,13 @@ class WishlistQueries extends Service
         }])->where('customer_id', $customer_id)->where('is_valid', true);
 
         $collect_data = collect($wishlist->get());
+
+        $merchants = Merchant::whereIn('id', $collect_data->pluck('merchant_id')->unique())
+            ->with('orders', function ($orders) {
+                $orders->whereHas('progress_active', function ($progress) {
+                    $progress->whereIn('status_code', ['01', '02']);
+                });
+            })->get();
 
         if ($sortby == 'newest') {
             $collect_data = $collect_data->sortByDesc('created_at');
@@ -55,10 +58,10 @@ class WishlistQueries extends Service
             $collect_data = $collect_data->sortByDesc('items_sold');
         }
 
-        $data = $collect_data->map(function ($item) {
-            $item['merchant']['order_count'] = count($item['merchant']['orders']);
+        $data = $collect_data->map(function ($item) use ($merchants) {
+            $merchant = collect($merchants)->where('id', $item['merchant_id'])->first();
+            $item['merchant']['order_count'] = count($merchant['orders']);
             $item['product']['strike_price'] = $item['product']['strike_price'] == 0 ? null : $item['product']['strike_price'];
-            unset($item['merchant']['orders']);
 
             return $item;
         })->toArray();
@@ -100,6 +103,13 @@ class WishlistQueries extends Service
 
         $collect_data = collect($wishlist->get());
 
+        $merchants = Merchant::whereIn('id', $collect_data->pluck('merchant_id')->unique())
+            ->with('orders', function ($orders) {
+                $orders->whereHas('progress_active', function ($progress) {
+                    $progress->whereIn('status_code', ['01', '02']);
+                });
+            })->get();
+
         if ($sortby == 'newest') {
             $collect_data = $collect_data->sortByDesc('created_at');
         } else if ($sortby == 'oldest') {
@@ -110,10 +120,10 @@ class WishlistQueries extends Service
             $collect_data = $collect_data->sortByDesc('items_sold');
         }
 
-        $data = $collect_data->map(function ($item) {
-            $item['merchant']['order_count'] = count($item['merchant']['orders']);
+        $data = $collect_data->map(function ($item)use ($merchants) {
+            $merchant = collect($merchants)->where('id', $item['merchant_id'])->first();
+            $item['merchant']['order_count'] = count($merchant['orders']);
             $item['product']['strike_price'] = $item['product']['strike_price'] == 0 ? null : $item['product']['strike_price'];
-            unset($item['merchant']['orders']);
 
             return $item;
         })->toArray();
