@@ -1047,6 +1047,11 @@ class TransactionQueries extends Service
     public function countCheckoutPriceV3($customer, $datas)
     {
         $customer_address = CustomerAddress::where('id', $datas['customer_address_id'])->first();
+
+        if (!$customer_address) {
+            throw new Exception('Silahkan tambah alamat pengiriman terlebih dahulu!', 404);
+        }
+
         $province_id = $customer_address->province_id;
         $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = $total_discount_payment = 0;
         $total_price_discount = 0;
