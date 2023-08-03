@@ -1009,7 +1009,7 @@ class TransactionController extends Controller
                     $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
 
                     if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && $order->merchant->is_voucher_ubah_daya) {
-                        if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
+                        if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::parse($order->order_date) || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::parse($order->order_date)) {
                             $res_generate = $this->voucherCommand->generateVoucher($order);
 
                             if ($res_generate['success'] == false) {
@@ -1352,9 +1352,6 @@ class TransactionController extends Controller
                 } else {
                     $amount = $order->total_amount - $total_insentif - $mdr_total;
                 }
-
-                $order->total_amount_iconcash = $amount;
-                $order->save();
 
                 $client_ref = $this->unique_code($iconcash->token);
                 $corporate_id = 10;

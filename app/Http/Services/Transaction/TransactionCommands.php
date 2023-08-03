@@ -413,6 +413,8 @@ class TransactionCommands extends Service
                 ];
             }
 
+            $mdr_total = MasterData::where('key', 'mdr_global_value')->first()->value ?? 0;
+
             foreach (data_get($datas, 'merchants') as $data) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
@@ -428,6 +430,7 @@ class TransactionCommands extends Service
                 $order->created_by = 'user';
                 $order->updated_by = 'user';
                 $order->npwp = data_get($datas, 'npwp');
+                $order->total_mdr = (int) $mdr_total;
                 $order->save();
 
                 if (isset($datas['save_npwp'])) {
@@ -757,13 +760,6 @@ class TransactionCommands extends Service
                 // }
                 // End hitung mdr
 
-                // Start hitung mdr V2 (urgent)
-                $mdr_total = MasterData::where('key', 'mdr_global_value')->first()->value ?? 0;
-
-                // update order table with mdr
-                $order->total_mdr = (int) $mdr_total;
-                $order->save();
-
                 $order_delivery = new OrderDelivery();
                 $order_delivery->order_id = $order->id;
                 $order_delivery->receiver_name = data_get($datas, 'destination_info.receiver_name');
@@ -800,6 +796,14 @@ class TransactionCommands extends Service
                 $order_payment->status = 0;
                 $order_payment->save();
 
+                $total_insentif = 0;
+                foreach ($order->detail as $item) {
+                    $total_insentif += $item->total_insentif;
+                }
+
+                $amount = $order->total_amount - $total_insentif - $mdr_total;
+
+                $order->total_amount_iconcash = $amount;
                 $order->payment_id = $order_payment->id;
                 if ($order->save()) {
                     $column_name = 'customer_id';
@@ -1097,6 +1101,9 @@ class TransactionCommands extends Service
                 ];
             }
 
+            // Start hitung mdr V2 (urgent)
+            $mdr_total = MasterData::where('key', 'mdr_global_value')->first()->value ?? 0;
+
             foreach (data_get($datas, 'merchants') as $data) {
                 $order = new Order();
                 $order->merchant_id = data_get($data, 'merchant_id');
@@ -1112,6 +1119,7 @@ class TransactionCommands extends Service
                 $order->created_by = 'user';
                 $order->updated_by = 'user';
                 $order->npwp = data_get($datas, 'npwp');
+                $order->total_mdr = (int) $mdr_total;
                 $order->save();
 
                 if (isset($datas['save_npwp'])) {
@@ -1448,13 +1456,6 @@ class TransactionCommands extends Service
                 // }
                 // End hitung mdr
 
-                // Start hitung mdr V2 (urgent)
-                $mdr_total = MasterData::where('key', 'mdr_global_value')->first()->value ?? 0;
-
-                // update order table with mdr
-                $order->total_mdr = (int) $mdr_total;
-                $order->save();
-
                 $merchant_data = Merchant::find($order->merchant_id);
 
                 $order_delivery = new OrderDelivery();
@@ -1508,6 +1509,19 @@ class TransactionCommands extends Service
                 $order_payment->status = 0;
                 $order_payment->save();
 
+                $total_insentif = 0;
+                foreach ($order->detail as $item) {
+                    $total_insentif += $item->total_insentif;
+                }
+
+                if ($order->delivery->delivery_setting == 'shipper') {
+                    $ongkir = $order->delivery->delivery_fee;
+                    $amount = $order->total_amount - $total_insentif - $mdr_total - $ongkir;
+                } else {
+                    $amount = $order->total_amount - $total_insentif - $mdr_total;
+                }
+
+                $order->total_amount_iconcash = $amount;
                 $order->payment_id = $order_payment->id;
                 if ($order->save()) {
                     $column_name = 'customer_id';
