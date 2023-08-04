@@ -287,14 +287,14 @@ class RajaOngkirManager
             'json' => $body
         ]);
 
+        $response = json_decode($response->getBody());
+
         Log::info("E00002", [
             'path_url' => "rajaongkir.endpoint/api/cost",
             'query' => [],
             'body' => $body,
             'response' => $response
         ]);
-
-        $response = json_decode($response->getBody());
 
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
