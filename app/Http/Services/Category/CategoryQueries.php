@@ -24,24 +24,31 @@ class CategoryQueries extends Service
         return $response;
     }
 
-    public function getAllCategory(){
-        $category = MasterData::with(['child' => function($j) {
+    public function getAllCategory()
+    {
+        $category = MasterData::with(['child' => function ($j) {
             $j->with(['child']);
-        }])->where('type', 'product_category')->where('parent_id', null)->orderBy('updated_at', 'DESC')->get();
-        if ($category->isEmpty()){
+        }])->where('type', 'product_category')
+            ->where(['parent_id' => null, 'status' => 1])
+            ->orderBy('updated_at', 'DESC')
+            ->get();
+
+        if ($category->isEmpty()) {
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data kategori!';
             return $response;
         }
+
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan data kategori!';
         $response['data'] = $category;
         return $response;
     }
 
-    public function getThreeRandomCategory(){
+    public function getThreeRandomCategory()
+    {
         $category = MasterData::where('type', 'product_category')->where('parent_id', null)->inRandomOrder()->limit(3)->get();
-        if ($category->isEmpty()){
+        if ($category->isEmpty()) {
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data kategori!';
             return $response;
@@ -62,7 +69,7 @@ class CategoryQueries extends Service
         ]);
         $category = MasterData::where('type', 'product_category')->where('parent_id', null)->orderBy('updated_at', 'DESC')->get();
 
-        if ($category->isEmpty()){
+        if ($category->isEmpty()) {
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data kategori!';
             return $response;
@@ -90,7 +97,7 @@ class CategoryQueries extends Service
             }
         }
 
-        if (empty($parents)){
+        if (empty($parents)) {
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data parent kategori!';
             return $response;
@@ -130,7 +137,7 @@ class CategoryQueries extends Service
         //     }
         // }
 
-        if (empty($childs)){
+        if (empty($childs)) {
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data child kategori!';
             return $response;
