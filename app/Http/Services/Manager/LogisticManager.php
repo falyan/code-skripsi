@@ -245,7 +245,7 @@ class LogisticManager
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
         if ($response['status'] != 200) {
-            throw new Exception($response['message'], $response['status']);
+            return [];
         }
 
         // $transactionQueries = new TransactionQueries();
