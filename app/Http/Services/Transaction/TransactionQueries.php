@@ -1933,7 +1933,7 @@ class TransactionQueries extends Service
 
     public function getTransactionByReference($no_reference)
     {
-        $orders = Order::with(['detail', 'promo_log_orders', 'progress_active'])->where('no_reference', $no_reference)->get();
+        $orders = Order::with(['detail', 'promo_log_orders', 'progress_active', 'delivery'])->where('no_reference', $no_reference)->get();
         return $orders;
     }
 
