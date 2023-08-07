@@ -1463,6 +1463,11 @@ class TransactionCommands extends Service
 
                 $merchant_data = Merchant::find($order->merchant_id);
 
+                $shipping_type = data_get($data, 'delivery_service');
+                if (str_contains(strtolower($shipping_type), 'seller')) {
+                    $shipping_type = 'custom';
+                }
+
                 $order_delivery = new OrderDelivery();
                 $order_delivery->order_id = $order->id;
                 $order_delivery->receiver_name = $customer_address->receiver_name;
