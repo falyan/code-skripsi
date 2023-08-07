@@ -1979,14 +1979,9 @@ class TransactionQueries extends Service
             $delivery = json_decode($item['delivery']['merchant_data']);
 
             if ($delivery != null) {
-                $city = Cache::rememberForever('city_' . $delivery->merchant_city_id, function () use ($delivery) {
-                    return City::find($delivery->merchant_city_id);
-                });
                 $item['merchant']['address'] = $delivery->merchant_address;
                 $item['merchant']['province_id'] = $delivery->merchant_province_id;
                 $item['merchant']['city_id'] = $delivery->merchant_city_id;
-                $item['merchant']['city']['id'] = $city->id;
-                $item['merchant']['city']['name'] = $city->name;
                 $item['merchant']['district_id'] = $delivery->merchant_district_id;
                 $item['merchant']['subdistrict_id'] = $delivery->merchant_subdistrict_id;
                 $item['merchant']['postal_code'] = $delivery->merchant_postal_code;
