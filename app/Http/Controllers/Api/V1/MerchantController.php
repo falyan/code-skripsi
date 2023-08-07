@@ -175,7 +175,7 @@ class MerchantController extends Controller
     public function setExpedition()
     {
         $validator = Validator::make(request()->all(), [
-            'list_expeditions' => 'required',
+            'list_expeditions' => 'nullable|string',
         ], [
             'required' => 'Minimal harus pilih 1 expedisi.',
         ]);
