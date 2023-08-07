@@ -1479,7 +1479,7 @@ class TransactionCommands extends Service
                 $order_delivery->postal_code = $customer_address->postal_code;
                 $order_delivery->latitude = $customer_address->latitude;
                 $order_delivery->longitude = $customer_address->longitude;
-                $order_delivery->shipping_type = data_get($data, 'delivery_service');
+                $order_delivery->shipping_type = $shipping_type;
                 $order_delivery->awb_number = null;
                 $order_delivery->merchant_data = json_encode([
                     'merchant_name' => $merchant_data->name,
