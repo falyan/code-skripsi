@@ -760,6 +760,11 @@ class TransactionCommands extends Service
                 // }
                 // End hitung mdr
 
+                $shipping_type = data_get($data, 'delivery_service');
+                if (str_contains(strtolower($shipping_type), 'seller')) {
+                    $shipping_type = 'custom';
+                }
+
                 $order_delivery = new OrderDelivery();
                 $order_delivery->order_id = $order->id;
                 $order_delivery->receiver_name = data_get($datas, 'destination_info.receiver_name');
