@@ -85,7 +85,7 @@ class ProductQueries extends Service
             }
             if ($product->status != 1) {
                 $message = 'Produk anda sedang diarsipkan!';
-                $description = 'Produk anda sedang diarsipkan, aktifasi kembali dengan cara melakukan pembaruan data produk Anda';
+                $description = 'Produk anda sedang diarsipkan, aktivasi kembali dengan cara melakukan pembaruan data produk Anda';
                 $status_code = 400;
                 break;
             }
@@ -125,7 +125,7 @@ class ProductQueries extends Service
         }
         if ($product->status != 1) {
             $message = 'Produk anda sedang diarsipkan!';
-            $description = 'Produk anda sedang diarsipkan, aktifasi kembali dengan cara melakukan pembaruan data produk Anda';
+            $description = 'Produk anda sedang diarsipkan, aktivasi kembali dengan cara melakukan pembaruan data produk Anda';
             $status_code = 400;
         }
 
