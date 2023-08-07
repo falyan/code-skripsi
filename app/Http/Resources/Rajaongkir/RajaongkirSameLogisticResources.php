@@ -4,6 +4,7 @@ namespace App\Http\Resources\Rajaongkir;
 
 use App\Models\MasterData;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Cache;
 
 class RajaongkirSameLogisticResources extends JsonResource
 {
@@ -11,7 +12,9 @@ class RajaongkirSameLogisticResources extends JsonResource
 
     public function toArray($request)
     {
-        $master_data = MasterData::where('type', 'rajaongkir_courier')->get();
+        $master_data = Cache::remember('master_data', 60 * 60 * 24, function () {
+            return MasterData::where('key', 'ro_courier')->get();
+        });
         $this->imageCourier = $master_data;
 
         return array_map(function ($courier) {

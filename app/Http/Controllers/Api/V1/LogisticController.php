@@ -12,6 +12,7 @@ use App\Models\Merchant;
 use App\Models\Order;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 
 class LogisticController extends Controller
@@ -282,9 +283,14 @@ class LogisticController extends Controller
         $request = request()->all();
         $merchant = Merchant::with('expedition')->where('id', $request['merchant_id'])->first();
         $customer_address = CustomerAddress::where('id', $request['customer_address_id'])->first();
-        $setting_shipper = MasterData::where('key', 'is_active_shipper')->first();
-        $prefix_shipper = MasterData::where('key', 'prefix_shipper')->first();
-        $setting_courirers = MasterData::where('type', 'rajaongkir_courier')->get();
+
+        $master_data = MasterData::whereIn('key', ['is_active_shipper', 'prefix_shipper'])->get();
+        $setting_shipper = collect($master_data)->where('key', 'is_active_shipper')->first();
+        $prefix_shipper = collect($master_data)->where('key', 'prefix_shipper')->first();
+
+        $setting_courirers = Cache::remember('setting_courirers', 60 * 60 * 24, function () {
+            return MasterData::where('type', 'rajaongkir_courier')->get();
+        });
 
         try {
             $ongkir = [];
