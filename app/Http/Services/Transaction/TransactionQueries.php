@@ -19,6 +19,7 @@ use App\Models\VariantStock;
 use App\Models\VariantValueProduct;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Cache;
 
 class TransactionQueries extends Service
 {
@@ -1974,7 +1975,27 @@ class TransactionQueries extends Service
     {
         $itemsPaginated = $transactions->paginate($limit);
 
-        $itemsTransformed = $itemsPaginated->getCollection()->toArray();
+        $itemsTransformed = array_map(function ($item) {
+            $delivery = json_decode($item['delivery']['merchant_data']);
+
+            if ($delivery != null) {
+                $item['merchant']['address'] = $delivery->merchant_address;
+                $item['merchant']['province_id'] = $delivery->merchant_province_id;
+                $item['merchant']['city_id'] = $delivery->merchant_city_id;
+                $item['merchant']['district_id'] = $delivery->merchant_district_id;
+                $item['merchant']['subdistrict_id'] = $delivery->merchant_subdistrict_id;
+                $item['merchant']['postal_code'] = $delivery->merchant_postal_code;
+                $item['merchant']['latitude'] = $delivery->merchant_latitude;
+                $item['merchant']['longitude'] = $delivery->merchant_longitude;
+
+                $item['merchant']['phone_office'] = $delivery->merchant_phone_office;
+                $item['merchant']['name'] = $delivery->merchant_name;
+
+                unset($item['delivery']['merchant_data']);
+            }
+
+            return $item;
+        }, $itemsPaginated->getCollection()->toArray());
 
         $itemsTransformedAndPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
             $itemsTransformed,
