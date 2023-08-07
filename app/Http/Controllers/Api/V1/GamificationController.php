@@ -62,7 +62,8 @@ class GamificationController extends Controller
         $key = (string) request()->header('key');
         $timestamp = request()->header('timestamp');
 
-        if (time() - $timestamp > 300) {
+        date_default_timezone_set('Asia/Jakarta');
+        if (time() - $timestamp >= 300) {
             return false;
         }
 
