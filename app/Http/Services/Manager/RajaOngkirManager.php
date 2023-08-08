@@ -287,17 +287,19 @@ class RajaOngkirManager
         //     $weight = $weight + $weighting;
         // }
 
+        $weight = $weight < 500 ? 500 : $weight;
+
         $courirers = [];
         foreach (explode(':', $courirer) as $courier) {
             $courirers[] = $merchant->district_id . '.' . $customer_address->district_id . '.' . $weight . '.' . $courier;
         }
 
         $cache_rajaongkir = CacheRajaongkirShipping::whereIn('key', $courirers)->where('expired_at', '>', Carbon::now())->get();
+        $cache_response = array_map(function ($item) {
+            return json_decode($item['value'], true);
+        }, $cache_rajaongkir->toArray());
+
         if (count($cache_rajaongkir) == count($courirers)) {
-            $cache_response = [];
-            foreach ($cache_rajaongkir as $cache) {
-                $cache_response[] = json_decode($cache->value);
-            }
             return $cache_response;
         }
 
@@ -330,7 +332,7 @@ class RajaOngkirManager
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
         if ($response->rajaongkir->status->code != 200) {
-            return [];
+            return $cache_response;
         }
 
         // $transactionQueries = new TransactionQueries();
