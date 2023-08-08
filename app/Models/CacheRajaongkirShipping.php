@@ -10,7 +10,13 @@ class CacheRajaongkirShipping extends Model
     use HasFactory;
 
     protected $table = 'cache_rajaongkir_shipping';
-    protected $guarded = ['id'];
+    protected $primaryKey = 'key';
+
+    protected $fillable = [
+        'key',
+        'value',
+        'expired_at',
+    ];
 
     protected function serializeDate($date)
     {

@@ -289,72 +289,36 @@ class RajaOngkirManager
 
         $courirers = [];
         foreach (explode(':', $courirer) as $courier) {
-            $courirers[] = $merchant->district_id . $customer_address->district_id . $weight . $courier;
+            $courirers[] = $merchant->district_id . '.' . $customer_address->district_id . '.' . $weight . '.' . $courier;
         }
 
-        $cache_rajaongkir = CacheRajaongkirShipping::whereIn('key', $courirers)->get();
+        $cache_rajaongkir = CacheRajaongkirShipping::whereIn('key', $courirers)->where('expired_at', '>', Carbon::now())->get();
         if (count($cache_rajaongkir) == count($courirers)) {
-            $response = [];
+            $cache_response = [];
             foreach ($cache_rajaongkir as $cache) {
-                if ($cache->expired_at < Carbon::now()) {
-                    break;
-                }
-
-                $response[] = json_decode($cache->value);
+                $cache_response[] = json_decode($cache->value);
             }
-            return $response;
+            return $cache_response;
         }
 
         $url = sprintf('%s/%s', static::$apiendpoint, 'api/cost');
 
-        if (static::$rajaOngkirType == 'pro') {
-            $body = [
-                'origin' => $merchant->district_id,
-                'originType' => 'subdistrict',
-                'destination' => $customer_address->district_id,
-                'destinationType' => 'subdistrict',
-                'weight' => (int) $weight,
-                'courier' => strtolower($courirer),
-            ];
+        $body = [
+            'origin' => $merchant->district_id,
+            'originType' => 'subdistrict',
+            'destination' => $customer_address->district_id,
+            'destinationType' => 'subdistrict',
+            'weight' => (int) $weight,
+            'courier' => strtolower($courirer),
+        ];
 
-            $response = static::$curl->request('POST', $url, [
-                'headers' => static::$header,
-                'http_errors' => false,
-                'json' => $body
-            ]);
+        $response = static::$curl->request('POST', $url, [
+            'headers' => static::$header,
+            'http_errors' => false,
+            'json' => $body
+        ]);
 
-            $response = json_decode($response->getBody());
-        } else {
-            $responseService = array_map(function ($courier) use ($url, $merchant, $customer_address, $weight) {
-                $body = [
-                    'origin' => $merchant->district_id,
-                    'originType' => 'subdistrict',
-                    'destination' => $customer_address->district_id,
-                    'destinationType' => 'subdistrict',
-                    'weight' => (int) $weight,
-                    'courier' => strtolower($courier),
-                ];
-
-                return static::$curl->postAsync($url, [
-                    'headers' => static::$header,
-                    'http_errors' => false,
-                    'body' => json_encode($body),
-                ])->then(
-                    function (ResponseInterface $res) {
-                        $response = json_decode($res->getBody()->getContents(), true);
-                        return $response;
-                    }
-                );
-            }, explode(':', $courirer));
-
-            $response = \GuzzleHttp\Promise\Utils::all($responseService)->wait();
-
-            Log::info("shipper.pricing", [
-                'path_url' => "rajaongkir.endpoint/api/cost",
-                'query' => [],
-                'response' => $response,
-            ]);
-        }
+        $response = json_decode($response->getBody());
 
         Log::info("E00002", [
             'path_url' => "rajaongkir.endpoint/api/cost",
@@ -372,12 +336,12 @@ class RajaOngkirManager
         // $transactionQueries = new TransactionQueries();
         // $response->delivery_discount = $transactionQueries->getDeliveryDiscount();
 
-        $data = new RajaongkirSameLogisticResources($response);
+        $resources = collect(new RajaongkirSameLogisticResources($response));
 
-        foreach ($data as $result) {
+        foreach ($resources as $resource) {
             $cache = [
-                'key' =>  $merchant->district_id . $customer_address->district_id . $weight . $result->code,
-                'value' => json_encode($result),
+                'key' =>  $merchant->district_id . '.' . $customer_address->district_id . '.' . $weight . '.' . data_get($resource, 'code'),
+                'value' => json_encode($resource),
                 'expired_at' => Carbon::now()->addDays(1)->format('Y-m-d H:i:s'),
             ];
 
@@ -387,7 +351,7 @@ class RajaOngkirManager
             );
         }
 
-        return $data;
+        return $resources;
     }
 
     public static function trackOrderSameLogistic($order)

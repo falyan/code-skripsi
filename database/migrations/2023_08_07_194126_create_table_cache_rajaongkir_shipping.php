@@ -15,7 +15,7 @@ class CreateTableCacheRajaongkirShipping extends Migration
     {
         Schema::create('cache_rajaongkir_shipping', function (Blueprint $table) {
             $table->string('key')->primary();
-            $table->text('value');
+            $table->json('value');
             $table->timestamp('expired_at')->nullable();
             $table->timestamps();
         });
