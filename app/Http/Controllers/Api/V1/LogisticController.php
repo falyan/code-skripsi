@@ -346,7 +346,7 @@ class LogisticController extends Controller
             }
             $rajaongkir = $merchant->expedition == null ? [] : $this->rajaongkirManager->getOngkirSameLogistic($customer_address, $merchant, $request['weight'], rtrim($ro_courier, ':'));
 
-            foreach (collect($rajaongkir) as $rjo) {
+            foreach ($rajaongkir as $rjo) {
                 $key = array_search($rjo['code'], array_column($ongkir, 'code'));
                 if ($key !== false) {
                     $data = [];
