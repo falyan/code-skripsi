@@ -288,7 +288,7 @@ class LogisticController extends Controller
         $setting_shipper = collect($master_data)->where('key', 'is_active_shipper')->first();
         $prefix_shipper = collect($master_data)->where('key', 'prefix_shipper')->first();
 
-        $setting_courirers = Cache::remember('setting_courirers', 60 * 60 * 24, function () {
+        $setting_courirers = Cache::remember('setting_courirers', 60 * 60, function () {
             return MasterData::where('type', 'rajaongkir_courier')->get();
         });
 
@@ -347,9 +347,7 @@ class LogisticController extends Controller
             $rajaongkir = $merchant->expedition == null ? [] : $this->rajaongkirManager->getOngkirSameLogistic($customer_address, $merchant, $request['weight'], rtrim($ro_courier, ':'));
 
             foreach (collect($rajaongkir) as $rjo) {
-                $rjo_code = $rjo['code'] == 'J&T' ? 'jnt' : $rjo['code'];
-
-                $key = array_search($rjo_code, array_column($ongkir, 'code'));
+                $key = array_search($rjo['code'], array_column($ongkir, 'code'));
                 if ($key !== false) {
                     $data = [];
                     foreach ($rjo['data'] as $data_value) {
@@ -384,7 +382,7 @@ class LogisticController extends Controller
                     }
 
                     $ongkir[] = [
-                        'code' => $rjo_code,
+                        'code' => $rjo['code'],
                         'name' => $rjo['name'],
                         'image' => $rjo['image'],
                         'data' => $data,
