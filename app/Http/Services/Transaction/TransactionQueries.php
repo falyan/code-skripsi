@@ -276,7 +276,9 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with('ev_subsidy');
                 }, 'variant_value_product']);
-            }, 'progress', 'merchant', 'delivery' => function($delivery) {
+            }, 'progress', 'merchant' => function($merchant) {
+                $merchant->with(['city', 'district', 'subdistrict', 'province']);
+            }, 'delivery' => function($delivery) {
                 $delivery->with(['subdistrict', 'district', 'city', 'city.province']);
             }, 'buyer', 'ev_subsidy', 'payment', 'review' => function ($review) {
                 $review->with(['review_photo']);
