@@ -276,7 +276,7 @@ class RajaOngkirManager
         return $response;
     }
 
-    static function getOngkirSameLogistic($customer_address, $merchant, $weight, $courirer)
+    static function getOngkirSameLogistic($customer_address, $merchant, $weight, $courirer, $setting = 'non-active')
     {
         // take 3 last character from weight
         // $weighting = substr($weight, -3);
@@ -289,18 +289,21 @@ class RajaOngkirManager
 
         $weight = $weight < 500 ? 500 : $weight;
 
-        $courirers = [];
-        foreach (explode(':', $courirer) as $courier) {
-            $courirers[] = $merchant->district_id . '.' . $customer_address->district_id . '.' . $weight . '.' . $courier;
-        }
+        $cache_response = [];
+        if ($setting == 'active') {
+            $courirers = [];
+            foreach (explode(':', $courirer) as $courier) {
+                $courirers[] = $merchant->district_id . '.' . $customer_address->district_id . '.' . $weight . '.' . $courier;
+            }
 
-        $cache_rajaongkir = CacheRajaongkirShipping::whereIn('key', $courirers)->where('expired_at', '>', Carbon::now())->get();
-        $cache_response = array_map(function ($item) {
-            return json_decode($item['value'], true);
-        }, $cache_rajaongkir->toArray());
+            $cache_rajaongkir = CacheRajaongkirShipping::whereIn('key', $courirers)->where('expired_at', '>', Carbon::now())->get();
+            $cache_response = array_map(function ($item) {
+                return json_decode($item['value'], true);
+            }, $cache_rajaongkir->toArray());
 
-        if (count($cache_rajaongkir) == count($courirers)) {
-            return $cache_response;
+            if (count($cache_rajaongkir) == count($courirers)) {
+                return $cache_response;
+            }
         }
 
         $url = sprintf('%s/%s', static::$apiendpoint, 'api/cost');
