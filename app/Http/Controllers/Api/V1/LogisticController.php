@@ -284,9 +284,10 @@ class LogisticController extends Controller
         $merchant = Merchant::with('expedition')->where('id', $request['merchant_id'])->first();
         $customer_address = CustomerAddress::where('id', $request['customer_address_id'])->first();
 
-        $master_data = MasterData::whereIn('key', ['is_active_shipper', 'prefix_shipper'])->get();
+        $master_data = MasterData::whereIn('key', ['is_active_shipper', 'prefix_shipper', 'is_active_rajaongkir_cache'])->get();
         $setting_shipper = collect($master_data)->where('key', 'is_active_shipper')->first();
         $prefix_shipper = collect($master_data)->where('key', 'prefix_shipper')->first();
+        $rajaongkir_cache_setting = collect($master_data)->where('key', 'is_active_rajaongkir_cache')->first();
 
         $setting_courirers = Cache::remember('setting_courirers', 60 * 60, function () {
             return MasterData::where('type', 'rajaongkir_courier')->get();
@@ -344,7 +345,7 @@ class LogisticController extends Controller
                     }
                 }
             }
-            $rajaongkir = $merchant->expedition == null ? [] : $this->rajaongkirManager->getOngkirSameLogistic($customer_address, $merchant, $request['weight'], rtrim($ro_courier, ':'));
+            $rajaongkir = $merchant->expedition == null ? [] : $this->rajaongkirManager->getOngkirSameLogistic($customer_address, $merchant, $request['weight'], rtrim($ro_courier, ':'), $rajaongkir_cache_setting);
 
             foreach ($rajaongkir as $rjo) {
                 $key = array_search($rjo['code'], array_column($ongkir, 'code'));
