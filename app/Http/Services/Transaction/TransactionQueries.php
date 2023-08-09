@@ -4,7 +4,10 @@ namespace App\Http\Services\Transaction;
 
 use App\Http\Services\Manager\GamificationManager;
 use App\Http\Services\Service;
+use App\Models\Province;
 use App\Models\City;
+use App\Models\District;
+use App\Models\Subdistrict;
 use App\Models\CustomerAddress;
 use App\Models\CustomerDiscount;
 use App\Models\DeliveryDiscount;
@@ -161,7 +164,8 @@ class TransactionQueries extends Service
                 }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer',
         ])->where(
-            $column_name, $column_value,
+            $column_name,
+            $column_value,
         )->whereHas('progress_active', function ($j) use ($status_code) {
             if (count($status_code) > 1) {
                 $j->whereIn('status_code', $status_code);
@@ -170,15 +174,13 @@ class TransactionQueries extends Service
             if (count($status_code) == 1) {
                 $j->where('status_code', $status_code[0]);
             }
-
         })
             ->when($column_name == 'merchant_id', function ($query) {
                 $query->whereHas('progress_active', function ($q) {
                     // $q->whereNotIn('status_code', [99]);
                 });
             })
-            ->orderBy('created_at', 'desc')
-        ;
+            ->orderBy('created_at', 'desc');
 
         $data = $this->filter($data, $filter);
         $data = $data->get();
@@ -274,11 +276,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with('ev_subsidy');
                 }, 'variant_value_product']);
-            }, 'progress', 'merchant' => function ($merchant) {
-                $merchant->with(['province', 'city', 'district', 'subdistrict']);
-            }, 'delivery' => function ($region) {
-                $region->with(['city', 'district']);
-            }, 'buyer', 'ev_subsidy', 'payment', 'review' => function ($review) {
+            }, 'progress', 'merchant', 'delivery', 'buyer', 'ev_subsidy', 'payment', 'review' => function ($review) {
                 $review->with(['review_photo']);
             }, 'promo_log_orders' => function ($promo) {
                 $promo->with(['promo_merchant.promo_master']);
@@ -301,20 +299,32 @@ class TransactionQueries extends Service
 
         $delivery = json_decode($data->delivery->merchant_data);
         if ($delivery != null) {
-            $city = City::find($delivery->merchant_city_id);
             $data->merchant->address = $delivery->merchant_address;
-            $data->merchant->province_id = $delivery->merchant_province_id;
-            $data->merchant->city_id = $delivery->merchant_city_id;
-            $data->merchant->city->id = $city->id;
-            $data->merchant->city->name = $city->name;
-            $data->merchant->district_id = $delivery->merchant_district_id;
-            $data->merchant->subdistrict_id = $delivery->merchant_subdistrict_id;
             $data->merchant->postal_code = $delivery->merchant_postal_code;
             $data->merchant->latitude = $delivery->merchant_latitude;
             $data->merchant->longitude = $delivery->merchant_longitude;
-
             $data->merchant->phone_office = $delivery->merchant_phone_office;
             $data->merchant->name = $delivery->merchant_name;
+
+            $prvince = Province::find($delivery->merchant_province_id);
+            $data->merchant->province_id = $delivery->merchant_province_id;
+            $data->merchant->province = $prvince;
+            $data->delivery->province = $prvince;
+
+            $city = City::find($delivery->merchant_city_id);
+            $data->merchant->city_id = $delivery->merchant_city_id;
+            $data->merchant->city = $city;
+            $data->delivery->city = $city;
+
+            $district = District::find($delivery->merchant_district_id);
+            $data->merchant->district_id = $delivery->merchant_district_id;
+            $data->merchant->district = $district;
+            $data->delivery->district = $district;
+
+            $subdistrict = Subdistrict::find($delivery->merchant_subdistrict_id);
+            $data->merchant->subdistrict_id = $delivery->merchant_subdistrict_id;
+            $data->merchant->subdistrict = $subdistrict;
+            $data->delivery->subdistrict = $subdistrict;
 
             unset($data->delivery->merchant_data);
         }
@@ -356,8 +366,8 @@ class TransactionQueries extends Service
                     })
                     ->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
             })->whereHas('progress_active', function ($q) {
-            $q->whereNotIn('status_code', ['00', '99']);
-        })->orderBy('order.created_at', 'desc');
+                $q->whereNotIn('status_code', ['00', '99']);
+            })->orderBy('order.created_at', 'desc');
 
         $data = $this->filter($data, $filter);
         $data = $this->transactionPaginate($data, $limit);
@@ -382,8 +392,8 @@ class TransactionQueries extends Service
                     })
                     ->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
             })->whereHas('progress_active', function ($q) {
-            $q->whereNotIn('status_code', ['00', '99']);
-        })->orderBy('order.created_at', 'desc');
+                $q->whereNotIn('status_code', ['00', '99']);
+            })->orderBy('order.created_at', 'desc');
 
         $data = $this->filter($data, $filter);
         $data = $data->count();
@@ -2001,7 +2011,8 @@ class TransactionQueries extends Service
             $itemsTransformed,
             $itemsPaginated->total(),
             $itemsPaginated->perPage(),
-            $itemsPaginated->currentPage(), [
+            $itemsPaginated->currentPage(),
+            [
                 // 'path' => \Illuminate\Http\Request::url(),
                 'query' => [
                     'page' => $itemsPaginated->currentPage(),
