@@ -8,11 +8,8 @@ use Exception;
 
 class CategoryController extends Controller
 {
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
+    protected $categoryQueries;
+
     public function __construct()
     {
         $this->categoryQueries = new CategoryQueries();

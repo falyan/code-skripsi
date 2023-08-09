@@ -760,6 +760,11 @@ class TransactionCommands extends Service
                 // }
                 // End hitung mdr
 
+                $shipping_type = data_get($data, 'delivery_service');
+                if (str_contains(strtolower($shipping_type), 'seller')) {
+                    $shipping_type = 'custom';
+                }
+
                 $order_delivery = new OrderDelivery();
                 $order_delivery->order_id = $order->id;
                 $order_delivery->receiver_name = data_get($datas, 'destination_info.receiver_name');
@@ -770,7 +775,7 @@ class TransactionCommands extends Service
                 $order_delivery->postal_code = data_get($datas, 'destination_info.postal_code');
                 $order_delivery->latitude = data_get($datas, 'destination_info.latitude');
                 $order_delivery->longitude = data_get($datas, 'destination_info.longitude');
-                $order_delivery->shipping_type = data_get($data, 'delivery_service');
+                $order_delivery->shipping_type = $shipping_type;
                 $order_delivery->awb_number = null;
                 $order_delivery->district_code = $district != null ? $district->district_code : null;
 
@@ -1458,6 +1463,11 @@ class TransactionCommands extends Service
 
                 $merchant_data = Merchant::find($order->merchant_id);
 
+                $shipping_type = data_get($data, 'delivery_service');
+                if (str_contains(strtolower($shipping_type), 'seller')) {
+                    $shipping_type = 'custom';
+                }
+
                 $order_delivery = new OrderDelivery();
                 $order_delivery->order_id = $order->id;
                 $order_delivery->receiver_name = $customer_address->receiver_name;
@@ -1469,7 +1479,7 @@ class TransactionCommands extends Service
                 $order_delivery->postal_code = $customer_address->postal_code;
                 $order_delivery->latitude = $customer_address->latitude;
                 $order_delivery->longitude = $customer_address->longitude;
-                $order_delivery->shipping_type = data_get($data, 'delivery_service');
+                $order_delivery->shipping_type = $shipping_type;
                 $order_delivery->awb_number = null;
                 $order_delivery->merchant_data = json_encode([
                     'merchant_name' => $merchant_data->name,

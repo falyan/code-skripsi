@@ -12,6 +12,7 @@ use App\Models\Merchant;
 use App\Models\Order;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 
 class LogisticController extends Controller
@@ -282,9 +283,15 @@ class LogisticController extends Controller
         $request = request()->all();
         $merchant = Merchant::with('expedition')->where('id', $request['merchant_id'])->first();
         $customer_address = CustomerAddress::where('id', $request['customer_address_id'])->first();
-        $setting_shipper = MasterData::where('key', 'is_active_shipper')->first();
-        $prefix_shipper = MasterData::where('key', 'prefix_shipper')->first();
-        $setting_courirers = MasterData::where('type', 'rajaongkir_courier')->get();
+
+        $master_data = MasterData::whereIn('key', ['is_active_shipper', 'prefix_shipper', 'is_active_rajaongkir_cache'])->get();
+        $setting_shipper = collect($master_data)->where('key', 'is_active_shipper')->first();
+        $prefix_shipper = collect($master_data)->where('key', 'prefix_shipper')->first();
+        $rajaongkir_cache_setting = collect($master_data)->where('key', 'is_active_rajaongkir_cache')->first();
+
+        $setting_courirers = Cache::remember('setting_courirers', 60 * 60, function () {
+            return MasterData::where('type', 'rajaongkir_courier')->get();
+        });
 
         try {
             $ongkir = [];
@@ -338,12 +345,10 @@ class LogisticController extends Controller
                     }
                 }
             }
-            $rajaongkir = $merchant->expedition == null ? [] : $this->rajaongkirManager->getOngkirSameLogistic($customer_address, $merchant, $request['weight'], rtrim($ro_courier, ':'));
+            $rajaongkir = $merchant->expedition == null ? [] : $this->rajaongkirManager->getOngkirSameLogistic($customer_address, $merchant, $request['weight'], rtrim($ro_courier, ':'), $rajaongkir_cache_setting->value);
 
-            foreach (collect($rajaongkir) as $rjo) {
-                $rjo_code = $rjo['code'] == 'J&T' ? 'jnt' : $rjo['code'];
-
-                $key = array_search($rjo_code, array_column($ongkir, 'code'));
+            foreach ($rajaongkir as $rjo) {
+                $key = array_search($rjo['code'], array_column($ongkir, 'code'));
                 if ($key !== false) {
                     $data = [];
                     foreach ($rjo['data'] as $data_value) {
@@ -378,7 +383,7 @@ class LogisticController extends Controller
                     }
 
                     $ongkir[] = [
-                        'code' => $rjo_code,
+                        'code' => $rjo['code'],
                         'name' => $rjo['name'],
                         'image' => $rjo['image'],
                         'data' => $data,
