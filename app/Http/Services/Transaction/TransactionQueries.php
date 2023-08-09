@@ -276,7 +276,11 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with('ev_subsidy');
                 }, 'variant_value_product']);
-            }, 'progress', 'merchant', 'delivery', 'buyer', 'ev_subsidy', 'payment', 'review' => function ($review) {
+            }, 'progress', 'merchant' => function($merchant) {
+                $merchant->with(['city', 'district', 'subdistrict', 'province']);
+            }, 'delivery' => function($delivery) {
+                $delivery->with(['subdistrict', 'district', 'city', 'city.province']);
+            }, 'buyer', 'ev_subsidy', 'payment', 'review' => function ($review) {
                 $review->with(['review_photo']);
             }, 'promo_log_orders' => function ($promo) {
                 $promo->with(['promo_merchant.promo_master']);
@@ -309,25 +313,24 @@ class TransactionQueries extends Service
             $prvince = Province::find($delivery->merchant_province_id);
             $data->merchant->province_id = $delivery->merchant_province_id;
             $data->merchant->province = $prvince;
-            $data->delivery->province = $prvince;
 
             $city = City::find($delivery->merchant_city_id);
             $data->merchant->city_id = $delivery->merchant_city_id;
             $data->merchant->city = $city;
-            $data->delivery->city = $city;
 
             $district = District::find($delivery->merchant_district_id);
             $data->merchant->district_id = $delivery->merchant_district_id;
             $data->merchant->district = $district;
-            $data->delivery->district = $district;
 
             $subdistrict = Subdistrict::find($delivery->merchant_subdistrict_id);
             $data->merchant->subdistrict_id = $delivery->merchant_subdistrict_id;
             $data->merchant->subdistrict = $subdistrict;
-            $data->delivery->subdistrict = $subdistrict;
 
             unset($data->delivery->merchant_data);
         }
+
+        $data->delivery->province = $data->delivery->city->province;
+        unset($data->delivery->city->province);
 
         foreach ($data->promo_log_orders as $promo_log_order) {
             if ($promo_log_order->promo_merchant->promo_master->event_type == 'ongkir') {

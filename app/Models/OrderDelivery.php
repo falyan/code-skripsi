@@ -31,6 +31,11 @@ class OrderDelivery extends Model
         return $this->belongsTo(District::class);
     }
 
+    public function subdistrict()
+    {
+        return $this->belongsTo(Subdistrict::class);
+    }
+
     public function getCourierAttribute()
     {
         $courier = MasterData::where([
