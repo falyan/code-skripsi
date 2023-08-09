@@ -775,7 +775,7 @@ class TransactionCommands extends Service
                 $order_delivery->postal_code = data_get($datas, 'destination_info.postal_code');
                 $order_delivery->latitude = data_get($datas, 'destination_info.latitude');
                 $order_delivery->longitude = data_get($datas, 'destination_info.longitude');
-                $order_delivery->shipping_type = data_get($data, 'delivery_service');
+                $order_delivery->shipping_type = $shipping_type;
                 $order_delivery->awb_number = null;
                 $order_delivery->district_code = $district != null ? $district->district_code : null;
 
