@@ -74,8 +74,6 @@ class MerchantCommands extends Service
             'updated_by' => $request->full_name,
         ]);
 
-        return $dataUpdated;
-
         $merchant->fill($dataUpdated);
 
         // $logisticManager = new LogisticManager();
