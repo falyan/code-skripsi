@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\DB;
 
 class MerchantCommands extends Service
 {
-    public static function aturToko($request, $merchant_id){
+    public static function aturToko($request, $merchant_id)
+    {
         try {
             DB::beginTransaction();
             $merchant = Merchant::find($merchant_id);
@@ -61,10 +62,19 @@ class MerchantCommands extends Service
     {
         $merchant = Merchant::findOrFail($merchant_id);
 
+        $address = $request->address;
+        if (str_contains(explode(', ', $address)[0], '+') && strlen(explode(', ', $address)[0]) <= 10) {
+            $address =  substr($address, strpos($address, ', ') + 1);
+            if (mb_substr($address, 0, 1) == ' ') $address =  substr($address, 1);
+        }
+
         $dataUpdated = array_merge($request->all(), [
             'email' => strtolower($merchant->email),
+            'address' => $address,
             'updated_by' => $request->full_name,
         ]);
+
+        return $dataUpdated;
 
         $merchant->fill($dataUpdated);
 
@@ -102,12 +112,13 @@ class MerchantCommands extends Service
         }
     }
 
-    public function updateMerchantProfile($merchant_id, $data){
+    public function updateMerchantProfile($merchant_id, $data)
+    {
         $merchant = Merchant::findOrFail($merchant_id);
         $merchant->photo_url = ($data->photo_url == null) ? ($merchant->photo_url) : ($data->photo_url);
         $merchant->name = ($data->name == null) ? ($merchant->name) : ($data->name);
 
-        if (!$merchant->save()){
+        if (!$merchant->save()) {
             $response['success'] = false;
             $response['message'] = 'Gagal mengubah profil merchant';
             $response['data'] = $merchant;
@@ -121,18 +132,19 @@ class MerchantCommands extends Service
         return $response;
     }
 
-    public function setCustomLogistic($merchant_id){
+    public function setCustomLogistic($merchant_id)
+    {
         $merchant = Merchant::find($merchant_id);
-        if ($merchant == null){
+        if ($merchant == null) {
             $response['success'] = false;
             $response['message'] = 'Gagal mendapatkan data merchant';
             $response['data'] = $merchant;
             return $response;
         }
 
-        if ($merchant->has_custom_logistic == false || $merchant->has_custom_logistic == null){
+        if ($merchant->has_custom_logistic == false || $merchant->has_custom_logistic == null) {
             $merchant->has_custom_logistic = true;
-            if ($merchant->save()){
+            if ($merchant->save()) {
                 $response['success'] = true;
                 $response['message'] = 'Berhasil mengaktifkan custom logistic';
                 $response['data'] = $merchant;
@@ -140,9 +152,9 @@ class MerchantCommands extends Service
             }
         }
 
-        if ($merchant->has_custom_logistic == true){
+        if ($merchant->has_custom_logistic == true) {
             $merchant->has_custom_logistic = false;
-            if ($merchant->save()){
+            if ($merchant->save()) {
                 $response['success'] = true;
                 $response['message'] = 'Berhasil menonaktifkan custom logistic';
                 $response['data'] = $merchant;

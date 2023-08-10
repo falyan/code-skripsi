@@ -163,10 +163,16 @@ class CustomerCommands
 
     public function createCustomerAddressV2($customer_id, $data)
     {
+        $address = $data['address'];
+        if (str_contains(explode(', ', $address)[0], '+') && strlen(explode(', ', $address)[0]) <= 10) {
+            $address =  substr($address, strpos($address, ', ') + 1);
+            if (mb_substr($address, 0, 1) == ' ') $address =  substr($address, 1);
+        }
+
         $customer_address = new CustomerAddress();
         $customer_address->customer_id = $customer_id;
         $customer_address->title = $data['title'];
-        $customer_address->address = $data['address'];
+        $customer_address->address = $address;
         $customer_address->province_id = $data['province_id'] ?? null;
         $customer_address->city_id = $data['city_id'] ?? null;
         $customer_address->district_id = $data['district_id'] ?? null;
@@ -205,9 +211,15 @@ class CustomerCommands
 
     public function updateCustomerAddressV2($id, $customer_id, $data)
     {
+        $address = $data['address'];
+        if (str_contains(explode(', ', $address)[0], '+') && strlen(explode(', ', $address)[0]) <= 10) {
+            $address =  substr($address, strpos($address, ', ') + 1);
+            if (mb_substr($address, 0, 1) == ' ') $address =  substr($address, 1);
+        }
+
         $customer_address = CustomerAddress::findOrFail($id);
         $customer_address->title = $data['title'] == null ? ($customer_address->title) : ($data['title']);
-        $customer_address->address = $data['address'] == null ? ($customer_address->address) : ($data['address']);
+        $customer_address->address = $data['address'] == null ? ($customer_address->address) : ($address);
         $customer_address->province_id = !isset($data['province_id']) ? ($customer_address->province_id) : ($data['province_id']);
         $customer_address->city_id = !isset($data['city_id']) ? ($customer_address->city_id) : ($data['city_id']);
         $customer_address->district_id = !isset($data['district_id']) ? ($customer_address->district_id) : ($data['district_id']);
