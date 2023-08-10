@@ -276,9 +276,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with('ev_subsidy');
                 }, 'variant_value_product']);
-            }, 'progress', 'merchant' => function($merchant) {
-                $merchant->with(['city', 'district', 'subdistrict', 'province']);
-            }, 'delivery' => function($delivery) {
+            }, 'progress', 'merchant', 'delivery' => function ($delivery) {
                 $delivery->with(['subdistrict', 'district', 'city', 'city.province']);
             }, 'buyer', 'ev_subsidy', 'payment', 'review' => function ($review) {
                 $review->with(['review_photo']);
@@ -301,8 +299,10 @@ class TransactionQueries extends Service
             $details[$key] = $detail;
         }
 
-        $delivery = json_decode($data->delivery->merchant_data);
+        $delivery = $data->delivery->merchant_data;
         if ($delivery != null) {
+            $delivery = json_decode($delivery);
+
             $data->merchant->address = $delivery->merchant_address;
             $data->merchant->postal_code = $delivery->merchant_postal_code;
             $data->merchant->latitude = $delivery->merchant_latitude;
@@ -310,23 +310,24 @@ class TransactionQueries extends Service
             $data->merchant->phone_office = $delivery->merchant_phone_office;
             $data->merchant->name = $delivery->merchant_name;
 
-            $prvince = Province::find($delivery->merchant_province_id);
             $data->merchant->province_id = $delivery->merchant_province_id;
-            $data->merchant->province = $prvince;
+            $data->merchant->province = Province::find($delivery->merchant_province_id);
 
-            $city = City::find($delivery->merchant_city_id);
             $data->merchant->city_id = $delivery->merchant_city_id;
-            $data->merchant->city = $city;
+            $data->merchant->city = City::find($delivery->merchant_city_id);
 
-            $district = District::find($delivery->merchant_district_id);
             $data->merchant->district_id = $delivery->merchant_district_id;
-            $data->merchant->district = $district;
+            $data->merchant->district = District::find($delivery->merchant_district_id);
 
-            $subdistrict = Subdistrict::find($delivery->merchant_subdistrict_id);
             $data->merchant->subdistrict_id = $delivery->merchant_subdistrict_id;
-            $data->merchant->subdistrict = $subdistrict;
+            $data->merchant->subdistrict = Subdistrict::find($delivery->merchant_subdistrict_id);
 
             unset($data->delivery->merchant_data);
+        } else {
+            $data->merchant->province = Province::find($data->merchant->province_id);
+            $data->merchant->city = City::find($data->merchant->city_id);
+            $data->merchant->district = District::find($data->merchant->district_id);
+            $data->merchant->subdistrict = Subdistrict::find($data->merchant->subdistrict_id);
         }
 
         $data->delivery->province = $data->delivery->city->province;
