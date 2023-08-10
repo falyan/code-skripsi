@@ -618,6 +618,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('resend-mail', 'TiketController@resendTicket');
     });
 
+    $router->group(['prefix' => 'gamification'], static function () use ($router) {
+        $router->get('order/{no_reference}/reference', 'GamificationController@orderByRefence');
+    });
+
     $router->group(['prefix' => 'ev-subsidy'], static function () use ($router) {
         $router->get('get-webview', 'EvSubsidyController@webview');
     });
