@@ -279,6 +279,12 @@ class IconcashController extends Controller
             }
 
             $response = IconcashManager::withdrawal($iconcash->token, $pin, $order_id);
+            if ($response) {
+                $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $order_id)->first();
+                $iconcash_inquiry->confirm_res_json = json_encode($response->data);
+                $iconcash_inquiry->confirm_status = $response->success;
+                $iconcash_inquiry->save();
+            }
 
             if (isset($response->code)) {
                 if ($response->code == 5001 || $response->code == 5002 || $response->code == 5003 || $response->code == 5004 || $response->code == 5006) {
@@ -287,18 +293,18 @@ class IconcashController extends Controller
             }
 
             return $this->respondWithData([
-                'order_id' => $response->orderId,
-                'invoice_id' => $response->invoiceId,
-                'source_account_id' => $response->sourceAccountId,
-                'source_account_name' => $response->sourceAccountName,
-                'nominal' => $response->nominal,
-                'fee' => $response->fee,
-                'total' => $response->total,
-                'bank_id' => $response->bankId,
-                'bank_code' => $response->bankCode,
-                'bank_name' => $response->bankName,
-                'bank_account_no' => $response->bankAccountNo,
-                'bank_account_name' => $response->bankAccountName,
+                'order_id' => data_get($response, 'data.orderId'),
+                'invoice_id' => data_get($response, 'data.invoiceId'),
+                'source_account_id' => data_get($response, 'data.sourceAccountId'),
+                'source_account_name' => data_get($response, 'data.sourceAccountName'),
+                'nominal' => data_get($response, 'data.nominal'),
+                'fee' => data_get($response, 'data.fee'),
+                'total' => data_get($response, 'data.total'),
+                'bank_id' => data_get($response, 'data.bankId'),
+                'bank_code' => data_get($response, 'data.bankCode'),
+                'bank_name' => data_get($response, 'data.bankName'),
+                'bank_account_no' => data_get($response, 'data.bankAccountNo'),
+                'bank_account_name' => data_get($response, 'data.bankAccountName'),
             ], 'Withdrawal Berhasil!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());

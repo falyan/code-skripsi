@@ -76,6 +76,9 @@ class IconcashInquiry extends Model
                 'iconcash_id' => $iconcash->id,
                 'type' => 'withdrawal',
                 'source_account_id' => $source_account_id,
+                'amount' => $nominal,
+                'iconcash_order_id' => $response->orderId,
+                'res_json' => json_encode($response),
             ]);
 
             return $response;
