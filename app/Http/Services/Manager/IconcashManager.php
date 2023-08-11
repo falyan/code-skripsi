@@ -277,6 +277,10 @@ class IconcashManager
 
         $response = json_decode($response->getBody());
 
+        Log::info('withdrawalInquiry', [
+            'response' => $response,
+        ]);
+
         throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
         if ($response->success != true) {
@@ -306,17 +310,21 @@ class IconcashManager
 
         $response = json_decode($response->getBody());
 
-        if ($response->code == 5001 || $response->code == 5002 || $response->code == 5003 || $response->code == 5004 || $response->code == 5006) {
-            return $response;
-        }
+        Log::info('withdrawalConfirm', [
+            'response' => $response,
+        ]);
 
-        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+        // if ($response->code == 5001 || $response->code == 5002 || $response->code == 5003 || $response->code == 5004 || $response->code == 5006) {
+        //     return $response;
+        // }
 
-        if ($response->success != true) {
-            throw new Exception($response->message, $response->code);
-        }
+        // throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-        return data_get($response, 'data');
+        // if ($response->success != true) {
+        //     throw new Exception($response->message, $response->code);
+        // }
+
+        return $response;
     }
 
     /* Topup Services */
