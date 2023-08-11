@@ -346,14 +346,12 @@ class ProductQueries extends Service
 
         if (!empty($keyword)) {
             // handle search with keyword if there more than 1 words with space
-            if (strpos($keyword, ' ')) {
-                $keyword = explode(' ', $keyword);
-                foreach ($keyword as $key) {
-                    $products = $products->where('name', 'ILIKE', '%' . $key . '%');
+            $keywords = explode(' ', $keyword);
+            $products = $products->where(function ($query) use ($keywords) {
+                foreach ($keywords as $keyword) {
+                    $query->orWhere('name', 'ILIKE', '%' . $keyword . '%');
                 }
-            } else {
-                $products = $products->where('name', 'ILIKE', '%' . $keyword . '%');
-            }
+            });
         }
 
         $filtered_data = $this->filter($products, $filter);
@@ -2094,15 +2092,12 @@ class ProductQueries extends Service
             $status = $filter['status'] ?? null;
 
             $data = $model->when(!empty($keyword), function ($query) use ($keyword) {
-                // handle search product if there is more than one word
                 $explode = explode(' ', $keyword);
-                if (count($explode) > 1) {
+                $query->where(function ($query) use ($explode) {
                     foreach ($explode as $value) {
-                        $query->where('name', 'ILIKE', "%{$value}%");
+                        $query->orWhere('name', 'ILIKE', "%{$value}%");
                     }
-                } else {
-                    $query->where('name', 'ILIKE', "%{$keyword}%");
-                }
+                });
             })->when(!empty($category), function ($query) use ($category) {
                 if (strpos($category, ',')) {
                     $query->whereIn('category_id', explode(',', $category));

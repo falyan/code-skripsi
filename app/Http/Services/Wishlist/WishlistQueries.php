@@ -94,11 +94,13 @@ class WishlistQueries extends Service
 
         if (!empty($keyword)) {
             $keywords = explode(' ', $keyword);
-            foreach ($keywords as $key) {
-                $wishlist->whereHas('product', function ($product) use ($key) {
-                    $product->where('name', 'ilike', '%' . $key . '%');
-                });
-            }
+            $wishlist->where(function ($query) use ($keywords) {
+                foreach ($keywords as $key) {
+                    $query->orWhereHas('product', function ($product) use ($key) {
+                        $product->where('name', 'ILIKE', '%' . $key . '%');
+                    });
+                }
+            });
         }
 
         $collect_data = collect($wishlist->get());
@@ -120,7 +122,7 @@ class WishlistQueries extends Service
             $collect_data = $collect_data->sortByDesc('items_sold');
         }
 
-        $data = $collect_data->map(function ($item)use ($merchants) {
+        $data = $collect_data->map(function ($item) use ($merchants) {
             $merchant = collect($merchants)->where('id', $item['merchant_id'])->first();
             $item['merchant']['order_count'] = count($merchant['orders']);
             $item['product']['strike_price'] = $item['product']['strike_price'] == 0 ? null : $item['product']['strike_price'];
