@@ -1353,7 +1353,8 @@ class TransactionController extends Controller
                     $amount = $order->total_amount - $total_insentif - $mdr_total;
                 }
 
-                $client_ref = $this->unique_code($iconcash->token);
+                // $client_ref = $this->unique_code($iconcash->token);
+                $client_ref = $order->trx_no;
                 $corporate_id = 10;
 
                 $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
