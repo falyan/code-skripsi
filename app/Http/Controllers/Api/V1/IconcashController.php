@@ -641,10 +641,13 @@ class IconcashController extends Controller
         }
     }
 
-    public function historySaldoPendapatan()
+    public function historySaldoPendapatan(Request $request)
     {
         try {
             $iconcash = Auth::user()->iconcash;
+
+            $page = $request->input('page') - 1 ?? 1;
+            $limit = $request->input('limit') ?? 10;
 
             if (!isset($iconcash->token)) {
                 return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
@@ -658,7 +661,7 @@ class IconcashController extends Controller
                 $account_type_id = 13;
             }
 
-            $response = IconcashManager::historySaldo($iconcash->token, $account_type_id);
+            $response = IconcashManager::historySaldo($iconcash->token, $account_type_id, $page, $limit);
             // return $this->respondWithCollection($response, function ($item) {
             //     $order_id = IconcashInquiry::select('order_id')->where('client_ref', $item->clientRef)->get()->toArray();
             //     if (count($order_id)) {
