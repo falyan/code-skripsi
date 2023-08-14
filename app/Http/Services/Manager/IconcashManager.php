@@ -626,9 +626,12 @@ class IconcashManager
         return $response;
     }
 
-    public static function historySaldo($token, $account_type_id)
+    public static function historySaldo($token, $account_type_id, $page, $limit)
     {
-        $param = self::setParamAPI([]);
+        $param = self::setParamAPI([
+            'size' => $limit,
+            'page' => $page,
+        ]);
 
         $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/history/customer' . $param);
 
