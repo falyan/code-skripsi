@@ -347,7 +347,7 @@ class RajaOngkirManager
             $cache = [
                 'key' =>  $merchant->district_id . '.' . $customer_address->district_id . '.' . $weight . '.' . data_get($resource, 'code'),
                 'value' => json_encode($resource),
-                'expired_at' => Carbon::now()->addDays(1)->format('Y-m-d H:i:s'),
+                'expired_at' => Carbon::now()->addDays(env('RAJAONGKIR_CACHE_EXPIRE_DAY', 1))->format('Y-m-d H:i:s'),
             ];
 
             CacheRajaongkirShipping::updateOrCreate(
