@@ -1565,13 +1565,13 @@ class TransactionCommands extends Service
                         $newOrder = Order::where('id', $order->id)->first();
                         $newOrder->bonus_discount = $claimApplyDiscount['data']['bonusAmount'];
                         $newOrder->voucher_bonus_code = $claimApplyDiscount['data']['claimId'] ?? null;
-                        $newOrder->total_amount = $newOrder->total_amount - $claimApplyDiscount['data']['bonusAmount'];
+                        // $newOrder->total_amount = $newOrder->total_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $newOrder->save();
 
                         // update order detail
                         $order_detail = OrderDetail::where('order_id', $newOrder->id)->first();
                         $order_detail->total_discount = $order_detail->total_discount + $claimApplyDiscount['data']['bonusAmount'];
-                        $order_detail->total_amount = $order_detail->total_amount - $claimApplyDiscount['data']['bonusAmount'];
+                        // $order_detail->total_amount = $order_detail->total_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $order_detail->save();
 
                         // update order payment
