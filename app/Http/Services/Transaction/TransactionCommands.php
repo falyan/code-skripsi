@@ -1932,16 +1932,20 @@ class TransactionCommands extends Service
 
     public function updatePaymentDetail($no_reference, $payment_method)
     {
+        $request = request()->all();
         \Illuminate\Support\Facades\Log::info('E0004', [
             'path' => 'iconcash.notify.update',
-            'body' => request()->all()
+            'body' => $request
         ]);
 
         $payments = OrderPayment::where('no_reference', $no_reference)->get();
 
         foreach ($payments as $payment) {
             $payment['payment_method'] = $payment_method;
-            $payment['status'] = 1;
+            $payment['status'] = data_get($request, 'status') == 'PAYMENT' ? 1 : 0;
+            $payment['status_verification'] = data_get($request, 'status') == 'PAYMENT' ? 'paid' : 'unpaid';
+            $payment['body_json'] = json_encode($request);
+            $payment['payment_date'] = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
             if (!$payment->save()) {
                 return false;
             }
