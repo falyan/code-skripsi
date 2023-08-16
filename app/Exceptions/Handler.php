@@ -9,7 +9,6 @@ use Laravel\Lumen\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpFoundation\Exception\RequestExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Throwable;
 
@@ -66,7 +65,7 @@ class Handler extends ExceptionHandler
                         return response(['status' => 'ERROR', 'message' => "Bad Request", 'error_code' => $e->getStatusCode()], 400);
                         break;
 
-                        // not authorized
+                    // not authorized
                     case '401':
                         return response(['status' => 'ERROR', 'message' => "Akses Tidak Diperbolehkan", 'error_code' => $e->getStatusCode()], 400);
                         break;
@@ -79,7 +78,7 @@ class Handler extends ExceptionHandler
                         return response(['status' => 'ERROR', 'message' => "Akses Dilarang", 'error_code' => $e->getStatusCode()], 400);
                         break;
 
-                        // not found
+                    // not found
                     case '404':
                         return response(['status' => 'ERROR', 'message' => "Halaman Tidak Ditemukan", 'error_code' => $e->getStatusCode()], 400);
                         break;
@@ -144,6 +143,8 @@ class Handler extends ExceptionHandler
         } else {
             if ($e instanceof \PDOException) {
                 return response(['status' => 'ERROR', 'message' => "Sedang ada gangguan di jaringan atau sistem. Mohon coba kembali beberapa saat lagi. - MKP01", 'error_code' => 500], 500);
+            } else if ($e instanceof \Illuminate\Database\QueryException) {
+                return response(['status' => 'ERROR', 'message' => "Sedang ada gangguan di jaringan atau sistem. Mohon coba kembali beberapa saat lagi. - MKP02", 'error_code' => 500], 500);
             } else {
                 return parent::render($request, $e);
             }
