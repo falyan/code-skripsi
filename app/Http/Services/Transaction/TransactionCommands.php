@@ -1932,6 +1932,11 @@ class TransactionCommands extends Service
 
     public function updatePaymentDetail($no_reference, $payment_method)
     {
+        \Illuminate\Support\Facades\Log::info('E0004', [
+            'path' => 'iconcash.notify.update',
+            'body' => request()->all()
+        ]);
+
         $payments = OrderPayment::where('no_reference', $no_reference)->get();
 
         foreach ($payments as $payment) {
