@@ -1004,6 +1004,15 @@ class TransactionCommands extends Service
                 }
             }
 
+            if ($customer_address->address == null || $customer_address->address == '') {
+                return [
+                    'success' => false,
+                    'status' => "Bad request",
+                    'status_code' => 400,
+                    'message' => 'Mohon maaf, alamat pengiriman harus diisi terlebih dahulu',
+                ];
+            }
+
             $check_orders = Merchant::with([
                 'orders' => function ($orders) {
                     $orders->whereHas('progress_active', function ($progress) {

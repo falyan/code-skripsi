@@ -1569,6 +1569,12 @@ class TransactionQueries extends Service
             }
         }
 
+        if ($customer_address->address == null || $customer_address->address == '') {
+            $datas['success'] = false;
+            $datas['status_code'] = 400;
+            $datas['message'] = 'Mohon lengkapin alamat Anda terlebih dahulu';
+        }
+
         return $datas;
     }
 
