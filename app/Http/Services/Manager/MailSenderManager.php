@@ -24,9 +24,11 @@ class MailSenderManager
         $transactionQueries = new TransactionQueries();
         $order = $transactionQueries->getDetailTransaction($order_id);
         $customer = $order->buyer;
+        $payment = $order->payment;
         $data = [
             'destination_name' => $customer->full_name ?? 'Pengguna Setia',
             'order' => $order,
+            'payment' => $payment,
         ];
 
         Mail::send('email.checkoutFeedback', $data, function ($mail) use ($customer) {

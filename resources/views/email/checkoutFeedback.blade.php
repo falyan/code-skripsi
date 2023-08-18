@@ -72,7 +72,7 @@
                                         @php
                                             \Carbon\Carbon::setLocale('id');
                                         @endphp
-                                        {{ \Carbon\Carbon::parse($order->order_date)->isoFormat('dddd, D MMMM Y, H:m') }}
+                                        {{ \Carbon\Carbon::parse($payment->date_expired)->isoFormat('dddd, D MMMM Y, H:m') }}
                                         WIB
                                     </h2>
                                     <p style="font-size: small;font-weight: bold;">Diinformasikan tanggal
