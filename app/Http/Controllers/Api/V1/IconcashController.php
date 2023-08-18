@@ -279,6 +279,12 @@ class IconcashController extends Controller
             }
 
             $response = IconcashManager::withdrawal($iconcash->token, $pin, $order_id);
+            if ($response) {
+                $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $order_id)->first();
+                $iconcash_inquiry->confirm_res_json = json_encode($response->data);
+                $iconcash_inquiry->confirm_status = $response->success;
+                $iconcash_inquiry->save();
+            }
 
             if (isset($response->code)) {
                 if ($response->code == 5001 || $response->code == 5002 || $response->code == 5003 || $response->code == 5004 || $response->code == 5006) {
@@ -287,18 +293,18 @@ class IconcashController extends Controller
             }
 
             return $this->respondWithData([
-                'order_id' => $response->orderId,
-                'invoice_id' => $response->invoiceId,
-                'source_account_id' => $response->sourceAccountId,
-                'source_account_name' => $response->sourceAccountName,
-                'nominal' => $response->nominal,
-                'fee' => $response->fee,
-                'total' => $response->total,
-                'bank_id' => $response->bankId,
-                'bank_code' => $response->bankCode,
-                'bank_name' => $response->bankName,
-                'bank_account_no' => $response->bankAccountNo,
-                'bank_account_name' => $response->bankAccountName,
+                'order_id' => data_get($response, 'data.orderId'),
+                'invoice_id' => data_get($response, 'data.invoiceId'),
+                'source_account_id' => data_get($response, 'data.sourceAccountId'),
+                'source_account_name' => data_get($response, 'data.sourceAccountName'),
+                'nominal' => data_get($response, 'data.nominal'),
+                'fee' => data_get($response, 'data.fee'),
+                'total' => data_get($response, 'data.total'),
+                'bank_id' => data_get($response, 'data.bankId'),
+                'bank_code' => data_get($response, 'data.bankCode'),
+                'bank_name' => data_get($response, 'data.bankName'),
+                'bank_account_no' => data_get($response, 'data.bankAccountNo'),
+                'bank_account_name' => data_get($response, 'data.bankAccountName'),
             ], 'Withdrawal Berhasil!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -592,6 +598,8 @@ class IconcashController extends Controller
 
             $response = IconcashManager::changePin($iconcash->token, $old_pin, $new_pin, $confirm_new_pin);
 
+            IconcashCommands::changePin($iconcash);
+
             return $this->respondWithItem($response, function ($item) {
                 return [
                     'success' => $item->success,
@@ -641,10 +649,13 @@ class IconcashController extends Controller
         }
     }
 
-    public function historySaldoPendapatan()
+    public function historySaldoPendapatan(Request $request)
     {
         try {
             $iconcash = Auth::user()->iconcash;
+
+            $page = $request->input('page') - 1 ?? 1;
+            $limit = $request->input('limit') ?? 10;
 
             if (!isset($iconcash->token)) {
                 return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi / token expired'], 200);
@@ -658,7 +669,7 @@ class IconcashController extends Controller
                 $account_type_id = 13;
             }
 
-            $response = IconcashManager::historySaldo($iconcash->token, $account_type_id);
+            $response = IconcashManager::historySaldo($iconcash->token, $account_type_id, $page, $limit);
             // return $this->respondWithCollection($response, function ($item) {
             //     $order_id = IconcashInquiry::select('order_id')->where('client_ref', $item->clientRef)->get()->toArray();
             //     if (count($order_id)) {

@@ -842,13 +842,13 @@ class TransactionCommands extends Service
                         $newOrder = Order::where('id', $order->id)->first();
                         $newOrder->bonus_discount = $claimApplyDiscount['data']['bonusAmount'];
                         $newOrder->voucher_bonus_code = $claimApplyDiscount['data']['claimId'] ?? null;
-                        $newOrder->total_amount = $newOrder->total_amount - $claimApplyDiscount['data']['bonusAmount'];
+                        // $newOrder->total_amount = $newOrder->total_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $newOrder->save();
 
                         // update order detail
                         $order_detail = OrderDetail::where('order_id', $newOrder->id)->first();
                         $order_detail->total_discount = $order_detail->total_discount + $claimApplyDiscount['data']['bonusAmount'];
-                        $order_detail->total_amount = $order_detail->total_amount - $claimApplyDiscount['data']['bonusAmount'];
+                        // $order_detail->total_amount = $order_detail->total_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $order_detail->save();
 
                         // update order payment
@@ -985,7 +985,7 @@ class TransactionCommands extends Service
 
             $timestamp = Carbon::now('Asia/Jakarta')->toIso8601String();
             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
-            $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(1))->timestamp);
+            $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(3))->timestamp);
             // $district = District::where('id', data_get($datas, 'destination_info.district_id'))->first();
 
             foreach ($datas['merchants'] as $m) {
@@ -1002,6 +1002,15 @@ class TransactionCommands extends Service
                         ];
                     }
                 }
+            }
+
+            if ($customer_address->address == null || $customer_address->address == '') {
+                return [
+                    'success' => false,
+                    'status' => "Bad request",
+                    'status_code' => 400,
+                    'message' => 'Mohon maaf, alamat pengiriman harus diisi terlebih dahulu',
+                ];
             }
 
             $check_orders = Merchant::with([
@@ -1565,13 +1574,13 @@ class TransactionCommands extends Service
                         $newOrder = Order::where('id', $order->id)->first();
                         $newOrder->bonus_discount = $claimApplyDiscount['data']['bonusAmount'];
                         $newOrder->voucher_bonus_code = $claimApplyDiscount['data']['claimId'] ?? null;
-                        $newOrder->total_amount = $newOrder->total_amount - $claimApplyDiscount['data']['bonusAmount'];
+                        // $newOrder->total_amount = $newOrder->total_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $newOrder->save();
 
                         // update order detail
                         $order_detail = OrderDetail::where('order_id', $newOrder->id)->first();
                         $order_detail->total_discount = $order_detail->total_discount + $claimApplyDiscount['data']['bonusAmount'];
-                        $order_detail->total_amount = $order_detail->total_amount - $claimApplyDiscount['data']['bonusAmount'];
+                        // $order_detail->total_amount = $order_detail->total_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $order_detail->save();
 
                         // update order payment
@@ -1932,11 +1941,20 @@ class TransactionCommands extends Service
 
     public function updatePaymentDetail($no_reference, $payment_method)
     {
+        $request = request()->all();
+        \Illuminate\Support\Facades\Log::info('E0004', [
+            'path' => 'iconcash.notify.update',
+            'body' => $request
+        ]);
+
         $payments = OrderPayment::where('no_reference', $no_reference)->get();
 
         foreach ($payments as $payment) {
             $payment['payment_method'] = $payment_method;
-            $payment['status'] = 1;
+            $payment['status'] = data_get($request, 'status') == 'PAYMENT' ? 1 : 0;
+            $payment['status_verification'] = data_get($request, 'status') == 'PAYMENT' ? 'paid' : 'unpaid';
+            $payment['body_json'] = json_encode($request);
+            $payment['payment_date'] = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
             if (!$payment->save()) {
                 return false;
             }
