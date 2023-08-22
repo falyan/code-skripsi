@@ -835,7 +835,7 @@ class TransactionCommands extends Service
                     $claimId = $checkBonusDiscount['data']['id'];
 
                     Log::info('Hit Claim Bonus Apply');
-                    $claimApplyDiscount = GamificationManager::claimBonusApply($claimId, $order->id, $datas['total_amount_without_delivery']);
+                    $claimApplyDiscount = GamificationManager::claimBonusApply($claimId, $order->no_reference, $datas['total_amount_without_delivery']);
 
                     if ($claimApplyDiscount['success'] == true) {
                         Log::info('Claim Bonus Apply Success');
