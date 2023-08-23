@@ -1954,7 +1954,7 @@ class TransactionCommands extends Service
             $payment['status'] = data_get($request, 'status') == 'PAYMENT' ? 1 : 0;
             $payment['status_verification'] = data_get($request, 'status') == 'PAYMENT' ? 'paid' : 'unpaid';
             $payment['body_json'] = json_encode($request);
-            $payment['payment_date'] = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
+            $payment['payment_date'] = Carbon::parse(data_get($request, 'payment_date'))->format('Y-m-d H:i:s');
             if (!$payment->save()) {
                 return false;
             }
