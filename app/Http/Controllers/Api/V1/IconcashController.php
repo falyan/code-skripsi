@@ -598,12 +598,7 @@ class IconcashController extends Controller
 
             $response = IconcashManager::changePin($iconcash->token, $old_pin, $new_pin, $confirm_new_pin);
 
-            return $this->respondWithItem($response, function ($item) {
-                return [
-                    'success' => $item->success,
-                    'message' => $item->message,
-                ];
-            });
+            return $this->respondWithResult(data_get($response, 'success'), data_get($response, 'message'), data_get($response, 'success') ? 200 : 400);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
