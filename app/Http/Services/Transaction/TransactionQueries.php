@@ -232,9 +232,7 @@ class TransactionQueries extends Service
     {
         $data = Order::with([
             'detail' => function ($product) {
-                $product->with(['product', function ($j) {
-                    $j->with(['product_photo']);
-                }]);
+                $product->with(['product', 'product.product_photo']);
             }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
                 $r->with(['review_photo']);
             },
