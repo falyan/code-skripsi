@@ -745,17 +745,17 @@ class TransactionController extends Controller
             foreach ($transactions as $transaction) {
                 $data[] = [
                     'trx_no' => $transaction->trx_no,
-                    'buyer_name' => $transaction->buyer->full_name ?? '',
                     'order_date' => $transaction->order_date,
                     'total_amount' => $transaction->total_amount,
-                    'total_weight' => $transaction->total_weight,
-                    'payment_method' => $transaction->payment->payment_method ?? '',
+                    'total_amount_iconcash' => $transaction->total_amount_iconcash,
                     'status_name' => $transaction->progress_active->status_name,
-                    'related_pln_mobile_customer_id' => $transaction->related_pln_mobile_customer_id,
-                    'delivery_method' => $transaction->delivery->delivery_method ?? '',
-                    'delivery_fee' => $transaction->delivery->delivery_fee ?? '',
-                    'created_by' => $transaction->created_by,
-                    'updated_by' => $transaction->updated_by,
+                    'awb_number' => $transaction->delivery->awb_number,
+                    'receiver_name' => $transaction->delivery->receiver_name,
+                    'receiver_phone' => $transaction->delivery->receiver_phone,
+                    'address' => $transaction->delivery->address,
+                    'city' => $transaction->delivery->city->name,
+                    'courier_name' => $transaction->delivery->delivery_method,
+                    'updated_at' => $transaction->progress_active->updated_at,
                 ];
             }
 
