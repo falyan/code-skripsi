@@ -4,13 +4,11 @@ namespace App\Http\Services\Transaction;
 
 use App\Http\Services\Manager\GamificationManager;
 use App\Http\Services\Service;
-use App\Models\Province;
 use App\Models\City;
-use App\Models\District;
-use App\Models\Subdistrict;
 use App\Models\CustomerAddress;
 use App\Models\CustomerDiscount;
 use App\Models\DeliveryDiscount;
+use App\Models\District;
 use App\Models\MasterData;
 use App\Models\MasterTiket;
 use App\Models\Merchant;
@@ -18,11 +16,12 @@ use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\Product;
 use App\Models\PromoLog;
+use App\Models\Province;
+use App\Models\Subdistrict;
 use App\Models\VariantStock;
 use App\Models\VariantValueProduct;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Cache;
 
 class TransactionQueries extends Service
 {
@@ -211,7 +210,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->select('id', 'merchant_id', 'name')->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer',
+            }, 'progress_active', 'merchant', 'delivery.city', 'buyer',
         ])->where(
             $column_name,
             $column_value,
@@ -222,7 +221,15 @@ class TransactionQueries extends Service
                 $j->whereIn('status_code', ['01', '02', '03', '08', '09', '88']);
             }
         })->when(!empty($filter['start_date']) && !empty($filter['end_date']), function ($query) use ($filter) {
-            $query->whereDate('created_at', '>=', $filter['start_date'])->whereDate('created_at', '<=', $filter['end_date']);
+            if (validateDate($filter['start_date'], 'Y-m-d')) {
+                $start_date = $filter['start_date'] . " 00:00:00";
+            }
+
+            if (validateDate($filter['end_date'], 'Y-m-d')) {
+                $end_date = $filter['end_date'] . " 23:59:59";
+            }
+
+            $query->whereBetween('created_at', [$start_date, $end_date]);
         })->orderBy('created_at', 'desc')->get();
 
         return $data;
@@ -368,8 +375,8 @@ class TransactionQueries extends Service
                     })
                     ->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
             })->whereHas('progress_active', function ($q) {
-                $q->whereNotIn('status_code', ['00', '99']);
-            })->orderBy('order.created_at', 'desc');
+            $q->whereNotIn('status_code', ['00', '99']);
+        })->orderBy('order.created_at', 'desc');
 
         $data = $this->filter($data, $filter);
         $data = $this->transactionPaginate($data, $limit);
@@ -394,8 +401,8 @@ class TransactionQueries extends Service
                     })
                     ->orWhere('trx_no', 'ILIKE', '%' . $keyword . '%');
             })->whereHas('progress_active', function ($q) {
-                $q->whereNotIn('status_code', ['00', '99']);
-            })->orderBy('order.created_at', 'desc');
+            $q->whereNotIn('status_code', ['00', '99']);
+        })->orderBy('order.created_at', 'desc');
 
         $data = $this->filter($data, $filter);
         $data = $data->count();
