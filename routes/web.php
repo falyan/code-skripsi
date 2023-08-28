@@ -14,7 +14,7 @@
  */
 
 $router->get('/', function () use ($router) {
-    return 'test deploy';
+    return 'Welcome to ' . env('APP_NAME');
 });
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
