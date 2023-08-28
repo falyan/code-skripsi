@@ -1618,60 +1618,60 @@ class TransactionCommands extends Service
             $mailSender = new MailSenderManager();
 
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
-                if ($ev_subsidies) {
-                    $ev_subsidy = $ev_subsidies[0];
-                    foreach (data_get($data, 'products') as $product) {
-                        if ($ev_subsidy->product_id == data_get($product, 'product_id')) {
-                            $customerEv = new CustomerEVSubsidy();
-                            $customerEv->customer_id = $customer_id;
-                            $customerEv->order_id = $order->id;
-                            $customerEv->product_id = $ev_subsidy->product_id;
-                            $customerEv->status_approval = null;
-                            $customerEv->customer_id_pel = $customer->pln_mobile_customer_id;
-                            $customerEv->customer_nik = data_get($datas, 'customer.nik');
-                            $customerEv->ktp_url = data_get($datas, 'customer.ktp_url');
-                            $customerEv->kk_url = data_get($datas, 'customer.kk_url');
-                            $customerEv->file_url = data_get($datas, 'customer.file_url');
-                            $customerEv->created_by = auth()->user()->full_name;
-                            $customerEv->save();
-                        }
+                // if ($ev_subsidies) {
+                $ev_subsidy = $ev_subsidies[0];
+                foreach (data_get($data, 'products') as $product) {
+                    if ($ev_subsidy->product_id == data_get($product, 'product_id')) {
+                        $customerEv = new CustomerEVSubsidy();
+                        $customerEv->customer_id = $customer_id;
+                        $customerEv->order_id = $order->id;
+                        $customerEv->product_id = $ev_subsidy->product_id;
+                        $customerEv->status_approval = null;
+                        $customerEv->customer_id_pel = $customer->pln_mobile_customer_id;
+                        $customerEv->customer_nik = data_get($datas, 'customer.nik');
+                        $customerEv->ktp_url = data_get($datas, 'customer.ktp_url');
+                        $customerEv->kk_url = data_get($datas, 'customer.kk_url');
+                        $customerEv->file_url = data_get($datas, 'customer.file_url');
+                        $customerEv->created_by = auth()->user()->full_name;
+                        $customerEv->save();
                     }
-
-                    $mailSender->mailCheckoutSubsidy($this->order_id);
-                } else {
-                    $master_ubah_daya = UbahDayaMaster::where('event_start_date', '<=', Carbon::now())->where('event_end_date', '>=', Carbon::now())->where('status', 1)->first();
-                    $check_voucher_ubah_daya_code = UbahDayaLog::where('nik', data_get($datas, 'customer.nik'))->where('master_ubah_daya_id', $master_ubah_daya->id)->first();
-
-                    $master_data = MasterData::whereIn('key', ['ubah_daya_min_transaction', 'ubah_daya_implementation_period'])->get();
-                    $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
-                    $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
-
-
-                    $total_amount_trx = data_get($datas, 'total_amount');
-                    $total_delivery_fee_trx = data_get($datas, 'total_delivery_fee');
-                    $product_insentif = false;
-                    foreach ($new_products as $product) {
-                        if ($product['insentif_ubah_daya'] == true) $product_insentif = true;
-                    }
-
-                    if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && $product_insentif == true) {
-                        if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
-                            $log = UbahDayaLog::create([
-                                'customer_id' => $customer_id,
-                                'order_id' => $order->id,
-                                'master_ubah_daya_id' => $master_ubah_daya->id,
-                                'customer_email' => $customer->email,
-                                'event_name' => $master_ubah_daya->event_name,
-                                'event_start_date' => $master_ubah_daya->event_start_date,
-                                'event_end_date' => $master_ubah_daya->event_end_date,
-                                'nik' => data_get($datas, 'customer.nik'),
-                                'created_by' => auth()->user()->full_name,
-                            ]);
-                        }
-                    }
-
-                    $mailSender->mailCheckout($this->order_id);
                 }
+
+                $mailSender->mailCheckoutSubsidy($this->order_id);
+                // } else {
+                //     $master_ubah_daya = UbahDayaMaster::where('event_start_date', '<=', Carbon::now())->where('event_end_date', '>=', Carbon::now())->where('status', 1)->first();
+                //     $check_voucher_ubah_daya_code = UbahDayaLog::where('nik', data_get($datas, 'customer.nik'))->where('master_ubah_daya_id', $master_ubah_daya->id)->first();
+
+                //     $master_data = MasterData::whereIn('key', ['ubah_daya_min_transaction', 'ubah_daya_implementation_period'])->get();
+                //     $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
+                //     $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
+
+
+                //     $total_amount_trx = data_get($datas, 'total_amount');
+                //     $total_delivery_fee_trx = data_get($datas, 'total_delivery_fee');
+                //     $product_insentif = false;
+                //     foreach ($new_products as $product) {
+                //         if ($product['insentif_ubah_daya'] == true) $product_insentif = true;
+                //     }
+
+                //     if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && $product_insentif == true) {
+                //         if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
+                //             $log = UbahDayaLog::create([
+                //                 'customer_id' => $customer_id,
+                //                 'order_id' => $order->id,
+                //                 'master_ubah_daya_id' => $master_ubah_daya->id,
+                //                 'customer_email' => $customer->email,
+                //                 'event_name' => $master_ubah_daya->event_name,
+                //                 'event_start_date' => $master_ubah_daya->event_start_date,
+                //                 'event_end_date' => $master_ubah_daya->event_end_date,
+                //                 'nik' => data_get($datas, 'customer.nik'),
+                //                 'created_by' => auth()->user()->full_name,
+                //             ]);
+                //         }
+                //     }
+
+                //     $mailSender->mailCheckout($this->order_id);
+                // }
             } else {
                 $mailSender->mailCheckout($this->order_id);
             }
