@@ -48,4 +48,9 @@ class UbahDayaLog extends Model
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
+
+    public function master_ubah_daya()
+    {
+        return $this->belongsTo(UbahDayaMaster::class, 'master_ubah_daya_id');
+    }
 }
