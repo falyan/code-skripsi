@@ -997,7 +997,7 @@ class TransactionController extends Controller
                         }
                     }
 
-                    $order = Order::with(['buyer', 'merchant', 'detail', 'progress_active', 'payment'])->find($order_id);
+                    $order = Order::with(['buyer', 'merchant', 'detail', 'detail.product', 'progress_active', 'payment'])->find($order_id);
                     $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
                     $total_amount_trx = $total_delivery_fee_trx = 0;
 
@@ -1007,8 +1007,15 @@ class TransactionController extends Controller
                         $check_voucher_ubah_daya_code = $o->voucher_ubah_daya_code;
                     }
 
+                    $is_ev2go = false;
+                    foreach ($order->detail as $detail) {
+                        if ($detail->product->insentif_ubah_daya) {
+                            $is_ev2go = true;
+                        }
+                    }
+
                     $master_ubah_dayas = UbahDayaMaster::where('status', 1)->orderBy('event_start_date', 'asc')->get();
-                    $master_ubah_daya_logs = UbahDayaLog::where(['customer_id' => $order->buyer_id, 'status' => 1])
+                    $ubah_daya_logs = UbahDayaLog::where(['customer_id' => $order->buyer_id, 'status' => 1])
                         ->whereIn('master_ubah_daya_id', collect($master_ubah_dayas)->pluck('id')->toArray())
                         ->get();
 
@@ -1016,24 +1023,20 @@ class TransactionController extends Controller
                     $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
                     $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
 
-                    $ubah_daya_generated = collect($master_ubah_dayas)->where('type', 'generate')->all();
-                    $log_ubah_daya_generated = collect($master_ubah_daya_logs)
-                        ->whereIn('master_ubah_daya_id', collect($ubah_daya_generated)->pluck('id')->toArray())->all();
-                    $ubah_daya_pregenerated = collect($master_ubah_dayas)->where('type', 'pregenerate')->all();
-                    $log_ubah_daya_pregenerated = collect($master_ubah_daya_logs)
-                        ->where([
-                            'voucher_code' => null,
-                            'with_nik_claim_at' => null,
-                        ])->whereIn('master_ubah_daya_id', collect($ubah_daya_pregenerated)->pluck('id')->toArray())->all();
+                    $ubah_daya = collect($master_ubah_dayas)->whereNot('event_name', 'ev2go')->all();
+                    $log_ubah_daya = collect($ubah_daya_logs)
+                        ->whereIn('master_ubah_daya_id', collect($ubah_daya)->pluck('id')->toArray())->all();
+                    $ubah_daya_ev2go = collect($master_ubah_dayas)->where('event_name', 'ev2go')->all();
+                    $log_ubah_daya_ev2go = collect($ubah_daya_logs)
+                        ->whereIn('master_ubah_daya_id', collect($ubah_daya_ev2go)->pluck('id')->toArray())->all();
 
-                    if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && !empty($ubah_daya_generated) && empty($log_ubah_daya_generated)) {
-                        if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::parse($order->order_date) || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::parse($order->order_date)) {
-                            $this->voucherCommand->generateVoucher($order, $ubah_daya_generated);
+                    if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::parse($order->order_date) || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::parse($order->order_date)) {
+                        if ($is_ev2go == true && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && !empty($ubah_daya_ev2go) && empty($log_ubah_daya_ev2go)) {
+                            $this->voucherCommand->generateVoucher($order, $ubah_daya_ev2go, true);
+                        } elseif ($is_ev2go == true && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && !empty($ubah_daya) && empty($log_ubah_daya)) {
+                            $this->voucherCommand->generateVoucher($order, $ubah_daya);
                         }
-                    } elseif (!empty($ubah_daya_pregenerated) && !empty($log_ubah_daya_pregenerated)) {
-                        $this->voucherCommand->claimPregenerate($order, $log_ubah_daya_pregenerated);
                     }
-
 
                     DB::commit();
 
@@ -1981,8 +1984,9 @@ class TransactionController extends Controller
             }
 
             if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000) {
-                $master_ubah_dayas = UbahDayaMaster::where('status', 1)->where('type', 'generate')->get();
-                $this->voucherCommand->generateVoucher($order, $master_ubah_dayas);
+                $master_ubah_dayas = UbahDayaMaster::where('status', 1)->orderBy('event_start_date', 'asc')->get();
+                $ubah_daya = collect($master_ubah_dayas)->whereNot('event_name', 'ev2go')->all();
+                $this->voucherCommand->generateVoucher($order, $ubah_daya);
             }
 
             DB::commit();
