@@ -355,6 +355,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
+                $router->post('complaint', 'TransactionController@addComplaint');
                 $router->post('checkout', 'TransactionController@checkout');
                 $router->post('checkoutv2', 'TransactionController@checkoutV2');
                 $router->post('checkoutv3', 'TransactionController@checkoutV3');

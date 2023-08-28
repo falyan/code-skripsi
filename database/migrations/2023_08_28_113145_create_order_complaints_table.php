@@ -19,6 +19,7 @@ class CreateOrderComplaintsTable extends Migration
             $table->string('complaint');
             $table->string('description')->nullable();
             $table->string('status')->nullable();
+            $table->string('image')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();
