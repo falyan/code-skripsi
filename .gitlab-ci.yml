@@ -38,7 +38,11 @@ Package Docker:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
     - >
-      if [ "$CI_COMMIT_REF_NAME" == "new-staging" ]; then
+      if [ "$CI_COMMIT_REF_NAME" == "development" ]; then
+        cp .env.staging .env &&
+        docker build --no-cache -t $DOCKER_IMAGE_APP --build-arg IMAGE_NAME=$DOCKER_IMAGE_BASE -f docker/deployment/Dockerfile-App . &&
+        docker push $DOCKER_IMAGE_APP
+      elif [ "$CI_COMMIT_REF_NAME" == "new-staging" ]; then
         cp .env.staging .env &&
         docker build --no-cache -t $DOCKER_IMAGE_APP --build-arg IMAGE_NAME=$DOCKER_IMAGE_BASE -f docker/deployment/Dockerfile-App . &&
         docker push $DOCKER_IMAGE_APP
@@ -48,7 +52,7 @@ Package Docker:
         docker push $DOCKER_IMAGE_APP
       fi
   rules:
-    - if: '$CI_COMMIT_BRANCH == "new-staging" || $CI_COMMIT_BRANCH == "new-staging" || $CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+    - if: '$CI_COMMIT_BRANCH == "development" || $CI_COMMIT_BRANCH == "new-staging" || $CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   tags:
     - docker
 
