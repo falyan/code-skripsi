@@ -16,6 +16,8 @@ class CreateOrderComplaintsTable extends Migration
         Schema::table('log_ubah_daya', function (Blueprint $table) {
             $table->string('nik')->nullable();
             $table->timestamp('with_nik_claim_at')->nullable();
+            // order_id
+            $table->foreignId('order_id')->nullable()->constrained('orders')->onDelete('cascade');
         });
 
         Schema::table('product', function (Blueprint $table) {

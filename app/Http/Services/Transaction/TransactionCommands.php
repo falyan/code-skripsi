@@ -1658,6 +1658,7 @@ class TransactionCommands extends Service
                         if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
                             $log = UbahDayaLog::create([
                                 'customer_id' => $customer_id,
+                                'order_id' => $order->id,
                                 'master_ubah_daya_id' => $master_ubah_daya->id,
                                 'customer_email' => $customer->email,
                                 'event_name' => $master_ubah_daya->event_name,
