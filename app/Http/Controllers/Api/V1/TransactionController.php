@@ -1023,6 +1023,7 @@ class TransactionController extends Controller
                         }
                     }
 
+
                     DB::commit();
 
                     $title = 'Pesanan Dikonfirmasi';
