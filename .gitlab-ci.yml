@@ -77,10 +77,10 @@ Deploy DevStaging:
   stage: deploy
   script:
     - >
-      if [ "$CI_COMMIT_REF_NAME" == "new-staging" ]; then
-        kubectl rollout restart staging/plnmkp-saruman -n staging
-      elseif [ "$CI_COMMIT_REF_NAME" == "staging" ]; then
-        kubectl rollout restart staging/plnmkp-saruman -n staging
+      if [ "$CI_COMMIT_REF_NAME" == "development" ]; then
+        kubectl rollout restart deployment/plnmkp-saruman -n development
+      else
+        kubectl rollout restart deployment/plnmkp-saruman -n staging
       fi
   only:
     - new-staging
