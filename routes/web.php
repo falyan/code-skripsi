@@ -284,6 +284,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'transaction', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('/delivery-discount', 'TransactionController@getDeliveryDiscount');
                 $router->get('/customer-discount', 'TransactionController@getCustomerDiscount');
+                $router->get('/list-complaint', 'TransactionController@getListComplaint');
                 $router->get('/{related_id}', 'TransactionController@buyerIndex');
 
                 $router->get('/{related_id}/category/{category_key}', 'TransactionController@transactionByCategoryKey');
@@ -354,6 +355,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
+                $router->post('complaint', 'TransactionController@addComplaint');
                 $router->post('checkout', 'TransactionController@checkout');
                 $router->post('checkoutv2', 'TransactionController@checkoutV2');
                 $router->post('checkoutv3', 'TransactionController@checkoutV3');
