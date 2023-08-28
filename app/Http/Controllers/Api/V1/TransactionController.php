@@ -1918,7 +1918,7 @@ class TransactionController extends Controller
             $customer = Auth::user();
             $request = request()->all();
             $respond = $this->transactionQueries->countCheckoutPriceV3($customer, $request);
-            $respond['ubah_daya_status'] = false;
+            $respond['insentif_ubah_daya'] = false;
 
             if (isset($request['customer']) && data_get($request, 'customer') != null) {
                 $ev_subsidies = [];
@@ -1957,11 +1957,17 @@ class TransactionController extends Controller
 
                 $total_amount_trx = data_get($respond, 'total_amount');
                 $total_delivery_fee_trx = data_get($respond, 'total_delivery_fee');
+                $product_insentif = false;
+                foreach ($respond['merchants'] as $merchant) {
+                    foreach ($merchant['products'] as $product) {
+                        if ($product['insentif_ubah_daya'] == true) $product_insentif = true;
+                    }
+                }
 
-                if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value ) {
+                if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && $product_insentif == true) {
                     if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
                         $respond['message'] = 'Customer dapat memperoleh voucher Ubah Daya.';
-                        $respond['ubah_daya_status'] = true;
+                        $respond['insentif_ubah_daya'] = true;
                     }
                 }
             }
