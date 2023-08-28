@@ -1022,7 +1022,7 @@ class TransactionController extends Controller
                     $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
                     $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
 
-                    $ubah_daya = collect($master_ubah_dayas)->whereNot('event_name', 'ev2go')->all();
+                    $ubah_daya = collect($master_ubah_dayas)->where('event_name', '!=','ev2go')->all();
                     $log_ubah_daya = collect($ubah_daya_logs)
                         ->whereIn('master_ubah_daya_id', collect($ubah_daya)->pluck('id')->toArray())->all();
                     $ubah_daya_ev2go = collect($master_ubah_dayas)->where('event_name', 'ev2go')->all();
