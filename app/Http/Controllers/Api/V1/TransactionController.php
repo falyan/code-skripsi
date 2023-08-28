@@ -1017,14 +1017,21 @@ class TransactionController extends Controller
                     $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
 
                     $ubah_daya_generated = collect($master_ubah_dayas)->where('type', 'generate')->all();
+                    $log_ubah_daya_generated = collect($master_ubah_daya_logs)
+                        ->whereIn('master_ubah_daya_id', collect($ubah_daya_generated)->pluck('id')->toArray())->all();
                     $ubah_daya_pregenerated = collect($master_ubah_dayas)->where('type', 'pregenerate')->all();
-                    $log_ubah_daya_pregenerated = collect($master_ubah_daya_logs)->whereIn('master_ubah_daya_id', collect($ubah_daya_pregenerated)->pluck('id')->toArray())->all();
-                    if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && !empty($ubah_daya_generated) && !empty($master_ubah_daya_logs)) {
+                    $log_ubah_daya_pregenerated = collect($master_ubah_daya_logs)
+                        ->where([
+                            'voucher_code' => null,
+                            'with_nik_claim_at' => null,
+                        ])->whereIn('master_ubah_daya_id', collect($ubah_daya_pregenerated)->pluck('id')->toArray())->all();
+
+                    if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && !empty($ubah_daya_generated) && empty($log_ubah_daya_generated)) {
                         if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::parse($order->order_date) || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::parse($order->order_date)) {
                             $this->voucherCommand->generateVoucher($order, $ubah_daya_generated);
                         }
                     } elseif (!empty($ubah_daya_pregenerated) && !empty($log_ubah_daya_pregenerated)) {
-                        $this->voucherCommand->claimPregenerate($order, $master_ubah_daya_logs);
+                        $this->voucherCommand->claimPregenerate($order, $log_ubah_daya_pregenerated);
                     }
 
                     DB::commit();
