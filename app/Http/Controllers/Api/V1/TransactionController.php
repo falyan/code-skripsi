@@ -1034,6 +1034,7 @@ class TransactionController extends Controller
                         $this->voucherCommand->claimPregenerate($order, $log_ubah_daya_pregenerated);
                     }
 
+
                     DB::commit();
 
                     $title = 'Pesanan Dikonfirmasi';
