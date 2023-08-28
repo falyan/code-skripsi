@@ -85,6 +85,7 @@ Deploy DevStaging:
         kubectl rollout restart deployment/plnmkp-saruman -n staging
       fi
   only:
+    - development
     - new-staging
   tags:
     - bkwh-runner
