@@ -1956,33 +1956,33 @@ class TransactionController extends Controller
                     ]);
                 }
 
-                $check_voucher_ubah_daya_code = UbahDayaLog::where([
-                    'nik' => data_get($request, 'customer.nik'),
-                    'status' => 1
-                ])
-                    ->whereHas('master_ubah_daya', function ($q) {
-                        $q->where('event_start_date', '<=', Carbon::now())->where('event_end_date', '>=', Carbon::now());
-                    })->first();
+                // $check_voucher_ubah_daya_code = UbahDayaLog::where([
+                //     'nik' => data_get($request, 'customer.nik'),
+                //     'status' => 1
+                // ])
+                //     ->whereHas('master_ubah_daya', function ($q) {
+                //         $q->where('event_start_date', '<=', Carbon::now())->where('event_end_date', '>=', Carbon::now());
+                //     })->first();
 
-                $master_data = MasterData::whereIn('key', ['ubah_daya_min_transaction', 'ubah_daya_implementation_period'])->get();
-                $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
-                $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
+                // $master_data = MasterData::whereIn('key', ['ubah_daya_min_transaction', 'ubah_daya_implementation_period'])->get();
+                // $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
+                // $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
 
-                $total_amount_trx = data_get($respond, 'total_amount');
-                $total_delivery_fee_trx = data_get($respond, 'total_delivery_fee');
-                $product_insentif = false;
-                foreach ($respond['merchants'] as $merchant) {
-                    foreach ($merchant['products'] as $product) {
-                        if ($product['insentif_ubah_daya'] == true) $product_insentif = true;
-                    }
-                }
+                // $total_amount_trx = data_get($respond, 'total_amount');
+                // $total_delivery_fee_trx = data_get($respond, 'total_delivery_fee');
+                // $product_insentif = false;
+                // foreach ($respond['merchants'] as $merchant) {
+                //     foreach ($merchant['products'] as $product) {
+                //         if ($product['insentif_ubah_daya'] == true) $product_insentif = true;
+                //     }
+                // }
 
-                if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && $product_insentif == true) {
-                    if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
-                        $respond['message'] = 'Customer dapat memperoleh voucher Ubah Daya.';
-                        $respond['insentif_ubah_daya'] = true;
-                    }
-                }
+                // if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && $product_insentif == true) {
+                //     if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
+                //         $respond['message'] = 'Customer dapat memperoleh voucher Ubah Daya.';
+                //         $respond['insentif_ubah_daya'] = true;
+                //     }
+                // }
             }
 
             return $respond;
