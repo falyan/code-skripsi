@@ -2200,4 +2200,11 @@ class TransactionController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function getListComplaint()
+    {
+        $complaints = MasterData::select('key', 'value')->where('type', 'complaint')->get();
+
+        return $this->respondWithData($complaints, 'Berhasil mendapatkan list complaint');
+    }
 }
