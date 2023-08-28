@@ -52,7 +52,7 @@ Package Docker:
         docker push $DOCKER_IMAGE_APP
       fi
   rules:
-    - if: '$CI_COMMIT_BRANCH == "new-staging" || $CI_COMMIT_BRANCH == "staging" || $CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+    - if: '$CI_COMMIT_BRANCH == "new-staging" || $CI_COMMIT_BRANCH == "new-staging" || $CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   tags:
     - docker
 
@@ -78,8 +78,10 @@ Deploy DevStaging:
   script:
     - >
       if [ "$CI_COMMIT_REF_NAME" == "development" ]; then
+        kubectl set image deployment/plnmkp-saruman plnmkp-saruman=$DOCKER_IMAGE_APP -n development
         kubectl rollout restart deployment/plnmkp-saruman -n development
       else
+        kubectl set image deployment/plnmkp-saruman plnmkp-saruman=$DOCKER_IMAGE_APP -n staging
         kubectl rollout restart deployment/plnmkp-saruman -n staging
       fi
   only:
