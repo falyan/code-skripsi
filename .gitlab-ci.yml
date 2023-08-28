@@ -42,10 +42,6 @@ Package Docker:
         cp .env.staging .env &&
         docker build --no-cache -t $DOCKER_IMAGE_APP --build-arg IMAGE_NAME=$DOCKER_IMAGE_BASE -f docker/deployment/Dockerfile-App . &&
         docker push $DOCKER_IMAGE_APP
-      elif [ "$CI_COMMIT_REF_NAME" == "staging" ]; then
-        cp .env.staging .env &&
-        docker build --no-cache -t $DOCKER_IMAGE_APP --build-arg IMAGE_NAME=$DOCKER_IMAGE_BASE -f docker/deployment/Dockerfile-App . &&
-        docker push $DOCKER_IMAGE_APP
       else
         cp .env.production .env &&
         docker build --no-cache -t $DOCKER_IMAGE_APP --build-arg IMAGE_NAME=$DOCKER_IMAGE_BASE -f docker/deployment/Dockerfile-App . &&
