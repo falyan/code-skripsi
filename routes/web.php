@@ -14,7 +14,7 @@
  */
 
 $router->get('/', function () use ($router) {
-    return $router->app->version();
+    return 'test deploy';
 });
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
