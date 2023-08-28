@@ -15,7 +15,6 @@ variables:
   # IMAGE VARIABLES
   DOCKER_IMAGE_BASE: $CI_REGISTRY_IMAGE:base
   DOCKER_IMAGE_APP: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-  #DOCKER_IMAGE_PHPFPM: $CI_REGISTRY_IMAGE:7.4.25-fpm-alpine3.13
   DOCKER_IMAGE_PHPFPM: registry-iconx.air.id/iconcash/latios:php-fpm-7.4.28-pgsql
 
 Build Base:
@@ -47,13 +46,13 @@ Package Docker:
         cp .env.staging .env &&
         docker build --no-cache -t $DOCKER_IMAGE_APP --build-arg IMAGE_NAME=$DOCKER_IMAGE_BASE -f docker/deployment/Dockerfile-App . &&
         docker push $DOCKER_IMAGE_APP
-      elif [ "$CI_COMMIT_REF_NAME" == "new-staging" ]; then
-        cp .env.staging .env &&
+      else
+        cp .env.production .env &&
         docker build --no-cache -t $DOCKER_IMAGE_APP --build-arg IMAGE_NAME=$DOCKER_IMAGE_BASE -f docker/deployment/Dockerfile-App . &&
         docker push $DOCKER_IMAGE_APP
       fi
   rules:
-    - if: '$CI_COMMIT_BRANCH == "development" || $CI_COMMIT_BRANCH == "staging" || $CI_COMMIT_BRANCH == "new-staging"'
+    - if: '$CI_COMMIT_BRANCH == "development" || $CI_COMMIT_BRANCH == "staging" || $CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   tags:
     - docker
 
@@ -74,46 +73,19 @@ Package k8s:
   tags:
     - docker
 
-Deploy Development:
+Deploy DevStaging:
   stage: deploy
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - docker stack deploy --orchestrator swarm -c docker/deployment/docker-development.yml --with-registry-auth pln-marketplace
-  environment:
-    name: URL Development
-    url: https://devmkp.beyondkwh.id/api/core/
+    - >
+      if [ "$CI_COMMIT_REF_NAME" == "development" ]; then
+        kubectl rollout restart deployment/plnmkp-saruman -n development
+      else
+        kubectl rollout restart deployment/plnmkp-saruman -n staging
+      fi
   only:
-    - development
-  tags:
-    - site-dd
-
-Deploy Staging:
-  stage: deploy
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  script:
-    - docker stack deploy --orchestrator swarm -c docker/deployment/docker-staging.yml --with-registry-auth pln-marketplace
-  environment:
-    name: URL Staging
-    url: https://stamkp.beyondkwh.id/api/core/
-  only:
-    - staging
     - new-staging
   tags:
-    - site-dd
+    - bkwh-runner
 
-Deploy Production:
-  stage: deploy
-  image: docker:20.10.5
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  script:
-    - docker stack deploy --orchestrator swarm -c docker/deployment/docker-production.yml --with-registry-auth pln-marketplace
-  environment:
-    name: URL Production
-    url: https://api-mkp.iconcash.id/v1/core/
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
-  tags:
-    - docker
+# https://stamkp.beyondkwh.id/api/core/
+
