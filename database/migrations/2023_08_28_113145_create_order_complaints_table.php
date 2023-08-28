@@ -25,6 +25,11 @@ class CreateOrderComplaintsTable extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+
+        Schema::table('log_ubah_daya', function (Blueprint $table) {
+            $table->string('nik')->nullable();
+            $table->timestamp('with_nik_claim_at')->nullable();
+        });
     }
 
     /**
@@ -35,5 +40,9 @@ class CreateOrderComplaintsTable extends Migration
     public function down()
     {
         Schema::dropIfExists('order_complaints');
+        Schema::table('log_ubah_daya', function (Blueprint $table) {
+            $table->dropColumn('nik');
+            $table->dropColumn('with_nik_claim_at');
+        });
     }
 }
