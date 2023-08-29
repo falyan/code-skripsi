@@ -1023,12 +1023,11 @@ class TransactionController extends Controller
                     foreach ($master_ubah_dayas as $master_ubah_daya) {
                         $with_insentif = $master_ubah_daya->with_insentif;
                         $periode = Carbon::parse($master_ubah_daya->event_start_date) <= Carbon::parse($order->order_date) && Carbon::parse($master_ubah_daya->event_end_date) >= Carbon::parse($order->order_date);
-                        $log_ubah_daya = collect($ubah_daya_logs)->where('master_ubah_daya_id', $master_ubah_daya->id)->all();
 
                         if (($is_ev2go == true && $check_voucher_exist == false && $with_insentif == true) && $periode) {
                             $claim_bonus_voucher = true;
                             $this->voucherCommand->generateVoucher($order, $master_ubah_daya);
-                        } elseif ($check_voucher_exist == false && ($total_amount_trx - $total_delivery_fee_trx) >= $master_ubah_daya->min_transaction && $periode && empty($log_ubah_daya)) {
+                        } elseif ($check_voucher_exist == false && ($total_amount_trx - $total_delivery_fee_trx) >= $master_ubah_daya->min_transaction && $periode && empty($ubah_daya_logs)) {
                             $claim_bonus_voucher = true;
                             $this->voucherCommand->generateVoucher($order, $master_ubah_daya);
                         }
