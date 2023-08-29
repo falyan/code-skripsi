@@ -1020,25 +1020,29 @@ class TransactionController extends Controller
                         ->whereIn('master_ubah_daya_id', collect($master_ubah_dayas)->pluck('id')->toArray())
                         ->get();
 
-                    $ubah_daya_ev2go = collect($master_ubah_dayas)->where('event_name', 'ev2go')->first();
-                    $log_ubah_daya_ev2go = collect($ubah_daya_logs)->where('master_ubah_daya_id', $ubah_daya_ev2go->id)->all();
-                    $period_ev2go = Carbon::parse($ubah_daya_ev2go->event_start_date) <= Carbon::parse($order->order_date) && Carbon::parse($ubah_daya_ev2go->event_end_date) >= Carbon::parse($order->order_date);
+                    $claim_bonus_voucher = false;
+                    foreach ($master_ubah_dayas as $master_ubah_daya) {
+                        $with_insentif = $master_ubah_daya->with_insentif;
+                        $periode = Carbon::parse($master_ubah_daya->event_start_date) <= Carbon::parse($order->order_date) && Carbon::parse($master_ubah_daya->event_end_date) >= Carbon::parse($order->order_date);
+                        $log_ubah_daya = collect($ubah_daya_logs)->where('master_ubah_daya_id', $master_ubah_daya->id)->all();
 
-                    $ubah_daya = collect($master_ubah_dayas)->where('event_name', '!=', 'ev2go')->first();
-                    $log_ubah_daya = collect($ubah_daya_logs)->where('master_ubah_daya_id', $ubah_daya->id)->all();
-                    $period_ubah_daya = Carbon::parse($ubah_daya->event_start_date) <= Carbon::parse($order->order_date) && Carbon::parse($ubah_daya->event_end_date) >= Carbon::parse($order->order_date);
+                        if (($is_ev2go == true && $check_voucher_exist == false && $with_insentif == true) && $periode) {
+                            $claim_bonus_voucher = true;
+                            $this->voucherCommand->generateVoucher($order, $master_ubah_daya);
+                        } elseif ($check_voucher_exist == false && ($total_amount_trx - $total_delivery_fee_trx) >= $master_ubah_daya->min_transaction && $periode && empty($log_ubah_daya)) {
+                            $claim_bonus_voucher = true;
+                            $this->voucherCommand->generateVoucher($order, $master_ubah_daya);
+                        }
+                    }
 
-                    if (($is_ev2go == true && $check_voucher_exist == false) && $period_ev2go && $ubah_daya_ev2go && empty($log_ubah_daya_ev2go)) {
-                        $this->voucherCommand->generateVoucher($order, $ubah_daya_ev2go);
-                    } elseif ($check_voucher_exist == false && ($total_amount_trx - $total_delivery_fee_trx) >= $ubah_daya->min_transaction && $period_ubah_daya && $ubah_daya && empty($log_ubah_daya)) {
-                        $this->voucherCommand->generateVoucher($order, $ubah_daya);
-                    } else {
+                    if ($claim_bonus_voucher == false) {
                         Log::info([
                             'path_info' => 'generate_voucher',
                             'message' => 'Tidak memenuhi syarat untuk generate voucher',
                             'order_id' => $order_id,
                         ]);
                     }
+
 
                     DB::commit();
 
