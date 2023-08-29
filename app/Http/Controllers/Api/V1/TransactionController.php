@@ -1027,9 +1027,9 @@ class TransactionController extends Controller
                     $log_ubah_daya = collect($ubah_daya_logs)->where('master_ubah_daya_id', $ubah_daya->id)->all();
                     $period_ubah_daya = Carbon::parse($ubah_daya->event_start_date) <= Carbon::parse($order->order_date) && Carbon::parse($ubah_daya->event_end_date) >= Carbon::parse($order->order_date);
 
-                    if (($is_ev2go == true && $check_voucher_exist == true) && $period_ev2go && $ubah_daya_ev2go && empty($log_ubah_daya_ev2go)) {
+                    if (($is_ev2go == true && $check_voucher_exist == false) && $period_ev2go && $ubah_daya_ev2go && empty($log_ubah_daya_ev2go)) {
                         $this->voucherCommand->generateVoucher($order, $ubah_daya_ev2go);
-                    } elseif ($check_voucher_exist == true && ($total_amount_trx - $total_delivery_fee_trx) >= $ubah_daya->min_transaction && $period_ubah_daya && $ubah_daya && empty($log_ubah_daya)) {
+                    } elseif ($check_voucher_exist == false && ($total_amount_trx - $total_delivery_fee_trx) >= $ubah_daya->min_transaction && $period_ubah_daya && $ubah_daya && empty($log_ubah_daya)) {
                         $this->voucherCommand->generateVoucher($order, $ubah_daya);
                     } else {
                         Log::info([
