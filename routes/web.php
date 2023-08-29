@@ -14,7 +14,7 @@
  */
 
 $router->get('/', function () use ($router) {
-    return $router->app->version();
+    return 'Welcome to ' . env('APP_NAME');
 });
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
@@ -189,6 +189,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('list/unread', 'DiscussionController@getListUnreadDiscussionBySeller');
                     $router->post('list/read', 'DiscussionController@getListReadDiscussionBySeller');
                     $router->get('detail/{id}', 'DiscussionController@getDiscussionByMasterId');
+                });
+
+                $router->group(['prefix' => 'pages'], static function () use ($router) {
+                    $router->get('term-condition', 'PagesController@termConditionSeller');
+                    $router->get('privacy-policy', 'PagesController@privacyPolicySeller');
                 });
             });
         });

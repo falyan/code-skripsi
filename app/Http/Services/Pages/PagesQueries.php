@@ -120,4 +120,42 @@ class PagesQueries extends Service
             ], 200);
         }
     }
+
+    public static function termConditionSellerPage()
+    {
+        $data = Pages::where('page_type', 'seller_term_condition')->select('id', 'page_type', 'title', 'body')->first();
+
+        if (!$data) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Page type Not Found!',
+                'data' => [],
+            ], 400);
+        } else {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data page berhasil ditampilkan',
+                'data' => $data,
+            ], 200);
+        }
+    }
+
+    public static function privacyPolicySellerPage()
+    {
+        $data = Pages::where('page_type', 'seller_privacy_policy')->select('id', 'page_type', 'title', 'body')->first();
+
+        if (!$data) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Page type Not Found!',
+                'data' => [],
+            ], 400);
+        } else {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data page berhasil ditampilkan',
+                'data' => $data,
+            ], 200);
+        }
+    }
 }

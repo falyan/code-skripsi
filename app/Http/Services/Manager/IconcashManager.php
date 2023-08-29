@@ -254,11 +254,43 @@ class IconcashManager
         return data_get($response, 'data');
     }
 
-    public static function withdrawalInquiry($token, $bankAccountName, $bankAccountNo, $bankId, $nominal, $sourceAccountId)
+    public static function withdrawalInquiryOld($token, $bankAccountName, $bankAccountNo, $bankId, $nominal, $sourceAccountId)
     {
         $param = self::setParamAPI([]);
 
         $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal/inquiry' . $param);
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+            'json' => [
+                'bankAccountName' => $bankAccountName,
+                'bankAccountNo' => $bankAccountNo,
+                'bankId' => $bankId,
+                'nominal' => $nominal,
+                'sourceAccountId' => $sourceAccountId,
+            ],
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
+    }
+
+    public static function withdrawalInquiry($token, $bankAccountName, $bankAccountNo, $bankId, $nominal, $sourceAccountId)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal_mkp/inquiry' . $param);
 
         $response = self::$curl->request('POST', $url, [
             'headers' => [
@@ -290,7 +322,7 @@ class IconcashManager
         return data_get($response, 'data');
     }
 
-    public static function withdrawal($token, $pin, $orderId)
+    public static function withdrawalOld($token, $pin, $orderId)
     {
         $param = self::setParamAPI([]);
 
@@ -309,6 +341,37 @@ class IconcashManager
         ]);
 
         $response = json_decode($response->getBody());
+
+        if ($response->code == 5001 || $response->code == 5002 || $response->code == 5003 || $response->code == 5004 || $response->code == 5006) {
+            return $response;
+        }
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
+    }
+
+    public static function withdrawal($token, $pin, $orderId)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal_mkp' . $param);
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'Credentials' => $pin,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+            'json' => [
+                'orderId' => $orderId,
+            ],
+        ]);
 
         Log::info('withdrawalConfirm', [
             'response' => $response,
