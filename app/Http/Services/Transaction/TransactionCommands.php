@@ -1564,6 +1564,7 @@ class TransactionCommands extends Service
             if (isset($datas['discount_type']) && $datas['discount_type'] === 'GAMI-BONUS-DISCOUNT') {
 
                 $userId = auth()->user()->pln_mobile_customer_id;
+                $bonusAmount = 0;
 
                 $checkBonusDiscount = GamificationManager::claimBonusHold($userId, $datas['total_amount_without_delivery']);
 
