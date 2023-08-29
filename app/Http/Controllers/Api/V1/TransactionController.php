@@ -1020,11 +1020,11 @@ class TransactionController extends Controller
 
                     $ubah_daya_ev2go = collect($master_ubah_dayas)->where('event_name', 'ev2go')->first();
                     $log_ubah_daya_ev2go = collect($ubah_daya_logs)->where('master_ubah_daya_id', $ubah_daya_ev2go->id)->all();
-                    $period_ev2go = Carbon::parse($ubah_daya_ev2go->event_start_date) >= Carbon::parse($order->order_date) && Carbon::parse($ubah_daya_ev2go->event_end_date) <= Carbon::parse($order->order_date);
+                    $period_ev2go = Carbon::parse($ubah_daya_ev2go->event_start_date) <= Carbon::parse($order->order_date) && Carbon::parse($ubah_daya_ev2go->event_end_date) >= Carbon::parse($order->order_date);
 
                     $ubah_daya = collect($master_ubah_dayas)->where('event_name', '!=', 'ev2go')->first();
                     $log_ubah_daya = collect($ubah_daya_logs)->where('master_ubah_daya_id', $ubah_daya->id)->all();
-                    $period_ubah_daya = Carbon::parse($ubah_daya->event_start_date) >= Carbon::parse($order->order_date) && Carbon::parse($ubah_daya->event_end_date) <= Carbon::parse($order->order_date);
+                    $period_ubah_daya = Carbon::parse($ubah_daya->event_start_date) <= Carbon::parse($order->order_date) && Carbon::parse($ubah_daya->event_end_date) >= Carbon::parse($order->order_date);
 
                     if ($is_ev2go == true && $period_ev2go && $ubah_daya_ev2go && empty($log_ubah_daya_ev2go)) {
                         $this->voucherCommand->generateVoucher($order, $ubah_daya_ev2go);
