@@ -34,19 +34,13 @@ class VoucherCommands
         ];
     }
 
-    public function generateVoucher($order, $master_ubah_dayas, $ev2go = false)
+    public function generateVoucher($order, $master_ubah_daya)
     {
-        $master_ubah_daya = null;
-        foreach ($master_ubah_dayas as $value) {
-            $master_ubah_daya = $value;
-            break;
-        }
-
         $param = static::setParamAPI([]);
         $url = sprintf('%s/%s', static::$apiendpoint, '/v1/ext/plnmkp/voucher/claim/ubahdaya' . $param);
 
         $json_body = null;
-        $key_id = $ev2go ? env('GAMIFICATION_EV2GO_KEY_ID', 50) : static::$keyid;
+        $key_id = $master_ubah_daya->voucher_id;
         if ($order->buyer->pln_mobile_customer_id != null) {
             $json_body = [
                 'userIdPlnMobile' => $order->buyer->pln_mobile_customer_id,
