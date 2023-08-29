@@ -824,31 +824,32 @@ class TransactionCommands extends Service
             }
 
             // Bonus Claim Apply
-            if (isset($datas['discount_type']) && $datas['discount_type'] === 'GAMI-BONUS-DISCOUNT' && $datas['discount_type'] != null) {
+            if (isset($datas['discount_type']) && $datas['discount_type'] === 'GAMI-BONUS-DISCOUNT') {
 
                 $userId = auth()->user()->pln_mobile_customer_id;
-                // $userId = 981; //dummy
+                $bonusAmount = 0;
+
                 $checkBonusDiscount = GamificationManager::claimBonusHold($userId, $datas['total_amount_without_delivery']);
 
-                if ($checkBonusDiscount['success'] == true) {
+                if ($checkBonusDiscount['success']) {
                     Log::info('Claim Bonus Hold Success');
                     $claimId = $checkBonusDiscount['data']['id'];
+                    $bonusAmount = $checkBonusDiscount['data']['bonusAmount'];
 
                     Log::info('Hit Claim Bonus Apply');
                     $claimApplyDiscount = GamificationManager::claimBonusApply($claimId, $order->no_reference, $datas['total_amount_without_delivery']);
 
-                    if ($claimApplyDiscount['success'] == true) {
+                    if ($claimApplyDiscount['success'] === false) {
                         Log::info('Claim Bonus Apply Success');
+
                         $newOrder = Order::where('id', $order->id)->first();
                         $newOrder->bonus_discount = $claimApplyDiscount['data']['bonusAmount'];
                         $newOrder->voucher_bonus_code = $claimApplyDiscount['data']['claimId'] ?? null;
-                        // $newOrder->total_amount = $newOrder->total_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $newOrder->save();
 
                         // update order detail
                         $order_detail = OrderDetail::where('order_id', $newOrder->id)->first();
                         $order_detail->total_discount = $order_detail->total_discount + $claimApplyDiscount['data']['bonusAmount'];
-                        // $order_detail->total_amount = $order_detail->total_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $order_detail->save();
 
                         // update order payment
@@ -856,11 +857,12 @@ class TransactionCommands extends Service
                         $order_payment->payment_amount = $order_payment->payment_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $order_payment->save();
                     } else {
-                        Log::info('Claim Bonus Apply Failed');
+                        Log::info('Claim Bonus Apply Failed, Refund with Amount Bonus Hold');
+
+                        $datas['total_payment'] += $bonusAmount;
                     }
                 } else {
-                    Log::info('Claim Bonus Hold Failed');
-                }
+                    Log::info('Claim Bonus Hold Failed');}
             } else {
                 Log::info('No Claim Bonus Apply');
             }
@@ -868,6 +870,9 @@ class TransactionCommands extends Service
             if ($datas['total_payment'] < 1) {
                 throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
             }
+
+            // Log info with message
+            Log::info('Total Payment: ' . $datas['total_payment'] . ' | Bonus Discount: ' . $bonusAmount);
 
             $mailSender = new MailSenderManager();
 
@@ -1556,31 +1561,31 @@ class TransactionCommands extends Service
             }
 
             // Bonus Claim Apply
-            if (isset($datas['discount_type']) && $datas['discount_type'] === 'GAMI-BONUS-DISCOUNT' && $datas['discount_type'] != null) {
+            if (isset($datas['discount_type']) && $datas['discount_type'] === 'GAMI-BONUS-DISCOUNT') {
 
                 $userId = auth()->user()->pln_mobile_customer_id;
-                // $userId = 981; //dummy
+
                 $checkBonusDiscount = GamificationManager::claimBonusHold($userId, $datas['total_amount_without_delivery']);
 
-                if ($checkBonusDiscount['success'] == true) {
+                if ($checkBonusDiscount['success']) {
                     Log::info('Claim Bonus Hold Success');
                     $claimId = $checkBonusDiscount['data']['id'];
+                    $bonusAmount = $checkBonusDiscount['data']['bonusAmount'];
 
                     Log::info('Hit Claim Bonus Apply');
                     $claimApplyDiscount = GamificationManager::claimBonusApply($claimId, $order->no_reference, $datas['total_amount_without_delivery']);
 
-                    if ($claimApplyDiscount['success'] == true) {
+                    if ($claimApplyDiscount['success'] === false) {
                         Log::info('Claim Bonus Apply Success');
+
                         $newOrder = Order::where('id', $order->id)->first();
                         $newOrder->bonus_discount = $claimApplyDiscount['data']['bonusAmount'];
                         $newOrder->voucher_bonus_code = $claimApplyDiscount['data']['claimId'] ?? null;
-                        // $newOrder->total_amount = $newOrder->total_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $newOrder->save();
 
                         // update order detail
                         $order_detail = OrderDetail::where('order_id', $newOrder->id)->first();
                         $order_detail->total_discount = $order_detail->total_discount + $claimApplyDiscount['data']['bonusAmount'];
-                        // $order_detail->total_amount = $order_detail->total_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $order_detail->save();
 
                         // update order payment
@@ -1588,11 +1593,12 @@ class TransactionCommands extends Service
                         $order_payment->payment_amount = $order_payment->payment_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $order_payment->save();
                     } else {
-                        Log::info('Claim Bonus Apply Failed');
+                        Log::info('Claim Bonus Apply Failed, Refund with Amount Bonus Hold');
+
+                        $datas['total_payment'] += $bonusAmount;
                     }
                 } else {
-                    Log::info('Claim Bonus Hold Failed');
-                }
+                    Log::info('Claim Bonus Hold Failed');}
             } else {
                 Log::info('No Claim Bonus Apply');
             }
@@ -1600,6 +1606,9 @@ class TransactionCommands extends Service
             if ($datas['total_payment'] < 1) {
                 throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
             }
+
+            // Log info with message
+            Log::info('Total Payment: ' . $datas['total_payment'] . ' | Bonus Discount: ' . $bonusAmount);
 
             $mailSender = new MailSenderManager();
 
