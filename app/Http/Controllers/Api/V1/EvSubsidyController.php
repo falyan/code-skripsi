@@ -158,12 +158,7 @@ class EvSubsidyController extends Controller
     // ================== Buyer
     public function checkIdentity(Request $request)
     {
-        return response()->json([
-            'status' => true,
-            'status_code' => '09',
-            'message' => '',
-            'data' => null,
-        ]);
+        return response()->json(null, 200);
 
         $validate = Validator::make($request->all(), [
             "nik" => "required|string",
