@@ -158,8 +158,6 @@ class EvSubsidyController extends Controller
     // ================== Buyer
     public function checkIdentity(Request $request)
     {
-        return response()->json(null, 200);
-
         $validate = Validator::make($request->all(), [
             "nik" => "required|string",
         ]);
@@ -172,6 +170,15 @@ class EvSubsidyController extends Controller
                 'errors' => $validate->errors(),
             ], 400);
         }
+
+        return response()->json([
+            'status' => true,
+            'status_code' => '00',
+            'message' => 'Berhasil melakukan pengecekan identitas',
+            'data' => [
+                'nik' => $request->nik,
+            ],
+        ]);
 
         $data = $this->EvSubsidyQueries->checkIdentity($validate->validated());
 
