@@ -281,10 +281,6 @@ class TransactionController extends Controller
             // 'save_npwp' => 'nullable|boolean|required_with:npwp',
         ];
 
-        if (isset(request()->all()['customer'])) {
-            $rules['customer.nik'] = 'required';
-        }
-
         $validator = Validator::make(request()->all(), $rules, [
             'required' => ':attribute diperlukan.',
         ]);
@@ -1917,10 +1913,6 @@ class TransactionController extends Controller
             'merchants.*.products.*.quantity' => 'required',
             'merchants.*.products.*.payment_note' => 'sometimes',
         ];
-
-        if (isset(request()->all()['customer'])) {
-            $rules['customer.nik'] = 'required';
-        }
 
         $validator = Validator::make(request()->all(), $rules, [
             'required' => ':attribute diperlukan.',
