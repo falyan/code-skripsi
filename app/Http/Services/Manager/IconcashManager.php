@@ -373,6 +373,8 @@ class IconcashManager
             ],
         ]);
 
+        $response = json_decode($response->getBody(), true);
+
         Log::info('withdrawalConfirm', [
             'response' => $response,
         ]);

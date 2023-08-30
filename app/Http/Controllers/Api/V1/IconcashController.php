@@ -279,16 +279,17 @@ class IconcashController extends Controller
             }
 
             $response = IconcashManager::withdrawal($iconcash->token, $pin, $order_id);
+
             if ($response) {
                 $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $order_id)->first();
-                $iconcash_inquiry->confirm_res_json = json_encode($response->data);
-                $iconcash_inquiry->confirm_status = $response->success;
+                $iconcash_inquiry->confirm_res_json = json_encode(data_get($response, 'data'));
+                $iconcash_inquiry->confirm_status = data_get($response, 'success');
                 $iconcash_inquiry->save();
             }
 
-            if (isset($response->code)) {
-                if ($response->code == 5001 || $response->code == 5002 || $response->code == 5003 || $response->code == 5004 || $response->code == 5006) {
-                    return response()->json(["success" => $response->success, "code" => $response->code, "message" => $response->message], 200);
+            if (data_get($response, 'code') != null) {
+                if (data_get($response, 'code') == 5001 || data_get($response, 'code') == 5002 || data_get($response, 'code') == 5003 || data_get($response, 'code') == 5004 || data_get($response, 'code') == 5006) {
+                    return response()->json(["success" => data_get($response, 'success'), "code" => data_get($response, 'code'), "message" => data_get($response, 'success')], 200);
                 }
             }
 
