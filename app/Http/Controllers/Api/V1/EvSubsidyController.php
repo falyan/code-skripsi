@@ -18,7 +18,8 @@ class EvSubsidyController extends Controller
         $this->EvSubsidyCommands = new EvSubsidyCommands();
     }
 
-    public function list() {
+    public function list()
+    {
         $keyword = request()->get('keyword');
         $limit = request()->get('limit', 10);
 
@@ -157,6 +158,13 @@ class EvSubsidyController extends Controller
     // ================== Buyer
     public function checkIdentity(Request $request)
     {
+        return response()->json([
+            'status' => true,
+            'status_code' => '09',
+            'message' => '',
+            'data' => null,
+        ]);
+
         $validate = Validator::make($request->all(), [
             "nik" => "required|string",
         ]);
