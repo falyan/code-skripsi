@@ -39,18 +39,16 @@ class VoucherCommands
         $param = static::setParamAPI([]);
         $url = sprintf('%s/%s', static::$apiendpoint, '/v1/ext/plnmkp/voucher/claim/ubahdaya' . $param);
 
-        $json_body = null;
-        $key_id = $master_ubah_daya->voucher_id;
+        $json_body = [
+            'userIdPlnMobile' => null,
+            'email' => null,
+            'voucherId' => (int) $master_ubah_daya->voucher_id,
+            'partnerRef' => $order->no_reference
+        ];
         if ($order->buyer->pln_mobile_customer_id != null) {
-            $json_body = [
-                'userIdPlnMobile' => $order->buyer->pln_mobile_customer_id,
-                'voucherId' => (int) $key_id,
-            ];
+            $json_body['userIdPlnMobile'] = $order->buyer->pln_mobile_customer_id;
         } else {
-            $json_body = [
-                'email' => $order->buyer->email,
-                'voucherId' => (int) $key_id,
-            ];
+            $json_body['email'] = $order->buyer->email;
         }
 
         $hashmac = hash_hmac('sha256', self::$header['timestamp'] . json_encode($json_body), self::$keysecret);
