@@ -840,7 +840,7 @@ class TransactionCommands extends Service
                     Log::info('Hit Claim Bonus Apply');
                     $claimApplyDiscount = GamificationManager::claimBonusApply($claimId, $order->no_reference, $datas['total_amount_without_delivery']);
 
-                    if ($claimApplyDiscount['success']) {
+                    if ($claimApplyDiscount['success'] === false) {
                         Log::info('Claim Bonus Apply Success');
 
                         $newOrder = Order::where('id', $order->id)->first();
@@ -1578,7 +1578,7 @@ class TransactionCommands extends Service
                     Log::info('Hit Claim Bonus Apply');
                     $claimApplyDiscount = GamificationManager::claimBonusApply($claimId, $order->no_reference, $datas['total_amount_without_delivery']);
 
-                    if ($claimApplyDiscount['success']) {
+                    if ($claimApplyDiscount['success'] === false) {
                         Log::info('Claim Bonus Apply Success');
 
                         $newOrder = Order::where('id', $order->id)->first();
