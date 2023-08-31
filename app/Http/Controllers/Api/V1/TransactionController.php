@@ -994,7 +994,7 @@ class TransactionController extends Controller
                     }
 
                     $order = Order::with(['buyer', 'merchant', 'detail', 'detail.product', 'progress_active', 'payment'])->find($order_id);
-                    $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+                    $orders = Order::with(['delivery', 'detail', 'detail.product'])->where('no_reference', $order->no_reference)->get();
                     $total_amount_trx = $total_delivery_fee_trx = 0;
 
                     $check_voucher_exist = false;
@@ -1005,9 +1005,13 @@ class TransactionController extends Controller
                     }
 
                     $is_ev2go = false;
-                    foreach ($order->detail as $detail) {
-                        if ($detail->product->insentif_ubah_daya) {
-                            $is_ev2go = true;
+                    $merchat_ev2go = false;
+                    foreach ($orders as $value) {
+                        foreach ($value->detail as $detail) {
+                            if ($detail->product->insentif_ubah_daya) {
+                                $is_ev2go = true;
+                                if ($order->merchant_id == $value->merchant_id) $merchat_ev2go = true;
+                            }
                         }
                     }
 
@@ -1021,10 +1025,10 @@ class TransactionController extends Controller
                         $with_insentif = $master_ubah_daya->with_insentif;
                         $periode = Carbon::parse($master_ubah_daya->event_start_date) <= Carbon::parse($order->order_date) && Carbon::parse($master_ubah_daya->event_end_date) >= Carbon::parse($order->order_date);
 
-                        if (($is_ev2go == true && $check_voucher_exist == false && $with_insentif == true) && $periode) {
+                        if ((($is_ev2go == true && $merchat_ev2go == true) && $check_voucher_exist == false && $with_insentif == true) && $periode) {
                             $claim_bonus_voucher = true;
                             $this->voucherCommand->generateVoucher($order, $master_ubah_daya);
-                        } elseif ($check_voucher_exist == false && ($total_amount_trx - $total_delivery_fee_trx) >= $master_ubah_daya->min_transaction && $periode && empty($ubah_daya_logs)) {
+                        } elseif ($check_voucher_exist == false && (($is_ev2go == true && $merchat_ev2go == true) || ($is_ev2go == false && $merchat_ev2go == false)) && ($total_amount_trx - $total_delivery_fee_trx) >= $master_ubah_daya->min_transaction && $periode && empty($ubah_daya_logs)) {
                             $claim_bonus_voucher = true;
                             $this->voucherCommand->generateVoucher($order, $master_ubah_daya);
                         }
