@@ -40,8 +40,6 @@ class VoucherCommands
         $url = sprintf('%s/%s', static::$apiendpoint, '/v1/ext/plnmkp/voucher/claim/ubahdaya' . $param);
 
         $json_body = [
-            'userIdPlnMobile' => null,
-            'email' => null,
             'voucherId' => (int) $master_ubah_daya->voucher_id,
             'partnerRef' => $order->no_reference
         ];
