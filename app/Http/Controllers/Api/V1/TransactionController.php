@@ -353,11 +353,13 @@ class TransactionController extends Controller
                 $data = $this->transactionQueries->getTransaction('related_pln_mobile_customer_id', $related_id, $limit, $filter, $page);
             }
 
-            if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');
-            } else {
-                return $this->respondWithResult(true, 'belum ada transaksi');
-            }
+            // if ($data['total'] > 0) {
+            //     return $this->respondWithData($data, 'sukses get data transaksi');
+            // } else {
+            //     return $this->respondWithResult(true, 'belum ada transaksi');
+            // }
+
+            return $this->respondWithData($data, 'sukses get data transaksi');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -378,11 +380,12 @@ class TransactionController extends Controller
             } else {
                 $data = $this->transactionQueries->getTransactionByCategoryKey('related_pln_mobile_customer_id', $related_id, $category_key, $limit, $filter, $page);
             }
-            if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');
-            } else {
-                return $this->respondWithResult(true, 'belum ada transaksi');
-            }
+            // if ($data['total'] > 0) {
+            //     return $this->respondWithData($data, 'sukses get data transaksi');
+            // } else {
+            //     return $this->respondWithResult(true, 'belum ada transaksi');
+            // }
+            return $this->respondWithData($data, 'sukses get data transaksi');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -405,11 +408,12 @@ class TransactionController extends Controller
                 $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['01', '02', '03', '08'], $limit, $filter, $page);
             }
 
-            if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');
-            } else {
-                return $this->respondWithResult(true, 'tidak ada transaksi dalam proses');
-            }
+            // if ($data['total'] > 0) {
+            //     return $this->respondWithData($data, 'sukses get data transaksi');
+            // } else {
+            //     return $this->respondWithResult(true, 'tidak ada transaksi dalam proses');
+            // }
+            return $this->respondWithData($data, 'sukses get data transaksi');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -432,11 +436,12 @@ class TransactionController extends Controller
                 $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['00'], $limit, $filter, $page);
             }
 
-            if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');
-            } else {
-                return $this->respondWithResult(true, 'tidak ada transaksi yang belum dibayar');
-            }
+            // if ($data['total'] > 0) {
+            //     return $this->respondWithData($data, 'sukses get data transaksi');
+            // } else {
+            //     return $this->respondWithResult(true, 'tidak ada transaksi yang belum dibayar');
+            // }
+            return $this->respondWithData($data, 'sukses get data transaksi');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -459,11 +464,12 @@ class TransactionController extends Controller
                 $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['01'], $limit, $filter, $page);
             }
 
-            if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');
-            } else {
-                return $this->respondWithResult(true, 'tidak ada transaksi yang menunggu persetujuan');
-            }
+            // if ($data['total'] > 0) {
+            //     return $this->respondWithData($data, 'sukses get data transaksi');
+            // } else {
+            //     return $this->respondWithResult(true, 'tidak ada transaksi yang menunggu persetujuan');
+            // }
+            return $this->respondWithData($data, 'sukses get data transaksi');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -486,11 +492,12 @@ class TransactionController extends Controller
                 $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['03', '08'], $limit, $filter, $page);
             }
 
-            if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');
-            } else {
-                return $this->respondWithResult(true, 'tidak ada transaksi yang sedang dikirim');
-            }
+            // if ($data['total'] > 0) {
+            //     return $this->respondWithData($data, 'sukses get data transaksi');
+            // } else {
+            //     return $this->respondWithResult(true, 'tidak ada transaksi yang sedang dikirim');
+            // }
+            return $this->respondWithData($data, 'sukses get data transaksi');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -513,11 +520,12 @@ class TransactionController extends Controller
                 $data = $this->transactionQueries->getTransactionDone('related_pln_mobile_customer_id', $related_id, ['88'], $limit, $filter, $page);
             }
 
-            if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');
-            } else {
-                return $this->respondWithResult(true, 'belum ada transaksi yang selesai');
-            }
+            // if ($data['total'] > 0) {
+            //     return $this->respondWithData($data, 'sukses get data transaksi');
+            // } else {
+            //     return $this->respondWithResult(true, 'belum ada transaksi yang selesai');
+            // }
+            return $this->respondWithData($data, 'sukses get data transaksi');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -540,11 +548,12 @@ class TransactionController extends Controller
                 $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['99', '09'], $limit, $filter, $page);
             }
 
-            if ($data['total'] > 0) {
-                return $this->respondWithData($data, 'sukses get data transaksi');
-            } else {
-                return $this->respondWithResult(true, 'tidak ada transaksi yang dibatalkan');
-            }
+            // if ($data['total'] > 0) {
+            //     return $this->respondWithData($data, 'sukses get data transaksi');
+            // } else {
+            //     return $this->respondWithResult(true, 'tidak ada transaksi yang dibatalkan');
+            // }
+            return $this->respondWithData($data, 'sukses get data transaksi');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
