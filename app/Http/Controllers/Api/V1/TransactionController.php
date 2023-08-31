@@ -1036,7 +1036,7 @@ class TransactionController extends Controller
                         if ((($is_ev2go == true && $merchat_ev2go == true) && $check_voucher_exist == false && $with_insentif == true) && $periode) {
                             $claim_bonus_voucher = true;
                             $this->voucherCommand->generateVoucher($order, $master_ubah_daya);
-                        } elseif ($check_voucher_exist == false && (($is_ev2go == true && $merchat_ev2go == true) || ($is_ev2go == false && $merchat_ev2go == false)) && ($total_amount_trx - $total_delivery_fee_trx) >= $master_ubah_daya->min_transaction && $periode && empty($ubah_daya_logs)) {
+                        } elseif (($is_ev2go == false && $merchat_ev2go == false) && $check_voucher_exist == false &&  ($total_amount_trx - $total_delivery_fee_trx) >= $master_ubah_daya->min_transaction && $periode && empty($ubah_daya_logs)) {
                             $claim_bonus_voucher = true;
                             $this->voucherCommand->generateVoucher($order, $master_ubah_daya);
                         }
