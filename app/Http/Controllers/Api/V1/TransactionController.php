@@ -1027,7 +1027,7 @@ class TransactionController extends Controller
                     $master_ubah_dayas = UbahDayaMaster::where('status', 1)->orderBy('event_start_date', 'asc')->get();
                     $ubah_daya_logs = UbahDayaLog::where(['customer_id' => $order->buyer_id, 'status' => 1])
                         ->whereIn('master_ubah_daya_id', collect($master_ubah_dayas)->pluck('id')->toArray())
-                        ->get();
+                        ->count();
 
                     $claim_bonus_voucher = false;
                     foreach ($master_ubah_dayas as $master_ubah_daya) {
@@ -1037,7 +1037,7 @@ class TransactionController extends Controller
                         if ((($is_ev2go == true && $merchat_ev2go == true) && $check_voucher_exist == false && $with_insentif == true) && $periode) {
                             $claim_bonus_voucher = true;
                             $this->voucherCommand->generateVoucher($order, $master_ubah_daya, true);
-                        } elseif (($is_ev2go == false && $merchat_ev2go == false) && $check_voucher_exist == false &&  ($total_amount_trx - $total_delivery_fee_trx) >= $master_ubah_daya->min_transaction && $periode && empty($ubah_daya_logs)) {
+                        } elseif (($is_ev2go == false && $merchat_ev2go == false) && $check_voucher_exist == false &&  ($total_amount_trx - $total_delivery_fee_trx) >= $master_ubah_daya->min_transaction && $periode && $ubah_daya_logs == 0) {
                             $claim_bonus_voucher = true;
                             $this->voucherCommand->generateVoucher($order, $master_ubah_daya);
                         }
