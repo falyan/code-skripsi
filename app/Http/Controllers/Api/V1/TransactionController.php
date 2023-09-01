@@ -27,6 +27,7 @@ use App\Models\VariantStock;
 use App\Models\OrderComplaint;
 use App\Models\UbahDayaLog;
 use App\Models\UbahDayaMaster;
+use App\Models\OrderProgress;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -1026,7 +1027,7 @@ class TransactionController extends Controller
 
                         if ((($is_ev2go == true && $merchat_ev2go == true) && $check_voucher_exist == false && $with_insentif == true) && $periode) {
                             $claim_bonus_voucher = true;
-                            $this->voucherCommand->generateVoucher($order, $master_ubah_daya);
+                            $this->voucherCommand->generateVoucher($order, $master_ubah_daya, true);
                         } elseif (($is_ev2go == false && $merchat_ev2go == false) && $check_voucher_exist == false &&  ($total_amount_trx - $total_delivery_fee_trx) >= $master_ubah_daya->min_transaction && $periode && empty($ubah_daya_logs)) {
                             $claim_bonus_voucher = true;
                             $this->voucherCommand->generateVoucher($order, $master_ubah_daya);
@@ -1034,13 +1035,14 @@ class TransactionController extends Controller
                     }
 
                     if ($claim_bonus_voucher == false) {
-                        Log::info([
+                        $log = [
                             'path_info' => 'generate_voucher',
                             'message' => 'Tidak memenuhi syarat untuk generate voucher',
                             'order_id' => $order_id,
-                        ]);
+                        ];
+                        Log::info($log);
+                        OrderProgress::where('order_id', $order_id)->where('status', 1)->update(['ubah_daya_log' => json_encode($log)]);
                     }
-
 
                     DB::commit();
 
