@@ -6,6 +6,7 @@ use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Notification\NotificationCommands;
 use App\Models\MasterData;
 use App\Models\Order;
+use App\Models\OrderProgress;
 use App\Models\UbahDayaLog;
 use App\Models\UbahDayaMaster;
 use App\Models\UbahDayaPregenerate;
@@ -34,19 +35,21 @@ class VoucherCommands
         ];
     }
 
-    public function generateVoucher($order, $master_ubah_daya)
+    public function generateVoucher($order, $master_ubah_daya, $is_insentif = false)
     {
         $param = static::setParamAPI([]);
-        $url = sprintf('%s/%s', static::$apiendpoint, '/v1/ext/plnmkp/voucher/claim/ubahdaya' . $param);
+        $url = sprintf('%s/%s', static::$apiendpoint, 'v1/ext/plnmkp/voucher/claim/ubahdaya' . $param);
 
         $json_body = [
-            'voucherId' => (int) $master_ubah_daya->voucher_id,
-            'partnerRef' => $order->no_reference
+            'voucherId' => (int) $master_ubah_daya->voucher_id
         ];
         if ($order->buyer->pln_mobile_customer_id != null) {
             $json_body['userIdPlnMobile'] = $order->buyer->pln_mobile_customer_id;
         } else {
             $json_body['email'] = $order->buyer->email;
+        }
+        if ($is_insentif) {
+            $json_body['partnerRef'] = $order->no_reference;
         }
 
         $hashmac = hash_hmac('sha256', self::$header['timestamp'] . json_encode($json_body), self::$keysecret);
@@ -60,12 +63,14 @@ class VoucherCommands
 
         $response = json_decode($response->getBody());
 
-        Log::info("E00003", [
+        $log = [
             'path_url' => "voucher.claim.ubahdaya",
             'query' => [],
             'body' => $json_body,
             'response' => $response,
-        ]);
+        ];
+        Log::info("E00003", $log);
+        OrderProgress::where('order_id', $order->id)->where('status', 1)->update(['ubah_daya_log' => json_encode($log)]);
 
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
 
