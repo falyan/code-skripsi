@@ -2202,12 +2202,13 @@ class TransactionController extends Controller
     public function addComplaint(Request $request)
     {
         $validator = Validator::make(request()->all(), [
-            'order_id' => 'required',
+            'order_id' => 'required|exists:order,id',
             'complaint' => 'required',
             'description' => 'nullable',
             'image' => 'nullable',
         ], [
             'required' => ':attribute diperlukan.',
+            'exists' => ':attribute tidak ditemukan.',
         ]);
 
         if ($validator->fails()) {
