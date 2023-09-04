@@ -17,12 +17,14 @@ class TransactionExport implements FromArray, WithHeadings, WithTitle, WithEvent
 {
     use Exportable;
 
+    protected $data;
+
     public function __construct($data)
     {
         $this->data = $data;
     }
 
-    function array(): array
+    public function array(): array
     {
         return $this->data;
     }
@@ -30,18 +32,18 @@ class TransactionExport implements FromArray, WithHeadings, WithTitle, WithEvent
     public function headings(): array
     {
         return [
-            'Invoice',
-            'Nama Pembeli',
-            'Tanggal Order',
-            'Total Harga',
-            'Total Berat',
-            'Metode Pembayaran',
-            'Status',
-            'Related Pln Mobile Customer ID',
-            'Jasa Pengiriman',
-            'Biaya Pengiriman',
-            'Dibuat Oleh',
-            'Diupdate Oleh',
+            'Nomor Invoice',
+            'Tanggal Pesanan',
+            'Nilai Transaksi',
+            'Total Pendapatan',
+            'Status Pesanan',
+            'Nomor Resi',
+            'Penerima',
+            'Nomor HP Penerima',
+            'Alamat Lengkap',
+            'Kota',
+            'Kurir',
+            'Tanggal Update',
         ];
     }
 
@@ -55,13 +57,13 @@ class TransactionExport implements FromArray, WithHeadings, WithTitle, WithEvent
         return [
             'A' => 30,
             'B' => 30,
-            'C' => 15,
+            'C' => 25,
             'D' => 25,
-            'E' => 15,
+            'E' => 20,
             'F' => 20,
             'G' => 25,
             'H' => 20,
-            'I' => 20,
+            'I' => 25,
             'J' => 20,
             'K' => 20,
             'L' => 20,
@@ -77,13 +79,20 @@ class TransactionExport implements FromArray, WithHeadings, WithTitle, WithEvent
                 // ]);
 
                 //append "Rp " to all cells in column D
+                $event->sheet->getDelegate()->getStyle('C2:C' . $event->sheet->getDelegate()->getHighestRow())
+                    ->getNumberFormat()
+                    ->setFormatCode('Rp #,##0');
+
                 $event->sheet->getDelegate()->getStyle('D2:D' . $event->sheet->getDelegate()->getHighestRow())
                     ->getNumberFormat()
                     ->setFormatCode('Rp #,##0');
 
-                $event->sheet->getDelegate()->getStyle('J2:J' . $event->sheet->getDelegate()->getHighestRow())
+                // in column H, text change to number
+                $event->sheet->getDelegate()->getStyle('H2:H' . $event->sheet->getDelegate()->getHighestRow())
                     ->getNumberFormat()
-                    ->setFormatCode('Rp #,##0');
+                    ->setFormatCode('0');
+
+                $event->sheet->getDelegate()->freezePane('A2');
             },
         ];
     }
