@@ -643,3 +643,9 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('voucher', 'UbahDayaController@createVoucher');
     });
 });
+
+$router->group(['namespace' => '\Rap2hpoutre\LaravelLogViewer'], function () use ($router) {
+    if (env('APP_ENV') === 'staging') {
+        $router->get('logs', 'LogViewerController@index');
+    }
+});
