@@ -63,14 +63,12 @@ class VoucherCommands
 
         $response = json_decode($response->getBody());
 
-        $log = [
+        Log::info("E00003", [
             'path_url' => "voucher.claim.ubahdaya",
             'query' => [],
             'body' => $json_body,
             'response' => $response,
-        ];
-        Log::info("E00003", $log);
-        OrderProgress::where('order_id', $order->id)->where('status', 1)->update(['ubah_daya_log' => json_encode($log)]);
+        ]);
 
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
 

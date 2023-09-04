@@ -1036,13 +1036,12 @@ class TransactionController extends Controller
                     }
 
                     if ($claim_bonus_voucher == false) {
-                        $log = [
+                        Log::info([
                             'path_info' => 'generate_voucher',
                             'message' => 'Tidak memenuhi syarat untuk generate voucher',
                             'order_id' => $order_id,
-                        ];
-                        Log::info($log);
-                        OrderProgress::where('order_id', $order_id)->where('status', 1)->update(['ubah_daya_log' => json_encode($log)]);
+                            'total_amount_trx' => $total_amount_trx - $total_delivery_fee_trx,
+                        ]);
                     }
 
                     DB::commit();
