@@ -140,6 +140,7 @@ $app->register(App\Providers\LogServiceProvider::class);
 // $app->register(Fruitcake\Cors\CorsServiceProvider::class);
 $app->register(Maatwebsite\Excel\ExcelServiceProvider::class);
 $app->register(Barryvdh\DomPDF\ServiceProvider::class);
+$app->register(\Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::class);
 
 class_alias(Maatwebsite\Excel\Facades\Excel::class, 'Excel');
 
