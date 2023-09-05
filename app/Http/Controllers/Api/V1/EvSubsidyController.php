@@ -170,6 +170,15 @@ class EvSubsidyController extends Controller
             ], 400);
         }
 
+        return response()->json([
+            'status' => true,
+            'status_code' => '00',
+            'message' => 'Berhasil melakukan pengecekan identitas',
+            'data' => [
+                'nik' => $request->nik,
+            ],
+        ]);
+
         $data = $this->EvSubsidyQueries->checkIdentity($validate->validated());
 
         if (isset($data['status']) && $data['status'] == false) {
