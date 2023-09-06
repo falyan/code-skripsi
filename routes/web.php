@@ -260,6 +260,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'category'], static function () use ($router) {
                 $router->get('/random', 'CategoryController@getThreeRandomCategory');
                 $router->get('/all', 'CategoryController@getAllCategory');
+                $router->get('/list', 'CategoryController@getListCategory');
             });
 
             $router->group(['prefix' => 'setting'], static function () use ($router) {
