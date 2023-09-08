@@ -2165,16 +2165,16 @@
         },
         {
             "name": "google/protobuf",
-            "version": "v3.24.2",
+            "version": "v3.24.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/protocolbuffers/protobuf-php.git",
-                "reference": "c1043089b14d4b41798b1665b9fbc58ca0f0383d"
+                "reference": "2fc191fc5e137829081b8700086ac6ed7003b925"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/protocolbuffers/protobuf-php/zipball/c1043089b14d4b41798b1665b9fbc58ca0f0383d",
-                "reference": "c1043089b14d4b41798b1665b9fbc58ca0f0383d",
+                "url": "https://api.github.com/repos/protocolbuffers/protobuf-php/zipball/2fc191fc5e137829081b8700086ac6ed7003b925",
+                "reference": "2fc191fc5e137829081b8700086ac6ed7003b925",
                 "shasum": ""
             },
             "require": {
@@ -2203,9 +2203,9 @@
                 "proto"
             ],
             "support": {
-                "source": "https://github.com/protocolbuffers/protobuf-php/tree/v3.24.2"
+                "source": "https://github.com/protocolbuffers/protobuf-php/tree/v3.24.3"
             },
-            "time": "2023-08-25T20:17:43+00:00"
+            "time": "2023-09-07T15:39:13+00:00"
         },
         {
             "name": "graham-campbell/result-type",
@@ -5304,16 +5304,16 @@
         },
         {
             "name": "nesbot/carbon",
-            "version": "2.69.0",
+            "version": "2.70.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/briannesbitt/Carbon.git",
-                "reference": "4308217830e4ca445583a37d1bf4aff4153fa81c"
+                "reference": "d3298b38ea8612e5f77d38d1a99438e42f70341d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/4308217830e4ca445583a37d1bf4aff4153fa81c",
-                "reference": "4308217830e4ca445583a37d1bf4aff4153fa81c",
+                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/d3298b38ea8612e5f77d38d1a99438e42f70341d",
+                "reference": "d3298b38ea8612e5f77d38d1a99438e42f70341d",
                 "shasum": ""
             },
             "require": {
@@ -5406,7 +5406,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-08-03T09:00:52+00:00"
+            "time": "2023-09-07T16:43:50+00:00"
         },
         {
             "name": "netflie/monolog-stackdriver-handler",
@@ -11957,5 +11957,5 @@
         "php": "^7.3"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.1.0"
+    "plugin-api-version": "2.3.0"
 }

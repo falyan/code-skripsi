@@ -190,11 +190,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                     $router->post('list/read', 'DiscussionController@getListReadDiscussionBySeller');
                     $router->get('detail/{id}', 'DiscussionController@getDiscussionByMasterId');
                 });
-
-                $router->group(['prefix' => 'pages'], static function () use ($router) {
-                    $router->get('term-condition', 'PagesController@termConditionSeller');
-                    $router->get('privacy-policy', 'PagesController@privacyPolicySeller');
-                });
             });
         });
     });
@@ -477,6 +472,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     $router->group(['prefix' => 'report', 'middleware' => 'auth'], static function () use ($router) {
         $router->get('reason', 'ReportController@getMasterData');
         $router->post('create', 'ReportController@createReport');
+    });
+
+    $router->group(['prefix' => 'pages'], static function () use ($router) {
+        $router->get('term-condition', 'PagesController@termConditionSeller');
+        $router->get('privacy-policy', 'PagesController@privacyPolicySeller');
     });
 
     $router->group(['prefix' => 'setting'], static function () use ($router) {
