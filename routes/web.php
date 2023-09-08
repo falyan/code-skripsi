@@ -474,6 +474,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('create', 'ReportController@createReport');
     });
 
+    $router->group(['prefix' => 'pages'], static function () use ($router) {
+        $router->get('term-condition', 'PagesController@termConditionSeller');
+        $router->get('privacy-policy', 'PagesController@privacyPolicySeller');
+    });
+
     $router->group(['prefix' => 'setting'], static function () use ($router) {
         $router->get('faq', 'FaqController@index');
         $router->group(['prefix' => 'pages'], static function () use ($router) {
