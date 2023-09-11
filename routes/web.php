@@ -650,3 +650,9 @@ $router->group(['namespace' => '\Rap2hpoutre\LaravelLogViewer'], function () use
         $router->get('logs', 'LogViewerController@index');
     }
 });
+
+// cache clear
+$router->get('/cache-clear', function () {
+    $exitCode = \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    return 'cache clear';
+});
