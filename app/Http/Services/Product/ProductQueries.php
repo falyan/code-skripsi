@@ -2143,6 +2143,28 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function getListProduct($limit, $page)
+    {
+        $product = Product::select('name')->where('status', 1);
+
+        if ($limit != null) $product = $product->limit($limit);
+        $product = $product->offset(($page - 1) * $limit)->get();
+
+        if ($product->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Produk tidak ditemukan!';
+            $response['data'] = [];
+            return $response;
+        }
+
+        $product = array_map(fn($item) => $item['name'], $product->toArray());
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $product;
+        return $response;
+    }
+
     public function countProductWithFilter($filter = [], $sortby = null)
     {
         $product = new Product();
