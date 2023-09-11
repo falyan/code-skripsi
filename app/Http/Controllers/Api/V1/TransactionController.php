@@ -1340,6 +1340,7 @@ class TransactionController extends Controller
         }
 
         try {
+            DB::beginTransaction();
             if (in_array($status_code, $check_status)) {
                 if ($status_code == '03') {
                     $notes = 'finish on delivery';
@@ -1348,13 +1349,6 @@ class TransactionController extends Controller
 
                 $this->transactionCommand->triggerItemSold($id);
                 $this->transactionCommand->updateOrderStatus($id, '88');
-
-                $column_name = 'merchant_id';
-                $column_value = $data->merchant_id;
-                $type = 2;
-                $title = 'Transaksi selesai';
-                $message = 'Transaksi sudah selesai, silakan memeriksa saldo ICONCASH anda.';
-                $url_path = 'v1/seller/query/transaction/detail/' . $id;
 
                 $order = Order::with(['delivery', 'detail'])->where('id', $id)->first();
                 $customer = Customer::with('iconcash')->where('merchant_id', $order->merchant_id)->first();
@@ -1397,6 +1391,13 @@ class TransactionController extends Controller
                     $iconcash_inquiry->save();
                 }
 
+                $column_name = 'merchant_id';
+                $column_value = $data->merchant_id;
+                $type = 2;
+                $title = 'Transaksi selesai';
+                $message = 'Transaksi sudah selesai, silakan memeriksa saldo ICONCASH anda.';
+                $url_path = 'v1/seller/query/transaction/detail/' . $id;
+
                 $notificationCommand = new NotificationCommands();
                 $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
 
@@ -1406,6 +1407,7 @@ class TransactionController extends Controller
                 $mailSender = new MailSenderManager();
                 $mailSender->mailOrderDone($id);
 
+                DB::commit();
                 return $this->respondWithResult(true, 'Selamat! Pesanan anda telah selesai', 200);
             } else {
                 if ($status_code == '03') {
@@ -1419,6 +1421,7 @@ class TransactionController extends Controller
                 return $this->respondWithResult(false, 'Pesanan anda belum dikirimkan oleh Penjual!', 400);
             }
         } catch (Exception $e) {
+            DB::rollBack();
             return $this->respondErrorException($e, request());
         }
     }
@@ -2030,10 +2033,12 @@ class TransactionController extends Controller
     {
         try {
             DB::beginTransaction();
+
             $this->transactionCommand->updateOrderStatus($id, '98', 'refund ongkir');
 
             $order = Order::with('delivery')->find($id);
-            $iconcash = Customer::where('merchant_id', $order->merchant_id)->first()->iconcash;
+            $customer = Customer::where('merchant_id', $order->merchant_id)->first();
+            $iconcash = $customer->iconcash;
             $account_type_id = null;
 
             if (env('APP_ENV') == 'staging') {
@@ -2048,7 +2053,7 @@ class TransactionController extends Controller
             $client_ref = $this->unique_code($iconcash->token);
             $corporate_id = 10;
 
-            $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
+            $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order, 'topup-refund-ongkir');
             $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
             if ($resConfrim) {
@@ -2058,14 +2063,21 @@ class TransactionController extends Controller
                 $iconcash_inquiry->save();
             }
 
-            $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+            // $column_name = 'merchant_id';
+            // $column_value = $customer->merchant_id;
+            // $type = 2;
+            // $title = 'Pengembalian dana ongkir';
+            // $message = 'Pengembalian dana ongkir berhasil, silakan memeriksa saldo ICONCASH anda.';
+            // $url_path = 'v1/seller/query/transaction/detail/' . $id;
 
-            if ($resConfrim) {
-                $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
-                $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
-                $iconcash_inquiry->confirm_status = $resConfrim->success;
-                $iconcash_inquiry->save();
-            }
+            // $notificationCommand = new NotificationCommands();
+            // $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
+
+            // $customer = Customer::where('merchant_id', $customer->merchant_id)->first();
+            // $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
+
+            // $mailSender = new MailSenderManager();
+            // $mailSender->mailOrderDone($id);
 
             DB::commit();
             return $this->respondWithResult(true, 'Topup refund ongkir berhasil!', 200);
