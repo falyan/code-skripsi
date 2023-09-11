@@ -2107,7 +2107,7 @@ class TransactionCommands extends Service
 
             $delivery->awb_number = $resi['data']['awb_number'];
             $delivery->no_reference = $resi['data']['no_reference'];
-            $delivery->image_logistic = $resi['data']['courier_image'];
+            $delivery->image_logistic = data_get($resi, 'data.courier_image');
 
             if (!$delivery->save()) {
                 $response['success'] = false;
@@ -2115,13 +2115,13 @@ class TransactionCommands extends Service
                 return $response;
             }
 
-            $requestPickup = LogisticManager::requestPickup($order->trx_no, $expect_time);
+            // $requestPickup = LogisticManager::requestPickup($order->trx_no, $expect_time);
 
-            if (isset($requestPickup) && !$requestPickup['success']) {
-                $response['success'] = false;
-                $response['message'] = $requestPickup['message'];
-                return $response;
-            }
+            // if (isset($requestPickup) && !$requestPickup['success']) {
+            //     $response['success'] = false;
+            //     $response['message'] = $requestPickup['message'];
+            //     return $response;
+            // }
         } else {
             Carbon::setLocale('id');
             $date = Carbon::now('Asia/Jakarta')->isoFormat('YMMDD');
