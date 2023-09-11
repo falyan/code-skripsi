@@ -804,6 +804,17 @@ class ProductController extends Controller
         }
     }
 
+    public function getListProduct()
+    {
+        try {
+            $limit = request()->query('limit');
+            $page = request()->query('page', 1);
+            return $this->productQueries->getListProduct($limit, $page);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function countProductWithFilter(Request $request)
     {
         try {
