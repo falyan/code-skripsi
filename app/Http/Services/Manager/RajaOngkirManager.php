@@ -293,7 +293,7 @@ class RajaOngkirManager
         if ($setting == 'active') {
             $courirers = [];
             foreach (explode(':', $courirer) as $courier) {
-                $courirers[] = $merchant->district_id . '.' . $customer_address->district_id . '.' . $weight . '.' . $courier;
+                $courirers[] = $merchant->district->rajaongkir_district_id . '.' . $customer_address->district->rajaongkir_district_id . '.' . $weight . '.' . $courier;
             }
 
             $cache_rajaongkir = CacheRajaongkirShipping::whereIn('key', $courirers)->where('expired_at', '>', Carbon::now())->get();
@@ -309,9 +309,9 @@ class RajaOngkirManager
         $url = sprintf('%s/%s', static::$apiendpoint, 'api/cost');
 
         $body = [
-            'origin' => $merchant->district_id,
+            'origin' => $merchant->district->rajaongkir_district_id,
             'originType' => 'subdistrict',
-            'destination' => $customer_address->district_id,
+            'destination' => $customer_address->district->rajaongkir_district_id,
             'destinationType' => 'subdistrict',
             'weight' => (int) $weight,
             'courier' => strtolower($courirer),

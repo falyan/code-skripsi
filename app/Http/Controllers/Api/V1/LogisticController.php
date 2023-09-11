@@ -281,12 +281,12 @@ class LogisticController extends Controller
         }
 
         $request = request()->all();
-        $merchant = Merchant::with('expedition')->where('id', $request['merchant_id'])->first();
-        $customer_address = CustomerAddress::where('id', $request['customer_address_id'])->first();
+        $merchant = Merchant::with(['expedition', 'district'])->where('id', $request['merchant_id'])->first();
+        $customer_address = CustomerAddress::with(['district'])->where('id', $request['customer_address_id'])->first();
 
-        $master_data = MasterData::whereIn('key', ['is_active_logistic', 'prefix_logistic', 'is_active_rajaongkir_cache'])->get();
-        $setting_logistic = collect($master_data)->where('key', 'is_active_logistic')->first();
-        $prefix_logistic = collect($master_data)->where('key', 'prefix_logistic')->first();
+        $master_data = MasterData::whereIn('key', ['is_active_shipper', 'prefix_shipper', 'is_active_rajaongkir_cache'])->get();
+        $setting_shipper = collect($master_data)->where('key', 'is_active_shipper')->first();
+        $prefix_shipper = collect($master_data)->where('key', 'prefix_shipper')->first();
         $rajaongkir_cache_setting = collect($master_data)->where('key', 'is_active_rajaongkir_cache')->first();
 
         $setting_courirers = Cache::remember('setting_courirers', 60 * 60, function () {
@@ -296,7 +296,7 @@ class LogisticController extends Controller
         try {
             $ongkir = [];
             $logistic = [];
-            if ($setting_logistic->value == 'active') {
+            if ($setting_shipper->value == 'active') {
                 $s_courier = '';
                 foreach (collect($setting_courirers)->where('key', 's_courier') as $courier) {
                     foreach (explode(':', $merchant->expedition->list_expeditions) as $value) {
@@ -317,7 +317,7 @@ class LogisticController extends Controller
                     foreach ($value['data'] as $data_value) {
                         $data[] = [
                             'service_code' => (string) $data_value['service_code'],
-                            'service_name' => $data_value['service_name'] . ' ' . ($prefix_logistic == null ? 'Pick Up' : $prefix_logistic->value),
+                            'service_name' => $data_value['service_name'] . ' ' . ($prefix_shipper == null ? 'Pick Up' : $prefix_shipper->value),
                             'estimate_day' => $data_value['estimate_day'],
                             'price' => $data_value['price'],
                             'min_weight' => $data_value['min_weight'],
@@ -345,6 +345,7 @@ class LogisticController extends Controller
                     }
                 }
             }
+
             $rajaongkir = $merchant->expedition == null ? [] : $this->rajaongkirManager->getOngkirSameLogistic($customer_address, $merchant, $request['weight'], rtrim($ro_courier, ':'), $rajaongkir_cache_setting->value);
 
             foreach ($rajaongkir as $rjo) {

@@ -209,16 +209,16 @@ class LogisticManager
     public static function getOngkir($customer_address, $merchant, $weight, $courirer, $price)
     {
         $param = static::setParamAPI([]);
-        $url = sprintf('%s/%s', static::$endpoint, 'v2/service/rates' . $param);
+        $url = sprintf('%s/%s', static::$endpoint, 'v1/service/rates' . $param);
 
         $body = [
             'shipper' => [
-                'dest_from_code' => (string) $customer_address->subdistrict_id,
+                'origin' => (string) $customer_address->district_id,
                 'latitude' => (string) $customer_address->latitude,
                 'longitude' => (string) $customer_address->longitude,
             ],
             'receiver' => [
-                'dest_to_code' => (string) $merchant->subdistrict_id,
+                'destination' => (string) $merchant->district_id,
                 'latitude' => (string) $merchant->latitude,
                 'longitude' => (string) $merchant->longitude,
             ],
