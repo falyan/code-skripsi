@@ -438,8 +438,8 @@ class LogisticManager
             'courier' => $order->delivery->delivery_method,
             'service_code' => $order->delivery->delivery_type,
             'shipping_price' => (int) $order->delivery->delivery_fee,
-            'shipping_type' => $order->delivery->shipping_type,
-            'must_use_insurance' => $order->delivery->must_use_insurance,
+            // 'shipping_type' => $order->delivery->shipping_type,
+            // 'must_use_insurance' => $order->delivery->must_use_insurance,
             'items_total_price' => $total_price,
             'shipper' => [
                 'name' => $order->merchant->name,
