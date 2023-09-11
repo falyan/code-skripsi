@@ -567,6 +567,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->get('hash-salt/generator/{pin}', 'IconcashController@hash_salt_sha256');
             $router->get('history/saldo-pendapatan', 'IconcashController@historySaldoPendapatan');
 
+            // Disbursement Customer Bank & Withdrawal
+            $router->post('command/disbursement/inquiry', 'IconcashController@withdrawalInquiryV2');
+            $router->post('command/disbursement', 'IconcashController@withdrawalV2');
+            $router->post('command/disbursement/customerbank', 'IconcashController@addCustomerBankV2');
+            $router->put('command/disbursement/customerbank/{id}', 'IconcashController@updateCustomerBankV2');
+
             $router->post('command/create-order', 'IconcashController@createOrder');
             $router->post('command/order-confirm', 'IconcashController@orderConfirm');
             $router->post('command/order-refund', 'IconcashController@manualOrderRefund');
