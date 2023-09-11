@@ -401,7 +401,7 @@ class LogisticManager
     public static function preorder($order_id)
     {
         $param = static::setParamAPI([]);
-        $url = sprintf('%s/%s', static::$endpoint, 'v2/preorder' . $param);
+        $url = sprintf('%s/%s', static::$endpoint, 'v1/preorder' . $param);
 
         $order = Order::with(['merchant', 'buyer', 'delivery', 'detail'])->where('id', $order_id)->first();
         $items = [];
@@ -436,7 +436,7 @@ class LogisticManager
         $body = [
             'trx_no' => $order->trx_no,
             'courier' => $order->delivery->delivery_method,
-            'service_code' => (int) $order->delivery->delivery_type,
+            'service_code' => $order->delivery->delivery_type,
             'shipping_price' => (int) $order->delivery->delivery_fee,
             'shipping_type' => $order->delivery->shipping_type,
             'must_use_insurance' => $order->delivery->must_use_insurance,
@@ -445,7 +445,7 @@ class LogisticManager
                 'name' => $order->merchant->name,
                 'email' => $order->merchant->email,
                 'phone' => $order->merchant->phone_office,
-                'dest_from_code' => (string) $order->merchant->subdistrict_id,
+                'origin' => (string) $order->merchant->district_id,
                 'merchant_name' => $order->merchant->name,
                 'address' => $order->merchant->address,
                 'latitude' => $order->merchant->latitude,
@@ -456,7 +456,7 @@ class LogisticManager
                 'name' => $order->delivery->receiver_name,
                 'email' => $order->buyer->email,
                 'phone' => $order->delivery->receiver_phone,
-                'dest_to_code' => (string) $order->delivery->subdistrict_id,
+                'destination' => (string) $order->delivery->district_id,
                 'address' => $order->delivery->address,
                 'latitude' => $order->delivery->latitude,
                 'longitude' => $order->delivery->longitude,
@@ -471,7 +471,7 @@ class LogisticManager
                 'name' => $merchant_delivery->merchant_name,
                 'email' => $order->merchant->email,
                 'phone' => $merchant_delivery->merchant_phone_office,
-                'dest_from_code' => (string) $merchant_delivery->merchant_subdistrict_id,
+                'origin' => (string) $merchant_delivery->merchant_district_id,
                 'merchant_name' => $merchant_delivery->merchant_name,
                 'address' => $merchant_delivery->merchant_address,
                 'latitude' => $merchant_delivery->merchant_latitude,
@@ -493,7 +493,7 @@ class LogisticManager
         // return $response;
 
         Log::info("E00002", [
-            'path_url' => "hedwig.endpoint/v2/preorder",
+            'path_url' => "hedwig.endpoint/v1/preorder",
             'query' => [],
             'body' => $body,
             'response' => $response,
