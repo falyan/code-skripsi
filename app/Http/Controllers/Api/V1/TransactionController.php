@@ -27,6 +27,7 @@ use App\Models\ProductStock;
 use App\Models\UbahDayaLog;
 use App\Models\UbahDayaMaster;
 use App\Models\VariantStock;
+use App\Models\RefundOrder;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -2057,6 +2058,7 @@ class TransactionController extends Controller
             $customer = Customer::where('merchant_id', $order->merchant_id)->first();
             $iconcash = $customer->iconcash;
             $account_type_id = null;
+            $refund = RefundOrder::where('order_id', $id)->first();
 
             if (env('APP_ENV') == 'staging') {
                 $account_type_id = 13;
@@ -2067,8 +2069,15 @@ class TransactionController extends Controller
             }
 
             $amount = $order->delivery->delivery_fee;
-            $client_ref = $this->unique_code($iconcash->token);
             $corporate_id = 10;
+
+            $client_ref = $this->unique_code($iconcash->token);
+            if ($refund->client_ref == null) {
+                $refund->client_ref = $client_ref;
+                $refund->save();
+            } else {
+                $client_ref = $refund->client_ref;
+            }
 
             $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order, 'topup-refund-ongkir');
             $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
