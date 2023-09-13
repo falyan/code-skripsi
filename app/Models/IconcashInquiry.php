@@ -87,6 +87,29 @@ class IconcashInquiry extends Model
         }
     }
 
+    public static function createWithdrawalInquiryV2($iconcash, $bank_account_name, $bank_account_no, $bank_id, $nominal, $source_account_id)
+    {
+        try {
+            $model = new self;
+
+            $response = IconcashManager::withdrawalInquiryV2($iconcash->token, $bank_account_name, $bank_account_no, $bank_id, $nominal, $source_account_id);
+
+            $model->create([
+                'customer_id' => $iconcash->customer_id,
+                'iconcash_id' => $iconcash->id,
+                'type' => 'withdrawal',
+                'source_account_id' => $source_account_id,
+                'amount' => $nominal,
+                'iconcash_order_id' => $response->orderId,
+                'res_json' => json_encode($response),
+            ]);
+
+            return $response;
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), $e->getCode());
+        }
+    }
+
     public static function createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order, $type = 'topup')
     {
         $model = new self;
@@ -100,6 +123,22 @@ class IconcashInquiry extends Model
             'order_id' => $order->id,
             'amount' => $amount,
             'client_ref' => $client_ref,
+            'iconcash_order_id' => $response->orderId,
+            'res_json' => json_encode($response),
+        ]);
+
+        return $response;
+    }
+
+    public static function updateTopupInquiry($id, $iconcash, $account_type_id, $amount, $client_ref, $corporate_id)
+    {
+        // update inquiry
+        $model = self::where('id', $id)->first();
+
+        $response = IconcashManager::topupInquiry($iconcash->phone, $account_type_id, $amount, $client_ref, $corporate_id);
+
+        $model->update([
+            'source_account_id' => $response->accountId,
             'iconcash_order_id' => $response->orderId,
             'res_json' => json_encode($response),
         ]);
