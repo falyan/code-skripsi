@@ -897,6 +897,7 @@ class IconcashController extends Controller
                     'amount' => $key->amount,
                     'fee' => $key->fee,
                     'amount_fee' => $key->amountFee,
+                    'mdr_value' => $key->mdrValue ?? 0,
                     'transaction_date' => $key->transactionDate,
                     'description' => $key->description ?? '',
                     'beneficiary_account' => $key->beneficiaryAccount ?? '',
