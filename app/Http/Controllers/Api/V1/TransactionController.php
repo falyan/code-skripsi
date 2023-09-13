@@ -1415,11 +1415,11 @@ class TransactionController extends Controller
                 $message = 'Transaksi sudah selesai, silakan memeriksa saldo ICONCASH anda.';
                 $url_path = 'v1/seller/query/transaction/detail/' . $id;
 
-                // $notificationCommand = new NotificationCommands();
-                // $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
+                $notificationCommand = new NotificationCommands();
+                $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
 
-                // $customer = Customer::where('merchant_id', $data->merchant_id)->first();
-                // $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
+                $customer = Customer::where('merchant_id', $data->merchant_id)->first();
+                $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
 
                 $mailSender = new MailSenderManager();
                 $mailSender->mailOrderDone($id);
