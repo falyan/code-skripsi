@@ -398,12 +398,12 @@ class LogisticManager
         return $response;
     }
 
-    public static function preorder($order_id)
+    public static function preorder($order_id, $pick_up_time)
     {
         $param = static::setParamAPI([]);
         $url = sprintf('%s/%s', static::$endpoint, 'v1/preorder' . $param);
 
-        $order = Order::with(['merchant', 'buyer', 'delivery', 'detail'])->where('id', $order_id)->first();
+        $order = Order::with(['merchant', 'merchant.corporate', 'buyer', 'delivery', 'detail'])->where('id', $order_id)->first();
         $items = [];
         $total_price = 0;
         foreach ($order->detail as $detail) {
@@ -438,10 +438,13 @@ class LogisticManager
             'courier' => $order->delivery->delivery_method,
             'service_code' => $order->delivery->delivery_type,
             'shipping_price' => (int) $order->delivery->delivery_fee,
-            // 'shipping_type' => $order->delivery->shipping_type,
-            // 'must_use_insurance' => $order->delivery->must_use_insurance,
+            'shipping_type' => $order->delivery->shipping_type,
+            'must_use_insurance' => $order->delivery->must_use_insurance,
             'items_total_price' => $total_price,
+            'pick_up_time' => $pick_up_time,
             'shipper' => [
+                'merchant_id' => $order->merchant->id,
+                'company_name' => $order->merchant->corporate->name,
                 'name' => $order->merchant->name,
                 'email' => $order->merchant->email,
                 'phone' => $order->merchant->phone_office,
@@ -468,6 +471,8 @@ class LogisticManager
         $merchant_delivery = json_decode($order->delivery->merchant_data);
         if ($merchant_delivery != null) {
             $body['shipper'] = [
+                'merchant_id' => $order->merchant->id,
+                'company_name' => $order->merchant->corporate->name,
                 'name' => $merchant_delivery->merchant_name,
                 'email' => $order->merchant->email,
                 'phone' => $merchant_delivery->merchant_phone_office,

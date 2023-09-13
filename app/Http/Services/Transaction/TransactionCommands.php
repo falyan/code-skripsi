@@ -2097,7 +2097,7 @@ class TransactionCommands extends Service
         $delivery = $order->delivery;
 
         if ($delivery->delivery_method != 'Pengiriman oleh Seller' && $delivery->delivery_setting == 'shipper') {
-            $resi = LogisticManager::preorder($order->id);
+            $resi = LogisticManager::preorder($order->id, $expect_time);
 
             if (!isset($resi['data'])) {
                 $response['success'] = false;
