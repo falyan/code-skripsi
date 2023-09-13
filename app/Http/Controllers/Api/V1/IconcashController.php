@@ -873,8 +873,8 @@ class IconcashController extends Controller
 
             // change to new format response
             $data = [];
-            foreach ($response as $key => $value) {
-                $order_id = IconcashInquiry::select('order_id')->where('client_ref', $value->clientRef)->get()->toArray();
+            foreach ($response as $key) {
+                $order_id = IconcashInquiry::select('order_id')->where('client_ref', $key->clientRef)->get()->toArray();
                 if (count($order_id)) {
                     $order_id = $order_id[0]['order_id'];
                     $order = Order::with('delivery', 'detail', 'detail.product', 'detail.product.product_photo', 'buyer', 'payment')->find($order_id);
@@ -884,25 +884,26 @@ class IconcashController extends Controller
                 } else {
                     $order = null;
                 }
+
                 $data[] = [
-                    'order_id' => $value->orderId,
-                    'client_ref' => $value->clientRef,
-                    'status' => $value->status,
-                    'transaction_type_name' => $value->transactionTypeName,
-                    'source_account_name' => $value->sourceAccountName,
-                    'receiver_account_name' => $value->receiverAccountName,
-                    'receiver_account_type' => $value->receiverAccountType,
-                    'corporate_name' => $value->corporateName,
-                    'amount' => $value->amount,
-                    'fee' => $value->fee,
-                    'amount_fee' => $value->amountFee,
-                    'transaction_date' => $value->transactionDate,
-                    'description' => $value->description,
-                    'beneficiary_account' => $value->beneficiaryAccount,
-                    'beneficiary_name' => $value->beneficiaryName,
-                    'bank_name' => $value->bankName,
-                    'remarks' => $value->remarks,
-                    'additional_info' => $value->additionalInfo,
+                    'order_id' => $key->orderId,
+                    'client_ref' => $key->clientRef,
+                    'status' => $key->status,
+                    'transaction_type_name' => $key->transactionTypeName,
+                    'source_account_name' => $key->sourceAccountName,
+                    'receiver_account_name' => $key->receiverAccountName,
+                    'receiver_account_type' => $key->receiverAccountType,
+                    'corporate_name' => $key->corporateName,
+                    'amount' => $key->amount,
+                    'fee' => $key->fee,
+                    'amount_fee' => $key->amountFee,
+                    'transaction_date' => $key->transactionDate,
+                    'description' => $key->description ?? '',
+                    'beneficiary_account' => $key->beneficiaryAccount ?? '',
+                    'beneficiary_name' => $key->beneficiaryName ?? '',
+                    'bank_name' => $key->bankName ?? '',
+                    'remarks' => $key->remarks ?? '',
+                    'additional_info' => $key->additionalInfo ?? '',
                     'order' => $order,
                 ];
             }
