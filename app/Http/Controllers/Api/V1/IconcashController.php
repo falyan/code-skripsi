@@ -637,15 +637,23 @@ class IconcashController extends Controller
 
             $response = IconcashManager::getCustomerBankById($iconcash->token, $id);
 
-            return $this->respondWithItem($response, function ($bank) {
-                return [
-                    'id' => $bank->id,
-                    'bank' => $bank->bank,
-                    'account_name' => $bank->accountName,
-                    'account_number' => $bank->accountNumber,
-                    'customer_name' => $bank->customerName,
-                ];
-            });
+            // return $this->respondWithItem($response, function ($bank) {
+            //     return [
+            //         'id' => $bank->id,
+            //         'bank' => $bank->bank,
+            //         'account_name' => $bank->accountName,
+            //         'account_number' => $bank->accountNumber,
+            //         'customer_name' => $bank->customerName,
+            //     ];
+            // });
+
+            return $this->respondWithData([
+                'id' => $response->id,
+                'bank' => $response->bank,
+                'customer_name' => $response->customerName,
+                'account_number' => $response->accountNumber,
+                'account_name' => $response->accountName,
+            ], 'Berhasil mendapatkan data customer bank!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -662,12 +670,14 @@ class IconcashController extends Controller
 
             $response = IconcashManager::deleteCustomerBank($iconcash->token, $id);
 
-            return $this->respondWithItem($response, function () {
-                return [
-                    'success' => true,
-                    'message' => "Customer Bank Berhasil Dihapus!",
-                ];
-            });
+            // return $this->respondWithItem($response, function () {
+            //     return [
+            //         'success' => true,
+            //         'message' => "Customer Bank Berhasil Dihapus!",
+            //     ];
+            // });
+
+            return $this->respondWithResult(true, 'Customer Bank Berhasil Dihapus!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
@@ -688,15 +698,23 @@ class IconcashController extends Controller
 
             $response = IconcashManager::updateCustomerBank($iconcash->token, $id, $account_name, $account_number, $bank_id);
 
-            return $this->respondWithItem($response, function ($bank) {
-                return [
-                    'id' => $bank->id,
-                    'bank' => $bank->bank,
-                    'account_name' => $bank->accountName,
-                    'account_number' => $bank->accountNumber,
-                    'customer_name' => $bank->customerName,
-                ];
-            });
+            // return $this->respondWithItem($response, function ($bank) {
+            //     return [
+            //         'id' => $bank->id,
+            //         'bank' => $bank->bank,
+            //         'account_name' => $bank->accountName,
+            //         'account_number' => $bank->accountNumber,
+            //         'customer_name' => $bank->customerName,
+            //     ];
+            // });
+
+            return $this->respondWithData([
+                'id' => $response->id,
+                'bank' => $response->bank,
+                'customer_name' => $response->customerName,
+                'account_number' => $response->accountNumber,
+                'account_name' => $response->accountName,
+            ], 'Berhasil menyimpan customer bank!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
