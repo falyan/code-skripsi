@@ -19,15 +19,14 @@ use App\Models\CustomerEVSubsidy;
 use App\Models\IconcashInquiry;
 use App\Models\MasterData;
 use App\Models\Order;
+use App\Models\OrderComplaint;
 use App\Models\OrderDelivery;
 use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductStock;
-use App\Models\VariantStock;
-use App\Models\OrderComplaint;
 use App\Models\UbahDayaLog;
 use App\Models\UbahDayaMaster;
-use App\Models\OrderProgress;
+use App\Models\VariantStock;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -1010,7 +1009,10 @@ class TransactionController extends Controller
                     foreach ($orders as $o) {
                         $total_amount_trx += $o->total_amount;
                         $total_delivery_fee_trx += $o->delivery->delivery_fee;
-                        if ($o->voucher_ubah_daya_code != null) $check_voucher_exist = true;
+                        if ($o->voucher_ubah_daya_code != null) {
+                            $check_voucher_exist = true;
+                        }
+
                     }
 
                     $is_ev2go = false;
@@ -1019,7 +1021,10 @@ class TransactionController extends Controller
                         foreach ($value->detail as $detail) {
                             if ($detail->product->insentif_ubah_daya) {
                                 $is_ev2go = true;
-                                if ($order->merchant_id == $value->merchant_id) $merchat_ev2go = true;
+                                if ($order->merchant_id == $value->merchant_id) {
+                                    $merchat_ev2go = true;
+                                }
+
                             }
                         }
                     }
@@ -1037,7 +1042,7 @@ class TransactionController extends Controller
                         if ((($is_ev2go == true && $merchat_ev2go == true) && $check_voucher_exist == false && $with_insentif == true) && $periode) {
                             $claim_bonus_voucher = true;
                             $this->voucherCommand->generateVoucher($order, $master_ubah_daya, true);
-                        } elseif (($is_ev2go == false && $merchat_ev2go == false) && $check_voucher_exist == false &&  ($total_amount_trx - $total_delivery_fee_trx) >= $master_ubah_daya->min_transaction && $periode && $ubah_daya_logs == 0) {
+                        } elseif (($is_ev2go == false && $merchat_ev2go == false) && $check_voucher_exist == false && ($total_amount_trx - $total_delivery_fee_trx) >= $master_ubah_daya->min_transaction && $periode && $ubah_daya_logs == 0) {
                             $claim_bonus_voucher = true;
                             $this->voucherCommand->generateVoucher($order, $master_ubah_daya);
                         }
@@ -1381,7 +1386,19 @@ class TransactionController extends Controller
                 $client_ref = $order->trx_no;
                 $corporate_id = 10;
 
-                $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
+                $createTopupInquiry = IconcashInquiry::create([
+                    'customer_id' => $iconcash->customer_id,
+                    'iconcash_id' => $iconcash->id,
+                    'type' => 'topup',
+                    'source_account_id' => $iconcash->account_id,
+                    'order_id' => $order->id,
+                    'amount' => $amount,
+                    'client_ref' => $client_ref,
+                    'iconcash_order_id' => null,
+                    'res_json' => null,
+                ]);
+
+                $topup_inquiry = IconcashInquiry::updateTopupInquiry($createTopupInquiry->id, $iconcash, $account_type_id, $amount, $client_ref, $corporate_id);
                 $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
                 if ($resConfrim) {
