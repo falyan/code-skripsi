@@ -877,7 +877,10 @@ class IconcashController extends Controller
                 $order_id = IconcashInquiry::select('order_id')->where('client_ref', $value->clientRef)->get()->toArray();
                 if (count($order_id)) {
                     $order_id = $order_id[0]['order_id'];
-                    $order = Order::with('delivery', 'detail', 'detail.product', 'detail.product.product_photo', 'buyer', 'payment')->find($order_id)->toArray();
+                    $order = Order::with('delivery', 'detail', 'detail.product', 'detail.product.product_photo', 'buyer', 'payment')->find($order_id);
+                    if ($order) {
+                        $order = $order->toArray();
+                    }
                 } else {
                     $order = null;
                 }
