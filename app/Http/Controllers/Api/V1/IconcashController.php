@@ -811,12 +811,14 @@ class IconcashController extends Controller
 
             $response = IconcashManager::forgotPin($iconcash->token, $otp, $new_pin, $confirm_new_pin, $iconcash->phone);
 
-            return $this->respondWithItem($response, function ($item) {
-                return [
-                    'success' => $item->success,
-                    'message' => $item->message,
-                ];
-            });
+            // return $this->respondWithItem($response, function ($item) {
+            //     return [
+            //         'success' => $item->success,
+            //         'message' => $item->message,
+            //     ];
+            // });
+
+            return $this->respondWithResult(data_get($response, 'success'), data_get($response, 'message'), data_get($response, 'success') ? 200 : 400);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
