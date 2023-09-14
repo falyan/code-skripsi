@@ -289,19 +289,20 @@ class IconcashController extends Controller
             $response = IconcashInquiry::createWithdrawalInquiryV2($iconcash, $bank_account_name, $bank_account_no, $bank_id, $nominal, $source_account_id);
 
             return $this->respondWithData([
-                'order_id' => $response->orderId,
-                'invoice_id' => $response->invoiceId,
-                'source_account_id' => $response->sourceAccountId,
-                'source_account_name' => $response->sourceAccountName,
-                'nominal' => $response->nominal,
-                'fee' => $response->fee,
-                'admin_fee' => $response->adminFee,
-                'total' => $response->total,
-                'bank_id' => $response->bankId,
-                'bank_code' => $response->bankCode,
-                'bank_name' => $response->bankName,
-                'bank_account_no' => $response->bankAccountNo,
-                'bank_account_name' => $response->bankAccountName,
+                'order_id' => data_get($response, 'orderId') ?? '',
+                'invoice_id' => data_get($response, 'invoiceId') ?? '',
+                'source_account_id' => data_get($response, 'sourceAccountId') ?? '',
+                'source_account_name' => data_get($response, 'sourceAccountName') ?? '',
+                'nominal' => data_get($response, 'nominal') ?? '',
+                'fee' => data_get($response, 'fee') ?? '',
+                'admin_fee' => data_get($response, 'adminFee') ?? '',
+                'total' => data_get($response, 'total') ?? '',
+                'bank_id' => data_get($response, 'bankId') ?? '',
+                'bank_code' => data_get($response, 'bankCode') ?? '',
+                'bank_name' => data_get($response, 'bankName') ?? '',
+                'bank_account_no' => data_get($response, 'bankAccountNo') ?? '',
+                'bank_account_name' => data_get($response, 'bankAccountName') ?? '',
+                'expired_date' => data_get($response, 'expiredDate') ?? '',
             ], 'Proses Inquiry Berhasil!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -341,18 +342,18 @@ class IconcashController extends Controller
             }
 
             return $this->respondWithData([
-                'order_id' => data_get($response, 'data.orderId'),
-                'invoice_id' => data_get($response, 'data.invoiceId'),
-                'source_account_id' => data_get($response, 'data.sourceAccountId'),
-                'source_account_name' => data_get($response, 'data.sourceAccountName'),
-                'nominal' => data_get($response, 'data.nominal'),
-                'fee' => data_get($response, 'data.fee'),
-                'total' => data_get($response, 'data.total'),
-                'bank_id' => data_get($response, 'data.bankId'),
-                'bank_code' => data_get($response, 'data.bankCode'),
-                'bank_name' => data_get($response, 'data.bankName'),
-                'bank_account_no' => data_get($response, 'data.bankAccountNo'),
-                'bank_account_name' => data_get($response, 'data.bankAccountName'),
+                'order_id' => data_get($response, 'data.orderId') ?? '',
+                'invoice_id' => data_get($response, 'data.invoiceId') ?? '',
+                'source_account_id' => data_get($response, 'data.sourceAccountId') ?? '',
+                'source_account_name' => data_get($response, 'data.sourceAccountName') ?? '',
+                'nominal' => data_get($response, 'data.nominal') ?? '',
+                'fee' => data_get($response, 'data.fee') ?? '',
+                'total' => data_get($response, 'data.total') ?? '',
+                'bank_id' => data_get($response, 'data.bankId') ?? '',
+                'bank_code' => data_get($response, 'data.bankCode') ?? '',
+                'bank_name' => data_get($response, 'data.bankName') ?? '',
+                'bank_account_no' => data_get($response, 'data.bankAccountNo') ?? '',
+                'bank_account_name' => data_get($response, 'data.bankAccountName') ?? '',
             ], 'Withdrawal Berhasil!');
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -505,12 +506,14 @@ class IconcashController extends Controller
 
             // change to new format
             $data = [];
-            foreach ($response as $key => $value) {
+            foreach ($response as $value) {
                 $data[] = [
-                    'id' => $value->id,
-                    'code' => $value->code,
-                    'name' => $value->name,
-                    'va_prefix' => $value->vaPrefix,
+                    'id' => $value->id ?? '',
+                    'code' => $value->code ?? '',
+                    'name' => $value->name ?? '',
+                    'va_prefix' => $value->vaPrefix ?? '',
+                    'fee_withdrawal' => $value->feeWithdrawal ?? '',
+                    'fee_wuthdrawal_type' => $value->feeWithdrawalType ?? '',
                 ];
             }
 
