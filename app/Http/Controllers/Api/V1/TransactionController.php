@@ -1387,19 +1387,7 @@ class TransactionController extends Controller
                 $client_ref = $order->trx_no;
                 $corporate_id = 10;
 
-                $createTopupInquiry = IconcashInquiry::create([
-                    'customer_id' => $iconcash->customer_id,
-                    'iconcash_id' => $iconcash->id,
-                    'type' => 'topup',
-                    'source_account_id' => $iconcash->account_id,
-                    'order_id' => $order->id,
-                    'amount' => $amount,
-                    'client_ref' => $client_ref,
-                    'iconcash_order_id' => null,
-                    'res_json' => null,
-                ]);
-
-                $topup_inquiry = IconcashInquiry::updateTopupInquiry($createTopupInquiry->id, $iconcash, $account_type_id, $amount, $client_ref, $corporate_id);
+                $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
                 $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
                 if ($resConfrim) {
