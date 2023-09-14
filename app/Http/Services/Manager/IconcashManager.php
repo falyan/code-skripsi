@@ -343,7 +343,7 @@ class IconcashManager
             ],
         ]);
 
-        $response = json_decode($response->getBody());
+        $response = json_decode($response->getBody(), true);
 
         Log::info('withdrawalInquiry', [
             'response' => $response,
@@ -351,8 +351,8 @@ class IconcashManager
 
         throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-        if ($response->success != true) {
-            throw new Exception($response->message, $response->code);
+        if ($response['success'] != true) {
+            throw new Exception($response['message'], $response['code']);
         }
 
         return data_get($response, 'data');
