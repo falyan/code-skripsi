@@ -2027,7 +2027,6 @@ class TransactionController extends Controller
             $client_ref = $this->unique_code($iconcash->token);
             if ($refund->client_ref == null) {
                 $refund->client_ref = $client_ref;
-                $refund->save();
             } else {
                 $client_ref = $refund->client_ref;
             }
@@ -2040,7 +2039,14 @@ class TransactionController extends Controller
                 $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
                 $iconcash_inquiry->confirm_status = $resConfrim->success;
                 $iconcash_inquiry->save();
+
+                $refund->status = 'success';
+                $refund->updated_by = 'system';
+            } else {
+                $refund->status = 'failed';
+                $refund->updated_by = 'system';
             }
+            $refund->save();
 
             // $column_name = 'merchant_id';
             // $column_value = $customer->merchant_id;
