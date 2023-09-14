@@ -125,6 +125,9 @@ class PagesQueries extends Service
     {
         $data = Pages::where('page_type', 'seller_term_condition')->select('id', 'page_type', 'title', 'body')->first();
 
+        // replace double quote to single quote
+        $data_body = str_replace('"', "'", $data->body);
+
         if (!$data) {
             return response()->json([
                 'success' => false,
@@ -135,7 +138,12 @@ class PagesQueries extends Service
             return response()->json([
                 'success' => true,
                 'message' => 'Data page berhasil ditampilkan',
-                'data' => $data,
+                'data' => [
+                    'id' => $data->id,
+                    'page_type' => $data->page_type,
+                    'title' => $data->title,
+                    'body' => $data_body,
+                ],
             ], 200);
         }
     }
@@ -144,6 +152,9 @@ class PagesQueries extends Service
     {
         $data = Pages::where('page_type', 'seller_privacy_policy')->select('id', 'page_type', 'title', 'body')->first();
 
+        // replace double quote to single quote
+        $data_body = str_replace('"', "'", $data->body);
+
         if (!$data) {
             return response()->json([
                 'success' => false,
@@ -154,7 +165,12 @@ class PagesQueries extends Service
             return response()->json([
                 'success' => true,
                 'message' => 'Data page berhasil ditampilkan',
-                'data' => $data,
+                'data' => [
+                    'id' => $data->id,
+                    'page_type' => $data->page_type,
+                    'title' => $data->title,
+                    'body' => $data_body,
+                ],
             ], 200);
         }
     }
