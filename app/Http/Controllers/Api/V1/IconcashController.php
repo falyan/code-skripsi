@@ -379,6 +379,10 @@ class IconcashController extends Controller
 
             $response = IconcashManager::withdrawalV2($iconcash->token, $pin, $order_id);
 
+            if (data_get($response, 'success') == false) {
+                return response()->json(["success" => data_get($response, 'success'), "code" => data_get($response, 'code'), "message" => data_get($response, 'message')], 200);
+            }
+
             if ($response) {
                 $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $order_id)->first();
                 $iconcash_inquiry->confirm_res_json = json_encode(data_get($response, 'data'));
