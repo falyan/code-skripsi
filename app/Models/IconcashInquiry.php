@@ -130,22 +130,6 @@ class IconcashInquiry extends Model
         return $response;
     }
 
-    public static function updateTopupInquiry($id, $iconcash, $account_type_id, $amount, $client_ref, $corporate_id)
-    {
-        // update inquiry
-        $model = self::where('id', $id)->first();
-
-        $response = IconcashManager::topupInquiry($iconcash->phone, $account_type_id, $amount, $client_ref, $corporate_id);
-
-        $model->update([
-            'source_account_id' => $response->accountId,
-            'iconcash_order_id' => $response->orderId,
-            'res_json' => json_encode($response),
-        ]);
-
-        return $response;
-    }
-
     public static function createTopupDepositInquiry($iconcash, $amount, $client_ref, $pspId, $order)
     {
         $model = new self;
