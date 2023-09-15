@@ -889,7 +889,7 @@ class TransactionCommands extends Service
                         $customerEv->customer_id_pel = $customer->pln_mobile_customer_id;
                         $customerEv->customer_nik = data_get($datas, 'customer.nik');
                         $customerEv->ktp_url = data_get($datas, 'customer.ktp_url');
-                        $customerEv->kk_url = data_get($datas, 'customer.kk_url');
+                        $customerEv->kk_url = data_get($datas, 'customer.kk_url') ?? null;
                         $customerEv->file_url = data_get($datas, 'customer.file_url');
                         $customerEv->created_by = auth()->user()->full_name;
                         $customerEv->save();
@@ -1628,7 +1628,7 @@ class TransactionCommands extends Service
                         $customerEv->customer_id_pel = $customer->pln_mobile_customer_id;
                         $customerEv->customer_nik = data_get($datas, 'customer.nik');
                         $customerEv->ktp_url = data_get($datas, 'customer.ktp_url');
-                        $customerEv->kk_url = data_get($datas, 'customer.kk_url');
+                        $customerEv->kk_url = data_get($datas, 'customer.kk_url') ?? null;
                         $customerEv->file_url = data_get($datas, 'customer.file_url');
                         $customerEv->created_by = auth()->user()->full_name;
                         $customerEv->save();
