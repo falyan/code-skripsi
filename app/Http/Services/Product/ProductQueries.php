@@ -1483,6 +1483,7 @@ class ProductQueries extends Service
         $merchant = Merchant::with(['city'])->where('id', env('PV_ROOFTOP_MERCHANT_ID'))->first();
 
         $data = array_map(function ($item) use ($master_data, $merchant) {
+            $master_data->value = $item['kategori'];
             return [
                 'id' => $item['id'],
                 'merchant_id' => $merchant->id,
@@ -1540,7 +1541,7 @@ class ProductQueries extends Service
                         'updated_at' => Carbon::parse($item['dateModified'])->format('Y-m-d H:i:s'),
                         'deleted_at' => null,
                     ];
-                }, ['https://api-central.air.id/plnmp-sauron-staging/api/firebase/file/load/Marketplace~products~1652938553989ea973-bce5-4440-bc16-73b0434bdb01.jpg']),
+                }, [$item['urlImg']]),
                 'is_whislist' => null,
                 'merchant' => $merchant,
                 'varian_product' => null,
@@ -1549,6 +1550,7 @@ class ProductQueries extends Service
                 'promo_value' => 0,
                 'promo_type' => '',
                 'reviews' => null,
+                'category' => $master_data,
             ];
         }, $response['data']);
 
