@@ -2104,7 +2104,7 @@ class TransactionCommands extends Service
 
             $delivery->awb_number = $resi['data']['awb_number'];
             $delivery->no_reference = $resi['data']['no_reference'];
-            $delivery->image_logistic = data_get($resi, 'data.courier_image');
+            $delivery->image_logistic = $resi['data']['courier_image'];
 
             if (!$delivery->save()) {
                 $response['success'] = false;
