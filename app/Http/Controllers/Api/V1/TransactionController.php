@@ -2155,6 +2155,7 @@ class TransactionController extends Controller
                                 'trx_no' => $data->trx_no,
                                 'awb_number' => $delivery->awb_number,
                                 'no_reference' => $delivery->no_reference,
+                                'image_logistic' => $delivery->image_logistic,
                             ];
                         }
                     } else {
@@ -2169,6 +2170,7 @@ class TransactionController extends Controller
                                 'trx_no' => $order->trx_no,
                                 'awb_number' => null,
                                 'no_reference' => null,
+                                'image_logistic' => null,
                             ];
                         }
                     }
