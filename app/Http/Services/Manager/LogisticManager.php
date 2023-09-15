@@ -325,7 +325,7 @@ class LogisticManager
     public static function track($order)
     {
         $param = static::setParamAPI([]);
-        $url = sprintf('%s/%s', static::$endpoint, 'v2/tracking' . $param);
+        $url = sprintf('%s/%s', static::$endpoint, 'v1/tracking' . $param);
 
         $body = [
             'trx_no' => $order->trx_no,
@@ -352,11 +352,11 @@ class LogisticManager
             throw new Exception($response['message'], $response['status']);
         }
 
+        $transactionQueries = new TransactionQueries();
+        $data = $transactionQueries->getStatusOrder($order->id, true);
+
         if (isset($response['data']) && $response['data']['delivered'] == true) {
             DB::beginTransaction();
-
-            $transactionQueries = new TransactionQueries();
-            $data = $transactionQueries->getStatusOrder($order->id, true);
 
             $status_codes = [];
             foreach ($data->progress as $item) {
@@ -393,6 +393,16 @@ class LogisticManager
             } else {
                 DB::rollBack();
             }
+        }
+
+        if (isset($response['data']) && $response['data']['shippper_name'] == null) {
+            $delivery = $data->delivery->merchant_data;
+            $delivery = json_decode($delivery);
+
+            $response['data']['shippper_name'] = $delivery->merchant_name;
+            $response['data']['shippper_address'] = $delivery->merchant_address;
+            $response['data']['receiver_name'] = $data->delivery->receiver_name;
+            $response['data']['receiver_address'] = $data->delivery->address;
         }
 
         return $response;
