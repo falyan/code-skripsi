@@ -30,9 +30,9 @@ class TransactionQueries extends Service
         $order = Order::with([
             'detail' => function ($product) {
                 $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
+                    $j->with(['product_photo', 'ev_subsidy']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
+            }, 'progress_active', 'merchant', 'ev_subsidy', 'delivery', 'buyer', 'review' => function ($r) {
                 $r->with(['review_photo'])->where('status', 1);
             },
         ])->where($column_name, $column_value)->when($column_name == 'merchant_id', function ($query) {
