@@ -196,6 +196,11 @@ class EvSubsidyCommands extends Service
                     $detail->price = $product->strike_price;
                     $detail->total_price = $product->strike_price * $detail->quantity;
                     $detail->total_amount = $detail->total_price;
+
+                    // update detail->product_data with json_encode
+                    $product_data = json_decode($detail->product_data);
+                    $product_data->price = $product->strike_price;
+                    $detail->product_data = json_encode($product_data);
                     $detail->save();
                 }
 
