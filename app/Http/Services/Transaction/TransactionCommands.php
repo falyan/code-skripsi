@@ -201,8 +201,8 @@ class TransactionCommands extends Service
                 throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
             }
 
-            // $mailSender = new MailSenderManager();
-            // $mailSender->mailCheckout($this->order_id);
+            $mailSender = new MailSenderManager();
+            $mailSender->mailCheckout($this->order_id);
 
             if ($datas['total_discount'] > 0) {
                 $update_discount = $this->updateCustomerDiscount($customer_id, $customer->email, $datas['total_discount'], $no_reference);
@@ -875,7 +875,7 @@ class TransactionCommands extends Service
             // Log info with message
             Log::info('Total Payment: ' . $datas['total_payment'] . ' | Bonus Discount: ' . $bonusAmount);
 
-            // $mailSender = new MailSenderManager();
+            $mailSender = new MailSenderManager();
 
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
                 $ev_subsidy = $ev_subsidies[0];
@@ -896,9 +896,9 @@ class TransactionCommands extends Service
                     }
                 }
 
-                // $mailSender->mailCheckoutSubsidy($this->order_id);
+                $mailSender->mailCheckoutSubsidy($this->order_id);
             } else {
-                // $mailSender->mailCheckout($this->order_id);
+                $mailSender->mailCheckout($this->order_id);
             }
 
             if ($datas['total_discount'] > 0) {
@@ -1613,7 +1613,7 @@ class TransactionCommands extends Service
             // Log info with message
             Log::info('Total Payment: ' . $datas['total_payment'] . ' | Bonus Discount: ' . $bonusAmount);
 
-            // $mailSender = new MailSenderManager();
+            $mailSender = new MailSenderManager();
 
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
                 // if ($ev_subsidies) {
@@ -1635,7 +1635,7 @@ class TransactionCommands extends Service
                     }
                 }
 
-                // $mailSender->mailCheckoutSubsidy($this->order_id);
+                $mailSender->mailCheckoutSubsidy($this->order_id);
                 // } else {
                 //     $master_ubah_daya = UbahDayaMaster::where('event_start_date', '<=', Carbon::now())->where('event_end_date', '>=', Carbon::now())->where('status', 1)->first();
                 //     $check_voucher_ubah_daya_code = UbahDayaLog::where('nik', data_get($datas, 'customer.nik'))->where('master_ubah_daya_id', $master_ubah_daya->id)->first();
@@ -1670,7 +1670,7 @@ class TransactionCommands extends Service
                 //     $mailSender->mailCheckout($this->order_id);
                 // }
             } else {
-                // $mailSender->mailCheckout($this->order_id);
+                $mailSender->mailCheckout($this->order_id);
             }
 
             if ($datas['total_discount'] > 0) {
