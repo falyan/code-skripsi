@@ -6,8 +6,6 @@ use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
 use App\Models\Customer;
-use App\Models\CustomerAddress;
-use App\Models\Merchant;
 use App\Models\Order;
 use Carbon\Carbon;
 use Exception;
@@ -407,6 +405,11 @@ class LogisticManager
             $response['data']['receiver_address'] = $data->delivery->address;
         }
 
+        $response['data']['tracking'] = array_map(function ($item) {
+            $item['status'] = static::getStatusRajaOngkir($item['status']);
+            return $item;
+        }, $response['data']['tracking']);
+
         return $response;
     }
 
@@ -606,5 +609,23 @@ class LogisticManager
         }
 
         return implode('', $param);
+    }
+
+    private static function getStatusRajaOngkir($status)
+    {
+        $statusCode = '1';
+        if (in_array($status, ['00', '01'])) {
+            $statusCode = '1';
+        } elseif (in_array($status, ['02', '03'])) {
+            $statusCode = '2';
+        } elseif (in_array($status, ['04'])) {
+            $statusCode = '4';
+        } elseif (in_array($status, ['88'])) {
+            $statusCode = '5';
+        } elseif (in_array($status, ['98', '99'])) {
+            $statusCode = '1';
+        }
+
+        return $statusCode;
     }
 }
