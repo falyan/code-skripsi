@@ -59,10 +59,10 @@ class BannerQueries extends Service
 
     public function getFlashPopup()
     {
-        $master_data = MasterData::whereIn('key', ['banner_url_path', 'banner_deeplink'])->get();
+        $master_data = MasterData::with('parent')->where('key', 'like', 'banner_url_path%')->inRandomOrder()->first();
 
-        $url_path = collect($master_data)->where('key', 'banner_url_path')->first();
-        $deeplink = collect($master_data)->where('key', 'banner_deeplink')->first();
+        $url_path = $master_data;
+        $deeplink = $master_data->parent;
 
         return [
             'sukses' => true,
