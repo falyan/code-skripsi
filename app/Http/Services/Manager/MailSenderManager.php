@@ -514,7 +514,7 @@ class MailSenderManager
 
         Mail::send('email.approvedEVSubsidy', $data, function ($mail) use ($order) {
             $mail->to($order->buyer->email, 'no-reply')
-                ->subject("Pesananmu sudah disetujui");
+                ->subject("Pengajuan Pesanan Diterima");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
         });
 
@@ -538,7 +538,7 @@ class MailSenderManager
 
         Mail::send('email.rejectedEVSubsidy', $data, function ($mail) use ($order) {
             $mail->to($order->buyer->email, 'no-reply')
-                ->subject("Pesananmu sudah disetujui");
+                ->subject(" Pengajuan Pesanan Ditolak");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
         });
 
