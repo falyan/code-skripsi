@@ -3,6 +3,7 @@
 namespace App\Http\Services\ProductEvSubsidy;
 
 use App\Helpers\LogService;
+use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Service;
 use App\Models\CustomerEVSubsidy;
 use App\Models\Order;
@@ -255,6 +256,9 @@ class EvSubsidyCommands extends Service
                 $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
                 $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
 
+                $mailSender = new MailSenderManager();
+                $mailSender->mailRejectedEVSubsidy($data->order_id);
+
                 DB::commit();
 
                 return [
@@ -264,6 +268,9 @@ class EvSubsidyCommands extends Service
                 ];
 
             }
+
+            $mailSender = new MailSenderManager();
+            $mailSender->mailApprovedEVSubsidy($data->order_id);
 
             DB::commit();
 
