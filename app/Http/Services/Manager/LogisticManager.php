@@ -216,11 +216,13 @@ class LogisticManager
                 'origin' => (string) $customer_address->district_id,
                 'latitude' => (string) $customer_address->latitude,
                 'longitude' => (string) $customer_address->longitude,
+                'postal_code' => (string) $customer_address->postal_code,
             ],
             'receiver' => [
                 'destination' => (string) $merchant->district_id,
                 'latitude' => (string) $merchant->latitude,
                 'longitude' => (string) $merchant->longitude,
+                'postal_code' => (string) $merchant->postal_code,
             ],
             'item_price' => $price,
             'weight' => $weight,
