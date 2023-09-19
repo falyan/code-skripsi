@@ -46,7 +46,7 @@ class InstallmentQueries extends Service
         $tenor_prices = [];
         foreach ($providers as $provider) {
             foreach ($provider->details as $simulation) {
-                $tenor_prices[] = $simulation->simulation_price;
+                $tenor_prices[] = $simulation->simulation_price_installment;
             }
         }
 
