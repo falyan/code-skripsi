@@ -319,7 +319,8 @@ class LogisticController extends Controller
                             'service_code' => (string) $data_value['service_code'],
                             'service_name' => $data_value['service_name'] . ' ' . ($prefix_shipper == null ? 'Pick Up' : $prefix_shipper->value),
                             'estimate_day' => $data_value['estimate_day'],
-                            'price' => $data_value['price'],
+                            'final_price' => $data_value['final_price'],
+                            'origin_price' => $data_value['origin_price'],
                             'min_weight' => $data_value['min_weight'],
                             'max_weight' => $data_value['max_weight'],
                             'delivery_discount' => 0,
@@ -357,12 +358,13 @@ class LogisticController extends Controller
                             'service_code' => $data_value['service_name'],
                             'service_name' => $data_value['service_name'],
                             'estimate_day' => $data_value['estimate_day'],
-                            'price' => $data_value['price'],
+                            'final_price' => $data_value['price'],
+                            'origin_price' => $data_value['price'],
                             'min_weight' => $data_value['min_weight'],
                             'max_weight' => $data_value['max_weight'],
                             'delivery_discount' => 0,
                             'delivery_setting' => 'rajaongkir',
-                            'must_use_insurance' => false,
+                            'must_use_insurance' => 0,
                         ];
                     }
 
@@ -374,12 +376,13 @@ class LogisticController extends Controller
                             'service_code' => $data_value['service_name'],
                             'service_name' => $data_value['service_name'],
                             'estimate_day' => $data_value['estimate_day'],
-                            'price' => $data_value['price'],
+                            'final_price' => $data_value['price'],
+                            'origin_price' => $data_value['price'],
                             'min_weight' => $data_value['min_weight'],
                             'max_weight' => $data_value['max_weight'],
                             'delivery_discount' => 0,
                             'delivery_setting' => 'rajaongkir',
-                            'must_use_insurance' => false,
+                            'must_use_insurance' => 0,
                         ];
                     }
 
