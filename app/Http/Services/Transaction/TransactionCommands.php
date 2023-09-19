@@ -1478,11 +1478,36 @@ class TransactionCommands extends Service
                 // }
                 // End hitung mdr
 
-                $merchant_data = Merchant::find($order->merchant_id);
-
                 $shipping_type = data_get($data, 'delivery_service');
                 if (str_contains(strtolower($shipping_type), 'seller')) {
                     $shipping_type = 'custom';
+                }
+
+                $merchant_data = Merchant::with('expedition')->where('id',$order->merchant_id)->first();
+                $setting_courirers = Cache::remember('setting_courirers', 60 * 60, function () {
+                    return MasterData::where('type', 'rajaongkir_courier')->get();
+                });
+
+                $s_courier = '';
+                foreach (collect($setting_courirers)->where('key', 's_courier') as $courier) {
+                    foreach (explode(':', $merchant_data->expedition->list_expeditions) as $value) {
+                        if ($value == $courier->reference_third_party_id) {
+                            $s_courier .= $value . ':';
+                        }
+                    }
+                }
+
+                $logistic_manager = new LogisticManager();
+                $shipping_prices = $logistic_manager->getOngkir($customer_address, $merchant_data, data_get($data, 'total_weight'), rtrim($s_courier, ':'), data_get($data, 'total_amount'));
+                $shipping_origin_price = null;
+                foreach (collect($shipping_prices) as $value) {
+                    if ($value['code'] == data_get($data, 'delivery_method')) {
+                        foreach ($value['data'] as $data_value) {
+                            if ($data_value['service_code'] == data_get($data, 'delivery_type')) {
+                                $shipping_origin_price = $data_value['origin_price'];
+                            }
+                        }
+                    }
                 }
 
                 $order_delivery = new OrderDelivery();
@@ -1520,6 +1545,7 @@ class TransactionCommands extends Service
                 $order_delivery->delivery_type = data_get($data, 'delivery_type');
                 $order_delivery->delivery_setting = data_get($data, 'delivery_setting');
                 $order_delivery->delivery_fee = data_get($data, 'delivery_fee');
+                $order_delivery->delivery_fee_origin =  $shipping_origin_price;
                 $order_delivery->delivery_discount = data_get($data, 'delivery_discount');
                 $order_delivery->must_use_insurance = data_get($data, 'must_use_insurance') ?? false;
                 $order_delivery->save();
