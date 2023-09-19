@@ -334,6 +334,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('detail/{id}', 'DiscussionController@getDiscussionByMasterId');
                 $router->get('count/unread', 'DiscussionController@countUnreadDiscussionBuyer');
             });
+
+            $router->group(['prefix' => 'installment', 'middleware' => 'auth'], static function () use ($router) {
+                $router->get('provider', 'InstallmentController@getListInstallmentProvider');
+            });
+
         });
         $router->group(['prefix' => 'command'], static function () use ($router) {
             $router->group(['prefix' => 'address'], static function () use ($router) {
