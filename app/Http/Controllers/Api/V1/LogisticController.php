@@ -319,7 +319,7 @@ class LogisticController extends Controller
                             'service_code' => (string) $data_value['service_code'],
                             'service_name' => $data_value['service_name'] . ' ' . ($prefix_shipper == null ? 'Pick Up' : $prefix_shipper->value),
                             'estimate_day' => $data_value['estimate_day'],
-                            'price' => $data_value['price'],
+                            'price' => $data_value['final_price'],
                             'min_weight' => $data_value['min_weight'],
                             'max_weight' => $data_value['max_weight'],
                             'delivery_discount' => 0,
