@@ -3,19 +3,16 @@
 namespace App\Http\Services\Manager;
 
 use App\Http\Services\Transaction\TransactionQueries;
-use App\Models\Order;
 use App\Models\CustomerTiket;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelHigh;
-use Endroid\QrCode\Label\Alignment\LabelAlignmentCenter;
-use Endroid\QrCode\Label\Font\NotoSans;
 use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
 use Endroid\QrCode\Writer\PngWriter;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class MailSenderManager
 {
@@ -161,7 +158,7 @@ class MailSenderManager
         });
 
         if (Mail::failures()) {
-            Log::error('Gagal mengirim email pesanan sampai untuk ke email: ' . $customer->email,);
+            Log::error('Gagal mengirim email pesanan sampai untuk ke email: ' . $customer->email, );
         } else {
             Log::info('Berhasil mengirim email pesanan sampai ke email: ' . $customer->email);
         }
@@ -301,7 +298,7 @@ class MailSenderManager
         $customer = $order->buyer;
         $data = [
             'destination_name' => $order->merchant->name ?? 'Toko Favorit',
-            'order' => $order
+            'order' => $order,
         ];
 
         Mail::send('email.acceptOrder', $data, function ($mail) use ($customer) {
@@ -354,7 +351,6 @@ class MailSenderManager
                 ->build();
 
             $result->saveToFile(storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.png'));
-
 
             Pdf::loadView('pdf.ticket', [
                 'order' => $order,
@@ -423,7 +419,6 @@ class MailSenderManager
                 ->build();
 
             $result->saveToFile(storage_path('app/public/ticket/ticket-' . $user_tiket->number_tiket . '.png'));
-
 
             Pdf::loadView('pdf.ticket', [
                 'order' => $order,
@@ -520,6 +515,54 @@ class MailSenderManager
             Log::error('Gagal mengirim email checkout ke email: ' . $email);
         } else {
             Log::info('Berhasil mengirim email checkout ke email: ' . $email);
+        }
+    }
+
+    public function mailApprovedEVSubsidy($order_id)
+    {
+        $transactionQueries = new TransactionQueries();
+        $order = $transactionQueries->getDetailTransaction($order_id);
+        $data = [
+            'destination_name' => $order->buyer->full_name ?? 'Pengguna Setia',
+            'order' => $order,
+        ];
+
+        Mail::send('email.approvedEVSubsidy', $data, function ($mail) use ($order) {
+            $mail->to($order->buyer->email, 'no-reply')
+                ->subject("Pesananmu sudah disetujui");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        if (Mail::failures()) {
+            Log::error(
+                'Gagal mengirim email approval ev subsidy ke email: ' . $order->buyer->email
+            );
+        } else {
+            Log::info('Berhasil mengirim email approval ev subsidy ke email: ' . $order->buyer->email);
+        }
+    }
+
+    public function mailRejectedEVSubsidy($order_id)
+    {
+        $transactionQueries = new TransactionQueries();
+        $order = $transactionQueries->getDetailTransaction($order_id);
+        $data = [
+            'destination_name' => $order->buyer->full_name ?? 'Pengguna Setia',
+            'order' => $order,
+        ];
+
+        Mail::send('email.rejectedEVSubsidy', $data, function ($mail) use ($order) {
+            $mail->to($order->buyer->email, 'no-reply')
+                ->subject("Pesananmu sudah disetujui");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        if (Mail::failures()) {
+            Log::error(
+                'Gagal mengirim email approval ev subsidy ke email: ' . $order->buyer->email
+            );
+        } else {
+            Log::info('Berhasil mengirim email approval ev subsidy ke email: ' . $order->buyer->email);
         }
     }
 }
