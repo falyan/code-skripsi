@@ -119,7 +119,7 @@ class InstallmentQueries extends Service
         return [
             'price' => $price,
             'tenor' => $tenor,
-            'markup_price' => $markup_price,
+            'markup_price' => round($markup_price),
             'installment_price' => $installment_price,
             'installment_fee' => $installment_fee,
         ];

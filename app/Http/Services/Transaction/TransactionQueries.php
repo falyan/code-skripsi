@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\Transaction;
 
+use App\Http\Services\Installment\InstallmentQueries;
 use App\Http\Services\Manager\GamificationManager;
 use App\Http\Services\Service;
 use App\Models\City;
@@ -34,7 +35,7 @@ class TransactionQueries extends Service
                 }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
                 $r->with(['review_photo'])->where('status', 1);
-            },
+            }, 'installment',
         ])->where($column_name, $column_value)->when($column_name == 'merchant_id', function ($query) {
             $query->whereHas('progress_active', function ($q) {
                 $q->whereNotIn('status_code', [99]);
@@ -289,7 +290,7 @@ class TransactionQueries extends Service
                 $review->with(['review_photo']);
             }, 'promo_log_orders' => function ($promo) {
                 $promo->with(['promo_merchant.promo_master']);
-            },
+            }, 'installment',
         ])->find($id);
 
         $details = $data->detail;
@@ -1508,12 +1509,6 @@ class TransactionQueries extends Service
 
         $total_discount_payment += $discount_payment;
 
-        // Payment Installment //
-
-        if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
-            //
-        }
-
         // $datas['merchants'] = $new_merchant2;
         $datas['buyer_npwp'] = auth()->user()->npwp;
         $datas['merchants'] = $new_merchant;
@@ -1524,6 +1519,27 @@ class TransactionQueries extends Service
         $datas['total_payment'] -= $total_price_discount;
         $datas['total_payment'] -= $total_insentif;
         $datas['total_payment'] -= $total_discount_payment;
+
+        // Payment Installment //
+
+        if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
+            $installment = InstallmentQueries::calculateInstallment($datas['installment'], $datas['total_payment']);
+
+            $installment_price = $installment['installment_price'];
+            $installment_fee = $installment['installment_fee'];
+            $installment_tenor = $installment['tenor'];
+            $installment_markup_price = $installment['markup_price'];
+            $installment_total_payment = $installment_markup_price ?? $datas['total_payment'];
+            $installment_actual_price = $datas['total_payment'];
+        }
+
+        $datas['installment_price'] = $installment_price ?? 0;
+        $datas['installment_fee'] = $installment_fee ?? 0;
+        $datas['installment_tenor'] = $installment_tenor ?? 0;
+        $datas['installment_markup_price'] = $installment_markup_price ?? 0;
+        $datas['installment_actual_price'] = $installment_actual_price ?? 0;
+
+        $datas['total_payment'] = $installment_total_payment ?? $datas['total_payment'];
 
         if ($message_error != '') {
             $datas['success'] = false;

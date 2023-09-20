@@ -84,4 +84,14 @@ class Order extends Model
     {
         return $this->hasOne(CustomerTiket::class, 'order_id');
     }
+
+    public function complaint()
+    {
+        return $this->hasOne(OrderComplaint::class);
+    }
+
+    public function installment()
+    {
+        return $this->hasOne(InstallmentOrder::class);
+    }
 }
