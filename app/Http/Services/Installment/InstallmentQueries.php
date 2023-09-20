@@ -58,11 +58,43 @@ class InstallmentQueries extends Service
             }
         }
 
-        // get installment withou
-
         return [
             'providers' => $providers,
             'smallest_installment' => !empty($tenor_prices) ? min($tenor_prices) : null,
+        ];
+    }
+
+    public function getTenorInstallmentByProvider($price, $provider_id)
+    {
+        $providers = InstallmentProvider::with(['details' => function ($query) {
+            $query->orderBy('tenor', 'asc');
+        }])->where('status', 1)->where('id', $provider_id)->get();
+
+        $providers = $providers->transform(function ($provider) use ($price) {
+            if ($provider->provider_code == 'BRI-CERIA') {
+                unset($provider->details);
+                $provider->details = [];
+            } else if ($provider->provider_code == 'BNI-INSTALLMENT') {
+                foreach ($provider->details as $detail) {
+                    if (!empty($price)) {
+                        $percentages = ($detail->mdr_percentage + $detail->fee_percentage);
+                        $markup_price = $price / (1 - ($percentages / 100));
+                        $detail->simulation_price_installment = round($markup_price / $detail->tenor);
+                        $detail->simulation_fee_installment = round($markup_price * $percentages / 100);
+                        $detail->mdr_fee_percentage = $percentages;
+                    } else {
+                        $detail->simulation_price_installment = 0;
+                        $detail->simulation_fee_installment = 0;
+                        $detail->mdr_fee_percentage = 0;
+                    }
+                }
+            }
+
+            return $provider;
+        });
+
+        return [
+            'providers' => $providers,
         ];
     }
 

@@ -340,6 +340,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
 
             $router->group(['prefix' => 'installment', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('provider', 'InstallmentController@getListInstallmentProvider');
+                $router->get('provider/tenor', 'InstallmentController@getTenorInstallmentByProvider');
             });
 
         });
