@@ -2175,10 +2175,10 @@ class TransactionController extends Controller
                             $message = 'Pesanan anda sedang dalam pengiriman.';
                             $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
                             // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
-                            $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+                            // $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
-                            $mailSender = new MailSenderManager();
-                            $mailSender->mailOrderOnDelivery($order_id);
+                            // $mailSender = new MailSenderManager();
+                            // $mailSender->mailOrderOnDelivery($order_id);
 
                             $delivery = OrderDelivery::where('order_id', $order_id)->first();
                             $results[] = [
