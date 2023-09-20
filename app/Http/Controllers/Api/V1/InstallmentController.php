@@ -27,6 +27,16 @@ class InstallmentController extends Controller
         return $this->respondWithData($installmentProvider, 'Success get list installment provider');
     }
 
+    public function getTenorInstallmentByProvider(Request $request)
+    {
+        $price = $request->price ?? null;
+        $providerId = $request->provider_id ?? null;
+
+        $installmentProvider = $this->installmentQueries->getTenorInstallmentByProvider($price, $providerId);
+
+        return $this->respondWithData($installmentProvider, 'Success get list installment provider');
+    }
+
     public function calculateInstallment(Request $request)
     {
         $providerId = $request->provider_id ?? null;
