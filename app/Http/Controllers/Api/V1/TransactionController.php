@@ -24,10 +24,10 @@ use App\Models\OrderDelivery;
 use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Models\RefundOrder;
 use App\Models\UbahDayaLog;
 use App\Models\UbahDayaMaster;
 use App\Models\VariantStock;
-use App\Models\RefundOrder;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -1897,6 +1897,12 @@ class TransactionController extends Controller
                             }
 
                             $ev_subsidies[] = $product['ev_subsidy'];
+                        } else {
+                            return array_merge($respond, [
+                                'success' => true,
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak berinsentif',
+                            ]);
                         }
                     }
                 }
@@ -1968,6 +1974,12 @@ class TransactionController extends Controller
                             }
 
                             $ev_subsidies[] = $product['ev_subsidy'];
+                        } else {
+                            return array_merge($respond, [
+                                'success' => true,
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak berinsentif',
+                            ]);
                         }
                     }
                 }
