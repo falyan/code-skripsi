@@ -984,7 +984,7 @@ class TransactionCommands extends Service
             $no_reference = (int) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
 
             $customer_address = CustomerAddress::where('id', $datas['customer_address_id'])->first();
-            $province_id = $customer_address->province_id;
+            // $province_id = $customer_address->province_id; // enhacement for customer
             // $district = $customer_address->district_id;
 
             while (static::checkReferenceExist($no_reference) == false) {
@@ -1225,6 +1225,7 @@ class TransactionCommands extends Service
                     })
                     ->get();
 
+                $province_id = data_get($data, 'province_id');
                 $promo_merchant_ongkir = null;
                 $value_ongkir = 0;
 
