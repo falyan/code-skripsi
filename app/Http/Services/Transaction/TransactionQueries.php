@@ -1508,6 +1508,12 @@ class TransactionQueries extends Service
 
         $total_discount_payment += $discount_payment;
 
+        // Payment Installment //
+
+        if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
+            //
+        }
+
         // $datas['merchants'] = $new_merchant2;
         $datas['buyer_npwp'] = auth()->user()->npwp;
         $datas['merchants'] = $new_merchant;
