@@ -2038,8 +2038,19 @@ class TransactionController extends Controller
     public function refundOngkir($id)
     {
         try {
-            DB::beginTransaction();
+            $timestamp = request()->header('timestamp');
+            $signature = request()->header('signature');
 
+            if ($timestamp == null || $signature == null) return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+
+            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
+            if (strtotime($timestamp) > strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+
+            $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
+            $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
+            if ($hash != $signature) return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+
+            DB::beginTransaction();
             $this->transactionCommand->updateOrderStatus($id, '98', 'refund ongkir');
 
             $order = Order::with('delivery')->find($id);
