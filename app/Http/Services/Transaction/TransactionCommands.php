@@ -1639,7 +1639,7 @@ class TransactionCommands extends Service
             // Log info with message
             Log::info('Total Payment: ' . $datas['total_payment'] . ' | Bonus Discount: ' . $bonusAmount);
 
-            $mailSender = new MailSenderManager();
+            // $mailSender = new MailSenderManager();
 
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
                 // if ($ev_subsidies) {
@@ -1661,7 +1661,7 @@ class TransactionCommands extends Service
                     }
                 }
 
-                $mailSender->mailCheckoutSubsidy($this->order_id);
+                // $mailSender->mailCheckoutSubsidy($this->order_id);
                 // } else {
                 //     $master_ubah_daya = UbahDayaMaster::where('event_start_date', '<=', Carbon::now())->where('event_end_date', '>=', Carbon::now())->where('status', 1)->first();
                 //     $check_voucher_ubah_daya_code = UbahDayaLog::where('nik', data_get($datas, 'customer.nik'))->where('master_ubah_daya_id', $master_ubah_daya->id)->first();
@@ -1696,7 +1696,7 @@ class TransactionCommands extends Service
                 //     $mailSender->mailCheckout($this->order_id);
                 // }
             } else {
-                $mailSender->mailCheckout($this->order_id);
+                // $mailSender->mailCheckout($this->order_id);
             }
 
             if ($datas['total_discount'] > 0) {
