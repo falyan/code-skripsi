@@ -23,6 +23,7 @@ use App\Models\OrderDelivery;
 use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Models\RefundOrder;
 use App\Models\VariantStock;
 use Exception;
 use Illuminate\Http\Request;
@@ -2015,7 +2016,8 @@ class TransactionController extends Controller
             $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
             if ($hash != $signature) return $this->respondWithResult(false, 'Signature tidak valid.', 400);
 
-            DB::beginTransaction();
+            Log::info('Refund Ongkir BOT - ' . $id);
+
             $this->transactionCommand->updateOrderStatus($id, '98', 'refund ongkir');
 
             $order = Order::with('delivery')->find($id);
