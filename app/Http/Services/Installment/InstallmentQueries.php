@@ -7,11 +7,17 @@ use App\Models\InstallmentProvider;
 
 class InstallmentQueries extends Service
 {
-    public function getListInstallmentProvider($price)
+    public function getListInstallmentProvider($price, $provider_id)
     {
         $providers = InstallmentProvider::with(['details' => function ($query) {
             $query->orderBy('tenor', 'asc');
-        }])->where('status', 1)->get();
+        }])->where('status', 1);
+
+        if (!empty($provider_id)) {
+            $providers = $providers->where('id', $provider_id);
+        }
+
+        $providers = $providers->get();
 
         $providers = $providers->transform(function ($provider) use ($price) {
             if ($provider->provider_code == 'BRI-CERIA') {
@@ -52,29 +58,52 @@ class InstallmentQueries extends Service
             }
         }
 
+        // get installment withou
+
         return [
             'providers' => $providers,
             'smallest_installment' => !empty($tenor_prices) ? min($tenor_prices) : null,
         ];
     }
 
-    public function getTenorInstallmentByProvider($providerId, $price)
+    public function calculateInstallment($providerId, $tenor, $price)
     {
-        $providers = InstallmentProvider::with('details')->where('id', $providerId)->get();
+        $providers = InstallmentProvider::with(['details' => function ($query) use ($tenor) {
+            $query->where('tenor', $tenor)->orderBy('tenor', 'asc');
+        }])->where('id', $providerId)->where('status', 1)->get();
 
-        // $providers = $providers->transform(function ($provider) use ($price) {
-        //     foreach ($provider->details as $detail) {
-        //         if (!empty($price)) {
-        //             $installment_price = $price + ($price * $detail->mdr_percentage / 100) + ($price * $detail->fee_percentage / 100);
-        //             $installment_price = round($installment_price / $detail->tenor);
-        //             $detail->simulation_price = $installment_price;
-        //         } else {
-        //             $detail->installment_price = 0;
-        //         }
-        //     }
+        // mapping data calculation
+        $providers = $providers->transform(function ($provider) use ($tenor, $price) {
+            if ($provider->provider_code == 'BRI-CERIA') {
+                foreach ($provider->details as $detail) {
+                    if (!empty($price)) {
+                        $markup_price = $price / (1 - ($detail->mdr_percentage / 100));
+                        $installment_price = ($markup_price / $tenor) + ($markup_price * $detail->interest_percentage / 100);
+                        $detail->simulation_price_installment = round($installment_price);
+                        $detail->simulation_fee_installment = round($markup_price * $detail->mdr_percentage / 100);
+                    } else {
+                        $detail->simulation_price_installment = 0;
+                        $detail->simulation_fee_installment = 0;
+                    }
+                }
+            } else if ($provider->provider_code == 'BNI-INSTALLMENT') {
+                foreach ($provider->details as $detail) {
+                    if (!empty($price)) {
+                        $percentages = ($detail->mdr_percentage + $detail->fee_percentage);
+                        $markup_price = $price / (1 - ($percentages / 100));
+                        $detail->simulation_price_installment = round($markup_price / $tenor);
+                        $detail->simulation_fee_installment = round($markup_price * $percentages / 100);
+                        $detail->mdr_fee_percentage = $percentages;
+                    } else {
+                        $detail->simulation_price_installment = 0;
+                        $detail->simulation_fee_installment = 0;
+                        $detail->mdr_fee_percentage = 0;
+                    }
+                }
+            }
 
-        //     return $provider;
-        // });
+            return $provider;
+        });
 
         return $providers;
     }
