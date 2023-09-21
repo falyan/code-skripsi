@@ -1073,7 +1073,7 @@ class TransactionQueries extends Service
             throw new Exception('Silahkan tambah alamat pengiriman terlebih dahulu!', 404);
         }
 
-        $province_id = $customer_address->province_id;
+        // $province_id = $customer_address->province_id; // enhacement for customer
         $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = $total_discount_payment = 0;
         $total_price_discount = 0;
         $message_error = '';
@@ -1109,6 +1109,8 @@ class TransactionQueries extends Service
                     });
                 },
             ])->findOrFail($merchant['merchant_id']);
+
+            $province_id = $data_merchant->province_id; // enhacement for merchant
 
             $new_product = [];
             foreach (data_get($merchant, 'products') as $product) {
