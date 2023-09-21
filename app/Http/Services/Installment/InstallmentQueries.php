@@ -101,13 +101,13 @@ class InstallmentQueries extends Service
         $tenor = $payload['tenor'] ?? null;
 
         $providers = InstallmentProvider::with(['details' => function ($query) use ($tenor) {
-            $query->where('tenor', $tenor);
+            if ($tenor !== null) {
+                $query->where('tenor', $tenor);
+            }
         }])->where('id', $providerId)->where('status', 1)->first();
 
         if ($providers->provider_code === 'BRI-CERIA') {
             $markup_price = $price / (1 - ($providers->details[0]->mdr_percentage / 100));
-            $installment_price_calc = ($markup_price / $tenor) + ($markup_price * $providers->details[0]->interest_percentage / 100);
-            $installment_price = round($installment_price_calc);
             $installment_fee = round($markup_price * $providers->details[0]->mdr_percentage / 100);
         } else if ($providers->provider_code === 'BNI-INSTALLMENT') {
             $markup_price = ($price + $providers->details[0]->fee_provider) / (1 - ($providers->details[0]->mdr_percentage / 100));
@@ -119,8 +119,10 @@ class InstallmentQueries extends Service
             'price' => $price,
             'tenor' => $tenor,
             'markup_price' => round($markup_price),
-            'installment_price' => $installment_price,
-            'installment_fee' => $installment_fee,
+            'installment_price' => $installment_price ?? 0,
+            'installment_fee' => $installment_fee ?? 0,
+            'provider_fee' => $providers->details[0]->fee_provider ?? 0,
+            'interest_percentage' => $providers->details[0]->interest_percentage ?? 0,
         ];
     }
 }
