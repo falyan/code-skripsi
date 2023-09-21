@@ -14,6 +14,8 @@ class InstallmentProvider extends Model
         'image_url',
         'terms_conditions',
         'status',
+        'min_price',
+        'max_price',
     ];
 
     public function details()
