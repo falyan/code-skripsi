@@ -900,15 +900,17 @@ class TransactionController extends Controller
     }
     #End Region
 
-    public function detailTransaction($id)
+    public function detailTransaction(Request $request, $id)
     {
+        $has_installment = $request->has_installment;
+
         try {
-            $data = $this->transactionQueries->getDetailTransaction($id);
+            $data = $this->transactionQueries->getDetailTransaction($id, $has_installment);
 
             if (!empty($data)) {
                 return $this->respondWithData($data, 'sukses get detail transaksi');
             } else {
-                return $this->respondWithResult(false, 'No reference salah', 400);
+                return $this->respondWithResult(false, 'transaksi tidak ditemukan', 404);
             }
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -2007,14 +2009,20 @@ class TransactionController extends Controller
             $timestamp = request()->header('timestamp');
             $signature = request()->header('signature');
 
-            if ($timestamp == null || $signature == null) return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+            if ($timestamp == null || $signature == null) {
+                return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+            }
 
             $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
-            if (strtotime($timestamp) > strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+            if (strtotime($timestamp) > strtotime($timestamp_plus)) {
+                return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+            }
 
             $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
             $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
-            if ($hash != $signature) return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+            if ($hash != $signature) {
+                return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+            }
 
             Log::info('Refund Ongkir BOT - ' . $id);
 

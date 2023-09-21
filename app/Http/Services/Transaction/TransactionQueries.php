@@ -55,6 +55,12 @@ class TransactionQueries extends Service
                 }
             });
 
+            if ($item->installment != null) {
+                $item->has_installment = true;
+            } else {
+                $item->has_installment = false;
+            }
+
             return $item;
         });
 
@@ -162,7 +168,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->select('id', 'merchant_id', 'name')->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer',
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'installment',
         ])->where(
             $column_name,
             $column_value,
@@ -277,7 +283,7 @@ class TransactionQueries extends Service
         return $data;
     }
 
-    public function getDetailTransaction($id)
+    public function getDetailTransaction($id, $has_installment)
     {
         $data = Order::with([
             'detail' => function ($product) {
@@ -292,6 +298,12 @@ class TransactionQueries extends Service
                 $promo->with(['promo_merchant.promo_master']);
             }, 'installment',
         ])->find($id);
+
+        if (empty($has_installment)) {
+            if ($data->installment != null) {
+                throw new Exception('Untuk melihat detail transaksi dengan cicilan, silahkan update aplikasi Anda terlebih dahulu');
+            }
+        }
 
         $details = $data->detail;
 
@@ -359,6 +371,7 @@ class TransactionQueries extends Service
         $data->iconpay_product_id = static::$productid;
 
         return $data;
+
     }
 
     public function searchTransaction($column_name, $column_value, $keyword, $limit = 0, $filter = [], $page = 1)
