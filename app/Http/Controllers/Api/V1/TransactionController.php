@@ -24,10 +24,10 @@ use App\Models\OrderDelivery;
 use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Models\RefundOrder;
 use App\Models\UbahDayaLog;
 use App\Models\UbahDayaMaster;
 use App\Models\VariantStock;
-use App\Models\RefundOrder;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -907,15 +907,17 @@ class TransactionController extends Controller
     }
     #End Region
 
-    public function detailTransaction($id)
+    public function detailTransaction(Request $request, $id)
     {
+        $has_installment = $request->has_installment;
+
         try {
-            $data = $this->transactionQueries->getDetailTransaction($id);
+            $data = $this->transactionQueries->getDetailTransaction($id, $has_installment);
 
             if (!empty($data)) {
                 return $this->respondWithData($data, 'sukses get detail transaksi');
             } else {
-                return $this->respondWithResult(false, 'No reference salah', 400);
+                return $this->respondWithResult(false, 'transaksi tidak ditemukan', 404);
             }
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
