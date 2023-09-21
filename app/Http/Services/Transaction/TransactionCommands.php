@@ -342,7 +342,7 @@ class TransactionCommands extends Service
                                     'success' => false,
                                     'status' => "Bad request",
                                     'status_code' => 400,
-                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                                 ];
                             }
 
@@ -352,7 +352,7 @@ class TransactionCommands extends Service
                                 'success' => false,
                                 'status' => "Bad request",
                                 'status_code' => 400,
-                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak berinsentif',
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak memiliki bantuan',
                             ];
                         }
                     }
@@ -363,7 +363,7 @@ class TransactionCommands extends Service
                         'success' => false,
                         'status' => "Bad request",
                         'status_code' => 400,
-                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                     ];
                 }
             }

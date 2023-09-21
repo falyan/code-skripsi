@@ -1885,7 +1885,7 @@ class TransactionController extends Controller
                                 return array_merge($respond, [
                                     'success' => true,
                                     'status_code' => 400,
-                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                                 ]);
                             }
 
@@ -1894,7 +1894,7 @@ class TransactionController extends Controller
                             return array_merge($respond, [
                                 'success' => true,
                                 'status_code' => 400,
-                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak berinsentif',
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang memiliki bantuan',
                             ]);
                         }
                     }
@@ -1904,7 +1904,7 @@ class TransactionController extends Controller
                     return array_merge($respond, [
                         'success' => true,
                         'status_code' => 400,
-                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                     ]);
                 }
             }
