@@ -347,6 +347,13 @@ class TransactionCommands extends Service
                             }
 
                             $ev_subsidies[] = $ev_subsidy;
+                        } else {
+                            return [
+                                'success' => false,
+                                'status' => "Bad request",
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak berinsentif',
+                            ];
                         }
                     }
                 }
@@ -888,6 +895,8 @@ class TransactionCommands extends Service
                         $customerEv->status_approval = null;
                         $customerEv->customer_id_pel = $customer->pln_mobile_customer_id;
                         $customerEv->customer_nik = data_get($datas, 'customer.nik');
+                        $customerEv->customer_full_name = strtoupper(data_get($datas, 'customer.full_name'));
+                        $customerEv->customer_father_name = strtoupper(data_get($datas, 'customer.father_name'));
                         $customerEv->ktp_url = data_get($datas, 'customer.ktp_url');
                         $customerEv->kk_url = data_get($datas, 'customer.kk_url') ?? null;
                         $customerEv->file_url = data_get($datas, 'customer.file_url');
@@ -1055,6 +1064,13 @@ class TransactionCommands extends Service
                             }
 
                             $ev_subsidies[] = $ev_subsidy;
+                        } else {
+                            return [
+                                'success' => false,
+                                'status' => "Bad request",
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak berinsentif',
+                            ];
                         }
                     }
                 }
@@ -1627,6 +1643,8 @@ class TransactionCommands extends Service
                         $customerEv->status_approval = null;
                         $customerEv->customer_id_pel = $customer->pln_mobile_customer_id;
                         $customerEv->customer_nik = data_get($datas, 'customer.nik');
+                        $customerEv->customer_full_name = strtoupper(data_get($datas, 'customer.full_name'));
+                        $customerEv->customer_father_name = strtoupper(data_get($datas, 'customer.father_name'));
                         $customerEv->ktp_url = data_get($datas, 'customer.ktp_url');
                         $customerEv->kk_url = data_get($datas, 'customer.kk_url') ?? null;
                         $customerEv->file_url = data_get($datas, 'customer.file_url');
