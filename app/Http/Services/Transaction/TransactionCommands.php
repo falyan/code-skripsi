@@ -26,8 +26,6 @@ use App\Models\Product;
 use App\Models\PromoLog;
 use App\Models\PromoMaster;
 use App\Models\PromoMerchant;
-use App\Models\UbahDayaLog;
-use App\Models\UbahDayaMaster;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
@@ -349,6 +347,13 @@ class TransactionCommands extends Service
                             }
 
                             $ev_subsidies[] = $ev_subsidy;
+                        } else {
+                            return [
+                                'success' => false,
+                                'status' => "Bad request",
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak berinsentif',
+                            ];
                         }
                     }
                 }
@@ -890,6 +895,8 @@ class TransactionCommands extends Service
                         $customerEv->status_approval = null;
                         $customerEv->customer_id_pel = $customer->pln_mobile_customer_id;
                         $customerEv->customer_nik = data_get($datas, 'customer.nik');
+                        $customerEv->customer_full_name = strtoupper(data_get($datas, 'customer.full_name'));
+                        $customerEv->customer_father_name = strtoupper(data_get($datas, 'customer.father_name'));
                         $customerEv->ktp_url = data_get($datas, 'customer.ktp_url');
                         $customerEv->kk_url = data_get($datas, 'customer.kk_url') ?? null;
                         $customerEv->file_url = data_get($datas, 'customer.file_url');
@@ -1637,6 +1644,8 @@ class TransactionCommands extends Service
                         $customerEv->status_approval = null;
                         $customerEv->customer_id_pel = $customer->pln_mobile_customer_id;
                         $customerEv->customer_nik = data_get($datas, 'customer.nik');
+                        $customerEv->customer_full_name = strtoupper(data_get($datas, 'customer.full_name'));
+                        $customerEv->customer_father_name = strtoupper(data_get($datas, 'customer.father_name'));
                         $customerEv->ktp_url = data_get($datas, 'customer.ktp_url');
                         $customerEv->kk_url = data_get($datas, 'customer.kk_url') ?? null;
                         $customerEv->file_url = data_get($datas, 'customer.file_url');
@@ -1653,7 +1662,6 @@ class TransactionCommands extends Service
                 //     $master_data = MasterData::whereIn('key', ['ubah_daya_min_transaction', 'ubah_daya_implementation_period'])->get();
                 //     $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
                 //     $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
-
 
                 //     $total_amount_trx = data_get($datas, 'total_amount');
                 //     $total_delivery_fee_trx = data_get($datas, 'total_delivery_fee');
@@ -2001,7 +2009,7 @@ class TransactionCommands extends Service
         $request = request()->all();
         \Illuminate\Support\Facades\Log::info('E0004', [
             'path' => 'iconcash.notify.update',
-            'body' => $request
+            'body' => $request,
         ]);
 
         $payments = OrderPayment::where('no_reference', $no_reference)->get();
