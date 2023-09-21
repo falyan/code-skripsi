@@ -1749,9 +1749,10 @@ class TransactionCommands extends Service
                 'email' => $customer->email,
                 'phone_number' => $customer->phone,
                 'expired_invoice' => $exp_date,
-                'additional_info8' => $datas['installment_tenor'] ?? null,
-                'additional_info9' => $datas['installment_actual_price'] ?? null,
-                'additional_info10' => $datas['installment_fee'] ?? null,
+                'additional_info7' => $datas['installment_provider_fee'] == 0 ? null : $datas['installment_provider_fee'],
+                'additional_info8' => $datas['installment_tenor'] == 0 ? null : $datas['installment_tenor'],
+                'additional_info9' => $datas['installment_actual_price'] == 0 ? null : $datas['installment_actual_price'],
+                'additional_info10' => $datas['installment_fee'] == 0 ? null : $datas['installment_fee'],
             ];
 
             $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);

@@ -1529,13 +1529,17 @@ class TransactionQueries extends Service
             $installment_markup_price = $installment['markup_price'];
             $installment_total_payment = $installment_markup_price ?? $datas['total_payment'];
             $installment_actual_price = $datas['total_payment'];
+            $installment_provider_fee = $installment['provider_fee'];
+            $installment_interest_percentage = $installment['interest_percentage'];
         }
 
         $datas['installment_price'] = $installment_price ?? 0;
         $datas['installment_fee'] = $installment_fee ?? 0;
-        $datas['installment_tenor'] = $installment_tenor ?? 0;
+        $datas['installment_tenor'] = $installment_tenor ?? null;
         $datas['installment_markup_price'] = $installment_markup_price ?? 0;
         $datas['installment_actual_price'] = $installment_actual_price ?? 0;
+        $datas['installment_provider_fee'] = $installment_provider_fee ?? 0;
+        $datas['installment_interest_percentage'] = $installment_interest_percentage ?? 0;
 
         $datas['total_payment'] = $installment_total_payment ?? $datas['total_payment'];
 
