@@ -35,7 +35,7 @@ class InstallmentQueries extends Service
             } else if ($provider->provider_code == 'BNI-INSTALLMENT') {
                 foreach ($provider->details as $detail) {
                     if (!empty($price)) {
-                        $markup_price = $price / (1 - ($detail->mdr_percentage / 100));
+                        $markup_price = ($price + $detail->fee_provider) / (1 - ($detail->mdr_percentage / 100));
                         $detail->simulation_price_installment = round($markup_price / $detail->tenor);
                         $detail->simulation_fee_installment = round($markup_price * $detail->mdr_percentage / 100);
                     } else {
@@ -109,9 +109,8 @@ class InstallmentQueries extends Service
             $installment_price_calc = ($markup_price / $tenor) + ($markup_price * $providers->details[0]->interest_percentage / 100);
             $installment_price = round($installment_price_calc);
             $installment_fee = round($markup_price * $providers->details[0]->mdr_percentage / 100);
-
         } else if ($providers->provider_code === 'BNI-INSTALLMENT') {
-            $markup_price = $price / (1 - ($providers->details[0]->mdr_percentage / 100));
+            $markup_price = ($price + $providers->details[0]->fee_provider) / (1 - ($providers->details[0]->mdr_percentage / 100));
             $installment_price = round($markup_price / $tenor);
             $installment_fee = round($markup_price * $providers->details[0]->mdr_percentage / 100);
         }
