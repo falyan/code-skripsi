@@ -29,7 +29,7 @@ class CreatePiProvider extends Migration
             $table->foreignId('pi_provider_id')->constrained('pi_provider')->onDelete('cascade');
             $table->integer('tenor')->nullable();
             $table->double('mdr_percentage')->nullable();
-            $table->double('fee_percentage')->nullable();
+            $table->integer('fee_provider')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
