@@ -1852,8 +1852,6 @@ class TransactionController extends Controller
 
         if (isset(request()->all()['customer'])) {
             $rules['customer.nik'] = 'required';
-            $rules['customer.full_name'] = 'required';
-            $rules['customer.father_name'] = 'required';
         }
 
         $validator = Validator::make(request()->all(), $rules, [
@@ -1934,8 +1932,6 @@ class TransactionController extends Controller
 
         if (isset(request()->all()['customer'])) {
             $rules['customer.nik'] = 'required';
-            $rules['customer.full_name'] = 'required';
-            $rules['customer.father_name'] = 'required';
         }
 
         $validator = Validator::make(request()->all(), $rules, [
