@@ -350,6 +350,7 @@ class TransactionQueries extends Service
             $data->merchant->subdistrict = Subdistrict::find($data->merchant->subdistrict_id);
         }
 
+        $data->delivery->delivery_fee_cod = 0;
         $data->delivery->province = $data->delivery->city->province;
         unset($data->delivery->city->province);
 
