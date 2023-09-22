@@ -6,8 +6,6 @@ use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
 use App\Models\Customer;
-use App\Models\CustomerAddress;
-use App\Models\Merchant;
 use App\Models\Order;
 use Carbon\Carbon;
 use Exception;
@@ -213,14 +211,16 @@ class LogisticManager
 
         $body = [
             'shipper' => [
-                'origin' => (string) $customer_address->district_id,
-                'latitude' => (string) $customer_address->latitude,
-                'longitude' => (string) $customer_address->longitude,
-            ],
-            'receiver' => [
-                'destination' => (string) $merchant->district_id,
+                'origin' => (string) $merchant->district_id,
                 'latitude' => (string) $merchant->latitude,
                 'longitude' => (string) $merchant->longitude,
+                'postal_code' => (string) $merchant->postal_code,
+            ],
+            'receiver' => [
+                'destination' => (string) $customer_address->district_id,
+                'latitude' => (string) $customer_address->latitude,
+                'longitude' => (string) $customer_address->longitude,
+                'postal_code' => (string) $customer_address->postal_code,
             ],
             'item_price' => $price,
             'weight' => $weight,
@@ -348,8 +348,8 @@ class LogisticManager
 
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
-        if ($response['status'] != 200) {
-            throw new Exception($response['message'], $response['status']);
+        if (!isset($response['status']) || $response['status'] != 200) {
+            throw new Exception('Terjadi kesalahan: Sedang terjadi gangguan.', 500);
         }
 
         $transactionQueries = new TransactionQueries();
@@ -405,6 +405,11 @@ class LogisticManager
             $response['data']['receiver_address'] = $data->delivery->address;
         }
 
+        $response['data']['tracking'] = array_map(function ($item) {
+            $item['status'] = static::getStatusRajaOngkir($item['status']);
+            return $item;
+        }, $response['data']['tracking']);
+
         return $response;
     }
 
@@ -447,7 +452,8 @@ class LogisticManager
             'trx_no' => $order->trx_no,
             'courier' => $order->delivery->delivery_method,
             'service_code' => $order->delivery->delivery_type,
-            'shipping_price' => (int) $order->delivery->delivery_fee,
+            'final_shipping_price' => (int) $order->delivery->delivery_fee,
+            'origin_shipping_price' => (int) $order->delivery->delivery_fee_origin,
             'shipping_type' => $order->delivery->shipping_type,
             'must_use_insurance' => $order->delivery->must_use_insurance,
             'items_total_price' => $total_price,
@@ -603,5 +609,23 @@ class LogisticManager
         }
 
         return implode('', $param);
+    }
+
+    private static function getStatusRajaOngkir($status)
+    {
+        $statusCode = '1';
+        if (in_array($status, ['00', '01'])) {
+            $statusCode = '1';
+        } elseif (in_array($status, ['02', '03'])) {
+            $statusCode = '2';
+        } elseif (in_array($status, ['04'])) {
+            $statusCode = '4';
+        } elseif (in_array($status, ['88'])) {
+            $statusCode = '5';
+        } elseif (in_array($status, ['98', '99'])) {
+            $statusCode = '1';
+        }
+
+        return $statusCode;
     }
 }

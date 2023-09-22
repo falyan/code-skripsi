@@ -14,6 +14,7 @@ use App\Models\CustomerDiscount;
 use App\Models\CustomerEVSubsidy;
 use App\Models\CustomerTiket;
 use App\Models\District;
+use App\Models\InstallmentOrder;
 use App\Models\MasterData;
 use App\Models\MasterTiket;
 use App\Models\Merchant;
@@ -997,7 +998,7 @@ class TransactionCommands extends Service
             $no_reference = (int) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
 
             $customer_address = CustomerAddress::where('id', $datas['customer_address_id'])->first();
-            $province_id = $customer_address->province_id;
+            // $province_id = $customer_address->province_id; // enhacement for customer
             // $district = $customer_address->district_id;
 
             while (static::checkReferenceExist($no_reference) == false) {
@@ -1238,6 +1239,7 @@ class TransactionCommands extends Service
                     })
                     ->get();
 
+                $province_id = data_get($data, 'province_id');
                 $promo_merchant_ongkir = null;
                 $value_ongkir = 0;
 
@@ -1498,11 +1500,36 @@ class TransactionCommands extends Service
                 // }
                 // End hitung mdr
 
-                $merchant_data = Merchant::find($order->merchant_id);
-
                 $shipping_type = data_get($data, 'delivery_service');
                 if (str_contains(strtolower($shipping_type), 'seller')) {
                     $shipping_type = 'custom';
+                }
+
+                $merchant_data = Merchant::with('expedition')->where('id', $order->merchant_id)->first();
+                $setting_courirers = Cache::remember('setting_courirers', 60 * 60, function () {
+                    return MasterData::where('type', 'rajaongkir_courier')->get();
+                });
+
+                $s_courier = '';
+                foreach (collect($setting_courirers)->where('key', 's_courier') as $courier) {
+                    foreach (explode(':', $merchant_data->expedition->list_expeditions) as $value) {
+                        if ($value == $courier->reference_third_party_id) {
+                            $s_courier .= $value . ':';
+                        }
+                    }
+                }
+
+                $logistic_manager = new LogisticManager();
+                $shipping_prices = $logistic_manager->getOngkir($customer_address, $merchant_data, data_get($data, 'total_weight'), rtrim($s_courier, ':'), data_get($data, 'total_amount'));
+                $shipping_origin_price = null;
+                foreach (collect($shipping_prices) as $value) {
+                    if ($value['code'] == data_get($data, 'delivery_method')) {
+                        foreach ($value['data'] as $data_value) {
+                            if ($data_value['service_code'] == data_get($data, 'delivery_type')) {
+                                $shipping_origin_price = $data_value['origin_price'];
+                            }
+                        }
+                    }
                 }
 
                 $order_delivery = new OrderDelivery();
@@ -1540,6 +1567,7 @@ class TransactionCommands extends Service
                 $order_delivery->delivery_type = data_get($data, 'delivery_type');
                 $order_delivery->delivery_setting = data_get($data, 'delivery_setting');
                 $order_delivery->delivery_fee = data_get($data, 'delivery_fee');
+                $order_delivery->delivery_fee_origin = $shipping_origin_price;
                 $order_delivery->delivery_discount = data_get($data, 'delivery_discount');
                 $order_delivery->must_use_insurance = data_get($data, 'must_use_insurance') ?? false;
                 $order_delivery->save();
@@ -1691,10 +1719,24 @@ class TransactionCommands extends Service
                 //         }
                 //     }
 
-                //     $mailSender->mailCheckout($this->order_id);
+                // $mailSender->mailCheckout($this->order_id);
                 // }
             } else {
                 $mailSender->mailCheckout($this->order_id);
+            }
+
+            if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
+                $installmentOrder = new InstallmentOrder();
+                $installmentOrder->customer_id = $customer_id;
+                $installmentOrder->pi_provider_id = data_get($datas, 'installment.provider_id');
+                $installmentOrder->order_id = $order->id;
+                $installmentOrder->month_tenor = data_get($datas, 'installment_tenor') ?? null;
+                $installmentOrder->fee_tenor = data_get($datas, 'installment_fee') ?? 0;
+                $installmentOrder->installment_tenor = data_get($datas, 'installment_price') ?? 0;
+                $installmentOrder->markup_price_tenor = data_get($datas, 'installment_markup_price') ?? 0;
+                $installmentOrder->interest_percentage_tenor = data_get($datas, 'installment_interest_percentage') ?? 0;
+                $installmentOrder->provider_fee = data_get($datas, 'installment_provider_fee') ?? 0;
+                $installmentOrder->save();
             }
 
             if ($datas['total_discount'] > 0) {
@@ -1721,6 +1763,10 @@ class TransactionCommands extends Service
                     'email' => $customer->email,
                     'phone_number' => $customer->phone,
                     'expired_invoice' => $exp_date,
+                    'additional_info7' => isset($datas['installment_provider_fee']) ? $datas['installment_provider_fee'] : null,
+                    'additional_info8' => isset($datas['installment_tenor']) ? $datas['installment_tenor'] : null,
+                    'additional_info9' => isset($datas['installment_actual_price']) ? $datas['installment_actual_price'] : null,
+                    'additional_info10' => isset($datas['installment_fee']) ? $datas['installment_fee'] : null,
                 ];
 
                 $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
