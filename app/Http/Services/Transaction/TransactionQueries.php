@@ -23,6 +23,7 @@ use App\Models\VariantStock;
 use App\Models\VariantValueProduct;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class TransactionQueries extends Service
 {
@@ -299,9 +300,11 @@ class TransactionQueries extends Service
             },
         ])->find($id);
 
-        if (empty($has_installment)) {
-            if ($data->installment != null) {
-                throw new Exception('Untuk melihat detail transaksi dengan cicilan, silahkan update aplikasi Anda terlebih dahulu');
+        if (Auth::user()->type === 'buyer') {
+            if (empty($has_installment)) {
+                if ($data->installment != null) {
+                    throw new Exception('Untuk melihat detail transaksi dengan cicilan, silahkan update aplikasi Anda terlebih dahulu');
+                }
             }
         }
 
