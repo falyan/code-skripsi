@@ -7,14 +7,14 @@ use App\Models\InstallmentProvider;
 
 class InstallmentQueries extends Service
 {
-    public function getListInstallmentProvider($price, $provider_id)
+    public function getListInstallmentProvider($price, $type)
     {
         $providers = InstallmentProvider::with(['details' => function ($query) {
             $query->orderBy('tenor', 'asc');
         }])->where('status', 1);
 
-        if (!empty($provider_id)) {
-            $providers = $providers->where('id', $provider_id);
+        if (!empty($type)) {
+            $providers = $providers->where('provider_type', $type);
         }
 
         if (!empty($price)) {

@@ -1679,9 +1679,12 @@ class TransactionCommands extends Service
                 $installmentOrder->customer_id = $customer_id;
                 $installmentOrder->pi_provider_id = data_get($datas, 'installment.provider_id');
                 $installmentOrder->order_id = $order->id;
-                $installmentOrder->month_tenor = data_get($datas, 'installment_tenor');
-                $installmentOrder->fee_tenor = data_get($datas, 'installment_fee');
-                $installmentOrder->installment_tenor = data_get($datas, 'installment_price');
+                $installmentOrder->month_tenor = data_get($datas, 'installment_tenor') ?? null;
+                $installmentOrder->fee_tenor = data_get($datas, 'installment_fee') ?? 0;
+                $installmentOrder->installment_tenor = data_get($datas, 'installment_price') ?? 0;
+                $installmentOrder->markup_price_tenor = data_get($datas, 'installment_markup_price') ?? 0;
+                $installmentOrder->interest_percentage_tenor = data_get($datas, 'installment_interest_percentage') ?? 0;
+                $installmentOrder->provider_fee = data_get($datas, 'installment_provider_fee') ?? 0;
                 $installmentOrder->save();
             }
 
