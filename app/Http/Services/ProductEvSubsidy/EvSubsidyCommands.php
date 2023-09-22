@@ -178,9 +178,10 @@ class EvSubsidyCommands extends Service
             $data->status_approval = $request['status'];
             $data->save();
 
-            if ($request['status'] == 0) {
+            $order = Order::with('detail', 'buyer')->findOrFail($data->order_id);
+            $payment = OrderPayment::where('id', $order->payment_id)->first();
 
-                $order = Order::with('detail', 'buyer')->findOrFail($data->order_id);
+            if ($request['status'] == 0) {
 
                 $totalProductNormalPrice = 0;
                 $totalProductPrice = 0;
@@ -209,75 +210,72 @@ class EvSubsidyCommands extends Service
                 $order->total_amount_iconcash = $order->total_amount_iconcash - $totalProductPrice + $totalProductNormalPrice;
                 $order->save();
 
-                $payment = OrderPayment::where('id', $order->payment_id)->first();
                 $payment->payment_amount = $order->total_amount;
+                $payment->date_expired = $exp_date;
                 $payment->save();
-
-                // return $normalPrice;
-
-                $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
-                $body = [
-                    'no_reference' => $order->no_reference,
-                    'transaction_date' => $trx_date,
-                    'transaction_code' => '01',
-                    'partner_reference' => $order->no_reference,
-                    'product_id' => static::$productid,
-                    'amount' => $payment->payment_amount,
-                    'customer_id' => $order->no_reference,
-                    'customer_name' => $order->buyer->full_name,
-                    'email' => $order->buyer->email,
-                    'phone_number' => $order->buyer->phone,
-                    'expired_invoice' => $exp_date,
-                ];
-
-                $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
-
-                static::$header['timestamp'] = static::$timestamp;
-                static::$header['signature'] = hash_hmac('sha256', $encode_body . static::$clientid . static::$timestamp, sha1(static::$appkey));
-                static::$header['content-type'] = 'application/json';
-
-                $response = static::$curl->request('POST', $url, [
-                    'headers' => static::$header,
-                    'http_errors' => false,
-                    'body' => $encode_body,
-                ]);
-
-                $response = json_decode($response->getBody());
-
-                static::$logService->setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
-
-                throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
-
-                if ($response->response_details[0]->response_code != 00) {
-                    throw new Exception($response->response_details[0]->response_message);
-                }
-
-                $response->response_details[0]->amount = $payment->payment_amount;
-                $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
-                $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
 
                 $mailSender = new MailSenderManager();
                 $mailSender->mailRejectedEVSubsidy($data->order_id);
 
-                DB::commit();
+            } else if ($request['status'] == 1) {
 
-                return [
-                    'success' => true,
-                    'message' => 'Berhasil update BA order',
-                    'data' => $response,
-                ];
+                $payment->date_expired = $exp_date;
+                $payment->save();
 
+                $mailSender = new MailSenderManager();
+                $mailSender->mailApprovedEVSubsidy($data->order_id);
             }
 
-            $mailSender = new MailSenderManager();
-            $mailSender->mailApprovedEVSubsidy($data->order_id);
+            $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
+            $body = [
+                'no_reference' => $order->no_reference,
+                'transaction_date' => $trx_date,
+                'transaction_code' => '00',
+                'partner_reference' => $order->no_reference,
+                'product_id' => static::$productid,
+                'amount' => $payment->payment_amount,
+                'customer_id' => $order->no_reference,
+                'customer_name' => $order->buyer->full_name,
+                'email' => $order->buyer->email,
+                'phone_number' => $order->buyer->phone,
+                'expired_invoice' => $exp_date,
+            ];
+
+            $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
+
+            static::$header['timestamp'] = static::$timestamp;
+            static::$header['signature'] = hash_hmac('sha256', $encode_body . static::$clientid . static::$timestamp, sha1(static::$appkey));
+            static::$header['content-type'] = 'application/json';
+
+            $response = static::$curl->request('POST', $url, [
+                'headers' => static::$header,
+                'http_errors' => false,
+                'body' => $encode_body,
+            ]);
+
+            $response = json_decode($response->getBody());
+
+            static::$logService->setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
+
+            throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+
+            if ($response->response_details[0]->response_code != 00) {
+                throw new Exception($response->response_details[0]->response_message);
+            }
+
+            $response->response_details[0]->amount = $payment->payment_amount;
+            $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
+            $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
 
             DB::commit();
 
             return [
                 'status' => true,
                 'message' => 'Status berhasil diupdate',
-                'data' => $data,
+                'data' => [
+                    'subsidy' => $data,
+                    'response' => $response,
+                ],
             ];
         } catch (\Throwable $th) {
             DB::rollBack();
