@@ -283,7 +283,7 @@ class TransactionQueries extends Service
         return $data;
     }
 
-    public function getDetailTransaction($id, $has_installment)
+    public function getDetailTransaction($id, $has_installment = false)
     {
         $data = Order::with([
             'detail' => function ($product) {
