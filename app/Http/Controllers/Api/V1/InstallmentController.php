@@ -20,9 +20,9 @@ class InstallmentController extends Controller
     public function getListInstallmentProvider(Request $request)
     {
         $price = $request->price ?? null;
-        $providerId = $request->provider_id ?? null;
+        $type = $request->type ?? null;
 
-        $installmentProvider = $this->installmentQueries->getListInstallmentProvider($price, $providerId);
+        $installmentProvider = $this->installmentQueries->getListInstallmentProvider($price, $type);
 
         return $this->respondWithData($installmentProvider, 'Success get list installment provider');
     }

@@ -296,7 +296,9 @@ class TransactionQueries extends Service
                 $review->with(['review_photo']);
             }, 'promo_log_orders' => function ($promo) {
                 $promo->with(['promo_merchant.promo_master']);
-            }, 'installment',
+            }, 'installment' => function ($installment) {
+                $installment->with(['provider']);
+            },
         ])->find($id);
 
         if (empty($has_installment)) {
