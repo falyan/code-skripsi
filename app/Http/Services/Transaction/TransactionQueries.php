@@ -289,7 +289,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with('ev_subsidy');
                 }, 'variant_value_product']);
-            }, 'progress', 'complaint', 'merchant', 'delivery' => function ($delivery) {
+            }, 'progress', 'progress_active', 'complaint', 'merchant', 'delivery' => function ($delivery) {
                 $delivery->with(['subdistrict', 'district', 'city', 'city.province']);
             }, 'buyer', 'ev_subsidy', 'payment', 'review' => function ($review) {
                 $review->with(['review_photo']);
@@ -301,9 +301,11 @@ class TransactionQueries extends Service
         ])->find($id);
 
         if (Auth::user()->type === 'buyer') {
-            if (empty($has_installment)) {
-                if ($data->installment != null) {
-                    throw new Exception('Untuk melihat detail transaksi dengan cicilan, silahkan update aplikasi Anda terlebih dahulu');
+            if ($data->progress_active->status_code == '00') {
+                if (empty($has_installment)) {
+                    if ($data->installment != null) {
+                        throw new Exception('Untuk melihat detail transaksi dan melanjutkan pembayaran dengan cicilan, silahkan update aplikasi Anda terlebih dahulu');
+                    }
                 }
             }
         }
