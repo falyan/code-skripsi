@@ -1249,6 +1249,7 @@ class TransactionQueries extends Service
                     if ($customer_limit_count <= ($promo_logs_sub - $promo_logs_add)) {
                         $message_error = 'Anda telah melebihi batas penggunaan promo ini';
                         $merchant_total_payment += $merchant['delivery_discount'];
+                        $merchant['total_payment'] += $merchant['delivery_discount'];
                         $merchant['delivery_discount'] = 0;
                     }
                 }
@@ -1352,6 +1353,7 @@ class TransactionQueries extends Service
                     if ($customer_limit_count <= ($promo_logs_sub - $promo_logs_add)) {
                         $message_error = 'Anda telah melebihi batas penggunaan promo ini';
                         $merchant_total_payment += $merchant['product_discount'];
+                        $merchant['total_payment'] += $merchant['product_discount'];
                         $merchant['product_discount'] = 0;
                     }
                 }
