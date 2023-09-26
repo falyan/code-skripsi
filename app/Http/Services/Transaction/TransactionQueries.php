@@ -1148,9 +1148,9 @@ class TransactionQueries extends Service
                 $new_product[] = array_merge($product, $data_product->toArray());
             }
 
-            if (!isset($datas['customer.full_name']) && data_get($datas, 'customer.full_name') == null || !isset($datas['customer.father_name']) && data_get($datas, 'customer.father_name') == null) {
-                $message_error = 'Untuk melakukan transaksi pengajuan subsidi, silahkan update aplikasi Anda terlebih dahulu';
-            }
+            // if (!isset($datas['customer.full_name']) && data_get($datas, 'customer.full_name') == null || !isset($datas['customer.father_name']) && data_get($datas, 'customer.father_name') == null) {
+            //     $message_error = 'Untuk melakukan transaksi pengajuan subsidi, silahkan update aplikasi Anda terlebih dahulu';
+            // }
 
             // shipping discount
             $promo_merchant_ongkir = null;

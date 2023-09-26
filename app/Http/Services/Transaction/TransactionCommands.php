@@ -1081,6 +1081,15 @@ class TransactionCommands extends Service
                     }
                 }
 
+                if (!isset($datas['customer.full_name']) && data_get($datas, 'customer.full_name') == null || !isset($datas['customer.father_name']) && data_get($datas, 'customer.father_name') == null) {
+                    return [
+                        'success' => false,
+                        'status' => "Bad request",
+                        'status_code' => 400,
+                        'message' => 'Untuk melakukan transaksi pengajuan subsidi, silahkan update aplikasi Anda terlebih dahulu',
+                    ];
+                }
+
                 if (count($ev_subsidies) > 1) {
                     return [
                         'success' => false,
