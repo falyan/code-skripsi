@@ -1149,7 +1149,7 @@ class TransactionQueries extends Service
             }
 
             if (!isset($datas['customer.full_name']) && data_get($datas, 'customer.full_name') == null || !isset($datas['customer.father_name']) && data_get($datas, 'customer.father_name') == null) {
-                $message_error = 'Nama Lengkap dan Nama Ayah tidak terpenuhi, Silahkan update aplikasi anda!';
+                $message_error = 'Untuk melakukan transaksi pengajuan subsidi, silahkan update aplikasi Anda terlebih dahulu';
             }
 
             // shipping discount
