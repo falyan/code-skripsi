@@ -1163,6 +1163,10 @@ class TransactionQueries extends Service
                 $new_product[] = array_merge($product, $data_product->toArray());
             }
 
+            if (!isset($datas['customer.full_name']) && data_get($datas, 'customer.full_name') == null || !isset($datas['customer.father_name']) && data_get($datas, 'customer.father_name') == null) {
+                $message_error = 'Nama Lengkap dan Nama Ayah tidak terpenuhi, Silahkan update aplikasi anda!';
+            }
+
             // shipping discount
             $promo_merchant_ongkir = null;
             if ($data_merchant->can_shipping_discount == true) {
