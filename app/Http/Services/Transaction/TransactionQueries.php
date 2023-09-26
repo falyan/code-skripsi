@@ -23,6 +23,7 @@ use App\Models\VariantStock;
 use App\Models\VariantValueProduct;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class TransactionQueries extends Service
 {
@@ -288,7 +289,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with('ev_subsidy');
                 }, 'variant_value_product']);
-            }, 'progress', 'complaint', 'merchant', 'delivery' => function ($delivery) {
+            }, 'progress', 'progress_active', 'complaint', 'merchant', 'delivery' => function ($delivery) {
                 $delivery->with(['subdistrict', 'district', 'city', 'city.province']);
             }, 'buyer', 'ev_subsidy', 'payment', 'review' => function ($review) {
                 $review->with(['review_photo']);
@@ -299,9 +300,13 @@ class TransactionQueries extends Service
             },
         ])->find($id);
 
-        if (empty($has_installment)) {
-            if ($data->installment != null) {
-                throw new Exception('Untuk melihat detail transaksi dengan cicilan, silahkan update aplikasi Anda terlebih dahulu');
+        if (Auth::user()->type === 'buyer') {
+            if ($data->progress_active->status_code == '00') {
+                if (empty($has_installment)) {
+                    if ($data->installment != null) {
+                        throw new Exception('Untuk melihat detail transaksi dan melanjutkan pembayaran dengan cicilan, silahkan update aplikasi Anda terlebih dahulu');
+                    }
+                }
             }
         }
 
@@ -1243,6 +1248,8 @@ class TransactionQueries extends Service
 
                     if ($customer_limit_count <= ($promo_logs_sub - $promo_logs_add)) {
                         $message_error = 'Anda telah melebihi batas penggunaan promo ini';
+                        $merchant_total_payment += $merchant['delivery_discount'];
+                        $merchant['total_payment'] += $merchant['delivery_discount'];
                         $merchant['delivery_discount'] = 0;
                     }
                 }
@@ -1345,6 +1352,8 @@ class TransactionQueries extends Service
 
                     if ($customer_limit_count <= ($promo_logs_sub - $promo_logs_add)) {
                         $message_error = 'Anda telah melebihi batas penggunaan promo ini';
+                        $merchant_total_payment += $merchant['product_discount'];
+                        $merchant['total_payment'] += $merchant['product_discount'];
                         $merchant['product_discount'] = 0;
                     }
                 }
