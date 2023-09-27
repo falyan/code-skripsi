@@ -170,7 +170,7 @@ class RajaOngkirController extends Controller
             $courier_map = [];
             foreach ($couriers as $courier) {
                 $key = collect($courier_map)->where('value', $courier->reference_third_party_id)->first();
-                if (!$key) {
+                if (!$key && $courier->reference_third_party_id != 'seller') {
                     $courier_map[] = [
                         'name' => $courier->value,
                         'value' => $courier->reference_third_party_id,

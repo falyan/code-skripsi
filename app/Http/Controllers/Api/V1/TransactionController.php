@@ -1894,11 +1894,17 @@ class TransactionController extends Controller
                                 return array_merge($respond, [
                                     'success' => true,
                                     'status_code' => 400,
-                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                                 ]);
                             }
 
                             $ev_subsidies[] = $product['ev_subsidy'];
+                        } else {
+                            return array_merge($respond, [
+                                'success' => true,
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang memiliki bantuan',
+                            ]);
                         }
                     }
                 }
@@ -1907,7 +1913,7 @@ class TransactionController extends Controller
                     return array_merge($respond, [
                         'success' => true,
                         'status_code' => 400,
-                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                     ]);
                 }
             }
@@ -1934,6 +1940,10 @@ class TransactionController extends Controller
             'merchants.*.products.*.quantity' => 'required',
             'merchants.*.products.*.payment_note' => 'sometimes',
         ];
+
+        if (isset(request()->all()['customer'])) {
+            $rules['customer.nik'] = 'required';
+        }
 
         $validator = Validator::make(request()->all(), $rules, [
             'required' => ':attribute diperlukan.',
@@ -1965,11 +1975,17 @@ class TransactionController extends Controller
                                 return array_merge($respond, [
                                     'success' => true,
                                     'status_code' => 400,
-                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                                 ]);
                             }
 
                             $ev_subsidies[] = $product['ev_subsidy'];
+                        } else {
+                            return array_merge($respond, [
+                                'success' => true,
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak memiliki bantuan',
+                            ]);
                         }
                     }
                 }
@@ -1978,7 +1994,7 @@ class TransactionController extends Controller
                     return array_merge($respond, [
                         'success' => true,
                         'status_code' => 400,
-                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                     ]);
                 }
             }
@@ -2040,8 +2056,19 @@ class TransactionController extends Controller
     public function refundOngkir($id)
     {
         try {
-            DB::beginTransaction();
+            $timestamp = request()->header('timestamp');
+            $signature = request()->header('signature');
 
+            if ($timestamp == null || $signature == null) return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+
+            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
+            if (strtotime($timestamp) > strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+
+            $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
+            $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
+            if ($hash != $signature) return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+
+            DB::beginTransaction();
             $this->transactionCommand->updateOrderStatus($id, '98', 'refund ongkir');
 
             $order = Order::with('delivery')->find($id);
@@ -2177,10 +2204,10 @@ class TransactionController extends Controller
                             $message = 'Pesanan anda sedang dalam pengiriman.';
                             $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
                             // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
-                            $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+                            // $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
-                            $mailSender = new MailSenderManager();
-                            $mailSender->mailOrderOnDelivery($order_id);
+                            // $mailSender = new MailSenderManager();
+                            // $mailSender->mailOrderOnDelivery($order_id);
 
                             $delivery = OrderDelivery::where('order_id', $order_id)->first();
                             $results[] = [
