@@ -1213,6 +1213,8 @@ class TransactionQueries extends Service
             if ($promo_merchant_ongkir != null) {
                 if ($promo_merchant_ongkir->promo_master->min_order_value > $merchant_total_price) {
                     $message_error = 'Minimal order untuk diskon ongkir adalah Rp ' . number_format($promo_merchant_ongkir->promo_master->min_order_value, 0, ',', '.');
+                    $merchant_total_payment += $merchant['delivery_discount'];
+                    $merchant['total_payment'] += $merchant['delivery_discount'];
                     $merchant['delivery_discount'] = 0;
                 }
 
