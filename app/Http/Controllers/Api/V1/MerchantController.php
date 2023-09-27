@@ -384,4 +384,52 @@ class MerchantController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function approvalTokoEmail(Request $request)
+    {
+        $validator = Validator::make(request()->all(), [
+            'email' => 'required|email',
+            'nama_toko' => 'required',
+            'status' => 'required',
+            'alasan' => 'required',
+            'akun' => 'nullable',
+            'password' => 'nullable',
+        ], [
+            'required' => ':attribute diperlukan.',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors, 'Validation Error!');
+        };
+
+        if ($request->status == 1) {
+            $status = 'Disetujui';
+        } elseif ($$request->status == 9) {
+            $status = 'Ditolak';
+        }
+
+        try {
+            $mail = new \App\Http\Services\Manager\MailSenderManager();
+            $mail->approvalTokoEmail($request->email, [
+                'email' => $request->email,
+                'full_name' => $request->full_name,
+                'nama_toko' => $request->nama_toko,
+                'status_code' => $request->status,
+                'status' => $status,
+                'alasan' => $request->alasan,
+                'akun' => $request->akun,
+                'password' => $request->password,
+            ]);
+
+            return $this->respondWithData([], 'Berhasil mengirim email');
+        } catch (\Throwable $th) {
+            return $this->respondErrorException($th, request());
+        }
+    }
 }
