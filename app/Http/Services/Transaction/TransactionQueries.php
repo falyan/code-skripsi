@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Auth;
 
 class TransactionQueries extends Service
 {
-    public function getTransaction($column_name, $column_value, $limit = 10, $filter = [], $page = 1)
+    public function getTransaction($column_name, $column_value, $limit = 10, $filter = [], $page = 1, $has_installment = true)
     {
         $order = Order::with([
             'detail' => function ($product) {
@@ -46,6 +46,16 @@ class TransactionQueries extends Service
         $order = $this->filter($order, $filter);
         $order = $order->get();
 
+        if (Auth::user()->type === 'buyer') {
+            if (empty($has_installment)) {
+                foreach ($order as $data) {
+                    if ($data->installment != null) {
+                        throw new Exception('Silahkan update aplikasi Anda terlebih dahulu!');
+                    }
+                }
+            }
+        }
+
         $data = $order->map(function ($item) {
             $item->detail->each(function ($product) {
                 if ($product->product_data != null && isset($product->product_data)) {
@@ -55,13 +65,6 @@ class TransactionQueries extends Service
                     $product->product = $product_data;
                 }
             });
-
-            if ($item->installment != null) {
-                $item->has_installment = true;
-            } else {
-                $item->has_installment = false;
-            }
-
             return $item;
         });
 
@@ -282,7 +285,7 @@ class TransactionQueries extends Service
         return $data;
     }
 
-    public function getDetailTransaction($id, $has_installment = false)
+    public function getDetailTransaction($id)
     {
         $data = Order::with([
             'detail' => function ($product) {
@@ -299,16 +302,6 @@ class TransactionQueries extends Service
                 $installment->with(['provider']);
             },
         ])->find($id);
-
-        if (Auth::user()->type === 'buyer') {
-            if ($data->progress_active->status_code == '00') {
-                if (empty($has_installment)) {
-                    if ($data->installment != null) {
-                        throw new Exception('Untuk melihat detail transaksi dan melanjutkan pembayaran dengan cicilan, silahkan update aplikasi Anda terlebih dahulu');
-                    }
-                }
-            }
-        }
 
         $details = $data->detail;
 
