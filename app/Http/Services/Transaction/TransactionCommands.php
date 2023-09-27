@@ -1755,6 +1755,10 @@ class TransactionCommands extends Service
                 }
             }
 
+            if (isset($datas['installment_tenor'])) {
+                $installment_tenor = $datas['installment_tenor'] < 10 ? str_pad($datas['installment_tenor'], 2, '0', STR_PAD_LEFT) : $datas['installment_tenor'];
+            }
+
             $product_name = json_decode(OrderDetail::where('order_id', $this->order_id)->first()->product_data)->name;
 
             if (!isset($datas['customer']) || data_get($datas, 'customer') == null) {
@@ -1773,7 +1777,7 @@ class TransactionCommands extends Service
                     'phone_number' => $customer->phone,
                     'expired_invoice' => $exp_date,
                     'additional_info7' => isset($datas['installment_provider_fee']) ? $datas['installment_provider_fee'] : null,
-                    'additional_info8' => isset($datas['installment_tenor']) ? $datas['installment_tenor'] : null,
+                    'additional_info8' => isset($installment_tenor) ? $installment_tenor : null,
                     'additional_info9' => isset($datas['installment_actual_price']) ? $datas['installment_actual_price'] : null,
                     'additional_info10' => isset($datas['installment_fee']) ? $datas['installment_fee'] : null,
                 ];
