@@ -462,6 +462,7 @@ class RajaOngkirManager
                 'status' => $value->manifest_code,
                 'date' => Carbon::createFromFormat('Y-m-d H:i:s', $value->manifest_date . ' ' . $value->manifest_time, 'Asia/Jakarta')->format('Y-m-d H:i'),
                 'description' => $description,
+                'pod_image' => null,
             ];
         }
 

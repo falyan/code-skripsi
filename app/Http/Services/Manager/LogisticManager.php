@@ -406,7 +406,10 @@ class LogisticManager
         }
 
         $response['data']['tracking'] = array_map(function ($item) {
+            $item['pod_image'] = $item['image_courier'];
             $item['status'] = static::getStatusRajaOngkir($item['status']);
+
+            unset($item['image_courier']);
             return $item;
         }, $response['data']['tracking']);
 
