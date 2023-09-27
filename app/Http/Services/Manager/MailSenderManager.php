@@ -372,7 +372,7 @@ class MailSenderManager
 
         Mail::send('email.sendTicket', $data, function ($mail) use ($customer, $attachments, $order) {
             $mail->to($customer->email, 'no-reply')
-                    ->subject("Pemesanan Tiket GJLS COMEDY NIGHT");
+                ->subject("Pemesanan Tiket GJLS COMEDY NIGHT");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
             foreach ($attachments as $file_path) {
                 $mail->attach($file_path);
@@ -441,7 +441,7 @@ class MailSenderManager
 
         Mail::send('email.sendTicket', $data, function ($mail) use ($customer, $attachments, $order) {
             $mail->to($customer->email, 'no-reply')
-                    ->subject("[Pengiriman Ulang] Pemesanan Tiket GJLS COMEDY NIGHT");
+                ->subject("[Pengiriman Ulang] Pemesanan Tiket GJLS COMEDY NIGHT");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
             foreach ($attachments as $file_path) {
                 $mail->attach($file_path);
@@ -505,6 +505,21 @@ class MailSenderManager
             Log::error('Gagal mengirim email checkout ke email: ' . $customer->email);
         } else {
             Log::info('Berhasil mengirim email checkout ke email: ' . $customer->email);
+        }
+    }
+
+    public function approvalTokoEmail($email, $data)
+    {
+        Mail::send('email.approve-toko', $data, function ($mail) use ($email) {
+            $mail->to($email, 'no-reply')
+                ->subject("Persetujuan Toko");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        if (Mail::failures()) {
+            Log::error('Gagal mengirim email checkout ke email: ' . $email);
+        } else {
+            Log::info('Berhasil mengirim email checkout ke email: ' . $email);
         }
     }
 }

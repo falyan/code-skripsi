@@ -613,6 +613,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     });
 
     $router->group(['prefix' => 'email'], static function () use ($router) {
+        $router->post('approval-toko', 'MerchantController@approvalTokoEmail');
         $router->post('resend', 'TransactionController@resendEmailVoucher');
     });
 
