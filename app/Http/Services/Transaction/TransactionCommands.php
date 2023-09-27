@@ -1665,24 +1665,26 @@ class TransactionCommands extends Service
                 $installment_tenor = $datas['installment_tenor'] < 10 ? str_pad($datas['installment_tenor'], 2, '0', STR_PAD_LEFT) : $datas['installment_tenor'];
             }
 
-            $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
-            $body = [
-                'no_reference' => $no_reference,
-                'transaction_date' => $trx_date,
-                'transaction_code' => '00',
-                'partner_reference' => $no_reference,
-                'product_id' => static::$productid,
-                'amount' => $datas['total_payment'],
-                'customer_id' => $no_reference,
-                'customer_name' => $customer->full_name,
-                'email' => $customer->email,
-                'phone_number' => $customer->phone,
-                'expired_invoice' => $exp_date,
-                'additional_info7' => isset($datas['installment_provider_fee']) ? $datas['installment_provider_fee'] : null,
-                'additional_info8' => isset($installment_tenor) ? $installment_tenor : null,
-                'additional_info9' => isset($datas['installment_actual_price']) ? $datas['installment_actual_price'] : null,
-                'additional_info10' => isset($datas['installment_fee']) ? $datas['installment_fee'] : null,
-            ];
+            if (!isset($datas['customer']) || data_get($datas, 'customer') == null) {
+
+                $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
+                $body = [
+                    'no_reference' => $no_reference,
+                    'transaction_date' => $trx_date,
+                    'transaction_code' => '00',
+                    'partner_reference' => $no_reference,
+                    'product_id' => static::$productid,
+                    'amount' => $datas['total_payment'],
+                    'customer_id' => $no_reference,
+                    'customer_name' => $customer->full_name,
+                    'email' => $customer->email,
+                    'phone_number' => $customer->phone,
+                    'expired_invoice' => $exp_date,
+                    'additional_info7' => isset($datas['installment_provider_fee']) ? $datas['installment_provider_fee'] : null,
+                    'additional_info8' => isset($installment_tenor) ? $installment_tenor : null,
+                    'additional_info9' => isset($datas['installment_actual_price']) ? $datas['installment_actual_price'] : null,
+                    'additional_info10' => isset($datas['installment_fee']) ? $datas['installment_fee'] : null,
+                ];
 
             $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
 
