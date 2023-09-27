@@ -349,11 +349,12 @@ class TransactionController extends Controller
             $filter = $request->filter ?? [];
             $limit = $request->limit ?? 10;
             $page = $request->page ?? 1;
+            $has_installment = $request->has_installment ?? false;
 
             if (Auth::check()) {
-                $data = $this->transactionQueries->getTransaction('buyer_id', Auth::id(), $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransaction('buyer_id', Auth::id(), $limit, $filter, $page, $has_installment);
             } else {
-                $data = $this->transactionQueries->getTransaction('related_pln_mobile_customer_id', $related_id, $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransaction('related_pln_mobile_customer_id', $related_id, $limit, $filter, $page, $has_installment);
             }
 
             if ($data['total'] > 0) {
@@ -900,12 +901,12 @@ class TransactionController extends Controller
     }
     #End Region
 
-    public function detailTransaction(Request $request, $id)
+    public function detailTransaction($id)
     {
-        $has_installment = $request->has_installment;
+        // $has_installment = $request->has_installment;
 
         try {
-            $data = $this->transactionQueries->getDetailTransaction($id, $has_installment);
+            $data = $this->transactionQueries->getDetailTransaction($id);
 
             if (!empty($data)) {
                 return $this->respondWithData($data, 'sukses get detail transaksi');
