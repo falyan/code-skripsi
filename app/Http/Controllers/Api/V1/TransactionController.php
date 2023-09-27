@@ -347,11 +347,12 @@ class TransactionController extends Controller
             $filter = $request->filter ?? [];
             $limit = $request->limit ?? 10;
             $page = $request->page ?? 1;
+            $has_installment = $request->has_installment ?? false;
 
             if (Auth::check()) {
-                $data = $this->transactionQueries->getTransaction('buyer_id', Auth::id(), $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransaction('buyer_id', Auth::id(), $limit, $filter, $page, $has_installment);
             } else {
-                $data = $this->transactionQueries->getTransaction('related_pln_mobile_customer_id', $related_id, $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransaction('related_pln_mobile_customer_id', $related_id, $limit, $filter, $page, $has_installment);
             }
 
             // if ($data['total'] > 0) {
@@ -907,12 +908,12 @@ class TransactionController extends Controller
     }
     #End Region
 
-    public function detailTransaction(Request $request, $id)
+    public function detailTransaction($id)
     {
-        $has_installment = $request->has_installment;
+        // $has_installment = $request->has_installment;
 
         try {
-            $data = $this->transactionQueries->getDetailTransaction($id, $has_installment);
+            $data = $this->transactionQueries->getDetailTransaction($id);
 
             if (!empty($data)) {
                 return $this->respondWithData($data, 'sukses get detail transaksi');
@@ -2059,14 +2060,20 @@ class TransactionController extends Controller
             $timestamp = request()->header('timestamp');
             $signature = request()->header('signature');
 
-            if ($timestamp == null || $signature == null) return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+            if ($timestamp == null || $signature == null) {
+                return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+            }
 
             $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
-            if (strtotime($timestamp) > strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+            if (strtotime($timestamp) > strtotime($timestamp_plus)) {
+                return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+            }
 
             $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
             $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
-            if ($hash != $signature) return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+            if ($hash != $signature) {
+                return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+            }
 
             DB::beginTransaction();
             $this->transactionCommand->updateOrderStatus($id, '98', 'refund ongkir');
