@@ -391,7 +391,7 @@ class MerchantController extends Controller
             'email' => 'required|email',
             'nama_toko' => 'required',
             'status' => 'required',
-            'alasan' => 'required',
+            'alasan' => 'nullable',
             'akun' => 'nullable',
             'password' => 'nullable',
         ], [
