@@ -434,7 +434,7 @@ class TransactionController extends Controller
             if (Auth::check()) {
                 $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['00'], $limit, $filter, $page, $has_installment);
             } else {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['00'], $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['00'], $limit, $filter, $page, $has_installment);
             }
 
             if ($data['total'] > 0) {
