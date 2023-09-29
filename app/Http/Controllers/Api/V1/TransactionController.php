@@ -429,9 +429,10 @@ class TransactionController extends Controller
             $filter = $request->filter ?? [];
             $limit = $request->limit ?? 10;
             $page = $request->page ?? 1;
+            $has_installment = $request->has_installment ?? false;
 
             if (Auth::check()) {
-                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['00'], $limit, $filter, $page);
+                $data = $this->transactionQueries->getTransactionWithStatusCode('buyer_id', Auth::id(), ['00'], $limit, $filter, $page, $has_installment);
             } else {
                 $data = $this->transactionQueries->getTransactionWithStatusCode('related_pln_mobile_customer_id', $related_id, ['00'], $limit, $filter, $page);
             }
