@@ -443,7 +443,7 @@ class LogisticManager
                 'length' => (int) $detail->product->length,
                 'width' => (int) $detail->product->width,
                 'height' => (int) $detail->product->height,
-                'category' => $detail->product->category->parent->parent->value,
+                'category' => $detail->product->category->parent != null || $detail->product->category->parent->parent != null ? $detail->product->category->parent->parent->value : null,
                 'uom' => $detail->product->stock_active->uom,
                 'note' => $detail->notes,
             ];
