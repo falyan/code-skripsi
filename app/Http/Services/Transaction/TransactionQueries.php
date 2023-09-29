@@ -165,7 +165,7 @@ class TransactionQueries extends Service
         return $data;
     }
 
-    public function getTransactionWithStatusCode($column_name, $column_value, $status_code, $limit = 10, $filter = [], $page = 1)
+    public function getTransactionWithStatusCode($column_name, $column_value, $status_code, $limit = 10, $filter = [], $page = 1, $has_installment = true)
     {
         $data = Order::with([
             'detail' => function ($product) {
@@ -194,6 +194,18 @@ class TransactionQueries extends Service
 
         $data = $this->filter($data, $filter);
         $data = $data->get();
+
+        if (Auth::user()->type === 'buyer') {
+            if (empty($has_installment)) {
+                foreach ($data as $d) {
+                    if ($d->progress_active->status_code == '00') {
+                        if ($d->installment != null) {
+                            throw new Exception('Silahkan update aplikasi Anda terlebih dahulu!');
+                        }
+                    }
+                }
+            }
+        }
 
         $data = $data->map(function ($item) {
             $item->detail->each(function ($product) {
