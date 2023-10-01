@@ -1665,6 +1665,8 @@ class TransactionCommands extends Service
                 $installment_tenor = $datas['installment_tenor'] < 10 ? str_pad($datas['installment_tenor'], 2, '0', STR_PAD_LEFT) : $datas['installment_tenor'];
             }
 
+            $product_name = json_decode(OrderDetail::where('order_id', $this->order_id)->first()->product_data)->name;
+
             if (!isset($datas['customer']) || data_get($datas, 'customer') == null) {
 
                 $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
@@ -1686,46 +1688,47 @@ class TransactionCommands extends Service
                     'additional_info10' => isset($datas['installment_fee']) ? $datas['installment_fee'] : null,
                 ];
 
-            $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
+                $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
 
-            static::$header['timestamp'] = $timestamp;
-            static::$header['signature'] = hash_hmac('sha256', $encode_body . static::$clientid . $timestamp, sha1(static::$appkey));
-            static::$header['content-type'] = 'application/json';
+                static::$header['timestamp'] = $timestamp;
+                static::$header['signature'] = hash_hmac('sha256', $encode_body . static::$clientid . $timestamp, sha1(static::$appkey));
+                static::$header['content-type'] = 'application/json';
 
-            $response = static::$curl->request('POST', $url, [
-                'headers' => static::$header,
-                'http_errors' => false,
-                'body' => $encode_body,
-            ]);
+                $response = static::$curl->request('POST', $url, [
+                    'headers' => static::$header,
+                    'http_errors' => false,
+                    'body' => $encode_body,
+                ]);
 
-            $response = json_decode($response->getBody());
+                $response = json_decode($response->getBody());
 
-            LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
+                LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
 
-            throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+                throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
-            if ($response->response_details[0]->response_code != 00) {
-                throw new Exception($response->response_details[0]->response_message);
+                if ($response->response_details[0]->response_code != 00) {
+                    throw new Exception($response->response_details[0]->response_message);
+                }
+
+                $response->response_details[0]->amount = $datas['total_payment'];
+                $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
+                $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
+
+                //add order id to response
+                $response->order_id = $this->order_id;
+                //get product name from order detail
+                $response->product_name = $product_name;
             }
 
-            $response->response_details[0]->amount = $datas['total_payment'];
-            $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
-            $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
-
             DB::commit();
-
-            // $product_name = OrderDetail::with('product')->where('order_id', $this->order_id)->first()->product->name;
-            // Get product name from product_data json order_detail_log
-            $product_name = json_decode(OrderDetail::where('order_id', $this->order_id)->first()->product_data)->name;
-            //add order id to response
-            $response->order_id = $this->order_id;
-            //get product name from order detail
-            $response->product_name = $product_name;
 
             return [
                 'success' => true,
                 'message' => 'Berhasil create order',
-                'data' => $response,
+                'data' => isset($datas['customer']) && data_get($datas, 'customer') != null ? [
+                    'order_id' => $this->order_id,
+                    'product_name' => $product_name,
+                ] : $response,
             ];
         } catch (Exception $th) {
             DB::rollBack();
@@ -1981,7 +1984,7 @@ class TransactionCommands extends Service
         $request = request()->all();
         \Illuminate\Support\Facades\Log::info('E0004', [
             'path' => 'iconcash.notify.update',
-            'body' => $request
+            'body' => $request,
         ]);
 
         $payments = OrderPayment::where('no_reference', $no_reference)->get();
