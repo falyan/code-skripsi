@@ -14,6 +14,7 @@ use App\Models\CustomerDiscount;
 use App\Models\CustomerEVSubsidy;
 use App\Models\CustomerTiket;
 use App\Models\District;
+use App\Models\InstallmentOrder;
 use App\Models\MasterData;
 use App\Models\MasterTiket;
 use App\Models\Merchant;
@@ -1705,6 +1706,21 @@ class TransactionCommands extends Service
                 // }
             } else {
                 $mailSender->mailCheckout($this->order_id);
+            }
+
+            if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
+                $installmentOrder = new InstallmentOrder();
+                $installmentOrder->customer_id = $customer_id;
+                $installmentOrder->pi_provider_id = data_get($datas, 'installment.provider_id');
+                $installmentOrder->order_id = $order->id;
+                $installmentOrder->month_tenor = data_get($datas, 'installment_tenor') ?? null;
+                $installmentOrder->fee_tenor = data_get($datas, 'installment_fee') ?? 0;
+                $installmentOrder->installment_tenor = data_get($datas, 'installment_price') ?? 0;
+                $installmentOrder->markup_price_tenor = data_get($datas, 'installment_markup_price') ?? 0;
+                $installmentOrder->actual_price_tenor = data_get($datas, 'installment_actual_price') ?? 0;
+                $installmentOrder->interest_percentage_tenor = data_get($datas, 'installment_interest_percentage') ?? 0;
+                $installmentOrder->provider_fee = data_get($datas, 'installment_provider_fee') ?? 0;
+                $installmentOrder->save();
             }
 
             if ($datas['total_discount'] > 0) {
