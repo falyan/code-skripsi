@@ -3,6 +3,7 @@
 namespace App\Http\Services\ProductEvSubsidy;
 
 use App\Helpers\LogService;
+use App\Http\Services\Installment\InstallmentQueries;
 use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Service;
 use App\Models\CustomerEVSubsidy;
@@ -165,20 +166,20 @@ class EvSubsidyCommands extends Service
         $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
         $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(3))->timestamp);
 
-        if ($data->status_approval != null) {
-            return [
-                'status' => false,
-                'message' => 'Status tidak dalam status menunggu',
-                'errors' => 'Status approval telah ' . ($data->status_approval == 0 ? 'ditolak' : 'disetujui'),
-            ];
-        }
+        // if ($data->status_approval != null) {
+        //     return [
+        //         'status' => false,
+        //         'message' => 'Status tidak dalam status menunggu',
+        //         'errors' => 'Status approval telah ' . ($data->status_approval == 0 ? 'ditolak' : 'disetujui'),
+        //     ];
+        // }
 
         try {
             DB::beginTransaction();
             $data->status_approval = $request['status'];
             $data->save();
 
-            $order = Order::with('detail', 'buyer')->findOrFail($data->order_id);
+            $order = Order::with('detail', 'buyer', 'installment')->findOrFail($data->order_id);
             $payment = OrderPayment::where('id', $order->payment_id)->first();
 
             if ($order->installment != null) {
@@ -221,8 +222,19 @@ class EvSubsidyCommands extends Service
                 $payment->date_expired = $exp_date;
                 $payment->save();
 
-                $mailSender = new MailSenderManager();
-                $mailSender->mailRejectedEVSubsidy($data->order_id);
+                $recalculateInstallment = InstallmentQueries::calculateInstallment([
+                    'provider_id' => $order->installment->pi_provider_id,
+                    'tenor' => $order->installment->month_tenor,
+                ], $order->total_amount);
+
+                $order->installment->fee_tenor = $recalculateInstallment['installment_fee'];
+                $order->installment->installment_tenor = $recalculateInstallment['installment_price'];
+                $order->installment->markup_price_tenor = $recalculateInstallment['markup_price'];
+                $order->installment->actual_price_tenor = $recalculateInstallment['price'];
+                $order->installment->save();
+
+                // $mailSender = new MailSenderManager();
+                // $mailSender->mailRejectedEVSubsidy($data->order_id);
 
             } else if ($request['status'] == 1) {
 
