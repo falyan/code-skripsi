@@ -215,13 +215,35 @@ class VoucherCommands
 
     public function generateVoucherOld($order)
     {
-
         $master_ubah_dayas = UbahDayaMaster::where('status', 1)->get();
 
         $master_ubah_daya = null;
         foreach ($master_ubah_dayas as $value) {
-            $master_ubah_daya = $value;
-            break;
+            if ($value->event_start_date <= date('Y-m-d') && $value->event_end_date >= date('Y-m-d')) {
+                $master_ubah_daya = $value;
+                break;
+            }
+        }
+
+        if ($master_ubah_daya == null) {
+            return [
+                'success' => false,
+                'message' => 'Mohon maaf, belum ada event yang sedang berlangsung',
+            ];
+        }
+
+        $logs = UbahDayaLog::where([
+            'customer_id' => $order->buyer_id,
+            'status' => 1,
+        ])->get();
+
+        foreach ($logs as $log) {
+            if ($log->master_ubah_daya_id == $master_ubah_daya->id) {
+                return [
+                    'success' => false,
+                    'message' => 'Anda sudah mengikuti event ini',
+                ];
+            }
         }
 
         $param = static::setParamAPI([]);
@@ -258,6 +280,14 @@ class VoucherCommands
             'response' => $response,
         ]);
 
+        // return [
+        //     'url' => $url,
+        //     'header' => self::$header,
+        //     'json' => self::$header['timestamp'] . json_encode($json_body),
+        //     'body' => $json_body,
+        //     'response' => $response,
+        // ];
+
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
 
         if (!isset($response->success) || $response->success != true) {
@@ -292,7 +322,17 @@ class VoucherCommands
 
             $mailSender = new MailSenderManager();
             $mailSender->mainVoucherClaim($order->id);
+
+            return [
+                'success' => true,
+                'message' => 'Berhasil generate voucher',
+            ];
         }
+
+        return [
+            'success' => false,
+            'message' => 'Gagal generate voucher',
+        ];
     }
 
     public function claimPregenerate($order, $master_ubah_daya_logs)
