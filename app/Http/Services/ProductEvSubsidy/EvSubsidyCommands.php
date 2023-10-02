@@ -3,12 +3,10 @@
 namespace App\Http\Services\ProductEvSubsidy;
 
 use App\Helpers\LogService;
-use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Service;
 use App\Models\CustomerEVSubsidy;
 use App\Models\Order;
 use App\Models\OrderPayment;
-use App\Models\Product;
 use App\Models\ProductEvSubsidy;
 use Carbon\Carbon;
 use Exception;
@@ -181,6 +179,13 @@ class EvSubsidyCommands extends Service
             $order = Order::with('detail', 'buyer')->findOrFail($data->order_id);
             $payment = OrderPayment::where('id', $order->payment_id)->first();
 
+            if ($order->installment != null) {
+                $installment_provider_fee = $order->installment->provider_fee;
+                $installment_tenor = $order->installment->month_tenor < 10 ? str_pad($order->installment->month_tenor, 2, '0', STR_PAD_LEFT) : $order->installment->month_tenor;
+                $installment_actual_price = $order->installment->actual_price_tenor;
+                $installment_fee = $order->installment->fee_tenor;
+            }
+
             if ($request['status'] == 0) {
 
                 $totalProductNormalPrice = 0;
@@ -239,6 +244,10 @@ class EvSubsidyCommands extends Service
                 'email' => $order->buyer->email,
                 'phone_number' => $order->buyer->phone,
                 'expired_invoice' => $exp_date,
+                'additional_info7' => isset($installment_provider_fee) ? $installment_provider_fee : null,
+                'additional_info8' => isset($installment_tenor) ? $installment_tenor : null,
+                'additional_info9' => isset($installment_actual_price) ? $installment_actual_price : null,
+                'additional_info10' => isset($installment_fee) ? $installment_fee : null,
             ];
 
             $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
