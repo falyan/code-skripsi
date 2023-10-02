@@ -1746,6 +1746,10 @@ class TransactionCommands extends Service
                 $installmentOrder->interest_percentage_tenor = data_get($datas, 'installment_interest_percentage') ?? 0;
                 $installmentOrder->provider_fee = data_get($datas, 'installment_provider_fee') ?? 0;
                 $installmentOrder->save();
+
+                $order_payment = OrderPayment::where('id', $order->payment_id)->first();
+                $order_payment->payment_amount = data_get($datas, 'installment_markup_price');
+                $order_payment->save();
             }
 
             if ($datas['total_discount'] > 0) {
