@@ -70,4 +70,22 @@ class PagesController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function termConditionSeller()
+    {
+        try {
+            return $this->pagesQueries->termConditionSellerPage();
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function privacyPolicySeller()
+    {
+        try {
+            return $this->pagesQueries->privacyPolicySellerPage();
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
 }
