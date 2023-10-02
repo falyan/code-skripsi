@@ -211,10 +211,6 @@ class EvSubsidyCommands extends Service
                 $order->total_amount_iconcash = $order->total_amount_iconcash - $totalProductPrice + $totalProductNormalPrice;
                 $order->save();
 
-                $payment->payment_amount = $order->total_amount;
-                $payment->date_expired = $exp_date;
-                $payment->save();
-
                 $recalculateInstallment = InstallmentQueries::calculateInstallment([
                     'provider_id' => $order->installment->pi_provider_id,
                     'tenor' => $order->installment->month_tenor,
@@ -225,6 +221,10 @@ class EvSubsidyCommands extends Service
                 $order->installment->markup_price_tenor = $recalculateInstallment['markup_price'];
                 $order->installment->actual_price_tenor = $recalculateInstallment['price'];
                 $order->installment->save();
+
+                $payment->payment_amount = $order->installment->markup_price_tenor;
+                $payment->date_expired = $exp_date;
+                $payment->save();
 
                 $mailSender = new MailSenderManager();
                 $mailSender->mailRejectedEVSubsidy($data->order_id);
