@@ -182,13 +182,6 @@ class EvSubsidyCommands extends Service
             $order = Order::with('detail', 'buyer', 'installment')->findOrFail($data->order_id);
             $payment = OrderPayment::where('id', $order->payment_id)->first();
 
-            if ($order->installment != null) {
-                $installment_provider_fee = $order->installment->provider_fee;
-                $installment_tenor = $order->installment->month_tenor < 10 ? str_pad($order->installment->month_tenor, 2, '0', STR_PAD_LEFT) : $order->installment->month_tenor;
-                $installment_actual_price = $order->installment->actual_price_tenor;
-                $installment_fee = $order->installment->fee_tenor;
-            }
-
             if ($request['status'] == 0) {
 
                 $totalProductNormalPrice = 0;
@@ -218,10 +211,6 @@ class EvSubsidyCommands extends Service
                 $order->total_amount_iconcash = $order->total_amount_iconcash - $totalProductPrice + $totalProductNormalPrice;
                 $order->save();
 
-                $payment->payment_amount = $order->total_amount;
-                $payment->date_expired = $exp_date;
-                $payment->save();
-
                 $recalculateInstallment = InstallmentQueries::calculateInstallment([
                     'provider_id' => $order->installment->pi_provider_id,
                     'tenor' => $order->installment->month_tenor,
@@ -233,8 +222,12 @@ class EvSubsidyCommands extends Service
                 $order->installment->actual_price_tenor = $recalculateInstallment['price'];
                 $order->installment->save();
 
-                // $mailSender = new MailSenderManager();
-                // $mailSender->mailRejectedEVSubsidy($data->order_id);
+                $payment->payment_amount = $order->installment->markup_price_tenor;
+                $payment->date_expired = $exp_date;
+                $payment->save();
+
+                $mailSender = new MailSenderManager();
+                $mailSender->mailRejectedEVSubsidy($data->order_id);
 
             } else if ($request['status'] == 1) {
 
@@ -258,10 +251,10 @@ class EvSubsidyCommands extends Service
                 'email' => $order->buyer->email,
                 'phone_number' => $order->buyer->phone,
                 'expired_invoice' => $exp_date,
-                'additional_info7' => isset($installment_provider_fee) ? $installment_provider_fee : null,
-                'additional_info8' => isset($installment_tenor) ? $installment_tenor : null,
-                'additional_info9' => isset($installment_actual_price) ? $installment_actual_price : null,
-                'additional_info10' => isset($installment_fee) ? $installment_fee : null,
+                'additional_info7' => $order->installment->provider_fee ?? null,
+                'additional_info8' => $order->installment->month_tenor < 10 ? str_pad($order->installment->month_tenor, 2, '0', STR_PAD_LEFT) : $order->installment->month_tenor ?? null,
+                'additional_info9' => $order->installment->actual_price_tenor ?? null,
+                'additional_info10' => $order->installment->fee_tenor ?? null,
             ];
 
             $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
