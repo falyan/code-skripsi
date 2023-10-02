@@ -1938,6 +1938,7 @@ class TransactionController extends Controller
             $customer = Auth::user();
             $request = request()->all();
             $respond = $this->transactionQueries->countCheckoutPriceV3($customer, $request);
+            $respond['ubah_daya_status'] = false;
 
             if (isset($request['customer']) && data_get($request, 'customer') != null) {
                 $ev_subsidies = [];
