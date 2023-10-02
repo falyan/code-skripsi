@@ -226,8 +226,8 @@ class EvSubsidyCommands extends Service
                 $order->installment->actual_price_tenor = $recalculateInstallment['price'];
                 $order->installment->save();
 
-                // $mailSender = new MailSenderManager();
-                // $mailSender->mailRejectedEVSubsidy($data->order_id);
+                $mailSender = new MailSenderManager();
+                $mailSender->mailRejectedEVSubsidy($data->order_id);
 
             } else if ($request['status'] == 1) {
 
