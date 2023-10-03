@@ -212,6 +212,8 @@ class EvSubsidyCommands extends Service
                 $order->save();
 
                 if ($order->installment != null) {
+                    $month_tenor = $order->installment->month_tenor < 10 ? str_pad($order->installment->month_tenor, 2, '0', STR_PAD_LEFT) : $order->installment->month_tenor;
+
                     $recalculateInstallment = InstallmentQueries::calculateInstallment([
                         'provider_id' => $order->installment->pi_provider_id,
                         'tenor' => $order->installment->month_tenor,
@@ -254,7 +256,7 @@ class EvSubsidyCommands extends Service
                 'phone_number' => $order->buyer->phone,
                 'expired_invoice' => $exp_date,
                 'additional_info7' => $order->installment->provider_fee ?? null,
-                'additional_info8' => $order->installment->month_tenor < 10 ? str_pad($order->installment->month_tenor, 2, '0', STR_PAD_LEFT) : $order->installment->month_tenor ?? null,
+                'additional_info8' => $month_tenor ?? null,
                 'additional_info9' => $order->installment->actual_price_tenor ?? null,
                 'additional_info10' => $order->installment->fee_tenor ?? null,
             ];
