@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\Transaction;
 
+use App\Http\Services\Installment\InstallmentQueries;
 use App\Http\Services\Manager\GamificationManager;
 use App\Http\Services\Service;
 use App\Models\City;
@@ -22,10 +23,11 @@ use App\Models\VariantStock;
 use App\Models\VariantValueProduct;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class TransactionQueries extends Service
 {
-    public function getTransaction($column_name, $column_value, $limit = 10, $filter = [], $page = 1)
+    public function getTransaction($column_name, $column_value, $limit = 10, $filter = [], $page = 1, $has_installment = true)
     {
         $order = Order::with([
             'detail' => function ($product) {
@@ -34,7 +36,7 @@ class TransactionQueries extends Service
                 }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
                 $r->with(['review_photo'])->where('status', 1);
-            },
+            }, 'installment',
         ])->where($column_name, $column_value)->when($column_name == 'merchant_id', function ($query) {
             $query->whereHas('progress_active', function ($q) {
                 $q->whereNotIn('status_code', [99]);
@@ -43,6 +45,16 @@ class TransactionQueries extends Service
 
         $order = $this->filter($order, $filter);
         $order = $order->get();
+
+        if (Auth::user()->type === 'buyer') {
+            if (empty($has_installment)) {
+                foreach ($order as $data) {
+                    if ($data->installment != null) {
+                        throw new Exception('Silahkan update aplikasi Anda terlebih dahulu!');
+                    }
+                }
+            }
+        }
 
         $data = $order->map(function ($item) {
             $item->detail->each(function ($product) {
@@ -53,7 +65,6 @@ class TransactionQueries extends Service
                     $product->product = $product_data;
                 }
             });
-
             return $item;
         });
 
@@ -154,14 +165,14 @@ class TransactionQueries extends Service
         return $data;
     }
 
-    public function getTransactionWithStatusCode($column_name, $column_value, $status_code, $limit = 10, $filter = [], $page = 1)
+    public function getTransactionWithStatusCode($column_name, $column_value, $status_code, $limit = 10, $filter = [], $page = 1, $has_installment = true)
     {
         $data = Order::with([
             'detail' => function ($product) {
                 $product->with(['product' => function ($j) {
                     $j->select('id', 'merchant_id', 'name')->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer',
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'installment',
         ])->where(
             $column_name,
             $column_value,
@@ -183,6 +194,18 @@ class TransactionQueries extends Service
 
         $data = $this->filter($data, $filter);
         $data = $data->get();
+
+        if (Auth::user()->type === 'buyer') {
+            if (empty($has_installment)) {
+                foreach ($data as $d) {
+                    if ($d->progress_active->status_code == '00') {
+                        if ($d->installment != null) {
+                            throw new Exception('Silahkan update aplikasi Anda terlebih dahulu!');
+                        }
+                    }
+                }
+            }
+        }
 
         $data = $data->map(function ($item) {
             $item->detail->each(function ($product) {
@@ -283,12 +306,14 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->with('ev_subsidy');
                 }, 'variant_value_product']);
-            }, 'progress', 'merchant', 'delivery' => function ($delivery) {
+            }, 'progress', 'progress_active', 'complaint', 'merchant', 'delivery' => function ($delivery) {
                 $delivery->with(['subdistrict', 'district', 'city', 'city.province']);
             }, 'buyer', 'ev_subsidy', 'payment', 'review' => function ($review) {
                 $review->with(['review_photo']);
             }, 'promo_log_orders' => function ($promo) {
                 $promo->with(['promo_merchant.promo_master']);
+            }, 'installment' => function ($installment) {
+                $installment->with(['provider']);
             },
         ])->find($id);
 
@@ -358,6 +383,7 @@ class TransactionQueries extends Service
         $data->iconpay_product_id = static::$productid;
 
         return $data;
+
     }
 
     public function searchTransaction($column_name, $column_value, $keyword, $limit = 0, $filter = [], $page = 1)
@@ -1518,6 +1544,31 @@ class TransactionQueries extends Service
         $datas['total_payment'] -= $total_price_discount;
         $datas['total_payment'] -= $total_insentif;
         $datas['total_payment'] -= $total_discount_payment;
+
+        // Payment Installment //
+
+        if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
+            $installment = InstallmentQueries::calculateInstallment($datas['installment'], $datas['total_payment']);
+
+            $installment_price = $installment['installment_price'];
+            $installment_fee = $installment['installment_fee'];
+            $installment_tenor = $installment['tenor'];
+            $installment_markup_price = $installment['markup_price'];
+            $installment_total_payment = $installment_markup_price ?? $datas['total_payment'];
+            $installment_actual_price = $datas['total_payment'];
+            $installment_provider_fee = $installment['provider_fee'];
+            $installment_interest_percentage = $installment['interest_percentage'];
+        }
+
+        $datas['installment_price'] = $installment_price ?? 0;
+        $datas['installment_fee'] = $installment_fee ?? 0;
+        $datas['installment_tenor'] = $installment_tenor ?? null;
+        $datas['installment_markup_price'] = $installment_markup_price ?? 0;
+        $datas['installment_actual_price'] = $installment_actual_price ?? 0;
+        $datas['installment_provider_fee'] = $installment_provider_fee ?? 0;
+        $datas['installment_interest_percentage'] = $installment_interest_percentage ?? 0;
+
+        $datas['total_payment'] = $installment_total_payment ?? $datas['total_payment'];
 
         if ($message_error != '') {
             $datas['success'] = false;
