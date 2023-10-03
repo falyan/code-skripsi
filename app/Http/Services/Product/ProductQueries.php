@@ -1413,26 +1413,26 @@ class ProductQueries extends Service
 
         $products = new Product();
         $products = $products
-        ->withCount(['order_details' => function ($details) {
-            $details->whereHas('order', function ($order) {
-                $order->whereHas('progress_done');
-            });
-        }])
-        ->with([
-            'product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name',
-            'merchant.promo_merchant' => function ($pd) {
-                $pd->where(function ($query) {
-                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
-                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
+            ->withCount(['order_details' => function ($details) {
+                $details->whereHas('order', function ($order) {
+                    $order->whereHas('progress_done');
                 });
-            },
-            'merchant.promo_merchant.promo_master',
-            'merchant.promo_merchant.promo_master.promo_values',
-            'varian_product' => function ($query) {
-                $query->with(['variant_stock'])->where('main_variant', true);
-            },
-            'ev_subsidy',
-        ])
+            }])
+            ->with([
+                'product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name',
+                'merchant.promo_merchant' => function ($pd) {
+                    $pd->where(function ($query) {
+                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
+                    });
+                },
+                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_values',
+                'varian_product' => function ($query) {
+                    $query->with(['variant_stock'])->where('main_variant', true);
+                },
+                'ev_subsidy',
+            ])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
             })
@@ -1453,7 +1453,7 @@ class ProductQueries extends Service
 
     public function getRecommendProductPvRooftop($filter = [], $sortby = null, $limit = 10, $current_page = 1)
     {
-        $curl = new \GuzzleHttp\Client();
+        $curl = new \GuzzleHttp\Client(['verify' => false]);
 
         $url = env('PV_ROOFTOP_ENDPOINT');
         $headers = [
@@ -2149,7 +2149,10 @@ class ProductQueries extends Service
     {
         $product = Product::select('name')->where('status', 1);
 
-        if ($limit != null) $product = $product->limit($limit);
+        if ($limit != null) {
+            $product = $product->limit($limit);
+        }
+
         $product = $product->offset(($page - 1) * $limit)->get();
 
         if ($product->isEmpty()) {
