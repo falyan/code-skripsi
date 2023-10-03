@@ -211,7 +211,7 @@ class EvSubsidyCommands extends Service
                 $order->total_amount_iconcash = $order->total_amount_iconcash - $totalProductPrice + $totalProductNormalPrice;
                 $order->save();
 
-                if ($order->installment->month_tenor != null) {
+                if ($order->installment != null) {
                     $recalculateInstallment = InstallmentQueries::calculateInstallment([
                         'provider_id' => $order->installment->pi_provider_id,
                         'tenor' => $order->installment->month_tenor,
