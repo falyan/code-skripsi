@@ -32,9 +32,9 @@ class TransactionQueries extends Service
         $order = Order::with([
             'detail' => function ($product) {
                 $product->with(['product' => function ($j) {
-                    $j->with(['product_photo']);
+                    $j->with(['product_photo', 'ev_subsidy']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
+            }, 'progress_active', 'merchant', 'ev_subsidy', 'delivery', 'buyer', 'review' => function ($r) {
                 $r->with(['review_photo'])->where('status', 1);
             }, 'installment',
         ])->where($column_name, $column_value)->when($column_name == 'merchant_id', function ($query) {
@@ -1100,7 +1100,7 @@ class TransactionQueries extends Service
             throw new Exception('Silahkan tambah alamat pengiriman terlebih dahulu!', 404);
         }
 
-        $province_id = $customer_address->province_id;
+        // $province_id = $customer_address->province_id; // enhacement for customer
         $total_price = $total_payment = $total_delivery_discount = $total_delivery_fee = $total_insentif = $total_discount_payment = 0;
         $total_price_discount = 0;
         $message_error = '';
@@ -1137,6 +1137,8 @@ class TransactionQueries extends Service
                 },
             ])->findOrFail($merchant['merchant_id']);
 
+            $province_id = $data_merchant->province_id; // enhacement for merchant
+
             $new_product = [];
             foreach (data_get($merchant, 'products') as $product) {
                 $data_product = Product::with(['product_photo', 'stock_active', 'ev_subsidy' => function ($es) use ($merchant) {
@@ -1171,6 +1173,10 @@ class TransactionQueries extends Service
 
                 $new_product[] = array_merge($product, $data_product->toArray());
             }
+
+            // if (!isset($datas['customer.full_name']) && data_get($datas, 'customer.full_name') == null || !isset($datas['customer.father_name']) && data_get($datas, 'customer.father_name') == null) {
+            //     $message_error = 'Untuk melakukan transaksi pengajuan subsidi, silahkan update aplikasi Anda terlebih dahulu';
+            // }
 
             // shipping discount
             $promo_merchant_ongkir = null;
@@ -1237,6 +1243,8 @@ class TransactionQueries extends Service
             if ($promo_merchant_ongkir != null) {
                 if ($promo_merchant_ongkir->promo_master->min_order_value > $merchant_total_price) {
                     $message_error = 'Minimal order untuk diskon ongkir adalah Rp ' . number_format($promo_merchant_ongkir->promo_master->min_order_value, 0, ',', '.');
+                    $merchant_total_payment += $merchant['delivery_discount'];
+                    $merchant['total_payment'] += $merchant['delivery_discount'];
                     $merchant['delivery_discount'] = 0;
                 }
 
@@ -1252,6 +1260,8 @@ class TransactionQueries extends Service
 
                     if ($customer_limit_count <= ($promo_logs_sub - $promo_logs_add)) {
                         $message_error = 'Anda telah melebihi batas penggunaan promo ini';
+                        $merchant_total_payment += $merchant['delivery_discount'];
+                        $merchant['total_payment'] += $merchant['delivery_discount'];
                         $merchant['delivery_discount'] = 0;
                     }
                 }
@@ -1354,6 +1364,8 @@ class TransactionQueries extends Service
 
                     if ($customer_limit_count <= ($promo_logs_sub - $promo_logs_add)) {
                         $message_error = 'Anda telah melebihi batas penggunaan promo ini';
+                        $merchant_total_payment += $merchant['product_discount'];
+                        $merchant['total_payment'] += $merchant['product_discount'];
                         $merchant['product_discount'] = 0;
                     }
                 }

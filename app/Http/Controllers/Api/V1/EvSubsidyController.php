@@ -18,7 +18,8 @@ class EvSubsidyController extends Controller
         $this->EvSubsidyCommands = new EvSubsidyCommands();
     }
 
-    public function list() {
+    public function list()
+    {
         $keyword = request()->get('keyword');
         $limit = request()->get('limit', 10);
 

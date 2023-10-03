@@ -343,11 +343,18 @@ class TransactionCommands extends Service
                                     'success' => false,
                                     'status' => "Bad request",
                                     'status_code' => 400,
-                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                                 ];
                             }
 
                             $ev_subsidies[] = $ev_subsidy;
+                        } else {
+                            return [
+                                'success' => false,
+                                'status' => "Bad request",
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak memiliki bantuan',
+                            ];
                         }
                     }
                 }
@@ -357,7 +364,7 @@ class TransactionCommands extends Service
                         'success' => false,
                         'status' => "Bad request",
                         'status_code' => 400,
-                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                     ];
                 }
             }
@@ -794,7 +801,7 @@ class TransactionCommands extends Service
                 $order_payment->customer_id = $customer_id;
                 $order_payment->payment_amount = data_get($data, 'total_payment');
                 $order_payment->date_created = $trx_date;
-                $order_payment->date_expired = $exp_date;
+                $order_payment->date_expired = (isset($datas['customer']) && data_get($datas, 'customer') != null) ? null : $exp_date;
                 $order_payment->payment_method = null;
                 $order_payment->no_reference = $no_reference;
                 $order_payment->booking_code = null;
@@ -810,7 +817,9 @@ class TransactionCommands extends Service
                 $amount = $order->total_amount - $total_insentif - $mdr_total;
 
                 $order->total_amount_iconcash = $amount;
+
                 $order->payment_id = $order_payment->id;
+
                 if ($order->save()) {
                     $column_name = 'customer_id';
                     $column_value = $customer_id;
@@ -858,6 +867,7 @@ class TransactionCommands extends Service
                         $order_payment = OrderPayment::where('id', $newOrder->payment_id)->first();
                         $order_payment->payment_amount = $order_payment->payment_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $order_payment->save();
+
                     } else {
                         Log::info('Claim Bonus Apply Failed, Refund with Amount Bonus Hold');
 
@@ -889,8 +899,10 @@ class TransactionCommands extends Service
                         $customerEv->status_approval = null;
                         $customerEv->customer_id_pel = $customer->pln_mobile_customer_id;
                         $customerEv->customer_nik = data_get($datas, 'customer.nik');
+                        $customerEv->customer_full_name = strtoupper(data_get($datas, 'customer.full_name')) ?? null;
+                        $customerEv->customer_father_name = strtoupper(data_get($datas, 'customer.father_name')) ?? null;
                         $customerEv->ktp_url = data_get($datas, 'customer.ktp_url');
-                        $customerEv->kk_url = data_get($datas, 'customer.kk_url');
+                        $customerEv->kk_url = data_get($datas, 'customer.kk_url') ?? null;
                         $customerEv->file_url = data_get($datas, 'customer.file_url');
                         $customerEv->created_by = auth()->user()->full_name;
                         $customerEv->save();
@@ -909,46 +921,49 @@ class TransactionCommands extends Service
                 }
             }
 
-            $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
-            $body = [
-                'no_reference' => $no_reference,
-                'transaction_date' => $trx_date,
-                'transaction_code' => '00',
-                'partner_reference' => $no_reference,
-                'product_id' => static::$productid,
-                'amount' => $datas['total_payment'],
-                'customer_id' => $no_reference,
-                'customer_name' => $customer->full_name,
-                'email' => $customer->email,
-                'phone_number' => $customer->phone,
-                'expired_invoice' => $exp_date,
-            ];
+            if (!isset($datas['customer'])) {
 
-            $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
+                $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
+                $body = [
+                    'no_reference' => $no_reference,
+                    'transaction_date' => $trx_date,
+                    'transaction_code' => '00',
+                    'partner_reference' => $no_reference,
+                    'product_id' => static::$productid,
+                    'amount' => $datas['total_payment'],
+                    'customer_id' => $no_reference,
+                    'customer_name' => $customer->full_name,
+                    'email' => $customer->email,
+                    'phone_number' => $customer->phone,
+                    'expired_invoice' => $exp_date,
+                ];
 
-            static::$header['timestamp'] = $timestamp;
-            static::$header['signature'] = hash_hmac('sha256', $encode_body . static::$clientid . $timestamp, sha1(static::$appkey));
-            static::$header['content-type'] = 'application/json';
+                $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
 
-            $response = static::$curl->request('POST', $url, [
-                'headers' => static::$header,
-                'http_errors' => false,
-                'body' => $encode_body,
-            ]);
+                static::$header['timestamp'] = $timestamp;
+                static::$header['signature'] = hash_hmac('sha256', $encode_body . static::$clientid . $timestamp, sha1(static::$appkey));
+                static::$header['content-type'] = 'application/json';
 
-            $response = json_decode($response->getBody());
+                $response = static::$curl->request('POST', $url, [
+                    'headers' => static::$header,
+                    'http_errors' => false,
+                    'body' => $encode_body,
+                ]);
 
-            LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
+                $response = json_decode($response->getBody());
 
-            throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+                LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
 
-            if ($response->response_details[0]->response_code != 00) {
-                throw new Exception($response->response_details[0]->response_message);
+                throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+
+                if ($response->response_details[0]->response_code != 00) {
+                    throw new Exception($response->response_details[0]->response_message);
+                }
+
+                $response->response_details[0]->amount = $datas['total_payment'];
+                $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
+                $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
             }
-
-            $response->response_details[0]->amount = $datas['total_payment'];
-            $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
-            $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
 
             DB::commit();
 
@@ -983,7 +998,7 @@ class TransactionCommands extends Service
             $no_reference = (int) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
 
             $customer_address = CustomerAddress::where('id', $datas['customer_address_id'])->first();
-            $province_id = $customer_address->province_id;
+            // $province_id = $customer_address->province_id; // enhacement for customer
             // $district = $customer_address->district_id;
 
             while (static::checkReferenceExist($no_reference) == false) {
@@ -1051,13 +1066,29 @@ class TransactionCommands extends Service
                                     'success' => false,
                                     'status' => "Bad request",
                                     'status_code' => 400,
-                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                                 ];
                             }
 
                             $ev_subsidies[] = $ev_subsidy;
+                        } else {
+                            return [
+                                'success' => false,
+                                'status' => "Bad request",
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak memiliki bantuan',
+                            ];
                         }
                     }
+                }
+
+                if (!isset($datas['customer.full_name']) && data_get($datas, 'customer.full_name') == null || !isset($datas['customer.father_name']) && data_get($datas, 'customer.father_name') == null) {
+                    return [
+                        'success' => false,
+                        'status' => "Bad request",
+                        'status_code' => 400,
+                        'message' => 'Untuk melakukan transaksi pengajuan subsidi, silahkan update aplikasi Anda terlebih dahulu',
+                    ];
                 }
 
                 if (count($ev_subsidies) > 1) {
@@ -1065,7 +1096,7 @@ class TransactionCommands extends Service
                         'success' => false,
                         'status' => "Bad request",
                         'status_code' => 400,
-                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                     ];
                 }
             }
@@ -1217,6 +1248,7 @@ class TransactionCommands extends Service
                     })
                     ->get();
 
+                $province_id = data_get($data, 'province_id');
                 $promo_merchant_ongkir = null;
                 $value_ongkir = 0;
 
@@ -1527,7 +1559,7 @@ class TransactionCommands extends Service
                 $order_payment->customer_id = $customer_id;
                 $order_payment->payment_amount = data_get($data, 'total_payment');
                 $order_payment->date_created = $trx_date;
-                $order_payment->date_expired = $exp_date;
+                $order_payment->date_expired = (isset($datas['customer']) && data_get($datas, 'customer') != null) ? null : $exp_date;
                 $order_payment->payment_method = null;
                 $order_payment->no_reference = $no_reference;
                 $order_payment->booking_code = null;
@@ -1617,6 +1649,7 @@ class TransactionCommands extends Service
             $mailSender = new MailSenderManager();
 
             if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
+                // if ($ev_subsidies) {
                 $ev_subsidy = $ev_subsidies[0];
                 foreach (data_get($data, 'products') as $product) {
                     if ($ev_subsidy->product_id == data_get($product, 'product_id')) {
@@ -1627,8 +1660,10 @@ class TransactionCommands extends Service
                         $customerEv->status_approval = null;
                         $customerEv->customer_id_pel = $customer->pln_mobile_customer_id;
                         $customerEv->customer_nik = data_get($datas, 'customer.nik');
+                        $customerEv->customer_full_name = strtoupper(data_get($datas, 'customer.full_name')) ?? null;
+                        $customerEv->customer_father_name = strtoupper(data_get($datas, 'customer.father_name')) ?? null;
                         $customerEv->ktp_url = data_get($datas, 'customer.ktp_url');
-                        $customerEv->kk_url = data_get($datas, 'customer.kk_url');
+                        $customerEv->kk_url = data_get($datas, 'customer.kk_url') ?? null;
                         $customerEv->file_url = data_get($datas, 'customer.file_url');
                         $customerEv->created_by = auth()->user()->full_name;
                         $customerEv->save();
@@ -1636,6 +1671,39 @@ class TransactionCommands extends Service
                 }
 
                 $mailSender->mailCheckoutSubsidy($this->order_id);
+                // } else {
+                //     $master_ubah_daya = UbahDayaMaster::where('event_start_date', '<=', Carbon::now())->where('event_end_date', '>=', Carbon::now())->where('status', 1)->first();
+                //     $check_voucher_ubah_daya_code = UbahDayaLog::where('nik', data_get($datas, 'customer.nik'))->where('master_ubah_daya_id', $master_ubah_daya->id)->first();
+
+                //     $master_data = MasterData::whereIn('key', ['ubah_daya_min_transaction', 'ubah_daya_implementation_period'])->get();
+                //     $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
+                //     $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
+
+                //     $total_amount_trx = data_get($datas, 'total_amount');
+                //     $total_delivery_fee_trx = data_get($datas, 'total_delivery_fee');
+                //     $product_insentif = false;
+                //     foreach ($new_products as $product) {
+                //         if ($product['insentif_ubah_daya'] == true) $product_insentif = true;
+                //     }
+
+                //     if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && $product_insentif == true) {
+                //         if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
+                //             $log = UbahDayaLog::create([
+                //                 'customer_id' => $customer_id,
+                //                 'order_id' => $order->id,
+                //                 'master_ubah_daya_id' => $master_ubah_daya->id,
+                //                 'customer_email' => $customer->email,
+                //                 'event_name' => $master_ubah_daya->event_name,
+                //                 'event_start_date' => $master_ubah_daya->event_start_date,
+                //                 'event_end_date' => $master_ubah_daya->event_end_date,
+                //                 'nik' => data_get($datas, 'customer.nik'),
+                //                 'created_by' => auth()->user()->full_name,
+                //             ]);
+                //         }
+                //     }
+
+                //     $mailSender->mailCheckout($this->order_id);
+                // }
             } else {
                 $mailSender->mailCheckout($this->order_id);
             }
@@ -1649,6 +1717,7 @@ class TransactionCommands extends Service
                 $installmentOrder->fee_tenor = data_get($datas, 'installment_fee') ?? 0;
                 $installmentOrder->installment_tenor = data_get($datas, 'installment_price') ?? 0;
                 $installmentOrder->markup_price_tenor = data_get($datas, 'installment_markup_price') ?? 0;
+                $installmentOrder->actual_price_tenor = data_get($datas, 'installment_actual_price') ?? 0;
                 $installmentOrder->interest_percentage_tenor = data_get($datas, 'installment_interest_percentage') ?? 0;
                 $installmentOrder->provider_fee = data_get($datas, 'installment_provider_fee') ?? 0;
                 $installmentOrder->save();

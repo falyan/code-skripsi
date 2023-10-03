@@ -19,11 +19,14 @@ use App\Models\CustomerEVSubsidy;
 use App\Models\IconcashInquiry;
 use App\Models\MasterData;
 use App\Models\Order;
+use App\Models\OrderComplaint;
 use App\Models\OrderDelivery;
 use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\RefundOrder;
+use App\Models\UbahDayaLog;
+use App\Models\UbahDayaMaster;
 use App\Models\VariantStock;
 use Exception;
 use Illuminate\Http\Request;
@@ -32,7 +35,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Input;
 use Maatwebsite\Excel\Facades\Excel;
 use stdClass;
 
@@ -278,10 +280,6 @@ class TransactionController extends Controller
             // "npwp" => 'nullable|string',
             // 'save_npwp' => 'nullable|boolean|required_with:npwp',
         ];
-
-        if (isset(request()->all()['customer'])) {
-            $rules['customer.nik'] = 'required';
-        }
 
         $validator = Validator::make(request()->all(), $rules, [
             'required' => ':attribute diperlukan.',
@@ -999,32 +997,60 @@ class TransactionController extends Controller
                         }
                     }
 
-                    $order = Order::with(['buyer', 'merchant', 'detail', 'progress_active', 'payment'])->find($order_id);
-                    $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
+                    $order = Order::with(['buyer', 'merchant', 'detail', 'detail.product', 'progress_active', 'payment'])->find($order_id);
+                    $orders = Order::with(['delivery', 'detail', 'detail.product'])->where('no_reference', $order->no_reference)->get();
                     $total_amount_trx = $total_delivery_fee_trx = 0;
 
+                    $check_voucher_exist = false;
                     foreach ($orders as $o) {
                         $total_amount_trx += $o->total_amount;
                         $total_delivery_fee_trx += $o->delivery->delivery_fee;
-                        $check_voucher_ubah_daya_code = $o->voucher_ubah_daya_code;
+                        if ($o->voucher_ubah_daya_code != null) {
+                            $check_voucher_exist = true;
+                        }
+
                     }
 
-                    $master_data = MasterData::whereIn('key', ['ubah_daya_min_transaction', 'ubah_daya_implementation_period'])->get();
-                    $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
-                    $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
+                    $is_ev2go = false;
+                    $merchat_ev2go = false;
+                    foreach ($orders as $value) {
+                        foreach ($value->detail as $detail) {
+                            if ($detail->product->insentif_ubah_daya) {
+                                $is_ev2go = true;
+                                if ($order->merchant_id == $value->merchant_id) {
+                                    $merchat_ev2go = true;
+                                }
 
-                    if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && $order->merchant->is_voucher_ubah_daya) {
-                        if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::parse($order->order_date) || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::parse($order->order_date)) {
-                            $res_generate = $this->voucherCommand->generateVoucher($order);
-
-                            if ($res_generate['success'] == false) {
-                                Log::info("E00004", [
-                                    'path_url' => "voucher.claim.ubahdaya.error",
-                                    'query' => [],
-                                    'response' => $res_generate['message'],
-                                ]);
                             }
                         }
+                    }
+
+                    $master_ubah_dayas = UbahDayaMaster::where('status', 1)->orderBy('event_start_date', 'asc')->get();
+                    $ubah_daya_logs = UbahDayaLog::where(['customer_id' => $order->buyer_id, 'status' => 1])
+                        ->whereIn('master_ubah_daya_id', collect($master_ubah_dayas)->pluck('id')->toArray())
+                        ->count();
+
+                    $claim_bonus_voucher = false;
+                    foreach ($master_ubah_dayas as $master_ubah_daya) {
+                        $with_insentif = $master_ubah_daya->with_insentif;
+                        $periode = Carbon::parse($master_ubah_daya->event_start_date) <= Carbon::parse($order->order_date) && Carbon::parse($master_ubah_daya->event_end_date) >= Carbon::parse($order->order_date);
+
+                        if ((($is_ev2go == true && $merchat_ev2go == true) && $check_voucher_exist == false && $with_insentif == true) && $periode) {
+                            $claim_bonus_voucher = true;
+                            $this->voucherCommand->generateVoucher($order, $master_ubah_daya, true);
+                        } elseif (($is_ev2go == false && $merchat_ev2go == false) && $check_voucher_exist == false && ($total_amount_trx - $total_delivery_fee_trx) >= $master_ubah_daya->min_transaction && $periode && $ubah_daya_logs == 0) {
+                            $claim_bonus_voucher = true;
+                            $this->voucherCommand->generateVoucher($order, $master_ubah_daya);
+                        }
+                    }
+
+                    if ($claim_bonus_voucher == false) {
+                        Log::info([
+                            'path_info' => 'generate_voucher',
+                            'message' => 'Tidak memenuhi syarat untuk generate voucher',
+                            'order_id' => $order_id,
+                            'total_amount_trx' => $total_amount_trx - $total_delivery_fee_trx,
+                        ]);
                     }
 
                     DB::commit();
@@ -1861,11 +1887,17 @@ class TransactionController extends Controller
                                 return array_merge($respond, [
                                     'success' => true,
                                     'status_code' => 400,
-                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                                 ]);
                             }
 
                             $ev_subsidies[] = $product['ev_subsidy'];
+                        } else {
+                            return array_merge($respond, [
+                                'success' => true,
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang memiliki bantuan',
+                            ]);
                         }
                     }
                 }
@@ -1874,7 +1906,7 @@ class TransactionController extends Controller
                     return array_merge($respond, [
                         'success' => true,
                         'status_code' => 400,
-                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                     ]);
                 }
             }
@@ -1925,6 +1957,7 @@ class TransactionController extends Controller
             $customer = Auth::user();
             $request = request()->all();
             $respond = $this->transactionQueries->countCheckoutPriceV3($customer, $request);
+            $respond['ubah_daya_status'] = false;
 
             if (isset($request['customer']) && data_get($request, 'customer') != null) {
                 $ev_subsidies = [];
@@ -1935,11 +1968,17 @@ class TransactionController extends Controller
                                 return array_merge($respond, [
                                     'success' => true,
                                     'status_code' => 400,
-                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                                 ]);
                             }
 
                             $ev_subsidies[] = $product['ev_subsidy'];
+                        } else {
+                            return array_merge($respond, [
+                                'success' => true,
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak memiliki bantuan',
+                            ]);
                         }
                     }
                 }
@@ -1948,7 +1987,7 @@ class TransactionController extends Controller
                     return array_merge($respond, [
                         'success' => true,
                         'status_code' => 400,
-                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik berinsentif',
+                        'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                     ]);
                 }
             }
@@ -1973,7 +2012,9 @@ class TransactionController extends Controller
             }
 
             if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000) {
-                $this->voucherCommand->generateVoucher($order);
+                $master_ubah_dayas = UbahDayaMaster::where('status', 1)->orderBy('event_start_date', 'asc')->get();
+                $ubah_daya = collect($master_ubah_dayas)->whereNot('event_name', 'ev2go')->all();
+                $this->voucherCommand->generateVoucher($order, $ubah_daya);
             }
 
             DB::commit();
@@ -2205,6 +2246,61 @@ class TransactionController extends Controller
             DB::commit();
 
             return $this->respondWithData($results, $message);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getListComplaint()
+    {
+        $complaints = MasterData::select('key', 'value')->where('type', 'complaint')->get();
+
+        return $this->respondWithData($complaints, 'Berhasil mendapatkan list complaint');
+    }
+
+    public function addComplaint(Request $request)
+    {
+        $validator = Validator::make(request()->all(), [
+            'order_id' => 'required|exists:order,id',
+            'complaint' => 'required',
+            'description' => 'nullable',
+            'image' => 'nullable',
+        ], [
+            'required' => ':attribute diperlukan.',
+            'exists' => ':attribute tidak ditemukan.',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            DB::beginTransaction();
+            $order = Order::find($request->order_id)->load('complaint');
+            if ($order->complaint != null) {
+                OrderComplaint::where('id', $order->complaint->id)->update([
+                    'complaint' => $request->complaint,
+                    'description' => $request->description,
+                    'image' => $request->image,
+                ]);
+            } else {
+                OrderComplaint::create([
+                    'order_id' => $request->order_id,
+                    'complaint' => $request->complaint,
+                    'description' => $request->description,
+                    'image' => $request->image,
+                ]);
+            }
+
+            DB::commit();
+            return $this->respondWithResult(true, 'Berhasil menambahkan complaint', 200);
         } catch (Exception $e) {
             DB::rollBack();
             return $this->respondErrorException($e, request());

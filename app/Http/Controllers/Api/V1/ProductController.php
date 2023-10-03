@@ -662,6 +662,7 @@ class ProductController extends Controller
             $sorting = $request->sortby ?? null;
             $page = $request->page ?? 1;
 
+            if ($category_key == 'prodcat_pv_rooftop') return $this->productQueries->getRecommendProductPvRooftop($filter, $sorting, $limit, $page);
             return $this->productQueries->getRecommendProductByCategory($category_key, $filter, $sorting, $limit, $page);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
@@ -798,6 +799,17 @@ class ProductController extends Controller
             $filter = $request->filter ?? [];
             $sorting = $request->sortby ?? null;
             return $this->productQueries->getUmkmProduct($limit, $filter, $sorting, request()->input('page') ?? 1);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function getListProduct()
+    {
+        try {
+            $limit = request()->query('limit');
+            $page = request()->query('page', 1);
+            return $this->productQueries->getListProduct($limit, $page);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

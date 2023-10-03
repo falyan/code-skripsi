@@ -1451,6 +1451,117 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function getRecommendProductPvRooftop($filter = [], $sortby = null, $limit = 10, $current_page = 1)
+    {
+        $curl = new \GuzzleHttp\Client();
+
+        $url = env('PV_ROOFTOP_ENDPOINT');
+        $headers = [
+            'Secret-key' => env('PV_ROOFTOP_SECRET_KEY'),
+        ];
+
+        $response = $curl->get($url, [
+            'headers' => $headers,
+        ]);
+
+        $response = json_decode($response->getBody()->getContents(), true);
+
+        Log::info("T00001", [
+            'path_url' => "product.recommend.pv-rooftop",
+            'url' => $url,
+            'body' => Carbon::now('Asia/Jakarta'),
+            'response' => $response,
+        ]);
+
+        if (!$response['success']) {
+            $response['success'] = false;
+            $response['message'] = 'Gagal mendapatkan data produk!';
+            return $response;
+        }
+
+        $master_data = MasterData::where('key', 'prodcat_pv_rooftop')->first();
+        $merchant = Merchant::with(['city'])->where('id', env('PV_ROOFTOP_MERCHANT_ID'))->first();
+
+        $data = array_map(function ($item) use ($master_data, $merchant) {
+            $master_data->value = $item['kategori'];
+            return [
+                'id' => $item['id'],
+                'merchant_id' => $merchant->id,
+                'name' => $item['productName'],
+                'price' => (string) $item['sellPricePpn'],
+                'strike_price' => (string) $item['price'],
+                'minimum_purchase' => $item['minimumPembelian'],
+                'category_id' => $master_data->id,
+                'etalase_id' => null,
+                'condition' => $item['kondisi'],
+                'description' => $item['spesifikasi'],
+                'is_shipping_insurance' => false,
+                'shipping_service' => false,
+                'is_featured_product' => false,
+                'created_by' => 'system',
+                'updated_by' => 'system',
+                'created_at' => Carbon::parse($item['dateCreate'])->format('Y-m-d H:i:s'),
+                'updated_at' => Carbon::parse($item['dateModified'])->format('Y-m-d H:i:s'),
+                'deleted_at' => null,
+                'status' => $item['status'] ?? 1,
+                'items_sold' => $item['terjual'],
+                'avg_rating' => (string) ($item['ratingStar'] ?? '5.0'),
+                'review_count' => $item['diulas'] ?? 0,
+                'is_flash_sale_discount' => false,
+                'weight' => (string) $item['berat'],
+                'length' => '0',
+                'width' => '0',
+                'height' => '0',
+                'order_details_count' => 0,
+                'product_stock' => array_map(function ($stock) use ($item, $merchant) {
+                    return [
+                        'id' => null,
+                        'merchant_id' => $merchant->id,
+                        'product_id' => $item['id'],
+                        'amount' => $stock,
+                        'uom' => 'pcs',
+                        'description' => '',
+                        'status' => 1,
+                        'created_by' => 'system',
+                        'updated_by' => 'system',
+                        'created_at' => Carbon::parse($item['dateCreate'])->format('Y-m-d H:i:s'),
+                        'updated_at' => Carbon::parse($item['dateModified'])->format('Y-m-d H:i:s'),
+                        'deleted_at' => null,
+                    ];
+                }, [$item['jumlahStok']]),
+                'product_photo' => array_map(function ($image) use ($item, $merchant) {
+                    return [
+                        'id' => null,
+                        'merchant_id' => $merchant->id,
+                        'product_id' => $item['id'],
+                        'url' => $image,
+                        'created_by' => 'system',
+                        'updated_by' => 'system',
+                        'created_at' => Carbon::parse($item['dateCreate'])->format('Y-m-d H:i:s'),
+                        'updated_at' => Carbon::parse($item['dateModified'])->format('Y-m-d H:i:s'),
+                        'deleted_at' => null,
+                    ];
+                }, [$item['urlImg']]),
+                'is_whislist' => null,
+                'merchant' => $merchant,
+                'varian_product' => null,
+                'ev_subsidy' => null,
+                'tiket' => null,
+                'promo_value' => 0,
+                'promo_type' => '',
+                'reviews' => null,
+                'category' => $master_data,
+            ];
+        }, $response['data']);
+
+        $data = $this->paginate($data, $limit, $current_page);
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $data;
+        return $response;
+    }
+
     public function getElectricVehicleByCategory($category_key, $sub_category_key, $sortby = null, $limit = 10)
     {
         $products = Product::where('status', 1)
@@ -2031,6 +2142,28 @@ class ProductQueries extends Service
         $response['success'] = true;
         $response['message'] = 'Review berhasil didapatkan!';
         $response['data'] = $review;
+        return $response;
+    }
+
+    public function getListProduct($limit, $page)
+    {
+        $product = Product::select('name')->where('status', 1);
+
+        if ($limit != null) $product = $product->limit($limit);
+        $product = $product->offset(($page - 1) * $limit)->get();
+
+        if ($product->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Produk tidak ditemukan!';
+            $response['data'] = [];
+            return $response;
+        }
+
+        $product = array_map(fn($item) => $item['name'], $product->toArray());
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data produk!';
+        $response['data'] = $product;
         return $response;
     }
 

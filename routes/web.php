@@ -246,6 +246,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
                 $router->get('special/tiket', 'ProductController@getTiketProduct');
                 $router->get('special/subsidy', 'ProductController@getSubsidyProduct');
                 $router->get('special/umkm', 'ProductController@getUmkmProduct');
+                $router->get('list/data', 'ProductController@getListProduct');
             });
 
             $router->group(['prefix' => 'variant'], static function () use ($router) {
@@ -284,6 +285,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'transaction', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('/delivery-discount', 'TransactionController@getDeliveryDiscount');
                 $router->get('/customer-discount', 'TransactionController@getCustomerDiscount');
+                $router->get('/list-complaint', 'TransactionController@getListComplaint');
                 $router->get('/{related_id}', 'TransactionController@buyerIndex');
 
                 $router->get('/{related_id}/category/{category_key}', 'TransactionController@transactionByCategoryKey');
@@ -360,6 +362,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             });
 
             $router->group(['prefix' => 'order', 'middleware' => 'auth'], static function () use ($router) {
+                $router->post('complaint', 'TransactionController@addComplaint');
                 $router->post('checkout', 'TransactionController@checkout');
                 $router->post('checkoutv2', 'TransactionController@checkoutV2');
                 $router->post('checkoutv3', 'TransactionController@checkoutV3');
@@ -475,6 +478,11 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     $router->group(['prefix' => 'report', 'middleware' => 'auth'], static function () use ($router) {
         $router->get('reason', 'ReportController@getMasterData');
         $router->post('create', 'ReportController@createReport');
+    });
+
+    $router->group(['prefix' => 'pages'], static function () use ($router) {
+        $router->get('term-condition', 'PagesController@termConditionSeller');
+        $router->get('privacy-policy', 'PagesController@privacyPolicySeller');
     });
 
     $router->group(['prefix' => 'setting'], static function () use ($router) {
@@ -642,4 +650,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->get('get-voucher/{id}/', 'UbahDayaController@getVoucherById');
         $router->post('voucher', 'UbahDayaController@createVoucher');
     });
+});
+
+$router->group(['namespace' => '\Rap2hpoutre\LaravelLogViewer'], function () use ($router) {
+    if (env('APP_ENV') === 'staging') {
+        $router->get('logs', 'LogViewerController@index');
+    }
 });
