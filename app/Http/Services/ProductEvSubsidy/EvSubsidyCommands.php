@@ -211,18 +211,20 @@ class EvSubsidyCommands extends Service
                 $order->total_amount_iconcash = $order->total_amount_iconcash - $totalProductPrice + $totalProductNormalPrice;
                 $order->save();
 
-                $recalculateInstallment = InstallmentQueries::calculateInstallment([
-                    'provider_id' => $order->installment->pi_provider_id,
-                    'tenor' => $order->installment->month_tenor,
-                ], $order->total_amount);
+                if ($order->installment->month_tenor != null) {
+                    $recalculateInstallment = InstallmentQueries::calculateInstallment([
+                        'provider_id' => $order->installment->pi_provider_id,
+                        'tenor' => $order->installment->month_tenor,
+                    ], $order->total_amount);
 
-                $order->installment->fee_tenor = $recalculateInstallment['installment_fee'];
-                $order->installment->installment_tenor = $recalculateInstallment['installment_price'];
-                $order->installment->markup_price_tenor = $recalculateInstallment['markup_price'];
-                $order->installment->actual_price_tenor = $recalculateInstallment['price'];
-                $order->installment->save();
+                    $order->installment->fee_tenor = $recalculateInstallment['installment_fee'];
+                    $order->installment->installment_tenor = $recalculateInstallment['installment_price'];
+                    $order->installment->markup_price_tenor = $recalculateInstallment['markup_price'];
+                    $order->installment->actual_price_tenor = $recalculateInstallment['price'];
+                    $order->installment->save();
+                }
 
-                $payment->payment_amount = $order->installment->markup_price_tenor;
+                $payment->payment_amount = $order->installment->markup_price_tenor ?? $order->total_amount;
                 $payment->date_expired = $exp_date;
                 $payment->save();
 
