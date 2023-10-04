@@ -149,6 +149,7 @@ class ProductQueries extends Service
             //     });
             // }])
             ->with([
+                'merchant',
                 'product_photo',
                 'product_stock',
                 'is_wishlist',
