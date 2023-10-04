@@ -38,7 +38,7 @@ class ProductQueries extends Service
                             ->where('end_date', '>=', date('Y-m-d H:i:s'));
                     });
                 },
-                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_regions',
                 'merchant.promo_merchant.promo_master.promo_values',
                 'is_wishlist', 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
@@ -268,7 +268,7 @@ class ProductQueries extends Service
                         ->where('end_date', '>=', date('Y-m-d H:i:s'));
                 });
             },
-            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_regions',
             'merchant.promo_merchant.promo_master.promo_values',
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
@@ -322,7 +322,7 @@ class ProductQueries extends Service
                         ->where('end_date', '>=', date('Y-m-d H:i:s'));
                 });
             },
-            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_regions',
             'merchant.promo_merchant.promo_master.promo_values',
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
@@ -387,7 +387,7 @@ class ProductQueries extends Service
                             ->where('end_date', '>=', date('Y-m-d H:i:s'));
                     });
                 },
-                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_regions',
                 'merchant.promo_merchant.promo_master.promo_values',
                 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
@@ -429,7 +429,7 @@ class ProductQueries extends Service
                             ->where('end_date', '>=', date('Y-m-d H:i:s'));
                     });
                 },
-                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_regions',
                 'merchant.promo_merchant.promo_master.promo_values',
                 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
@@ -474,7 +474,7 @@ class ProductQueries extends Service
                         $pm->where('status', 1);
                     });
                 },
-                'merchant.promo_merchant.promo_master' => function ($pm) {
+                'merchant.promo_merchant.promo_master.promo_regions' => function ($pm) {
                     $pm->where('status', 1);
                 },
                 'varian_product' => function ($query) {
@@ -551,7 +551,7 @@ class ProductQueries extends Service
                         ->where('end_date', '>=', date('Y-m-d H:i:s'));
                 });
             },
-            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_regions',
             'merchant.promo_merchant.promo_master.promo_values',
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
@@ -599,7 +599,7 @@ class ProductQueries extends Service
                         ->where('end_date', '>=', date('Y-m-d H:i:s'));
                 });
             },
-            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_regions',
             'merchant.promo_merchant.promo_master.promo_values',
             'etalase', 'category', 'order_details' => function ($order_details) {
                 $order_details->whereHas('order', function ($order) {
@@ -656,31 +656,37 @@ class ProductQueries extends Service
 
         $item = $product->toArray();
 
+        $province_id = $item['merchant']['province_id'];
         if (isset($item['merchant']['promo_merchant']) && $item['merchant']['can_shipping_discount'] == true) {
             foreach ($item['merchant']['promo_merchant'] as $promo) {
                 if (isset($promo['promo_master']['event_type']) && $promo['promo_master']['event_type'] == 'ongkir') {
-                    if ($promo['promo_master']['value_2'] >= $promo['promo_master']['value_1']) {
-                        $value_ongkir = $promo['promo_master']['value_2'];
-                    } else {
-                        $value_ongkir = $promo['promo_master']['value_1'];
-                    }
+                    foreach ($promo['promo_master']['promo_regions'] as $region) {
+                        $region_ids = collect($region['province_ids'])->toArray();
+                        if (in_array($province_id, $region_ids)) {
+                            if ($region['value_type'] == 'value_2') {
+                                $value_ongkir = $promo['promo_master']['value_2'];
+                            } else {
+                                $value_ongkir = $promo['promo_master']['value_1'];
+                            }
 
-                    $max_merchant = ($promo['usage_value'] + $value_ongkir) > $promo['max_value'];
-                    $max_master = ($promo['promo_master']['usage_value'] + $value_ongkir) > $promo['promo_master']['max_value'];
+                            $max_merchant = ($promo['usage_value'] + $value_ongkir) > $promo['max_value'];
+                            $max_master = ($promo['promo_master']['usage_value'] + $value_ongkir) > $promo['promo_master']['max_value'];
 
-                    if ($max_merchant && !$max_master) {
-                        $is_shipping_discount = true;
-                        break;
-                    }
+                            if ($max_merchant && !$max_master) {
+                                $is_shipping_discount = true;
+                                break;
+                            }
 
-                    if (!$max_merchant && $max_master) {
-                        $is_shipping_discount = true;
-                        break;
-                    }
+                            if (!$max_merchant && $max_master) {
+                                $is_shipping_discount = true;
+                                break;
+                            }
 
-                    if (!$max_merchant && !$max_master) {
-                        $is_shipping_discount = true;
-                        break;
+                            if (!$max_merchant && !$max_master) {
+                                $is_shipping_discount = true;
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -800,7 +806,7 @@ class ProductQueries extends Service
                             ->where('end_date', '>=', date('Y-m-d H:i:s'));
                     });
                 },
-                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_regions',
                 'merchant.promo_merchant.promo_master.promo_values',
                 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
@@ -1048,7 +1054,7 @@ class ProductQueries extends Service
                             ->where('end_date', '>=', date('Y-m-d H:i:s'));
                     });
                 },
-                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_regions',
                 'merchant.promo_merchant.promo_master.promo_values',
                 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
@@ -1163,31 +1169,37 @@ class ProductQueries extends Service
 
         $item = $merchant->toArray();
 
+        $province_id = $item['merchant']['province_id'];
         if (isset($item['promo_merchant']) && $item['can_shipping_discount'] == true) {
             foreach ($item['promo_merchant'] as $promo) {
                 if (isset($promo['promo_master']['event_type']) && $promo['promo_master']['event_type'] == 'ongkir') {
-                    if ($promo['promo_master']['value_2'] >= $promo['promo_master']['value_1']) {
-                        $value_ongkir = $promo['promo_master']['value_2'];
-                    } else {
-                        $value_ongkir = $promo['promo_master']['value_1'];
-                    }
+                    foreach ($promo['promo_master']['promo_regions'] as $region) {
+                        $region_ids = collect($region['province_ids'])->toArray();
+                        if (in_array($province_id, $region_ids)) {
+                            if ($region['value_type'] == 'value_2') {
+                                $value_ongkir = $promo['promo_master']['value_2'];
+                            } else {
+                                $value_ongkir = $promo['promo_master']['value_1'];
+                            }
 
-                    $max_merchant = ($promo['usage_value'] + $value_ongkir) > $promo['max_value'];
-                    $max_master = ($promo['promo_master']['usage_value'] + $value_ongkir) > $promo['promo_master']['max_value'];
+                            $max_merchant = ($promo['usage_value'] + $value_ongkir) > $promo['max_value'];
+                            $max_master = ($promo['promo_master']['usage_value'] + $value_ongkir) > $promo['promo_master']['max_value'];
 
-                    if ($max_merchant && !$max_master) {
-                        $is_shipping_discount = true;
-                        break;
-                    }
+                            if ($max_merchant && !$max_master) {
+                                $is_shipping_discount = true;
+                                break;
+                            }
 
-                    if (!$max_merchant && $max_master) {
-                        $is_shipping_discount = true;
-                        break;
-                    }
+                            if (!$max_merchant && $max_master) {
+                                $is_shipping_discount = true;
+                                break;
+                            }
 
-                    if (!$max_merchant && !$max_master) {
-                        $is_shipping_discount = true;
-                        break;
+                            if (!$max_merchant && !$max_master) {
+                                $is_shipping_discount = true;
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -1413,26 +1425,26 @@ class ProductQueries extends Service
 
         $products = new Product();
         $products = $products
-            ->withCount(['order_details' => function ($details) {
-                $details->whereHas('order', function ($order) {
-                    $order->whereHas('progress_done');
+        ->withCount(['order_details' => function ($details) {
+            $details->whereHas('order', function ($order) {
+                $order->whereHas('progress_done');
+            });
+        }])
+        ->with([
+            'product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name',
+            'merchant.promo_merchant' => function ($pd) {
+                $pd->where(function ($query) {
+                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
+                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
                 });
-            }])
-            ->with([
-                'product_stock', 'product_photo', 'is_wishlist', 'merchant.city:id,name',
-                'merchant.promo_merchant' => function ($pd) {
-                    $pd->where(function ($query) {
-                        $query->where('start_date', '<=', date('Y-m-d H:i:s'))
-                            ->where('end_date', '>=', date('Y-m-d H:i:s'));
-                    });
-                },
-                'merchant.promo_merchant.promo_master',
-                'merchant.promo_merchant.promo_master.promo_values',
-                'varian_product' => function ($query) {
-                    $query->with(['variant_stock'])->where('main_variant', true);
-                },
-                'ev_subsidy',
-            ])
+            },
+            'merchant.promo_merchant.promo_master.promo_regions',
+            'merchant.promo_merchant.promo_master.promo_values',
+            'varian_product' => function ($query) {
+                $query->with(['variant_stock'])->where('main_variant', true);
+            },
+            'ev_subsidy',
+        ])
             ->whereHas('merchant', function ($merchant) {
                 $merchant->where('status', 1);
             })
@@ -1581,7 +1593,7 @@ class ProductQueries extends Service
                             ->where('end_date', '>=', date('Y-m-d H:i:s'));
                     });
                 },
-                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_regions',
                 'merchant.promo_merchant.promo_master.promo_values',
                 'varian_product' => fn($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
                 'ev_subsidy',
@@ -1627,7 +1639,7 @@ class ProductQueries extends Service
                             ->where('end_date', '>=', date('Y-m-d H:i:s'));
                     });
                 },
-                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_regions',
                 'merchant.promo_merchant.promo_master.promo_values',
                 'varian_product' => fn($q) => $q->where('main_variant', true), 'varian_product.variant_stock',
                 'ev_subsidy',
@@ -1811,7 +1823,7 @@ class ProductQueries extends Service
                             ->where('end_date', '>=', date('Y-m-d H:i:s'));
                     });
                 },
-                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_regions',
                 'merchant.promo_merchant.promo_master.promo_values',
                 'ev_subsidy',
             ])
@@ -1874,7 +1886,7 @@ class ProductQueries extends Service
                         ->where('end_date', '>=', date('Y-m-d H:i:s'));
                 });
             },
-            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_regions',
             'merchant.promo_merchant.promo_master.promo_values',
             'ev_subsidy',
         ])
@@ -1937,7 +1949,7 @@ class ProductQueries extends Service
                         ->where('end_date', '>=', date('Y-m-d H:i:s'));
                 });
             },
-            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_regions',
             'merchant.promo_merchant.promo_master.promo_values',
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
@@ -2002,7 +2014,7 @@ class ProductQueries extends Service
                         ->where('end_date', '>=', date('Y-m-d H:i:s'));
                 });
             },
-            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_regions',
             'merchant.promo_merchant.promo_master.promo_values',
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
@@ -2059,7 +2071,7 @@ class ProductQueries extends Service
                         ->where('end_date', '>=', date('Y-m-d H:i:s'));
                 });
             },
-            'merchant.promo_merchant.promo_master',
+            'merchant.promo_merchant.promo_master.promo_regions',
             'merchant.promo_merchant.promo_master.promo_values',
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
@@ -2105,7 +2117,7 @@ class ProductQueries extends Service
                             ->where('end_date', '>=', date('Y-m-d H:i:s'));
                     });
                 },
-                'merchant.promo_merchant.promo_master',
+                'merchant.promo_merchant.promo_master.promo_regions',
                 'merchant.promo_merchant.promo_master.promo_values',
                 'is_wishlist', 'varian_product' => function ($query) {
                     $query->with(['variant_stock'])->where('main_variant', true);
@@ -2331,31 +2343,37 @@ class ProductQueries extends Service
 
                 $item = $item->toArray();
 
+                $province_id = $item['merchant']['province_id'];
                 if (isset($item['merchant']['promo_merchant']) && $item['merchant']['can_shipping_discount'] == true) {
                     foreach ($item['merchant']['promo_merchant'] as $promo) {
                         if (isset($promo['promo_master']['event_type']) && $promo['promo_master']['event_type'] == 'ongkir') {
-                            if ($promo['promo_master']['value_2'] >= $promo['promo_master']['value_1']) {
-                                $value_ongkir = $promo['promo_master']['value_2'];
-                            } else {
-                                $value_ongkir = $promo['promo_master']['value_1'];
-                            }
+                            foreach ($promo['promo_master']['promo_regions'] as $region) {
+                                $region_ids = collect($region['province_ids'])->toArray();
+                                if (in_array($province_id, $region_ids)) {
+                                    if ($region['value_type'] == 'value_2') {
+                                        $value_ongkir = $promo['promo_master']['value_2'];
+                                    } else {
+                                        $value_ongkir = $promo['promo_master']['value_1'];
+                                    }
 
-                            $max_merchant = ($promo['usage_value'] + $value_ongkir) > $promo['max_value'];
-                            $max_master = ($promo['promo_master']['usage_value'] + $value_ongkir) > $promo['promo_master']['max_value'];
+                                    $max_merchant = ($promo['usage_value'] + $value_ongkir) > $promo['max_value'];
+                                    $max_master = ($promo['promo_master']['usage_value'] + $value_ongkir) > $promo['promo_master']['max_value'];
 
-                            if ($max_merchant && !$max_master) {
-                                $is_shipping_discount = true;
-                                break;
-                            }
+                                    if ($max_merchant && !$max_master) {
+                                        $is_shipping_discount = true;
+                                        break;
+                                    }
 
-                            if (!$max_merchant && $max_master) {
-                                $is_shipping_discount = true;
-                                break;
-                            }
+                                    if (!$max_merchant && $max_master) {
+                                        $is_shipping_discount = true;
+                                        break;
+                                    }
 
-                            if (!$max_merchant && !$max_master) {
-                                $is_shipping_discount = true;
-                                break;
+                                    if (!$max_merchant && !$max_master) {
+                                        $is_shipping_discount = true;
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
