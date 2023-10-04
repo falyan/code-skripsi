@@ -1317,12 +1317,12 @@ class TransactionCommands extends Service
                     $type_usage = 'master';
                     if (!$limit_merchant) {
                         $type_usage = 'merchant';
-                        Cache::lock('promo_merchant', 10)->block(10);
+                        // Cache::lock('promo_merchant', 10)->block(10);
                         $promo_merchant_ongkir = PromoMerchant::find($promo_merchant_ongkir['id']);
                         $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
                         $promo_merchant_ongkir->save();
                     } else {
-                        Cache::lock('promo_master', 10)->block(10);
+                        // Cache::lock('promo_master', 10)->block(10);
                         $promo_master = PromoMaster::find($promo_merchant_ongkir['promo_master']['id']);
                         $promo_master->usage_value = $promo_master->usage_value + $value_ongkir;
                         $promo_master->save();
@@ -1434,12 +1434,12 @@ class TransactionCommands extends Service
                     $type_usage = 'master';
                     if (!$limit_merchant) {
                         $type_usage = 'merchant';
-                        Cache::lock('promo_merchant', 10)->block(10);
+                        // Cache::lock('promo_merchant', 10)->block(10);
                         $promo_merchant_flash_sale = PromoMerchant::find($promo_merchant_flash_sale['id']);
                         $promo_merchant_flash_sale->usage_value = $promo_merchant_flash_sale->usage_value + $value_flash_sale;
                         $promo_merchant_flash_sale->save();
                     } else {
-                        Cache::lock('promo_master', 10)->block(10);
+                        // Cache::lock('promo_master', 10)->block(10);
                         $promo_master = PromoMaster::find($promo_merchant_flash_sale['promo_master']['id']);
                         $promo_master->usage_value = $promo_master->usage_value + $value_flash_sale;
                         $promo_master->save();
