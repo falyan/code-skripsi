@@ -84,7 +84,7 @@ class TransactionQueries extends Service
                 }]);
             }, 'progress_active', 'merchant', 'delivery', 'buyer', 'ev_subsidy', 'review' => function ($r) {
                 $r->with(['review_photo'])->where('status', 1);
-            },
+            }, 'installment',
         ])
             ->whereHas('ev_subsidy', function ($q) use ($merchant_id) {
                 $q->whereHas('order', function ($o) use ($merchant_id) {
@@ -141,7 +141,7 @@ class TransactionQueries extends Service
                         $product->with(['product' => function ($j) {
                             $j->with(['product_photo']);
                         }]);
-                    }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
+                    }, 'progress_active', 'merchant', 'delivery', 'buyer', 'installment', 'review' => function ($r) {
                         $r->with(['review_photo']);
                     },
                 ])->where($column_name, $column_value)
@@ -233,7 +233,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->select('id', 'merchant_id', 'name')->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery.city', 'buyer',
+            }, 'progress_active', 'merchant', 'delivery.city', 'buyer', 'installment',
         ])->where(
             $column_name,
             $column_value,
@@ -258,13 +258,11 @@ class TransactionQueries extends Service
         return $data;
     }
 
-    public function getTransactionDone($column_name, $column_value, $status_code, $limit = 10, $filter = [], $page = 1)
+    public function getTransactionDone($column_name, $column_value, $status_code, $limit = 10, $filter = [], $page = 1, $has_installment)
     {
         $data = Order::with([
             'detail' => function ($product) {
-                $product->with(['product', function ($j) {
-                    $j->with(['product_photo']);
-                }]);
+                $product->with(['product', 'product.product_photo']);
             }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
                 $r->with(['review_photo']);
             },
@@ -280,6 +278,18 @@ class TransactionQueries extends Service
 
         $data = $this->filter($data, $filter);
         $data = $data->get();
+
+        if (Auth::user()->type === 'buyer') {
+            if (empty($has_installment)) {
+                foreach ($data as $d) {
+                    if ($d->progress_active->status_code == '00') {
+                        if ($d->installment != null) {
+                            throw new Exception('Silahkan update aplikasi Anda terlebih dahulu!');
+                        }
+                    }
+                }
+            }
+        }
 
         $data = $data->map(function ($item) {
             $item->detail->each(function ($product) {
