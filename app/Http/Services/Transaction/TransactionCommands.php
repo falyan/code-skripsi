@@ -1216,6 +1216,8 @@ class TransactionCommands extends Service
                     })
                     ->get();
 
+                $cache_lock_merchant = Cache::lock('promo_merchant', 10);
+                $cache_lock_master = Cache::lock('promo_master', 10);
                 $province_id = data_get($data, 'province_id');
                 $promo_merchant_ongkir = null;
                 $value_ongkir = 0;
@@ -1285,12 +1287,12 @@ class TransactionCommands extends Service
                     $type_usage = 'master';
                     if (!$limit_merchant) {
                         $type_usage = 'merchant';
-                        // Cache::lock('promo_merchant', 10)->block(10);
+                        $cache_lock_merchant->block(10);
                         $promo_merchant_ongkir = PromoMerchant::find($promo_merchant_ongkir['id']);
                         $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
                         $promo_merchant_ongkir->save();
                     } else {
-                        // Cache::lock('promo_master', 10)->block(10);
+                        $cache_lock_master->block(10);
                         $promo_master = PromoMaster::find($promo_merchant_ongkir['promo_master']['id']);
                         $promo_master->usage_value = $promo_master->usage_value + $value_ongkir;
                         $promo_master->save();
@@ -1402,12 +1404,12 @@ class TransactionCommands extends Service
                     $type_usage = 'master';
                     if (!$limit_merchant) {
                         $type_usage = 'merchant';
-                        // Cache::lock('promo_merchant', 10)->block(10);
+                        $cache_lock_merchant->block(10);
                         $promo_merchant_flash_sale = PromoMerchant::find($promo_merchant_flash_sale['id']);
                         $promo_merchant_flash_sale->usage_value = $promo_merchant_flash_sale->usage_value + $value_flash_sale;
                         $promo_merchant_flash_sale->save();
                     } else {
-                        // Cache::lock('promo_master', 10)->block(10);
+                        $cache_lock_master->block(10);
                         $promo_master = PromoMaster::find($promo_merchant_flash_sale['promo_master']['id']);
                         $promo_master->usage_value = $promo_master->usage_value + $value_flash_sale;
                         $promo_master->save();
@@ -1430,6 +1432,9 @@ class TransactionCommands extends Service
                     $order_details[0]['total_discount'] = $order_details[0]['total_discount'] + $value_flash_sale;
                     $order_details[0]['total_amount'] = $order_details[0]['total_amount'] - $value_flash_sale;
                 }
+
+                $cache_lock_merchant->release();
+                $cache_lock_master->release();
 
                 // sementara ketika flash sale nempel merchant
                 OrderDetail::insert($order_details);
