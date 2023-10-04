@@ -1472,6 +1472,7 @@ class TransactionController extends Controller
             $status_order = $this->transactionQueries->getStatusOrder($id);
             $orderByReference = $this->transactionQueries->getTransactionByReference($status_order->no_reference);
 
+            DB::beginTransaction();
             foreach ($orderByReference as $key => $order) {
                 if ($order->progress_active->status_code == '00') {
                     $this->transactionCommand->updateOrderStatus($order->id, '99', request()->get('reason'));
@@ -1491,9 +1492,13 @@ class TransactionController extends Controller
                     }
 
                     if ($key == 0) {
+
                         $payment_info = OrderPayment::getByRefnum($order->no_reference)->first();
 
-                        IconpayManager::booking($payment_info->no_reference, $payment_info->date_created, $payment_info->date_expired, "99", $payment_info->payment_amount, $payment_info->customer->full_name, $payment_info->customer->email, $payment_info->customer->phone, false);
+                        if ($payment_info->date_expired != null) {
+                            IconpayManager::booking($payment_info->no_reference, $payment_info->date_created, $payment_info->date_expired, "99", $payment_info->payment_amount, $payment_info->customer->full_name, $payment_info->customer->email, $payment_info->customer->phone, false);
+                        }
+
                     }
 
                     $evCustomer = CustomerEVSubsidy::where([
@@ -1521,8 +1526,11 @@ class TransactionController extends Controller
                     $mailSender->mailorderCanceled($order->id);
                 }
             }
+
+            DB::commit();
             return $this->respondWithResult(true, 'Pesanan anda berhasil dibatalkan.', 200);
         } catch (Exception $e) {
+            DB::rollBack();
             return $this->respondErrorException($e, request());
         }
     }
