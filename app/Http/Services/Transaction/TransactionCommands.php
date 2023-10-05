@@ -353,7 +353,7 @@ class TransactionCommands extends Service
                                 'success' => false,
                                 'status' => "Bad request",
                                 'status_code' => 400,
-                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak memiliki bantuan',
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak mendapatkan bantuan',
                             ];
                         }
                     }
@@ -1076,7 +1076,7 @@ class TransactionCommands extends Service
                                 'success' => false,
                                 'status' => "Bad request",
                                 'status_code' => 400,
-                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak memiliki bantuan',
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak mendapatkan bantuan',
                             ];
                         }
                     }
@@ -1775,7 +1775,12 @@ class TransactionCommands extends Service
 
                 $response = json_decode($response->getBody());
 
-                LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
+                Log::info("E00002", [
+                    'path_url' => "ba.booking",
+                    'query' => [],
+                    'body' => $body,
+                    'response' => $response,
+                ]);
 
                 throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
