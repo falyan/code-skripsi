@@ -241,7 +241,12 @@ class TransactionCommands extends Service
 
             $response = json_decode($response->getBody());
 
-            LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
+            Log::info("E00002", [
+                'path_url' => "iconpay.booking",
+                'query' => [],
+                'body' => $body,
+                'response' => $response,
+            ]);
 
             throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
@@ -952,7 +957,12 @@ class TransactionCommands extends Service
 
                 $response = json_decode($response->getBody());
 
-                LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
+            Log::info("E00002", [
+                'path_url' => "iconpay.booking",
+                'query' => [],
+                'body' => $body,
+                'response' => $response,
+            ]);
 
                 throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
@@ -1776,7 +1786,7 @@ class TransactionCommands extends Service
                 $response = json_decode($response->getBody());
 
             Log::info("E00002", [
-                'path_url' => "ba.booking",
+                'path_url' => "iconpay.booking",
                 'query' => [],
                 'body' => $body,
                 'response' => $response,
