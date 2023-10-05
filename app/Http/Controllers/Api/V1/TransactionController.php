@@ -2006,7 +2006,7 @@ class TransactionController extends Controller
                             return array_merge($respond, [
                                 'success' => true,
                                 'status_code' => 400,
-                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak memiliki bantuan',
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak mendapatkan bantuan',
                             ]);
                         }
                     }
