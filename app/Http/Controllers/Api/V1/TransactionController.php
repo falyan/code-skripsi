@@ -2130,8 +2130,6 @@ class TransactionController extends Controller
             }
 
             DB::beginTransaction();
-            $this->transactionCommand->updateOrderStatus($id, '98', 'refund ongkir');
-
             $order = Order::with('detail', 'buyer', 'merchant', 'merchant.corporate', 'progress', 'progress_active', 'delivery')->where('id', $id)->first();
             $this->transactionCommand->generateResi($order, $order->delivery->request_pickup_time);
 
