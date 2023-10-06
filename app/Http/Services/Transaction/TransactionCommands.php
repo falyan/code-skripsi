@@ -1325,7 +1325,7 @@ class TransactionCommands extends Service
                     $limit_merchant = ($promo_merchant_ongkir['usage_value'] + $value_ongkir) > $promo_merchant_ongkir['max_value'];
 
                     $type_usage = 'master';
-                    if (!$limit_merchant || $promo_merchant_ongkir['promo_master']['max_value_merchant'] == 0) {
+                    if (!$limit_merchant || $promo_merchant_ongkir['promo_master']['max_value_merchant'] > 0) {
                         $type_usage = 'merchant';
                         Cache::lock('promo_merchant_ongkir', 10)->block(10);
                         $promo_merchant_ongkir = PromoMerchant::find($promo_merchant_ongkir['id']);
@@ -1443,7 +1443,7 @@ class TransactionCommands extends Service
                     $limit_merchant = ($promo_merchant_flash_sale['usage_value'] + $value_flash_sale_m) > $promo_merchant_flash_sale['max_value'];
 
                     $type_usage = 'master';
-                    if (!$limit_merchant || $promo_merchant_flash_sale['promo_master']['max_value_merchant'] == 0) {
+                    if (!$limit_merchant || $promo_merchant_flash_sale['promo_master']['max_value_merchant'] > 0) {
                         $type_usage = 'merchant';
                         Cache::lock('promo_merchant_flash_sale', 10)->block(10);
                         $promo_merchant_flash_sale = PromoMerchant::find($promo_merchant_flash_sale['id']);
