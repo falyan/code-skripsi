@@ -416,12 +416,8 @@ class LogisticManager
         return $response;
     }
 
-    public static function preorder($order_id, $pick_up_time)
+    public static function preorder($order, $pick_up_time)
     {
-        $param = static::setParamAPI([]);
-        $url = sprintf('%s/%s', static::$endpoint, 'v1/preorder' . $param);
-
-        $order = Order::with(['merchant', 'merchant.corporate', 'buyer', 'delivery', 'detail'])->where('id', $order_id)->first();
         $items = [];
         $total_price = 0;
         foreach ($order->detail as $detail) {
@@ -453,14 +449,18 @@ class LogisticManager
 
         $body = [
             'trx_no' => $order->trx_no,
+            'pick_up_time' => $pick_up_time,
             'courier' => $order->delivery->delivery_method,
             'service_code' => $order->delivery->delivery_type,
-            'final_shipping_price' => (int) $order->delivery->delivery_fee,
-            'origin_shipping_price' => (int) $order->delivery->delivery_fee_origin,
             'shipping_type' => $order->delivery->shipping_type,
-            'must_use_insurance' => $order->delivery->must_use_insurance,
             'items_total_price' => $total_price,
-            'pick_up_time' => $pick_up_time,
+            'final_shipping_price' => (float) $order->delivery->delivery_fee,
+            'origin_shipping_price' => (float) $order->delivery->delivery_fee_origin,
+            'must_use_insurance' => $order->delivery->must_use_insurance,
+            'insurance_fee' => (float) $order->delivery->insurance_fee,
+            'insurance_tax' => (float) $order->delivery->insurance_tax,
+            'origin_fee' => (float) $order->delivery->origin_fee,
+            'origin_tax' => (float) $order->delivery->origin_tax,
             'shipper' => [
                 'merchant_id' => $order->merchant->id,
                 'company_name' => $order->merchant->corporate->name,
@@ -507,6 +507,7 @@ class LogisticManager
         // dd($body);
         // return $body;
 
+        $url = sprintf('%s/%s', static::$endpoint, 'v1/preorder');
         $response = static::$curl->request('POST', $url, [
             'headers' => static::$headers,
             'http_errors' => false,
@@ -523,7 +524,7 @@ class LogisticManager
             'response' => $response,
         ]);
 
-        throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+        // throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
         return $response;
     }
