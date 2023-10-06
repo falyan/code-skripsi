@@ -241,7 +241,12 @@ class TransactionCommands extends Service
 
             $response = json_decode($response->getBody());
 
-            LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
+            Log::info("E00002", [
+                'path_url' => "iconpay.booking",
+                'query' => [],
+                'body' => $body,
+                'response' => $response,
+            ]);
 
             throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
@@ -952,7 +957,12 @@ class TransactionCommands extends Service
 
                 $response = json_decode($response->getBody());
 
-                LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
+            Log::info("E00002", [
+                'path_url' => "iconpay.booking",
+                'query' => [],
+                'body' => $body,
+                'response' => $response,
+            ]);
 
                 throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
@@ -1334,6 +1344,7 @@ class TransactionCommands extends Service
                         $promo_log->promo_master_id = $promo_merchant_ongkir['promo_master']['id'];
                         $promo_log->promo_merchant_id = $promo_merchant_ongkir->id;
                         $promo_log->type = 'sub';
+                        $promo_log->type_usage = $type_usage;
                         $promo_log->value = $value_ongkir;
                         $promo_log->created_by = 'System';
                         $promo_log->save();
@@ -1734,25 +1745,6 @@ class TransactionCommands extends Service
                 $mailSender->mailCheckout($this->order_id);
             }
 
-            if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
-                $installmentOrder = new InstallmentOrder();
-                $installmentOrder->customer_id = $customer_id;
-                $installmentOrder->pi_provider_id = data_get($datas, 'installment.provider_id');
-                $installmentOrder->order_id = $order->id;
-                $installmentOrder->month_tenor = data_get($datas, 'installment_tenor') ?? null;
-                $installmentOrder->fee_tenor = data_get($datas, 'installment_fee') ?? 0;
-                $installmentOrder->installment_tenor = data_get($datas, 'installment_price') ?? 0;
-                $installmentOrder->markup_price_tenor = data_get($datas, 'installment_markup_price') ?? 0;
-                $installmentOrder->actual_price_tenor = data_get($datas, 'installment_actual_price') ?? 0;
-                $installmentOrder->interest_percentage_tenor = data_get($datas, 'installment_interest_percentage') ?? 0;
-                $installmentOrder->provider_fee = data_get($datas, 'installment_provider_fee') ?? 0;
-                $installmentOrder->save();
-
-                $order_payment = OrderPayment::where('id', $order->payment_id)->first();
-                $order_payment->payment_amount = data_get($datas, 'installment_markup_price');
-                $order_payment->save();
-            }
-
             if ($datas['total_discount'] > 0) {
                 $update_discount = $this->updateCustomerDiscount($customer_id, $customer->email, $datas['total_discount'], $no_reference);
                 if ($update_discount == false) {
@@ -1801,12 +1793,12 @@ class TransactionCommands extends Service
 
                 $response = json_decode($response->getBody());
 
-                Log::info("E00002", [
-                    'path_url' => "ba.booking",
-                    'query' => [],
-                    'body' => $body,
-                    'response' => $response,
-                ]);
+            Log::info("E00002", [
+                'path_url' => "iconpay.booking",
+                'query' => [],
+                'body' => $body,
+                'response' => $response,
+            ]);
 
                 throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
@@ -1935,11 +1927,11 @@ class TransactionCommands extends Service
     public function updatePromoLog($promo_log_order)
     {
         if ($promo_log_order->type_usage == 'merchant') {
-            $promo_merchant = PromoMerchant::find($promo_log_order->promo_merchant_id);
+            $promo_merchant = PromoMerchant::where('promo_master_id', $promo_log_order->promo_master_id)->where('merchant_id', $promo_log_order->order->merchant_id)->first();
             $promo_merchant->usage_value = $promo_merchant->usage_value - (int) $promo_log_order->value;
             $promo_merchant->save();
         } else {
-            $promo_master = PromoMaster::find($promo_log_order->promo_master_id);
+            $promo_master = PromoMaster::where('id', $promo_log_order->promo_master_id)->first();
             $promo_master->usage_value = $promo_master->usage_value - (int) $promo_log_order->value;
             $promo_master->save();
         }
