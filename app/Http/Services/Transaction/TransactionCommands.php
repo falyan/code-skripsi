@@ -2040,7 +2040,14 @@ class TransactionCommands extends Service
     public function addAwbNumber($order_id, $awb)
     {
         $delivery = OrderDelivery::where('order_id', $order_id)->first();
+        $image_logistic = null;
+        if ($delivery->delivery_setting == 'rajaongkir') {
+            $logistic_master = MasterData::where('type', 'rajaongkir_courier')->where('reference_third_party_id', $delivery->delivery_method)->first();
+            $image_logistic = $logistic_master != null ? $logistic_master->photo_url : null;
+        }
+
         $delivery->awb_number = $awb;
+        $delivery->image_logistic = $image_logistic;
 
         if (!$delivery->save()) {
             $response['success'] = false;
