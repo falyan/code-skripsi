@@ -2075,6 +2075,52 @@ class TransactionController extends Controller
         }
     }
 
+    public function generateAwbBOT($id)
+    {
+        try {
+            $timestamp = request()->header('timestamp');
+            $signature = request()->header('signature');
+
+            if ($timestamp == null || $signature == null) {
+                return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+            }
+
+            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
+            if (strtotime($timestamp) > strtotime($timestamp_plus)) {
+                return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+            }
+
+            $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
+            $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
+            if ($hash != $signature) {
+                return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+            }
+
+            DB::beginTransaction();
+            $this->transactionCommand->updateOrderStatus($id, '98', 'refund ongkir');
+
+            $order = Order::with('detail', 'buyer', 'merchant', 'merchant.corporate', 'progress', 'progress_active', 'delivery')->where('id', $id)->first();
+            $this->transactionCommand->generateResi($order, $order->delivery->request_pickup_time);
+
+            $delivery = OrderDelivery::where('order_id', $id)->first();
+            if ($delivery->awb_number != null) {
+                $title = 'Pesanan Dikirim';
+                $message = 'Pesanan anda sedang dalam pengiriman.';
+                // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
+                $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+
+                $mailSender = new MailSenderManager();
+                $mailSender->mailOrderOnDelivery($order->id);
+            }
+
+            DB::commit();
+            return $this->respondWithResult($delivery->awb_number != null, 'Berhasil generate awb BOT', 200);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function unique_code($value)
     {
         return substr(base_convert(sha1(uniqid($value)), 16, 36), 0, 25);
@@ -2149,7 +2195,6 @@ class TransactionController extends Controller
             }
 
             $success_trx = collect($results)->where('success', true)->pluck('trx_no')->all();
-            $mailSender = new MailSenderManager();
             $message = 'Berhasil menambahkan resi';
             foreach ($orders as $order) {
                 if (in_array($order->trx_no, $success_trx)) {
@@ -2158,6 +2203,7 @@ class TransactionController extends Controller
                     // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
                     $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
+                    $mailSender = new MailSenderManager();
                     $mailSender->mailOrderOnDelivery($order->id);
                 } else {
                     $message = 'Berhasil menambahkan resi dengan beberapa pesanan gagal';
