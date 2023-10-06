@@ -1190,6 +1190,8 @@ class TransactionQueries extends Service
 
             // shipping discount
             $promo_merchant_ongkir = null;
+            $max_merchant_ongkir = false;
+            $max_master_ongkir = false;
             if ($data_merchant->can_shipping_discount == true) {
                 foreach ($data_merchant->promo_merchant as $promo) {
                     if ($promo->promo_master->event_type == 'ongkir') {
@@ -1217,20 +1219,20 @@ class TransactionQueries extends Service
                                     $value_ongkir = $promo->promo_master->value_1;
                                 }
 
-                                $max_merchant = ($promo->usage_value + $value_ongkir) > $promo->max_value;
-                                $max_master = ($promo->promo_master->usage_value + $value_ongkir) > $promo->promo_master->max_value;
+                                $max_merchant_ongkir = ($promo->usage_value + $value_ongkir) > $promo->max_value;
+                                $max_master_ongkir = ($promo->promo_master->usage_value + $value_ongkir) > $promo->promo_master->max_value;
 
-                                if ($max_merchant && !$max_master) {
+                                if ($max_merchant_ongkir && !$max_master_ongkir) {
                                     $merchant['delivery_discount'] = $value_ongkir;
                                     break;
                                 }
 
-                                if (!$max_merchant && $max_master) {
+                                if (!$max_merchant_ongkir && $max_master_ongkir) {
                                     $merchant['delivery_discount'] = $value_ongkir;
                                     break;
                                 }
 
-                                if (!$max_merchant && !$max_master) {
+                                if (!$max_merchant_ongkir && !$max_master_ongkir) {
                                     $merchant['delivery_discount'] = $value_ongkir;
                                     break;
                                 }
@@ -1250,7 +1252,7 @@ class TransactionQueries extends Service
             $merchant['total_amount'] = $merchant_total_price;
             $merchant['total_payment'] = $merchant_total_payment = $merchant_total_price_with_delivery - $merchant['delivery_discount'];
 
-            if ($promo_merchant_ongkir != null && $merchant['delivery_discount'] > 0) {
+            if ($promo_merchant_ongkir != null && ($merchant['delivery_discount'] > 0 || !$max_merchant_ongkir || !$max_master_ongkir)) {
                 if ($promo_merchant_ongkir->promo_master->min_order_value > $merchant_total_price) {
                     $message_error = 'Minimal order untuk diskon ongkir adalah Rp ' . number_format($promo_merchant_ongkir->promo_master->min_order_value, 0, ',', '.');
                     $merchant_total_payment += $merchant['delivery_discount'];
@@ -1289,6 +1291,8 @@ class TransactionQueries extends Service
             $promo_merchant_flash_sale = null;
             $promo_flash_sale_value = null;
             $merchant['product_discount'] = 0;
+            $max_merchant_flash_sale = false;
+            $max_master_flash_sale = false;
             if ($data_merchant->can_flash_sale_discount == true) {
                 foreach ($data_merchant->promo_merchant as $promo) {
                     if ($promo->promo_master->event_type == 'flash_sale') {
@@ -1336,20 +1340,20 @@ class TransactionQueries extends Service
                             }
                         }
 
-                        $max_merchant = ($promo->usage_value + $value_flash_sale) > $promo->max_value;
-                        $max_master = ($promo->promo_master->usage_value + $value_flash_sale) > $promo->promo_master->max_value;
+                        $max_merchant_flash_sale = ($promo->usage_value + $value_flash_sale) > $promo->max_value;
+                        $max_master_flash_sale = ($promo->promo_master->usage_value + $value_flash_sale) > $promo->promo_master->max_value;
 
-                        if ($max_merchant && !$max_master) {
+                        if ($max_merchant_flash_sale && !$max_master_flash_sale) {
                             $merchant['product_discount'] = $value_flash_sale;
                             break;
                         }
 
-                        if (!$max_merchant && $max_master) {
+                        if (!$max_merchant_flash_sale && $max_master_flash_sale) {
                             $merchant['product_discount'] = $value_flash_sale;
                             break;
                         }
 
-                        if (!$max_merchant && !$max_master) {
+                        if (!$max_merchant_flash_sale && !$max_master_flash_sale) {
                             $merchant['product_discount'] = $value_flash_sale;
                             break;
                         }
@@ -1357,7 +1361,7 @@ class TransactionQueries extends Service
                 }
             }
 
-            if ($promo_merchant_flash_sale != null && $merchant['product_discount'] > 0) {
+            if ($promo_merchant_flash_sale != null && ($merchant['product_discount'] > 0 || !$max_merchant_flash_sale || !$max_master_flash_sale)) {
                 if ($promo_merchant_flash_sale->promo_master->min_order_value > $merchant_total_price && $promo_flash_sale_value == null) {
                     $merchant['product_discount'] = 0;
                 }
