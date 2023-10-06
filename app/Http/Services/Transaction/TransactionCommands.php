@@ -1312,6 +1312,7 @@ class TransactionCommands extends Service
                         $promo_log->promo_master_id = $promo_merchant_ongkir['promo_master']['id'];
                         $promo_log->promo_merchant_id = $promo_merchant_ongkir->id;
                         $promo_log->type = 'sub';
+                        $promo_log->type_usage = $type_usage;
                         $promo_log->value = $value_ongkir;
                         $promo_log->created_by = 'System';
                         $promo_log->save();
@@ -1879,11 +1880,11 @@ class TransactionCommands extends Service
     public function updatePromoLog($promo_log_order)
     {
         if ($promo_log_order->type_usage == 'merchant') {
-            $promo_merchant = PromoMerchant::find($promo_log_order->promo_merchant_id);
+            $promo_merchant = PromoMerchant::where('promo_master_id', $promo_log_order->promo_master_id)->where('merchant_id', $promo_log_order->order->merchant_id)->first();
             $promo_merchant->usage_value = $promo_merchant->usage_value - (int) $promo_log_order->value;
             $promo_merchant->save();
         } else {
-            $promo_master = PromoMaster::find($promo_log_order->promo_master_id);
+            $promo_master = PromoMaster::where('id', $promo_log_order->promo_master_id)->first();
             $promo_master->usage_value = $promo_master->usage_value - (int) $promo_log_order->value;
             $promo_master->save();
         }
