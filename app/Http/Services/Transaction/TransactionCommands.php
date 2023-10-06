@@ -1830,6 +1830,27 @@ class TransactionCommands extends Service
         return $response;
     }
 
+    public function updateOrderStatusV2($order, $status_code, $note = null)
+    {
+        $old_progress = $order->progress;
+        foreach ($old_progress as $progress) {
+            if ($progress->status == 1) {
+                $progress->status = 0;
+                $progress->save();
+            }
+        }
+
+        OrderProgress::create([
+            'order_id' => $order->id,
+            'status_code' => $status_code,
+            'status_name' => parent::$status_order[$status_code],
+            'note' => $note,
+            'status' => 1,
+            'created_by' => 'system',
+            'updated_by' => 'system',
+        ]);
+    }
+
     public function updateOrderStatusTiket($order_id, $status_codes = ['02', '03', '08'], $note = null)
     {
         $old_order_progress = OrderProgress::where('order_id', $order_id)->get();
@@ -2138,54 +2159,28 @@ class TransactionCommands extends Service
         return true;
     }
 
-    public function generateResi($order_id, $expect_time)
+    public function generateResi($order, $expect_time)
     {
-        $order = Order::where('id', $order_id)->with(['delivery'])->first();
-        $delivery = $order->delivery;
-
+        $delivery = OrderDelivery::where('order_id', $order->id)->first();
         if ($delivery->delivery_method != 'Pengiriman oleh Seller' && $delivery->delivery_setting == 'shipper') {
-            $resi = LogisticManager::preorder($order->id, $expect_time);
+            $resi = LogisticManager::preorder($order, $expect_time);
 
-            if (!isset($resi['data'])) {
-                $response['success'] = false;
-                $response['message'] = 'Gagal menambahkan nomor resi.';
-                return $response;
+            if (isset($resi['data'])) {
+                $delivery->awb_number = $resi['data']['awb_number'];
+                $delivery->no_reference = $resi['data']['no_reference'];
+                $delivery->image_logistic = $resi['data']['courier_image'];
+                $delivery->is_request_pickup = $expect_time != null ? true : false;
+                $delivery->save();
             }
-
-            $delivery->awb_number = $resi['data']['awb_number'];
-            $delivery->no_reference = $resi['data']['no_reference'];
-            $delivery->image_logistic = $resi['data']['courier_image'];
-
-            if (!$delivery->save()) {
-                $response['success'] = false;
-                $response['message'] = 'Gagal menambahkan nomor resi';
-                return $response;
-            }
-
-            // $requestPickup = LogisticManager::requestPickup($order->trx_no, $expect_time);
-
-            // if (isset($requestPickup) && !$requestPickup['success']) {
-            //     $response['success'] = false;
-            //     $response['message'] = $requestPickup['message'];
-            //     return $response;
-            // }
         } else {
             Carbon::setLocale('id');
             $date = Carbon::now('Asia/Jakarta')->isoFormat('YMMDD');
-            $id = str_pad($order_id, 4, '0', STR_PAD_LEFT);
+            $id = str_pad($order->id, 4, '0', STR_PAD_LEFT);
             $resi = "CLG/{$date}/{$id}";
 
             $delivery->awb_number = $resi;
-            if (!$delivery->save()) {
-                $response['success'] = false;
-                $response['message'] = 'Gagal menambahkan nomor resi';
-                return $response;
-            }
+            $delivery->save();
         }
-
-        $response['success'] = true;
-        $response['message'] = 'Berhasil menambahkan nomor resi';
-        return $response;
     }
 
     public function generateTicket($order_id)
