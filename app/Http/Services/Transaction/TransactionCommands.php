@@ -1508,6 +1508,10 @@ class TransactionCommands extends Service
                 }
 
                 $shipping_origin_price = null;
+                $shipping_insurance_fee = null;
+                $shipping_insurance_tax = null;
+                $shipping_origin_fee = null;
+                $shipping_origin_tax = null;
                 if (data_get($data, 'delivery_setting') == 'shipper') {
                     $logistic_manager = new LogisticManager();
                     $shipping_prices = $logistic_manager->getOngkir($customer_address, $merchant_data, data_get($data, 'total_weight'), rtrim($s_courier, ':'), data_get($data, 'total_amount'));
@@ -1516,6 +1520,10 @@ class TransactionCommands extends Service
                             foreach ($value['data'] as $data_value) {
                                 if ($data_value['service_code'] == data_get($data, 'delivery_type')) {
                                     $shipping_origin_price = $data_value['origin_price'];
+                                    $shipping_insurance_fee = $data_value['insurance_fee'];
+                                    $shipping_insurance_tax = $data_value['insurance_tax'];
+                                    $shipping_origin_fee = $data_value['origin_fee'];
+                                    $shipping_origin_tax = $data_value['origin_tax'];
                                 }
                             }
                         }
@@ -1557,9 +1565,13 @@ class TransactionCommands extends Service
                 $order_delivery->delivery_type = data_get($data, 'delivery_type');
                 $order_delivery->delivery_setting = data_get($data, 'delivery_setting');
                 $order_delivery->delivery_fee = data_get($data, 'delivery_fee');
-                $order_delivery->delivery_fee_origin =  $shipping_origin_price;
                 $order_delivery->delivery_discount = data_get($data, 'delivery_discount');
                 $order_delivery->must_use_insurance = data_get($data, 'must_use_insurance') ?? false;
+                $order_delivery->delivery_fee_origin =  $shipping_origin_price;
+                $order_delivery->insurance_fee = $shipping_insurance_fee;
+                $order_delivery->insurance_tax = $shipping_insurance_tax;
+                $order_delivery->origin_fee = $shipping_origin_fee;
+                $order_delivery->origin_tax = $shipping_origin_tax;
                 $order_delivery->save();
 
                 $order_payment = new OrderPayment();

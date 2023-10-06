@@ -453,14 +453,18 @@ class LogisticManager
 
         $body = [
             'trx_no' => $order->trx_no,
+            'pick_up_time' => $pick_up_time,
             'courier' => $order->delivery->delivery_method,
             'service_code' => $order->delivery->delivery_type,
-            'final_shipping_price' => (int) $order->delivery->delivery_fee,
-            'origin_shipping_price' => (int) $order->delivery->delivery_fee_origin,
             'shipping_type' => $order->delivery->shipping_type,
-            'must_use_insurance' => $order->delivery->must_use_insurance,
             'items_total_price' => $total_price,
-            'pick_up_time' => $pick_up_time,
+            'final_shipping_price' => (float) $order->delivery->delivery_fee,
+            'origin_shipping_price' => (float) $order->delivery->delivery_fee_origin,
+            'must_use_insurance' => $order->delivery->must_use_insurance,
+            'insurance_fee' => (float) $order->delivery->insurance_fee,
+            'insurance_tax' => (float) $order->delivery->insurance_tax,
+            'origin_fee' => (float) $order->delivery->origin_fee,
+            'origin_tax' => (float) $order->delivery->origin_tax,
             'shipper' => [
                 'merchant_id' => $order->merchant->id,
                 'company_name' => $order->merchant->corporate->name,
