@@ -1507,14 +1507,16 @@ class TransactionCommands extends Service
                     }
                 }
 
-                $logistic_manager = new LogisticManager();
-                $shipping_prices = $logistic_manager->getOngkir($customer_address, $merchant_data, data_get($data, 'total_weight'), rtrim($s_courier, ':'), data_get($data, 'total_amount'));
                 $shipping_origin_price = null;
-                foreach (collect($shipping_prices) as $value) {
-                    if ($value['code'] == data_get($data, 'delivery_method')) {
-                        foreach ($value['data'] as $data_value) {
-                            if ($data_value['service_code'] == data_get($data, 'delivery_type')) {
-                                $shipping_origin_price = $data_value['origin_price'];
+                if (data_get($data, 'delivery_setting') == 'shipper') {
+                    $logistic_manager = new LogisticManager();
+                    $shipping_prices = $logistic_manager->getOngkir($customer_address, $merchant_data, data_get($data, 'total_weight'), rtrim($s_courier, ':'), data_get($data, 'total_amount'));
+                    foreach (collect($shipping_prices) as $value) {
+                        if ($value['code'] == data_get($data, 'delivery_method')) {
+                            foreach ($value['data'] as $data_value) {
+                                if ($data_value['service_code'] == data_get($data, 'delivery_type')) {
+                                    $shipping_origin_price = $data_value['origin_price'];
+                                }
                             }
                         }
                     }
