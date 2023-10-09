@@ -14,7 +14,6 @@ use App\Models\CustomerDiscount;
 use App\Models\CustomerEVSubsidy;
 use App\Models\CustomerTiket;
 use App\Models\District;
-use App\Models\InstallmentOrder;
 use App\Models\MasterData;
 use App\Models\MasterTiket;
 use App\Models\Merchant;
@@ -33,7 +32,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use LogService;
 
 class TransactionCommands extends Service
 {
@@ -371,6 +369,25 @@ class TransactionCommands extends Service
                         'status_code' => 400,
                         'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                     ];
+                }
+            }
+
+            foreach ($datas['merchants'] as $merchant) {
+                foreach ($merchant['products'] as $product) {
+                    $ev_subsidy = Product::with('ev_subsidy')->where('id', $product['product_id'])->first()->ev_subsidy;
+
+                    if ($ev_subsidy) {
+                        // validasi jika produk adalah subsidi namun body request tidak mengirimkan data customer
+                        if (!isset($datas['customer']) || data_get($datas, 'customer') == null) {
+                            return [
+                                'success' => false,
+                                'status' => "Bad request",
+                                'status_code' => 400,
+                                'message' => 'Untuk melakukan transaksi pengajuan subsidi, silahkan update aplikasi Anda terlebih dahulu',
+                            ];
+                        }
+                    }
+
                 }
             }
 
@@ -957,12 +974,12 @@ class TransactionCommands extends Service
 
                 $response = json_decode($response->getBody());
 
-            Log::info("E00002", [
-                'path_url' => "iconpay.booking",
-                'query' => [],
-                'body' => $body,
-                'response' => $response,
-            ]);
+                Log::info("E00002", [
+                    'path_url' => "iconpay.booking",
+                    'query' => [],
+                    'body' => $body,
+                    'response' => $response,
+                ]);
 
                 throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
@@ -1108,6 +1125,25 @@ class TransactionCommands extends Service
                         'status_code' => 400,
                         'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                     ];
+                }
+            }
+
+            foreach ($datas['merchants'] as $merchant) {
+                foreach ($merchant['products'] as $product) {
+                    $ev_subsidy = Product::with('ev_subsidy')->where('id', $product['product_id'])->first()->ev_subsidy;
+
+                    if ($ev_subsidy) {
+                        // validasi jika produk adalah subsidi namun body request tidak mengirimkan data customer
+                        if (!isset($datas['customer']) || data_get($datas, 'customer') == null) {
+                            return [
+                                'success' => false,
+                                'status' => "Bad request",
+                                'status_code' => 400,
+                                'message' => 'Untuk melakukan transaksi pengajuan subsidi, silahkan update aplikasi Anda terlebih dahulu',
+                            ];
+                        }
+                    }
+
                 }
             }
 
@@ -1785,12 +1821,12 @@ class TransactionCommands extends Service
 
                 $response = json_decode($response->getBody());
 
-            Log::info("E00002", [
-                'path_url' => "iconpay.booking",
-                'query' => [],
-                'body' => $body,
-                'response' => $response,
-            ]);
+                Log::info("E00002", [
+                    'path_url' => "iconpay.booking",
+                    'query' => [],
+                    'body' => $body,
+                    'response' => $response,
+                ]);
 
                 throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
