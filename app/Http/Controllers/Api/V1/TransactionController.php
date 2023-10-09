@@ -210,6 +210,13 @@ class TransactionController extends Controller
             return $this->respondValidationError($errors, 'Validation Error!');
         }
 
+        return [
+            'success' => false,
+            'status' => "Bad request",
+            'status_code' => 400,
+            'message' => 'Untuk melakukan transaksi, silahkan update aplikasi Anda terlebih dahulu',
+        ];
+
         try {
             $customer = Auth::user();
             $request = request()->all();
