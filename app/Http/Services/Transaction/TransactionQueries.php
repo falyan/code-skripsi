@@ -1209,21 +1209,21 @@ class TransactionQueries extends Service
                 }
             }
 
-            $merchant['products'] = $new_product;
-            $merchant['total_weight'] = $total_weight;
-            if ($merchant['delivery_discount'] > $merchant['delivery_fee']) {
-                $merchant['delivery_discount'] = $merchant['delivery_fee'];
-            }
+            // $merchant['products'] = $new_product;
+            // $merchant['total_weight'] = $total_weight;
+            // if ($merchant['delivery_discount'] > $merchant['delivery_fee']) {
+            //     $merchant['delivery_discount'] = $merchant['delivery_fee'];
+            // }
 
-            $merchant_total_price_with_delivery = $merchant_total_price + $merchant['delivery_fee'];
-            $merchant['total_amount'] = $merchant_total_price;
-            $merchant['total_payment'] = $merchant_total_payment = $merchant_total_price_with_delivery - $merchant['delivery_discount'];
+            // $merchant_total_price_with_delivery = $merchant_total_price + $merchant['delivery_fee'];
+            // $merchant['total_amount'] = $merchant_total_price;
+            // $merchant['total_payment'] = $merchant_total_payment = $merchant_total_price_with_delivery - $merchant['delivery_discount'];
 
             if ($promo_merchant_ongkir != null && ($merchant['delivery_discount'] > 0 || !$max_merchant_ongkir || !$max_master_ongkir)) {
                 if ($promo_merchant_ongkir->promo_master->min_order_value > $merchant_total_price) {
                     $message_error = 'Minimal order untuk diskon ongkir adalah Rp ' . number_format($promo_merchant_ongkir->promo_master->min_order_value, 0, ',', '.');
-                    $merchant_total_payment += $merchant['delivery_discount'];
-                    $merchant['total_payment'] += $merchant['delivery_discount'];
+                    // $merchant_total_payment += $merchant['delivery_discount'];
+                    // $merchant['total_payment'] += $merchant['delivery_discount'];
                     $merchant['delivery_discount'] = 0;
                 }
 
@@ -1239,8 +1239,8 @@ class TransactionQueries extends Service
 
                     if ($customer_limit_count <= ($promo_logs_sub - $promo_logs_add)) {
                         $message_error = 'Anda telah melebihi batas penggunaan promo ini';
-                        $merchant_total_payment += $merchant['delivery_discount'];
-                        $merchant['total_payment'] += $merchant['delivery_discount'];
+                        // $merchant_total_payment += $merchant['delivery_discount'];
+                        // $merchant['total_payment'] += $merchant['delivery_discount'];
                         $merchant['delivery_discount'] = 0;
                     }
                 }
@@ -1253,6 +1253,16 @@ class TransactionQueries extends Service
                     }
                 }
             }
+
+            $merchant['products'] = $new_product;
+            $merchant['total_weight'] = $total_weight;
+            if ($merchant['delivery_discount'] > $merchant['delivery_fee']) {
+                $merchant['delivery_discount'] = $merchant['delivery_fee'];
+            }
+
+            $merchant_total_price_with_delivery = $merchant_total_price + $merchant['delivery_fee'];
+            $merchant['total_amount'] = $merchant_total_price;
+            $merchant['total_payment'] = $merchant_total_payment = $merchant_total_price_with_delivery - $merchant['delivery_discount'];
 
             // flash sale discount
             $promo_merchant_flash_sale = null;
@@ -1345,8 +1355,8 @@ class TransactionQueries extends Service
 
                     if ($customer_limit_count <= ($promo_logs_sub - $promo_logs_add)) {
                         $message_error = 'Anda telah melebihi batas penggunaan promo ini';
-                        $merchant_total_payment += $merchant['product_discount'];
-                        $merchant['total_payment'] += $merchant['product_discount'];
+                        // $merchant_total_payment += $merchant['product_discount'];
+                        // $merchant['total_payment'] += $merchant['product_discount'];
                         $merchant['product_discount'] = 0;
                     }
                 }
