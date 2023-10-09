@@ -172,7 +172,7 @@ class TransactionQueries extends Service
                 $product->with(['product' => function ($j) {
                     $j->select('id', 'merchant_id', 'name')->with(['product_photo']);
                 }]);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'installment',
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'installment', 'ev_subsidy',
         ])->where(
             $column_name,
             $column_value,
@@ -263,7 +263,7 @@ class TransactionQueries extends Service
         $data = Order::with([
             'detail' => function ($product) {
                 $product->with(['product', 'product.product_photo']);
-            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'review' => function ($r) {
+            }, 'progress_active', 'merchant', 'delivery', 'buyer', 'ev_subsidy', 'review' => function ($r) {
                 $r->with(['review_photo']);
             },
         ])->where([
