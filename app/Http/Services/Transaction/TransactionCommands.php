@@ -1300,7 +1300,7 @@ class TransactionCommands extends Service
                     }
                 }
 
-                if ($value_ongkir > 0 && data_get($data, 'delivery_discount') > 0) {
+                if ($value_ongkir == 0 && data_get($data, 'delivery_discount') > 0) {
                     return [
                         'success' => false,
                         'status' => "Bad request",
@@ -1418,7 +1418,7 @@ class TransactionCommands extends Service
                     }
                 }
 
-                if ($value_flash_sale > 0 && data_get($data, 'product_discount') > 0) {
+                if ($value_flash_sale == 0 && data_get($data, 'product_discount') > 0) {
                     return [
                         'success' => false,
                         'status' => "Bad request",
