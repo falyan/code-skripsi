@@ -1295,13 +1295,13 @@ class TransactionCommands extends Service
                     $type_usage = 'master';
                     if (!$limit_merchant && $promo_merchant_ongkir['promo_master']['max_value_merchant'] > 0) {
                         $type_usage = 'merchant';
-                        Cache::lock('promo_merchant_ongkir', 10)->block(10);
-                        $promo_merchant_ongkir = PromoMerchant::find($promo_merchant_ongkir['id']);
+                        $promo_merchant_ongkir = PromoMerchant::lockForUpdate()->find($promo_merchant_ongkir['id']);
+                        sleep(10);
                         $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
                         $promo_merchant_ongkir->save();
                     } else {
-                        Cache::lock('promo_master_ongkir', 10)->block(10);
-                        $promo_master = PromoMaster::find($promo_merchant_ongkir['promo_master']['id']);
+                        $promo_master = PromoMaster::lockForUpdate()->find($promo_merchant_ongkir['promo_master']['id']);
+                        sleep(10);
                         $promo_master->usage_value = $promo_master->usage_value + $value_ongkir;
                         $promo_master->save();
                     }
@@ -1413,13 +1413,13 @@ class TransactionCommands extends Service
                     $type_usage = 'master';
                     if (!$limit_merchant && $promo_merchant_flash_sale['promo_master']['max_value_merchant'] > 0) {
                         $type_usage = 'merchant';
-                        Cache::lock('promo_merchant_flash_sale', 10)->block(10);
-                        $promo_merchant_flash_sale = PromoMerchant::find($promo_merchant_flash_sale['id']);
+                        $promo_merchant_flash_sale = PromoMerchant::lockForUpdate()->find($promo_merchant_flash_sale['id']);
+                        sleep(10);
                         $promo_merchant_flash_sale->usage_value = $promo_merchant_flash_sale->usage_value + $value_flash_sale;
                         $promo_merchant_flash_sale->save();
                     } else {
-                        Cache::lock('promo_master_flash_sale', 10)->block(10);
-                        $promo_master = PromoMaster::find($promo_merchant_flash_sale['promo_master']['id']);
+                        $promo_master = PromoMaster::lockForUpdate()->find($promo_merchant_flash_sale['promo_master']['id']);
+                        sleep(10);
                         $promo_master->usage_value = $promo_master->usage_value + $value_flash_sale;
                         $promo_master->save();
                     }
