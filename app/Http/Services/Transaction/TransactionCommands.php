@@ -14,7 +14,6 @@ use App\Models\CustomerDiscount;
 use App\Models\CustomerEVSubsidy;
 use App\Models\CustomerTiket;
 use App\Models\District;
-use App\Models\InstallmentOrder;
 use App\Models\MasterData;
 use App\Models\MasterTiket;
 use App\Models\Merchant;
@@ -33,7 +32,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use LogService;
 
 class TransactionCommands extends Service
 {
@@ -241,7 +239,12 @@ class TransactionCommands extends Service
 
             $response = json_decode($response->getBody());
 
-            LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
+            Log::info("E00002", [
+                'path_url' => "iconpay.booking",
+                'query' => [],
+                'body' => $body,
+                'response' => $response,
+            ]);
 
             throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
@@ -353,7 +356,7 @@ class TransactionCommands extends Service
                                 'success' => false,
                                 'status' => "Bad request",
                                 'status_code' => 400,
-                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak memiliki bantuan',
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak mendapatkan bantuan',
                             ];
                         }
                     }
@@ -366,6 +369,25 @@ class TransactionCommands extends Service
                         'status_code' => 400,
                         'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                     ];
+                }
+            }
+
+            foreach ($datas['merchants'] as $merchant) {
+                foreach ($merchant['products'] as $product) {
+                    $ev_subsidy = Product::with('ev_subsidy')->where('id', $product['product_id'])->first()->ev_subsidy;
+
+                    if ($ev_subsidy) {
+                        // validasi jika produk adalah subsidi namun body request tidak mengirimkan data customer
+                        if (!isset($datas['customer']) || data_get($datas, 'customer') == null) {
+                            return [
+                                'success' => false,
+                                'status' => "Bad request",
+                                'status_code' => 400,
+                                'message' => 'Untuk melakukan transaksi pengajuan subsidi, silahkan update aplikasi Anda terlebih dahulu',
+                            ];
+                        }
+                    }
+
                 }
             }
 
@@ -952,7 +974,12 @@ class TransactionCommands extends Service
 
                 $response = json_decode($response->getBody());
 
-                LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
+                Log::info("E00002", [
+                    'path_url' => "iconpay.booking",
+                    'query' => [],
+                    'body' => $body,
+                    'response' => $response,
+                ]);
 
                 throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
@@ -1076,7 +1103,7 @@ class TransactionCommands extends Service
                                 'success' => false,
                                 'status' => "Bad request",
                                 'status_code' => 400,
-                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak memiliki bantuan',
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak mendapatkan bantuan',
                             ];
                         }
                     }
@@ -1098,6 +1125,25 @@ class TransactionCommands extends Service
                         'status_code' => 400,
                         'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
                     ];
+                }
+            }
+
+            foreach ($datas['merchants'] as $merchant) {
+                foreach ($merchant['products'] as $product) {
+                    $ev_subsidy = Product::with('ev_subsidy')->where('id', $product['product_id'])->first()->ev_subsidy;
+
+                    if ($ev_subsidy) {
+                        // validasi jika produk adalah subsidi namun body request tidak mengirimkan data customer
+                        if (!isset($datas['customer']) || data_get($datas, 'customer') == null) {
+                            return [
+                                'success' => false,
+                                'status' => "Bad request",
+                                'status_code' => 400,
+                                'message' => 'Untuk melakukan transaksi pengajuan subsidi, silahkan update aplikasi Anda terlebih dahulu',
+                            ];
+                        }
+                    }
+
                 }
             }
 
@@ -1290,6 +1336,15 @@ class TransactionCommands extends Service
                     }
                 }
 
+                if ($value_ongkir == 0 && data_get($data, 'delivery_discount') > 0) {
+                    return [
+                        'success' => false,
+                        'status' => "Bad request",
+                        'status_code' => 400,
+                        'message' => 'Promo Ongkir telah mencapai limit silahkah muat ulang halaman ini terlebih dahulu!',
+                    ];
+                }
+
                 if ($value_ongkir > data_get($data, 'delivery_fee')) {
                     $value_ongkir = data_get($data, 'delivery_fee');
                 }
@@ -1315,14 +1370,14 @@ class TransactionCommands extends Service
                     $limit_merchant = ($promo_merchant_ongkir['usage_value'] + $value_ongkir) > $promo_merchant_ongkir['max_value'];
 
                     $type_usage = 'master';
-                    if (!$limit_merchant) {
+                    if (!$limit_merchant && $promo_merchant_ongkir['promo_master']['max_value_merchant'] > 0) {
                         $type_usage = 'merchant';
-                        Cache::lock('promo_merchant', 10)->block(10);
+                        Cache::lock('promo_merchant_ongkir', 10)->block(10);
                         $promo_merchant_ongkir = PromoMerchant::find($promo_merchant_ongkir['id']);
                         $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
                         $promo_merchant_ongkir->save();
                     } else {
-                        Cache::lock('promo_master', 10)->block(10);
+                        Cache::lock('promo_master_ongkir', 10)->block(10);
                         $promo_master = PromoMaster::find($promo_merchant_ongkir['promo_master']['id']);
                         $promo_master->usage_value = $promo_master->usage_value + $value_ongkir;
                         $promo_master->save();
@@ -1334,6 +1389,7 @@ class TransactionCommands extends Service
                         $promo_log->promo_master_id = $promo_merchant_ongkir['promo_master']['id'];
                         $promo_log->promo_merchant_id = $promo_merchant_ongkir->id;
                         $promo_log->type = 'sub';
+                        $promo_log->type_usage = $type_usage;
                         $promo_log->value = $value_ongkir;
                         $promo_log->created_by = 'System';
                         $promo_log->save();
@@ -1398,6 +1454,15 @@ class TransactionCommands extends Service
                     }
                 }
 
+                if ($value_flash_sale == 0 && data_get($data, 'product_discount') > 0) {
+                    return [
+                        'success' => false,
+                        'status' => "Bad request",
+                        'status_code' => 400,
+                        'message' => 'Promo Flash Sale telah mencapai limit silahkah muat ulang halaman ini terlebih dahulu!',
+                    ];
+                }
+
                 $min_condition = false;
                 if ($promo_flash_sale_value != null) {
                     $min_condition = true;
@@ -1432,14 +1497,14 @@ class TransactionCommands extends Service
                     $limit_merchant = ($promo_merchant_flash_sale['usage_value'] + $value_flash_sale_m) > $promo_merchant_flash_sale['max_value'];
 
                     $type_usage = 'master';
-                    if (!$limit_merchant) {
+                    if (!$limit_merchant && $promo_merchant_flash_sale['promo_master']['max_value_merchant'] > 0) {
                         $type_usage = 'merchant';
-                        Cache::lock('promo_merchant', 10)->block(10);
+                        Cache::lock('promo_merchant_flash_sale', 10)->block(10);
                         $promo_merchant_flash_sale = PromoMerchant::find($promo_merchant_flash_sale['id']);
                         $promo_merchant_flash_sale->usage_value = $promo_merchant_flash_sale->usage_value + $value_flash_sale;
                         $promo_merchant_flash_sale->save();
                     } else {
-                        Cache::lock('promo_master', 10)->block(10);
+                        Cache::lock('promo_master_flash_sale', 10)->block(10);
                         $promo_master = PromoMaster::find($promo_merchant_flash_sale['promo_master']['id']);
                         $promo_master->usage_value = $promo_master->usage_value + $value_flash_sale;
                         $promo_master->save();
@@ -1708,25 +1773,6 @@ class TransactionCommands extends Service
                 $mailSender->mailCheckout($this->order_id);
             }
 
-            if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
-                $installmentOrder = new InstallmentOrder();
-                $installmentOrder->customer_id = $customer_id;
-                $installmentOrder->pi_provider_id = data_get($datas, 'installment.provider_id');
-                $installmentOrder->order_id = $order->id;
-                $installmentOrder->month_tenor = data_get($datas, 'installment_tenor') ?? null;
-                $installmentOrder->fee_tenor = data_get($datas, 'installment_fee') ?? 0;
-                $installmentOrder->installment_tenor = data_get($datas, 'installment_price') ?? 0;
-                $installmentOrder->markup_price_tenor = data_get($datas, 'installment_markup_price') ?? 0;
-                $installmentOrder->actual_price_tenor = data_get($datas, 'installment_actual_price') ?? 0;
-                $installmentOrder->interest_percentage_tenor = data_get($datas, 'installment_interest_percentage') ?? 0;
-                $installmentOrder->provider_fee = data_get($datas, 'installment_provider_fee') ?? 0;
-                $installmentOrder->save();
-
-                $order_payment = OrderPayment::where('id', $order->payment_id)->first();
-                $order_payment->payment_amount = data_get($datas, 'installment_markup_price');
-                $order_payment->save();
-            }
-
             if ($datas['total_discount'] > 0) {
                 $update_discount = $this->updateCustomerDiscount($customer_id, $customer->email, $datas['total_discount'], $no_reference);
                 if ($update_discount == false) {
@@ -1775,7 +1821,12 @@ class TransactionCommands extends Service
 
                 $response = json_decode($response->getBody());
 
-                LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode('iconpay')->setCategory('out')->log();
+                Log::info("E00002", [
+                    'path_url' => "iconpay.booking",
+                    'query' => [],
+                    'body' => $body,
+                    'response' => $response,
+                ]);
 
                 throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
@@ -1805,10 +1856,10 @@ class TransactionCommands extends Service
             ];
         } catch (Exception $th) {
             DB::rollBack();
-            if (in_array($th->getCode(), self::$error_codes)) {
-                throw new Exception($th->getMessage(), $th->getCode());
-            }
-            throw new Exception($th->getMessage(), 500);
+            // if (in_array($th->getCode(), self::$error_codes)) {
+            //     throw new Exception($th->getMessage(), $th->getCode());
+            // }
+            throw new Exception('Gagal membuat pesanan', 500);
         }
     }
 
@@ -1904,11 +1955,11 @@ class TransactionCommands extends Service
     public function updatePromoLog($promo_log_order)
     {
         if ($promo_log_order->type_usage == 'merchant') {
-            $promo_merchant = PromoMerchant::find($promo_log_order->promo_merchant_id);
+            $promo_merchant = PromoMerchant::where('promo_master_id', $promo_log_order->promo_master_id)->where('merchant_id', $promo_log_order->order->merchant_id)->first();
             $promo_merchant->usage_value = $promo_merchant->usage_value - (int) $promo_log_order->value;
             $promo_merchant->save();
         } else {
-            $promo_master = PromoMaster::find($promo_log_order->promo_master_id);
+            $promo_master = PromoMaster::where('id', $promo_log_order->promo_master_id)->first();
             $promo_master->usage_value = $promo_master->usage_value - (int) $promo_log_order->value;
             $promo_master->save();
         }

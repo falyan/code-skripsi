@@ -210,6 +210,13 @@ class TransactionController extends Controller
             return $this->respondValidationError($errors, 'Validation Error!');
         }
 
+        return [
+            'success' => false,
+            'status' => "Bad request",
+            'status_code' => 400,
+            'message' => 'Untuk melakukan transaksi, silahkan update aplikasi Anda terlebih dahulu',
+        ];
+
         try {
             $customer = Auth::user();
             $request = request()->all();
@@ -1449,25 +1456,26 @@ class TransactionController extends Controller
 
     public function cancelOrder($id)
     {
-        try {
-            $rules = [
-                'reason' => 'required',
-            ];
+        $rules = [
+            'reason' => 'required',
+        ];
 
-            $validator = Validator::make(request()->all(), $rules, [
-                'required' => 'sertakan alasan pembatalan pesanan anda.',
-            ]);
-            if ($validator->fails()) {
-                $errors = collect();
-                foreach ($validator->errors()->getMessages() as $key => $value) {
-                    foreach ($value as $error) {
-                        $errors->push($error);
-                    }
+        $validator = Validator::make(request()->all(), $rules, [
+            'required' => 'sertakan alasan pembatalan pesanan anda.',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
                 }
-
-                return $this->respondValidationError($errors, 'Validation Error!');
             }
 
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
             $status_order = $this->transactionQueries->getStatusOrder($id);
             $orderByReference = $this->transactionQueries->getTransactionByReference($status_order->no_reference);
 
@@ -2005,7 +2013,7 @@ class TransactionController extends Controller
                             return array_merge($respond, [
                                 'success' => true,
                                 'status_code' => 400,
-                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak memiliki bantuan',
+                                'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak mendapatkan bantuan',
                             ]);
                         }
                     }
