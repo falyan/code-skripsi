@@ -1336,6 +1336,15 @@ class TransactionCommands extends Service
                     }
                 }
 
+                if ($value_ongkir > 0 && data_get($data, 'delivery_discount') > 0) {
+                    return [
+                        'success' => false,
+                        'status' => "Bad request",
+                        'status_code' => 400,
+                        'message' => 'Promo Ongkir telah mencapai limit silahkah muat ulang halaman ini terlebih dahulu!',
+                    ];
+                }
+
                 if ($value_ongkir > data_get($data, 'delivery_fee')) {
                     $value_ongkir = data_get($data, 'delivery_fee');
                 }
@@ -1443,6 +1452,15 @@ class TransactionCommands extends Service
                             }
                         }
                     }
+                }
+
+                if ($value_flash_sale > 0 && data_get($data, 'product_discount') > 0) {
+                    return [
+                        'success' => false,
+                        'status' => "Bad request",
+                        'status_code' => 400,
+                        'message' => 'Promo Flash Sale telah mencapai limit silahkah muat ulang halaman ini terlebih dahulu!',
+                    ];
                 }
 
                 $min_condition = false;
