@@ -1842,10 +1842,10 @@ class TransactionCommands extends Service
             ];
         } catch (Exception $th) {
             DB::rollBack();
-            if (in_array($th->getCode(), self::$error_codes)) {
-                throw new Exception($th->getMessage(), $th->getCode());
-            }
-            throw new Exception($th->getMessage(), 500);
+            // if (in_array($th->getCode(), self::$error_codes)) {
+            //     throw new Exception($th->getMessage(), $th->getCode());
+            // }
+            throw new Exception('Gagal membuat pesanan', 500);
         }
     }
 
