@@ -33,7 +33,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use LogService;
 
 class TransactionCommands extends Service
 {
@@ -884,6 +883,21 @@ class TransactionCommands extends Service
                 Log::info('No Claim Bonus Apply');
             }
 
+            if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
+                $installmentOrder = new InstallmentOrder();
+                $installmentOrder->customer_id = $customer_id;
+                $installmentOrder->pi_provider_id = data_get($datas, 'installment.provider_id');
+                $installmentOrder->order_id = $order->id;
+                $installmentOrder->month_tenor = data_get($datas, 'installment_tenor');
+                $installmentOrder->fee_tenor = data_get($datas, 'installment_fee');
+                $installmentOrder->installment_tenor = data_get($datas, 'installment_price') ?? 0;
+                $installmentOrder->markup_price_tenor = data_get($datas, 'installment_markup_price') ?? 0;
+                $installmentOrder->actual_price_tenor = data_get($datas, 'installment_actual_price') ?? 0;
+                $installmentOrder->interest_percentage_tenor = data_get($datas, 'installment_interest_percentage') ?? 0;
+                $installmentOrder->provider_fee = data_get($datas, 'installment_provider_fee') ?? 0;
+                $installmentOrder->save();
+            }
+
             if ($datas['total_payment'] < 1) {
                 throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
             }
@@ -926,7 +940,7 @@ class TransactionCommands extends Service
                 }
             }
 
-            if (!isset($datas['customer'])) {
+            if (!isset($datas['customer']) || data_get($datas, 'customer') == null) {
 
                 $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
                 $body = [
@@ -957,12 +971,12 @@ class TransactionCommands extends Service
 
                 $response = json_decode($response->getBody());
 
-            Log::info("E00002", [
-                'path_url' => "iconpay.booking",
-                'query' => [],
-                'body' => $body,
-                'response' => $response,
-            ]);
+                Log::info("E00002", [
+                    'path_url' => "iconpay.booking",
+                    'query' => [],
+                    'body' => $body,
+                    'response' => $response,
+                ]);
 
                 throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
@@ -1599,7 +1613,7 @@ class TransactionCommands extends Service
                 $order_delivery->delivery_fee = data_get($data, 'delivery_fee');
                 $order_delivery->delivery_discount = data_get($data, 'delivery_discount');
                 $order_delivery->must_use_insurance = data_get($data, 'must_use_insurance') ?? false;
-                $order_delivery->delivery_fee_origin =  $shipping_origin_price;
+                $order_delivery->delivery_fee_origin = $shipping_origin_price;
                 $order_delivery->insurance_fee = $shipping_insurance_fee;
                 $order_delivery->insurance_tax = $shipping_insurance_tax;
                 $order_delivery->origin_fee = $shipping_origin_fee;
@@ -1688,6 +1702,21 @@ class TransactionCommands extends Service
                     Log::info('Claim Bonus Hold Failed');}
             } else {
                 Log::info('No Claim Bonus Apply');
+            }
+
+            if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
+                $installmentOrder = new InstallmentOrder();
+                $installmentOrder->customer_id = $customer_id;
+                $installmentOrder->pi_provider_id = data_get($datas, 'installment.provider_id');
+                $installmentOrder->order_id = $order->id;
+                $installmentOrder->month_tenor = data_get($datas, 'installment_tenor');
+                $installmentOrder->fee_tenor = data_get($datas, 'installment_fee');
+                $installmentOrder->installment_tenor = data_get($datas, 'installment_price') ?? 0;
+                $installmentOrder->markup_price_tenor = data_get($datas, 'installment_markup_price') ?? 0;
+                $installmentOrder->actual_price_tenor = data_get($datas, 'installment_actual_price') ?? 0;
+                $installmentOrder->interest_percentage_tenor = data_get($datas, 'installment_interest_percentage') ?? 0;
+                $installmentOrder->provider_fee = data_get($datas, 'installment_provider_fee') ?? 0;
+                $installmentOrder->save();
             }
 
             if ($datas['total_payment'] < 1) {
@@ -1807,12 +1836,12 @@ class TransactionCommands extends Service
 
                 $response = json_decode($response->getBody());
 
-            Log::info("E00002", [
-                'path_url' => "iconpay.booking",
-                'query' => [],
-                'body' => $body,
-                'response' => $response,
-            ]);
+                Log::info("E00002", [
+                    'path_url' => "iconpay.booking",
+                    'query' => [],
+                    'body' => $body,
+                    'response' => $response,
+                ]);
 
                 throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
