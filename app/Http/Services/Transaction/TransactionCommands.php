@@ -14,6 +14,7 @@ use App\Models\CustomerDiscount;
 use App\Models\CustomerEVSubsidy;
 use App\Models\CustomerTiket;
 use App\Models\District;
+use App\Models\InstallmentOrder;
 use App\Models\MasterData;
 use App\Models\MasterTiket;
 use App\Models\Merchant;
