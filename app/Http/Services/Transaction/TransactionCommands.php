@@ -2170,7 +2170,7 @@ class TransactionCommands extends Service
                 $delivery->no_reference = $resi['data']['no_reference'];
                 $delivery->image_logistic = $resi['data']['courier_image'];
                 $delivery->is_request_pickup = $expect_time != null ? true : false;
-                $delivery->request_pickup_time = $expect_time;
+                $delivery->request_pickup_time =  $expect_time != null ? Carbon::parse($expect_time)->format('Y-m-d H:i:s') : null;
                 $delivery->save();
             }
         } else {
