@@ -1700,7 +1700,7 @@ class TransactionCommands extends Service
                 } else {
 
                     // mdr promo
-                    if ($value_ongkir > 0 || $value_flash_sale > 0) {
+                    if ($value_ongkir > 0 || $order_details[0]['discount'] > 0) {
                         $mdr_total += $mdr_promo;
                         $order->total_mdr = (int) $mdr_total;
                         $order->save();
