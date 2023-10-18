@@ -1530,8 +1530,8 @@ class TransactionCommands extends Service
                 }
 
                 // mdr promo
-                if ($value_ongkir > 0 && $value_flash_sale > 0) {
-                    $mdr_total =+ $mdr_promo;
+                if ($value_ongkir > 0 || $value_flash_sale > 0) {
+                    $mdr_total += $mdr_promo;
                     $order->total_mdr = (int) $mdr_total;
                     $order->save();
                 }
