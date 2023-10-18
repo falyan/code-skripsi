@@ -1384,7 +1384,7 @@ class TransactionCommands extends Service
                         $promo_master->save();
                     }
 
-                    if (!$limit_merchant && $value_ongkir > 0) {
+                    if ($value_ongkir > 0) {
                         $promo_log = new PromoLog();
                         $promo_log->order_id = $order->id;
                         $promo_log->promo_master_id = $promo_merchant_ongkir['promo_master']['id'];
@@ -1394,8 +1394,6 @@ class TransactionCommands extends Service
                         $promo_log->value = $value_ongkir;
                         $promo_log->created_by = 'System';
                         $promo_log->save();
-                    } else {
-                        $value_ongkir = 0;
                     }
                 }
 
@@ -1513,7 +1511,7 @@ class TransactionCommands extends Service
                         $promo_master->save();
                     }
 
-                    if (!$limit_merchant && $value_flash_sale > 0) {
+                    if ($value_flash_sale > 0) {
                         $promo_log = new PromoLog();
                         $promo_log->order_id = $order->id;
                         $promo_log->promo_master_id = $promo_merchant_flash_sale['promo_master']['id'];
@@ -1523,8 +1521,6 @@ class TransactionCommands extends Service
                         $promo_log->value = $value_flash_sale;
                         $promo_log->created_by = 'System';
                         $promo_log->save();
-                    } else {
-                        $value_flash_sale = 0;
                     }
 
                     // sementara ketika flash sale nempel merchant
