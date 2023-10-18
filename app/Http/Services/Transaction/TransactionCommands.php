@@ -1529,13 +1529,6 @@ class TransactionCommands extends Service
                     $order_details[0]['total_amount'] = $order_details[0]['total_amount'] - $value_flash_sale;
                 }
 
-                // mdr promo
-                if ($value_ongkir > 0 || $value_flash_sale > 0) {
-                    $mdr_total += $mdr_promo;
-                    $order->total_mdr = (int) $mdr_total;
-                    $order->save();
-                }
-
                 // sementara ketika flash sale nempel merchant
                 OrderDetail::insert($order_details);
 
@@ -1649,6 +1642,13 @@ class TransactionCommands extends Service
                     $ongkir = $order->delivery->delivery_fee;
                     $amount = $order->total_amount - $total_insentif - $mdr_total - $ongkir;
                 } else {
+
+                    // mdr promo
+                    if ($value_ongkir > 0 || $value_flash_sale > 0) {
+                        $mdr_total += $mdr_promo;
+                        $order->total_mdr = (int) $mdr_total;
+                        $order->save();
+                    }
                     $amount = $order->total_amount - $total_insentif - $mdr_total;
                 }
 
