@@ -388,7 +388,6 @@ class TransactionCommands extends Service
                             ];
                         }
                     }
-
                 }
             }
 
@@ -890,14 +889,14 @@ class TransactionCommands extends Service
                         $order_payment = OrderPayment::where('id', $newOrder->payment_id)->first();
                         $order_payment->payment_amount = $order_payment->payment_amount - $claimApplyDiscount['data']['bonusAmount'];
                         $order_payment->save();
-
                     } else {
                         Log::info('Claim Bonus Apply Failed, Refund with Amount Bonus Hold');
 
                         $datas['total_payment'] += $bonusAmount;
                     }
                 } else {
-                    Log::info('Claim Bonus Hold Failed');}
+                    Log::info('Claim Bonus Hold Failed');
+                }
             } else {
                 Log::info('No Claim Bonus Apply');
             }
@@ -1159,7 +1158,6 @@ class TransactionCommands extends Service
                             ];
                         }
                     }
-
                 }
             }
 
@@ -1216,7 +1214,10 @@ class TransactionCommands extends Service
             }
 
             // Start hitung mdr V2 (urgent)
-            $mdr_total = MasterData::where('key', 'mdr_global_value')->first()->value ?? 0;
+            $mdr_master = MasterData::whereIn('key', ['mdr_global_value', 'mdr_global_promo'])->get();
+            $mdr_value = collect($mdr_master)->where('key', 'mdr_global_value')->first()->value ?? 0;
+            $mdr_promo = collect($mdr_master)->where('key', 'mdr_global_promo')->first()->value ?? 0;
+            $mdr_total = $mdr_value;
 
             foreach (data_get($datas, 'merchants') as $data) {
                 $order = new Order();
@@ -1544,6 +1545,13 @@ class TransactionCommands extends Service
                     $order_details[0]['total_amount'] = $order_details[0]['total_amount'] - $value_flash_sale;
                 }
 
+                // mdr promo
+                if ($value_ongkir > 0 && $value_flash_sale > 0) {
+                    $mdr_total =+ $mdr_promo;
+                    $order->total_mdr = (int) $mdr_total;
+                    $order->save();
+                }
+
                 // sementara ketika flash sale nempel merchant
                 OrderDetail::insert($order_details);
 
@@ -1755,7 +1763,8 @@ class TransactionCommands extends Service
                         $datas['total_payment'] += $bonusAmount;
                     }
                 } else {
-                    Log::info('Claim Bonus Hold Failed');}
+                    Log::info('Claim Bonus Hold Failed');
+                }
             } else {
                 Log::info('No Claim Bonus Apply');
             }
