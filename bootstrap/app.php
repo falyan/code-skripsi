@@ -144,6 +144,14 @@ $app->register(\Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::cl
 
 class_alias(Maatwebsite\Excel\Facades\Excel::class, 'Excel');
 
+$app->register(\Sentry\Laravel\ServiceProvider::class);
+
+// To enable Sentry Performance Monitoring, the `TracingServiceProvider` has to be registered additionally:
+// $app->register('Sentry\Laravel\Tracing\ServiceProvider');
+
+// Sentry must be registered before routes are included
+// require __DIR__ . '/../app/Http/routes.php';
+
 /*
 |--------------------------------------------------------------------------
 | Load The Application Routes
