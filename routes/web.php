@@ -17,6 +17,10 @@ $router->get('/', function () use ($router) {
     return 'Welcome to ' . env('APP_NAME');
 });
 
+$router->get('/debug-sentry', function () {
+    throw new Exception('Mari kita coba, Sentry error!');
+});
+
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
     $router->post('biller/payment/notification', 'TransactionController@updatePaymentStatus');
     $router->post('biller/payment/notification-bot', 'TransactionController@updatePaymentStatusForBOT');
