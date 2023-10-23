@@ -2055,9 +2055,15 @@ class ProductQueries extends Service
         }
 
         $product = new Product();
-        $products = $product->where([
-            'status' => 1,
-        ])->with([
+        $products = $product
+            ->withCount(['order_details' => function ($details) {
+                $details->whereHas('order', function ($order) {
+                    $order->whereHas('progress_done');
+                });
+            }])
+            ->where([
+                'status' => 1,
+            ])->with([
             'product_stock', 'product_photo', 'is_wishlist',
             'merchant.city:id,name',
             'merchant.promo_merchant' => function ($pd) {
