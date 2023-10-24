@@ -166,13 +166,13 @@ class EvSubsidyCommands extends Service
         $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
         $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(3))->timestamp);
 
-        if ($data->status_approval != null) {
-            return [
-                'status' => false,
-                'message' => 'Status tidak dalam status menunggu',
-                'errors' => 'Status approval telah ' . ($data->status_approval == 0 ? 'ditolak' : 'disetujui'),
-            ];
-        }
+        // if ($data->status_approval != null) {
+        //     return [
+        //         'status' => false,
+        //         'message' => 'Status tidak dalam status menunggu',
+        //         'errors' => 'Status approval telah ' . ($data->status_approval == 0 ? 'ditolak' : 'disetujui'),
+        //     ];
+        // }
 
         try {
             DB::beginTransaction();

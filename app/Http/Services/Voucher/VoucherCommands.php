@@ -335,49 +335,6 @@ class VoucherCommands
         ];
     }
 
-    public function claimPregenerate($order, $master_ubah_daya_logs)
-    {
-        $log_ubah_daya = null;
-        foreach ($master_ubah_daya_logs as $value) {
-            $log_ubah_daya = $value;
-            break;
-        }
-
-        $pregenerate = UbahDayaPregenerate::where([
-            'master_ubah_daya_id' => $log_ubah_daya->master_ubah_daya_id,
-            'status' => 1,
-            'claimed_at' => null,
-        ])->first();
-
-        if ($pregenerate) {
-            $voucher_code = $pregenerate->kode;
-            UbahDayaLog::where('id', $log_ubah_daya->id)->update([
-                'voucher_code' => $voucher_code,
-                'with_nik_claim_at' => date('Y-m-d H:i:s'),
-            ]);
-
-            $orders = Order::where('no_reference', $order->no_reference)->update([
-                'voucher_ubah_daya_code' => $voucher_code,
-            ]);
-
-            UbahDayaPregenerate::where('id', $pregenerate->id)->update([
-                'claimed_at' => date('Y-m-d H:i:s'),
-            ]);
-
-            throw_if(!$orders, Exception::class, new Exception('Terjadi kesalahan: Gagal menyimpan data voucher', 400));
-
-            $title = 'Selamat Anda Mendapatkan Voucher';
-            $message = 'Selamat anda mendapatkan voucher ubah daya! Cek voucher anda pada voucher saya di bagian profil';
-            $url_path = 'v1/buyer/query/transaction/' . $order->buyer->id . '/detail/' . $order->id;
-            $notificationCommand = new NotificationCommands();
-            $notificationCommand->create('customer_id', $order->buyer->id, 2, $title, $message, $url_path);
-            $notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
-
-            $mailSender = new MailSenderManager();
-            $mailSender->mainVoucherClaim($order->id);
-        }
-    }
-
     // generateVoucherCode random 14`char
     public function generateVoucherCode($customer_id, $ubah_daya_id)
     {

@@ -372,6 +372,7 @@ class TransactionQueries extends Service
             $data->merchant->subdistrict = Subdistrict::find($data->merchant->subdistrict_id);
         }
 
+        $data->delivery->delivery_fee_cod = 0;
         $data->delivery->province = $data->delivery->city->province;
         unset($data->delivery->city->province);
 
@@ -451,10 +452,19 @@ class TransactionQueries extends Service
     public function getStatusOrder($id, $allStatus = false)
     {
         $data = Order::when($allStatus == false, function ($query) {
-            $query->with('progress_active');
+            $query->with('progress_active', 'buyer');
         })->when($allStatus == true, function ($query) {
-            $query->with('progress');
+            $query->with('progress', 'buyer');
         })->find($id);
+        return $data;
+    }
+
+    public function getOrders($ids)
+    {
+        $data = Order::with('detail', 'buyer', 'merchant', 'merchant.corporate', 'progress', 'progress_active', 'delivery')
+            ->whereIn('id', $ids)
+            ->get();
+
         return $data;
     }
 

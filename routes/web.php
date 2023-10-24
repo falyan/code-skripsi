@@ -14,7 +14,11 @@
  */
 
 $router->get('/', function () use ($router) {
-    return $router->app->version();
+    return 'Welcome to ' . env('APP_NAME');
+});
+
+$router->get('/debug-sentry', function () {
+    throw new Exception('Mari kita coba, Sentry error!');
 });
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($router) {
@@ -256,6 +260,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'category'], static function () use ($router) {
                 $router->get('/random', 'CategoryController@getThreeRandomCategory');
                 $router->get('/all', 'CategoryController@getAllCategory');
+                $router->get('/list', 'CategoryController@getListCategory');
             });
 
             $router->group(['prefix' => 'setting'], static function () use ($router) {
@@ -545,6 +550,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('/{id}/cancel', 'TransactionController@cancelOrder');
         $router->post('/{id}/finish', 'TransactionController@finishOrder');
         $router->post('/{id}/refund-ongkir', 'TransactionController@refundOngkir');
+        $router->post('/{id}/generate-awb', 'TransactionController@generateAwbBOT');
     });
 
     $router->group(['prefix' => 'merchant'], static function () use ($router) {
@@ -571,6 +577,12 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->put('command/customerbank/{id}', 'IconcashController@updateCustomerBank');
             $router->get('hash-salt/generator/{pin}', 'IconcashController@hash_salt_sha256');
             $router->get('history/saldo-pendapatan', 'IconcashController@historySaldoPendapatan');
+
+            // Disbursement Customer Bank & Withdrawal
+            $router->post('command/disbursement/inquiry', 'IconcashController@withdrawalInquiryV2');
+            $router->post('command/disbursement', 'IconcashController@withdrawalV2');
+            $router->post('command/disbursement/customerbank', 'IconcashController@addCustomerBankV2');
+            $router->put('command/disbursement/customerbank/{id}', 'IconcashController@updateCustomerBankV2');
 
             $router->post('command/create-order', 'IconcashController@createOrder');
             $router->post('command/order-confirm', 'IconcashController@orderConfirm');
@@ -656,4 +668,10 @@ $router->group(['namespace' => '\Rap2hpoutre\LaravelLogViewer'], function () use
     if (env('APP_ENV') === 'staging') {
         $router->get('logs', 'LogViewerController@index');
     }
+});
+
+// cache clear
+$router->get('/cache-clear', function () {
+    $exitCode = \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    return 'cache clear';
 });

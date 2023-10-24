@@ -6,8 +6,6 @@ use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Transaction\TransactionCommands;
 use App\Http\Services\Transaction\TransactionQueries;
 use App\Models\Customer;
-use App\Models\CustomerAddress;
-use App\Models\Merchant;
 use App\Models\Order;
 use Carbon\Carbon;
 use Exception;
@@ -209,18 +207,20 @@ class LogisticManager
     public static function getOngkir($customer_address, $merchant, $weight, $courirer, $price)
     {
         $param = static::setParamAPI([]);
-        $url = sprintf('%s/%s', static::$endpoint, 'v2/service/rates' . $param);
+        $url = sprintf('%s/%s', static::$endpoint, 'v1/service/rates' . $param);
 
         $body = [
             'shipper' => [
-                'dest_from_code' => (string) $customer_address->subdistrict_id,
-                'latitude' => (string) $customer_address->latitude,
-                'longitude' => (string) $customer_address->longitude,
-            ],
-            'receiver' => [
-                'dest_to_code' => (string) $merchant->subdistrict_id,
+                'origin' => (string) $merchant->district_id,
                 'latitude' => (string) $merchant->latitude,
                 'longitude' => (string) $merchant->longitude,
+                'postal_code' => (string) $merchant->postal_code,
+            ],
+            'receiver' => [
+                'destination' => (string) $customer_address->district_id,
+                'latitude' => (string) $customer_address->latitude,
+                'longitude' => (string) $customer_address->longitude,
+                'postal_code' => (string) $customer_address->postal_code,
             ],
             'item_price' => $price,
             'weight' => $weight,
@@ -325,7 +325,7 @@ class LogisticManager
     public static function track($order)
     {
         $param = static::setParamAPI([]);
-        $url = sprintf('%s/%s', static::$endpoint, 'v2/tracking' . $param);
+        $url = sprintf('%s/%s', static::$endpoint, 'v1/tracking' . $param);
 
         $body = [
             'trx_no' => $order->trx_no,
@@ -348,15 +348,15 @@ class LogisticManager
 
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
-        if ($response['status'] != 200) {
-            throw new Exception($response['message'], $response['status']);
+        if (!isset($response['status']) || $response['status'] != 200) {
+            throw new Exception('Terjadi kesalahan: Sedang terjadi gangguan.', 500);
         }
+
+        $transactionQueries = new TransactionQueries();
+        $data = $transactionQueries->getStatusOrder($order->id, true);
 
         if (isset($response['data']) && $response['data']['delivered'] == true) {
             DB::beginTransaction();
-
-            $transactionQueries = new TransactionQueries();
-            $data = $transactionQueries->getStatusOrder($order->id, true);
 
             $status_codes = [];
             foreach ($data->progress as $item) {
@@ -395,15 +395,29 @@ class LogisticManager
             }
         }
 
+        if (isset($response['data']) && $response['data']['shippper_name'] == null) {
+            $delivery = $data->delivery->merchant_data;
+            $delivery = json_decode($delivery);
+
+            $response['data']['shippper_name'] = $delivery->merchant_name;
+            $response['data']['shippper_address'] = $delivery->merchant_address;
+            $response['data']['receiver_name'] = $data->delivery->receiver_name;
+            $response['data']['receiver_address'] = $data->delivery->address;
+        }
+
+        $response['data']['tracking'] = array_map(function ($item) {
+            $item['pod_image'] = $item['image_courier'];
+            $item['status'] = static::getStatusRajaOngkir($item['status']);
+
+            unset($item['image_courier']);
+            return $item;
+        }, $response['data']['tracking']);
+
         return $response;
     }
 
-    public static function preorder($order_id)
+    public static function preorder($order, $pick_up_time)
     {
-        $param = static::setParamAPI([]);
-        $url = sprintf('%s/%s', static::$endpoint, 'v2/preorder' . $param);
-
-        $order = Order::with(['merchant', 'buyer', 'delivery', 'detail'])->where('id', $order_id)->first();
         $items = [];
         $total_price = 0;
         foreach ($order->detail as $detail) {
@@ -425,7 +439,7 @@ class LogisticManager
                 'length' => (int) $detail->product->length,
                 'width' => (int) $detail->product->width,
                 'height' => (int) $detail->product->height,
-                'category' => $detail->product->category->parent->parent->value,
+                'category' => $detail->product->category->parent != null || $detail->product->category->parent->parent != null ? $detail->product->category->parent->parent->value : null,
                 'uom' => $detail->product->stock_active->uom,
                 'note' => $detail->notes,
             ];
@@ -435,17 +449,25 @@ class LogisticManager
 
         $body = [
             'trx_no' => $order->trx_no,
+            'pick_up_time' => $pick_up_time,
             'courier' => $order->delivery->delivery_method,
-            'service_code' => (int) $order->delivery->delivery_type,
-            'shipping_price' => (int) $order->delivery->delivery_fee,
+            'service_code' => $order->delivery->delivery_type,
             'shipping_type' => $order->delivery->shipping_type,
-            'must_use_insurance' => $order->delivery->must_use_insurance,
             'items_total_price' => $total_price,
+            'final_shipping_price' => (float) $order->delivery->delivery_fee,
+            'origin_shipping_price' => (float) $order->delivery->delivery_fee_origin,
+            'must_use_insurance' => $order->delivery->must_use_insurance,
+            'insurance_fee' => (float) $order->delivery->insurance_fee,
+            'insurance_tax' => (float) $order->delivery->insurance_tax,
+            'origin_fee' => (float) $order->delivery->origin_fee,
+            'origin_tax' => (float) $order->delivery->origin_tax,
             'shipper' => [
+                'merchant_id' => $order->merchant->id,
+                'company_name' => $order->merchant->corporate->name,
                 'name' => $order->merchant->name,
                 'email' => $order->merchant->email,
                 'phone' => $order->merchant->phone_office,
-                'dest_from_code' => (string) $order->merchant->subdistrict_id,
+                'origin' => (string) $order->merchant->district_id,
                 'merchant_name' => $order->merchant->name,
                 'address' => $order->merchant->address,
                 'latitude' => $order->merchant->latitude,
@@ -456,7 +478,7 @@ class LogisticManager
                 'name' => $order->delivery->receiver_name,
                 'email' => $order->buyer->email,
                 'phone' => $order->delivery->receiver_phone,
-                'dest_to_code' => (string) $order->delivery->subdistrict_id,
+                'destination' => (string) $order->delivery->district_id,
                 'address' => $order->delivery->address,
                 'latitude' => $order->delivery->latitude,
                 'longitude' => $order->delivery->longitude,
@@ -468,10 +490,12 @@ class LogisticManager
         $merchant_delivery = json_decode($order->delivery->merchant_data);
         if ($merchant_delivery != null) {
             $body['shipper'] = [
+                'merchant_id' => $order->merchant->id,
+                'company_name' => $order->merchant->corporate->name,
                 'name' => $merchant_delivery->merchant_name,
                 'email' => $order->merchant->email,
                 'phone' => $merchant_delivery->merchant_phone_office,
-                'dest_from_code' => (string) $merchant_delivery->merchant_subdistrict_id,
+                'origin' => (string) $merchant_delivery->merchant_district_id,
                 'merchant_name' => $merchant_delivery->merchant_name,
                 'address' => $merchant_delivery->merchant_address,
                 'latitude' => $merchant_delivery->merchant_latitude,
@@ -483,6 +507,7 @@ class LogisticManager
         // dd($body);
         // return $body;
 
+        $url = sprintf('%s/%s', static::$endpoint, 'v1/preorder');
         $response = static::$curl->request('POST', $url, [
             'headers' => static::$headers,
             'http_errors' => false,
@@ -493,13 +518,13 @@ class LogisticManager
         // return $response;
 
         Log::info("E00002", [
-            'path_url' => "hedwig.endpoint/v2/preorder",
+            'path_url' => "hedwig.endpoint/v1/preorder",
             'query' => [],
             'body' => $body,
             'response' => $response,
         ]);
 
-        throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+        // throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
         return $response;
     }
@@ -588,5 +613,23 @@ class LogisticManager
         }
 
         return implode('', $param);
+    }
+
+    private static function getStatusRajaOngkir($status)
+    {
+        $statusCode = '1';
+        if (in_array($status, ['00', '01'])) {
+            $statusCode = '1';
+        } elseif (in_array($status, ['02', '03'])) {
+            $statusCode = '2';
+        } elseif (in_array($status, ['04'])) {
+            $statusCode = '4';
+        } elseif (in_array($status, ['88'])) {
+            $statusCode = '5';
+        } elseif (in_array($status, ['98', '99'])) {
+            $statusCode = '1';
+        }
+
+        return $statusCode;
     }
 }

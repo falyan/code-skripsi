@@ -45,6 +45,38 @@ class CategoryQueries extends Service
         return $response;
     }
 
+    public function getListCategory()
+    {
+        $category = MasterData::with(['child' => function ($j) {
+            $j->with(['child']);
+        }])->where('type', 'product_category')
+            ->where(['parent_id' => null, 'status' => 1])
+            ->orderBy('updated_at', 'DESC')
+            ->get();
+
+        if ($category->isEmpty()) {
+            $response['success'] = false;
+            $response['message'] = 'Gagal mendapatkan data kategori!';
+            return $response;
+        }
+
+        $categories = [];
+        for ($i = 0; $i < count($category); $i++) {
+            $categories[] = $category[$i]->value;
+            for ($j = 0; $j < count($category[$i]->child); $j++) {
+                $categories[] = $category[$i]->child[$j]->value;
+                for ($k = 0; $k < count($category[$i]->child[$j]->child); $k++) {
+                    $categories[] = $category[$i]->child[$j]->child[$k]->value;
+                }
+            }
+        }
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan data kategori!';
+        $response['data'] = $categories;
+        return $response;
+    }
+
     public function getThreeRandomCategory()
     {
         $category = MasterData::where('type', 'product_category')->where('parent_id', null)->inRandomOrder()->limit(3)->get();
