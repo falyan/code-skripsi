@@ -95,6 +95,11 @@ class Merchant extends Model
         return $this->hasOne(User::class);
     }
 
+    public function corporate()
+    {
+        return $this->belongsTo(Corporate::class);
+    }
+
     public function orders()
     {
         return $this->hasMany(Order::class);

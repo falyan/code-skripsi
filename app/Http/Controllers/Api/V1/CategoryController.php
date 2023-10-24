@@ -24,6 +24,15 @@ class CategoryController extends Controller
         }
     }
 
+    public function getListCategory()
+    {
+        try {
+            return $this->categoryQueries->getListCategory();
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function getThreeRandomCategory()
     {
         try {

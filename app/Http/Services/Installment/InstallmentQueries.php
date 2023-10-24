@@ -49,8 +49,8 @@ class InstallmentQueries extends Service
                 foreach ($provider->details as $detail) {
                     if (!empty($price)) {
                         $markup_price = ($price + $detail->fee_provider) / (1 - ($detail->mdr_percentage / 100));
-                        $detail->simulation_price_installment = ceil($markup_price / $detail->tenor);
-                        $detail->simulation_fee_installment = ceil($markup_price * $detail->mdr_percentage / 100);
+                        $detail->simulation_price_installment = round($markup_price / $detail->tenor);
+                        $detail->simulation_fee_installment = round($markup_price * $detail->mdr_percentage / 100);
                     } else {
                         $detail->simulation_price_installment = 0;
                         $detail->simulation_fee_installment = 0;
@@ -88,8 +88,8 @@ class InstallmentQueries extends Service
                 foreach ($provider->details as $detail) {
                     if (!empty($price)) {
                         $markup_price = ($price + $detail->fee_provider) / (1 - ($detail->mdr_percentage / 100));
-                        $detail->simulation_price_installment = ceil($markup_price / $detail->tenor);
-                        $detail->simulation_fee_installment = ceil($markup_price * $detail->mdr_percentage / 100);
+                        $detail->simulation_price_installment = round($markup_price / $detail->tenor);
+                        $detail->simulation_fee_installment = round($markup_price * $detail->mdr_percentage / 100);
                     } else {
                         $detail->simulation_price_installment = 0;
                         $detail->simulation_fee_installment = 0;
@@ -117,18 +117,18 @@ class InstallmentQueries extends Service
         }])->where('id', $providerId)->where('status', 1)->first();
 
         if ($providers->provider_code === 'bri-ceria') {
-            $markup_price = $price / (1 - ($providers->details[0]->mdr_percentage / 100));
+            $markup_price = ceil($price / (1 - ($providers->details[0]->mdr_percentage / 100)));
             $installment_fee = ceil($markup_price * $providers->details[0]->mdr_percentage / 100);
         } else if ($providers->provider_code === 'bni-installment') {
-            $markup_price = ($price + $providers->details[0]->fee_provider) / (1 - ($providers->details[0]->mdr_percentage / 100));
-            $installment_price = ceil($markup_price / $tenor);
-            $installment_fee = ceil($markup_price * $providers->details[0]->mdr_percentage / 100);
+            $markup_price = round(($price + $providers->details[0]->fee_provider) / (1 - ($providers->details[0]->mdr_percentage / 100)));
+            $installment_price = round($markup_price / $tenor);
+            $installment_fee = round($markup_price * $providers->details[0]->mdr_percentage / 100);
         }
 
         return [
             'price' => $price,
             'tenor' => $tenor,
-            'markup_price' => ceil($markup_price ?? 0),
+            'markup_price' => $markup_price ?? 0,
             'installment_price' => $installment_price ?? 0,
             'installment_fee' => $installment_fee ?? 0,
             'provider_fee' => $providers->details[0]->fee_provider ?? 0,

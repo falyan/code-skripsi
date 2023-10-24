@@ -281,8 +281,8 @@ class LogisticController extends Controller
         }
 
         $request = request()->all();
-        $merchant = Merchant::with('expedition')->where('id', $request['merchant_id'])->first();
-        $customer_address = CustomerAddress::where('id', $request['customer_address_id'])->first();
+        $merchant = Merchant::with(['expedition', 'district'])->where('id', $request['merchant_id'])->first();
+        $customer_address = CustomerAddress::with(['district'])->where('id', $request['customer_address_id'])->first();
 
         $master_data = MasterData::whereIn('key', ['is_active_shipper', 'prefix_shipper', 'is_active_rajaongkir_cache'])->get();
         $setting_shipper = collect($master_data)->where('key', 'is_active_shipper')->first();
@@ -319,7 +319,7 @@ class LogisticController extends Controller
                             'service_code' => (string) $data_value['service_code'],
                             'service_name' => $data_value['service_name'] . ' ' . ($prefix_shipper == null ? 'Pick Up' : $prefix_shipper->value),
                             'estimate_day' => $data_value['estimate_day'],
-                            'price' => $data_value['price'],
+                            'price' => $data_value['final_price'],
                             'min_weight' => $data_value['min_weight'],
                             'max_weight' => $data_value['max_weight'],
                             'delivery_discount' => 0,
@@ -345,6 +345,7 @@ class LogisticController extends Controller
                     }
                 }
             }
+
             $rajaongkir = $merchant->expedition == null ? [] : $this->rajaongkirManager->getOngkirSameLogistic($customer_address, $merchant, $request['weight'], rtrim($ro_courier, ':'), $rajaongkir_cache_setting->value);
 
             foreach ($rajaongkir as $rjo) {

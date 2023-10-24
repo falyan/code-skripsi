@@ -503,21 +503,6 @@ class MailSenderManager
         }
     }
 
-    public function approvalTokoEmail($email, $data)
-    {
-        Mail::send('email.approve-toko', $data, function ($mail) use ($email) {
-            $mail->to($email, 'no-reply')
-                ->subject("Persetujuan Toko");
-            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
-        });
-
-        if (Mail::failures()) {
-            Log::error('Gagal mengirim email checkout ke email: ' . $email);
-        } else {
-            Log::info('Berhasil mengirim email checkout ke email: ' . $email);
-        }
-    }
-
     public function mailApprovedEVSubsidy($order_id)
     {
         $transactionQueries = new TransactionQueries();
@@ -563,6 +548,21 @@ class MailSenderManager
             );
         } else {
             Log::info('Berhasil mengirim email approval ev subsidy ke email: ' . $order->buyer->email);
+        }
+    }
+
+    public function approvalTokoEmail($email, $data)
+    {
+        Mail::send('email.approve-toko', $data, function ($mail) use ($email) {
+            $mail->to($email, 'no-reply')
+                ->subject("Persetujuan Toko");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        if (Mail::failures()) {
+            Log::error('Gagal mengirim email checkout ke email: ' . $email);
+        } else {
+            Log::info('Berhasil mengirim email checkout ke email: ' . $email);
         }
     }
 }

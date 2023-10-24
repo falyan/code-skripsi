@@ -254,7 +254,7 @@ class IconcashManager
         return data_get($response, 'data');
     }
 
-    public static function withdrawalInquiry($token, $bankAccountName, $bankAccountNo, $bankId, $nominal, $sourceAccountId)
+    public static function withdrawalInquiryOld($token, $bankAccountName, $bankAccountNo, $bankId, $nominal, $sourceAccountId)
     {
         $param = self::setParamAPI([]);
 
@@ -290,7 +290,79 @@ class IconcashManager
         return data_get($response, 'data');
     }
 
-    public static function withdrawal($token, $pin, $orderId)
+    public static function withdrawalInquiry($token, $bankAccountName, $bankAccountNo, $bankId, $nominal, $sourceAccountId)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal_mkp/inquiry' . $param);
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+            'json' => [
+                'bankAccountName' => $bankAccountName,
+                'bankAccountNo' => $bankAccountNo,
+                'bankId' => $bankId,
+                'nominal' => $nominal,
+                'sourceAccountId' => $sourceAccountId,
+            ],
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        Log::info('withdrawalInquiry', [
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
+    }
+
+    public static function withdrawalInquiryV2($token, $bankAccountName, $bankAccountNo, $bankId, $nominal, $sourceAccountId)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/disbursement/inquiry' . $param);
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+            'json' => [
+                'bankAccountName' => $bankAccountName,
+                'bankAccountNo' => $bankAccountNo,
+                'bankId' => $bankId,
+                'nominal' => $nominal,
+                'sourceAccountId' => $sourceAccountId,
+            ],
+        ]);
+
+        $response = json_decode($response->getBody(), true);
+
+        Log::info('withdrawalInquiry', [
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response['success'] != true) {
+            throw new Exception($response['message'], $response['code']);
+        }
+
+        return data_get($response, 'data');
+    }
+
+    public static function withdrawalOld($token, $pin, $orderId)
     {
         $param = self::setParamAPI([]);
 
@@ -309,6 +381,80 @@ class IconcashManager
         ]);
 
         $response = json_decode($response->getBody());
+
+        Log::info('withdrawalConfirm', [
+            'response' => $response,
+        ]);
+
+        // if ($response->code == 5001 || $response->code == 5002 || $response->code == 5003 || $response->code == 5004 || $response->code == 5006) {
+        //     return $response;
+        // }
+
+        // throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        // if ($response->success != true) {
+        //     throw new Exception($response->message, $response->code);
+        // }
+
+        return $response;
+    }
+
+    public static function withdrawal($token, $pin, $orderId)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/withdrawal_mkp' . $param);
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'Credentials' => $pin,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+            'json' => [
+                'orderId' => $orderId,
+            ],
+        ]);
+
+        $response = json_decode($response->getBody(), true);
+
+        Log::info('withdrawalConfirm', [
+            'response' => $response,
+        ]);
+
+        // if ($response->code == 5001 || $response->code == 5002 || $response->code == 5003 || $response->code == 5004 || $response->code == 5006) {
+        //     return $response;
+        // }
+
+        // throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        // if ($response->success != true) {
+        //     throw new Exception($response->message, $response->code);
+        // }
+
+        return $response;
+    }
+
+    public static function withdrawalV2($token, $pin, $orderId)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/disbursement' . $param);
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'Credentials' => $pin,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+            'json' => [
+                'orderId' => $orderId,
+            ],
+        ]);
+
+        $response = json_decode($response->getBody(), true);
 
         Log::info('withdrawalConfirm', [
             'response' => $response,
@@ -451,6 +597,40 @@ class IconcashManager
         return data_get($response, 'data');
     }
 
+    public static function addCustomerBankV2($token, $account_name, $account_number, $bank_id)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/disbursement/customerbank' . $param);
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+            'json' => [
+                'accountName' => $account_name,
+                'accountNumber' => $account_number,
+                'bankId' => $bank_id,
+            ],
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        Log::info('addCustomerBank', [
+            'response' => $response,
+        ]);
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
+    }
+
     public static function searchCustomerBank($token, $keyword)
     {
         $param = self::setParamAPI([
@@ -554,6 +734,41 @@ class IconcashManager
         ]);
 
         $response = json_decode($response->getBody());
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
+    }
+
+    public static function updateCustomerBankV2($token, $customer_bank_id, $account_name, $account_number, $bank_id)
+    {
+        $param = self::setParamAPI([]);
+
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/command/disbursement/customerbank' . $param);
+
+        $response = self::$curl->request('PUT', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+            'http_errors' => false,
+            'json' => [
+                'id' => $customer_bank_id,
+                'accountName' => $account_name,
+                'accountNumber' => $account_number,
+                'bankId' => $bank_id,
+            ],
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        Log::info('updateCustomerBank', [
+            'response' => $response,
+        ]);
 
         throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
