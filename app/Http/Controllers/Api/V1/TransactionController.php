@@ -2359,61 +2359,6 @@ class TransactionController extends Controller
             }
 
             DB::commit();
-
-            return $this->respondWithData($results, $message);
-        } catch (Exception $e) {
-            return $this->respondErrorException($e, request());
-        }
-    }
-
-    public function getListComplaint()
-    {
-        $complaints = MasterData::select('key', 'value')->where('type', 'complaint')->get();
-
-        return $this->respondWithData($complaints, 'Berhasil mendapatkan list complaint');
-    }
-
-    public function addComplaint(Request $request)
-    {
-        $validator = Validator::make(request()->all(), [
-            'order_id' => 'required|exists:order,id',
-            'complaint' => 'required',
-            'description' => 'nullable',
-            'image' => 'nullable',
-        ], [
-            'required' => ':attribute diperlukan.',
-            'exists' => ':attribute tidak ditemukan.',
-        ]);
-
-        if ($validator->fails()) {
-            $errors = collect();
-            foreach ($validator->errors()->getMessages() as $key => $value) {
-                foreach ($value as $error) {
-                    $errors->push($error);
-                }
-            }
-            return $this->respondValidationError($errors, 'Validation Error!');
-        }
-
-        try {
-            DB::beginTransaction();
-            $order = Order::find($request->order_id)->load('complaint');
-            if ($order->complaint != null) {
-                OrderComplaint::where('id', $order->complaint->id)->update([
-                    'complaint' => $request->complaint,
-                    'description' => $request->description,
-                    'image' => $request->image,
-                ]);
-            } else {
-                OrderComplaint::create([
-                    'order_id' => $request->order_id,
-                    'complaint' => $request->complaint,
-                    'description' => $request->description,
-                    'image' => $request->image,
-                ]);
-            }
-
-            DB::commit();
             return $this->respondWithResult(true, 'Berhasil menambahkan complaint', 200);
         } catch (Exception $e) {
             DB::rollBack();
