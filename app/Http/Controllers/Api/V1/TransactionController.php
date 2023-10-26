@@ -1455,6 +1455,29 @@ class TransactionController extends Controller
         }
     }
 
+    public function finishScheduller($order_id)
+    {
+        $timestamp = request()->header('timestamp');
+        $signature = request()->header('signature');
+
+        if ($timestamp == null || $signature == null) {
+            return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+        }
+
+        $timestamp_plus = \Carbon\Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
+        if (strtotime($timestamp) > strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+
+        $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
+        $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
+        if ($hash != $signature) return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+
+        try {
+            $this->finishOrder($order_id);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function cancelOrder($id)
     {
         $rules = [
@@ -1542,6 +1565,30 @@ class TransactionController extends Controller
             return $this->respondErrorException($e, request());
         }
     }
+
+    public function cancelScheduller($order_id)
+    {
+        $timestamp = request()->header('timestamp');
+        $signature = request()->header('signature');
+
+        if ($timestamp == null || $signature == null) {
+            return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+        }
+
+        $timestamp_plus = \Carbon\Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
+        if (strtotime($timestamp) > strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+
+        $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
+        $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
+        if ($hash != $signature) return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+
+        try {
+            $this->cancelOrder($order_id);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
 
     public function orderConfirmHasArrived($order_id)
     {
