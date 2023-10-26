@@ -74,12 +74,17 @@ class NotificationCommands extends Service
         ];
 
         $url = sprintf('%s/%s', static::$apiendpoint, 'api/notify/' . $id . $param);
-        $response = static::$curl->request('POST', $url, [
-            'http_errors' => false,
-            'json' => $json_body
-        ]);
 
-        return json_decode($response->getBody());
+        try {
+            $response = static::$curl->request('POST', $url, [
+                'http_errors' => false,
+                'json' => $json_body
+            ]);
+
+            return json_decode($response->getBody());
+        } catch (\Throwable $th) {
+            return false;
+        }
     }
 
     public function sendPushNotificationCustomerPlnMobile($id, $title, $body){
@@ -90,8 +95,7 @@ class NotificationCommands extends Service
             'signature' => $signature
         ];
 
-        $param = static::setParamAPI([
-        ]);
+        $param = static::setParamAPI([ ]);
 
         $json_body = [
             'email' => $user->email,
@@ -102,13 +106,17 @@ class NotificationCommands extends Service
 
         $url = sprintf('%s/%s', static::$apiendpointplnmobile, 'beyondkwh/push-notif' . $param);
 
-        $response = static::$curl->request('POST', $url, [
-            'http_errors' => false,
-            'headers' => self::$header,
-            'json' => $json_body
-        ]);
+        try {
+            $response = static::$curl->request('POST', $url, [
+                'http_errors' => false,
+                'headers' => self::$header,
+                'json' => $json_body
+            ]);
 
-        return true;
+            return true;
+        } catch (\Throwable $th) {
+            return false;
+        }
     }
 
     static function setParamAPI($data = [])
