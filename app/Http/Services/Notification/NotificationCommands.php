@@ -6,6 +6,7 @@ use App\Http\Services\Service;
 use App\Models\Customer;
 use App\Models\Notification;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
 class NotificationCommands extends Service
 {
@@ -81,7 +82,18 @@ class NotificationCommands extends Service
                 'json' => $json_body
             ]);
 
-            return json_decode($response->getBody());
+            $status_code = $response->getStatusCode();
+            $response = json_decode($response->getBody());
+
+            Log::info("send.push_notif", [
+                'url' => $url,
+                'body' => $json_body,
+                'response' => $response,
+                'status' => $status_code,
+                'time' => time(),
+            ]);
+
+            return $response;
         } catch (\Throwable $th) {
             return false;
         }
@@ -111,6 +123,17 @@ class NotificationCommands extends Service
                 'http_errors' => false,
                 'headers' => self::$header,
                 'json' => $json_body
+            ]);
+
+            $status_code = $response->getStatusCode();
+            $response = json_decode($response->getBody());
+
+            Log::info("send.push_notif.customer", [
+                'url' => $url,
+                'body' => $json_body,
+                'response' => $response,
+                'status' => $status_code,
+                'time' => time(),
             ]);
 
             return true;
