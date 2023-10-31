@@ -16,7 +16,7 @@ class NotificationCommands extends Service
     {
         self::$curl = new Client();
         self::$apiendpoint = config('credentials.radagast.endpoint');
-        self::$apiendpointplnmobile = env('PLNMOBILE_ENDPOINT');
+        self::$apiendpointplnmobile = config('credentials.plnmobile.endpoint');
     }
 
     public function create($column_name, $column_value, $type, $title, $message, $url_path, $related_pln_mobile_customer_id = null, $created_by = null)
@@ -64,9 +64,7 @@ class NotificationCommands extends Service
     }
 
     public function sendPushNotification($id, $title, $body, $status){
-        $param = static::setParamAPI([
-            'status' => $status
-        ]);
+        $param = static::setParamAPI(['status' => $status]);
 
         $json_body = [
             'customer_id' => $id,
@@ -107,7 +105,7 @@ class NotificationCommands extends Service
             'signature' => $signature
         ];
 
-        $param = static::setParamAPI([ ]);
+        $param = static::setParamAPI([]);
 
         $json_body = [
             'email' => $user->email,
