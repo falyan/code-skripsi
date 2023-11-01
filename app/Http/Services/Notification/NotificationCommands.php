@@ -43,12 +43,11 @@ class NotificationCommands extends Service
         $data = Notification::findOrFail($id);
         $data->status = 1;
         $data->updated_by = $updated_by;
-        if($data->save()){
+        if ($data->save()) {
             return true;
-        }else {
+        } else {
             return false;
         }
-
     }
 
     public function destroy($id, $updated_by = "system")
@@ -58,12 +57,13 @@ class NotificationCommands extends Service
         $data->updated_by = $updated_by;
         if ($data->save() && $data->delete()) {
             return true;
-        }else {
+        } else {
             return false;
         }
     }
 
-    public function sendPushNotification($id, $title, $body, $status){
+    public function sendPushNotification($id, $title, $body, $status)
+    {
         $param = static::setParamAPI(['status' => $status]);
 
         $json_body = [
@@ -93,13 +93,21 @@ class NotificationCommands extends Service
 
             return $response;
         } catch (\Throwable $th) {
+            Log::error("send.push_notif.customer", [
+                'url' => $url,
+                'body' => $json_body,
+                'response' => $th->getMessage(),
+                'status' => $th->getCode(),
+                'time' => time(),
+            ]);
             return false;
         }
     }
 
-    public function sendPushNotificationCustomerPlnMobile($id, $title, $body){
+    public function sendPushNotificationCustomerPlnMobile($id, $title, $body)
+    {
         $user = Customer::findOrFail($id);
-        $signature = hash('sha256', $user->email.$user->phone);
+        $signature = hash('sha256', $user->email . $user->phone);
 
         self::$header = [
             'signature' => $signature
@@ -136,6 +144,13 @@ class NotificationCommands extends Service
 
             return true;
         } catch (\Throwable $th) {
+            Log::error("send.push_notif.customer", [
+                'url' => $url,
+                'body' => $json_body,
+                'response' => $th->getMessage(),
+                'status' => $th->getCode(),
+                'time' => time(),
+            ]);
             return false;
         }
     }
