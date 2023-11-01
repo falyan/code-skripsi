@@ -675,6 +675,7 @@ $router->group(['namespace' => '\Rap2hpoutre\LaravelLogViewer'], function () use
 
 // cache clear
 $router->get('/cache-clear', function () {
-    $exitCode = \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    if (env('CACHE_DRIVER') === 'redis') \Illuminate\Support\Facades\Cache::flush();
+    if (env('CACHE_DRIVER') !== 'redis') \Illuminate\Support\Facades\Artisan::call('cache:clear');
     return 'cache clear';
 });

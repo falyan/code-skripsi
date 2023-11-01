@@ -10,8 +10,7 @@ use App\Models\District;
 use App\Models\MasterData;
 use App\Models\Province;
 use Exception;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -166,7 +165,7 @@ class RajaOngkirController extends Controller
     public function couriers()
     {
         try {
-            $couriers = MasterData::where('type', 'rajaongkir_courier')->orderBy('value', 'ASC')->get();
+            $couriers = Cache::remember('couriers', 60 * 60 * 24, fn () => MasterData::where('type', 'rajaongkir_courier')->orderBy('value', 'ASC')->get());
             $courier_map = [];
             foreach ($couriers as $courier) {
                 $key = collect($courier_map)->where('value', $courier->reference_third_party_id)->first();
