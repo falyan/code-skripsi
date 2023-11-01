@@ -94,7 +94,7 @@ class NotificationCommands extends Service
 
             return $response;
         } catch (\Throwable $th) {
-            Log::error("send.push_notif.customer", [
+            Log::error("send.push_notif", [
                 'url' => $url,
                 'body' => $json_body,
                 'response' => $th->getMessage(),
