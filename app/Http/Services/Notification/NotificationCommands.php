@@ -77,6 +77,7 @@ class NotificationCommands extends Service
         try {
             $response = static::$curl->request('POST', $url, [
                 'http_errors' => false,
+                'timeout' => 10,
                 'json' => $json_body
             ]);
 
@@ -126,8 +127,9 @@ class NotificationCommands extends Service
 
         try {
             $response = static::$curl->request('POST', $url, [
-                'http_errors' => false,
                 'headers' => self::$header,
+                'http_errors' => false,
+                'timeout' => 10,
                 'json' => $json_body
             ]);
 
