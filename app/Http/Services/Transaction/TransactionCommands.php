@@ -1615,6 +1615,7 @@ class TransactionCommands extends Service
                 $shipping_insurance_tax = null;
                 $shipping_origin_fee = null;
                 $shipping_origin_tax = null;
+                $shipping_is_sameday = null;
                 if (data_get($data, 'delivery_setting') == 'shipper') {
                     $logistic_manager = new LogisticManager();
                     $shipping_prices = $logistic_manager->getOngkir($customer_address, $merchant_data, data_get($data, 'total_weight'), rtrim($s_courier, ':'), data_get($data, 'total_amount'));
@@ -1627,6 +1628,7 @@ class TransactionCommands extends Service
                                     $shipping_insurance_tax = $data_value['insurance_tax'];
                                     $shipping_origin_fee = $data_value['origin_fee'];
                                     $shipping_origin_tax = $data_value['origin_tax'];
+                                    $shipping_is_sameday = $data_value['is_same_day'];
                                 }
                             }
                         }
@@ -1675,6 +1677,7 @@ class TransactionCommands extends Service
                 $order_delivery->insurance_tax = $shipping_insurance_tax;
                 $order_delivery->origin_fee = $shipping_origin_fee;
                 $order_delivery->origin_tax = $shipping_origin_tax;
+                $order_delivery->is_sameday = $shipping_is_sameday;
                 $order_delivery->save();
 
                 $order_payment = new OrderPayment();

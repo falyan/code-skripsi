@@ -976,6 +976,7 @@ class TransactionController extends Controller
         try {
             $rules = [
                 'id.*' => 'required',
+                'acc_sameday' => 'nullable|boolean',
             ];
 
             $validator = Validator::make($request->all(), $rules, [
@@ -1025,7 +1026,12 @@ class TransactionController extends Controller
                         }
                     }
 
-                    $order = Order::with(['buyer', 'merchant', 'detail', 'detail.product', 'progress_active', 'payment'])->find($order_id);
+                    $order = Order::with(['buyer', 'merchant', 'detail', 'delivery', 'detail.product', 'progress_active', 'payment'])->find($order_id);
+
+                    if ($order->delivery->is_sameday && (!isset($request->acc_sameday) || $request->acc_sameday == false)) {
+                        return $this->respondWithResult(false, 'Pesanan termasuk same day delivery, apakah anda yakin untuk menerima pesanan ini?', 400);
+                    }
+
                     $orders = Order::with(['delivery', 'detail', 'detail.product'])->where('no_reference', $order->no_reference)->get();
                     $total_amount_trx = $total_delivery_fee_trx = 0;
 

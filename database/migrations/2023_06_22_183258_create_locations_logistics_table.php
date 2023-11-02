@@ -55,6 +55,8 @@ class CreateLocationsLogisticsTable extends Migration
             $table->string('delivery_setting')->default('rajaongkir');
             $table->json('merchant_data')->nullable();
             $table->boolean('must_use_insurance')->default(false);
+            $table->boolean('is_request_pickup')->default(false);
+            $table->boolean('is_sameday')->default(false);
         });
 
         Schema::table('customer_address', function (Blueprint $table) {
@@ -110,6 +112,8 @@ class CreateLocationsLogisticsTable extends Migration
             $table->dropColumn('delivery_type');
             $table->dropColumn('delivery_setting');
             $table->dropColumn('merchant_data');
+            $table->dropColumn('is_request_pickup');
+            $table->dropColumn('is_sameday');
         });
 
         Schema::table('customer_address', function (Blueprint $table) {
