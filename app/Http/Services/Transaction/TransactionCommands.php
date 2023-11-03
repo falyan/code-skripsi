@@ -1927,7 +1927,7 @@ class TransactionCommands extends Service
                 $response->product_name = $product_name;
             }
 
-            // DB::commit();
+            DB::commit();
 
             return [
                 'success' => true,
