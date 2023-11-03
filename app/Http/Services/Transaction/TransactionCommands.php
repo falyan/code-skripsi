@@ -1615,7 +1615,7 @@ class TransactionCommands extends Service
                 $shipping_insurance_tax = null;
                 $shipping_origin_fee = null;
                 $shipping_origin_tax = null;
-                $shipping_is_sameday = null;
+                $shipping_is_sameday = false;
                 if (data_get($data, 'delivery_setting') == 'shipper') {
                     $logistic_manager = new LogisticManager();
                     $shipping_prices = $logistic_manager->getOngkir($customer_address, $merchant_data, data_get($data, 'total_weight'), rtrim($s_courier, ':'), data_get($data, 'total_amount'));
@@ -1927,7 +1927,7 @@ class TransactionCommands extends Service
                 $response->product_name = $product_name;
             }
 
-            DB::commit();
+            // DB::commit();
 
             return [
                 'success' => true,
@@ -1938,11 +1938,11 @@ class TransactionCommands extends Service
                 ] : $response,
             ];
         } catch (Exception $th) {
-            DB::rollBack();
-            // if (in_array($th->getCode(), self::$error_codes)) {
-            //     throw new Exception($th->getMessage(), $th->getCode());
-            // }
-            throw new Exception('Gagal membuat pesanan', 500);
+        DB::rollBack();
+        // if (in_array($th->getCode(), self::$error_codes)) {
+        //     throw new Exception($th->getMessage(), $th->getCode());
+        // }
+        throw new Exception('Gagal membuat pesanan', 500);
         }
     }
 
