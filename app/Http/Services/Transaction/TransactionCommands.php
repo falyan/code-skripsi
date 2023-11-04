@@ -3,6 +3,7 @@
 namespace App\Http\Services\Transaction;
 
 use App\Http\Services\Manager\GamificationManager;
+use App\Http\Services\Manager\IconpayManager;
 use App\Http\Services\Manager\LogisticManager;
 use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Notification\NotificationCommands;
@@ -2485,6 +2486,84 @@ class TransactionCommands extends Service
                 $dataCreateds[] = $dataCreated;
             }
 
+            $customerEvCreated = null;
+            if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
+                $ev_subsidy = $ev_subsidies[0];
+                foreach ($new_products as $product) {
+                    if ($ev_subsidy->product_id == $product->id) {
+                        $customerEvCreated = [
+                            'order_id' => null,
+                            'customer_id' => $customer_id,
+                            'product_id' => $ev_subsidy->product_id,
+                            'status_approval' => null,
+                            'customer_id_pel' => $customer->pln_mobile_customer_id,
+                            'customer_nik' => data_get($datas, 'customer.nik'),
+                            'customer_full_name' => strtoupper(data_get($datas, 'customer.full_name')) ?? null,
+                            'customer_father_name' => strtoupper(data_get($datas, 'customer.father_name')) ?? null,
+                            'ktp_url' => data_get($datas, 'customer.ktp_url'),
+                            'kk_url' => data_get($datas, 'customer.kk_url') ?? null,
+                            'file_url' => data_get($datas, 'customer.file_url'),
+                            'created_by' => auth()->user()->full_name,
+                        ];
+                    }
+                }
+            }
+
+            $instalmentCreated = null;
+            if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
+                $instalmentCreated = [
+                    'order_id' => null,
+                    'customer_id' => $customer_id,
+                    'pi_provider_id' => data_get($datas, 'installment.provider_id'),
+                    'month_tenor' => data_get($datas, 'installment_tenor'),
+                    'fee_tenor' => data_get($datas, 'installment_fee'),
+                    'installment_tenor' => data_get($datas, 'installment_price') ?? 0,
+                    'markup_price_tenor' => data_get($datas, 'installment_markup_price') ?? 0,
+                    'actual_price_tenor' => data_get($datas, 'installment_actual_price') ?? 0,
+                    'interest_percentage_tenor' => data_get($datas, 'installment_interest_percentage') ?? 0,
+                    'provider_fee' => data_get($datas, 'installment_provider_fee') ?? 0,
+                ];
+            }
+
+            $bonusAmount = 0;
+            $bonus_discount = 0;
+            $voucher_bonus_code = '';
+            if (isset($datas['discount_type']) && $datas['discount_type'] === 'GAMI-BONUS-DISCOUNT') {
+                $userId = auth()->user()->pln_mobile_customer_id;
+
+                $checkBonusDiscount = GamificationManager::claimBonusHold($userId, $datas['total_amount_without_delivery']);
+
+                if ($checkBonusDiscount['success']) {
+                    Log::info('bonus.claim', ['info' => 'Claim Bonus Hold Success']);
+                    $claimId = $checkBonusDiscount['data']['id'];
+                    $bonusAmount = $checkBonusDiscount['data']['bonusAmount'];
+
+                    Log::info('bonus.claim', ['info' => 'Hit Claim Bonus Apply']);
+                    $claimApplyDiscount = GamificationManager::claimBonusApply($claimId, $no_reference, $datas['total_amount_without_delivery']);
+
+                    if ($claimApplyDiscount['success']) {
+                        Log::info('bonus.claim', ['Claim Bonus Apply Success']);
+
+                        $bonus_discount = $claimApplyDiscount['data']['bonusAmount'];
+                        $voucher_bonus_code = $claimApplyDiscount['data']['claimId'] ?? null;
+
+                        // update order detail
+                        $dataCreateds[0]['order_detail'][0]['total_discount'] = $dataCreateds[0]['order_detail'][0]['total_discount'] + $claimApplyDiscount['data']['bonusAmount'];
+
+                        // update order payment
+                        $dataCreateds[0]['order_payment']['payment_amount'] = $dataCreateds[0]['order_payment']['payment_amount'] - $claimApplyDiscount['data']['bonusAmount'];
+                    } else {
+                        Log::info('bonus.claim', ['info' => 'Claim Bonus Apply Failed, Refund with Amount Bonus Hold']);
+
+                        $datas['total_payment'] += $bonusAmount;
+                    }
+                } else {
+                    Log::info('bonus.claim', ['info' => 'Claim Bonus Hold Failed']);
+                }
+            } else {
+                Log::info('bonus.claim', ['info' => 'No Claim Bonus Apply']);
+            }
+
             DB::beginTransaction();
             foreach (data_get($datas, 'merchants') as $data) {
                 if (isset($datas['save_npwp'])) {
@@ -2495,6 +2574,7 @@ class TransactionCommands extends Service
                 }
             }
 
+            $gami_claim = false;
             foreach ($dataCreateds as $key => $dataCreated) {
                 $promo_merchant_ongkir = PromoMerchant::where('id', $dataCreated['promo_merchant_ongkir']['id'])->lockForUpdate()->first();
                 $promo_merchant_ongkir_master = PromoMaster::where('id', $promo_merchant_ongkir->promo_master_id)->lockForUpdate()->first();
@@ -2579,6 +2659,11 @@ class TransactionCommands extends Service
                     PromoLog::create($promoLogFlashSaleCreated);
                 }
 
+                if ($customerEvCreated != null) {
+                    $customerEvCreated['order_id'] = $order->id;
+                    CustomerEVSubsidy::create($customerEvCreated);
+                }
+
                 foreach ($dataCreated['order_detail'] as $order_detail) {
                     $order_detail['order_id'] = $order->id;
                     OrderDetail::create($order_detail);
@@ -2595,6 +2680,12 @@ class TransactionCommands extends Service
                 $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
                 $order->payment_id = $order_payment->id;
 
+                if (!$gami_claim) {
+                    $gami_claim = true;
+                    $order->bonus_discount = $bonus_discount;
+                    $order->voucher_bonus_code = $voucher_bonus_code;
+                }
+
                 if ($order->save()) {
                     $column_name = 'customer_id';
                     $column_value = $customer_id;
@@ -2608,151 +2699,35 @@ class TransactionCommands extends Service
                 }
             }
 
-            // Bonus Claim Apply
-            $bonusAmount = 0;
-            if (isset($datas['discount_type']) && $datas['discount_type'] === 'GAMI-BONUS-DISCOUNT') {
-
-                $userId = auth()->user()->pln_mobile_customer_id;
-
-                $checkBonusDiscount = GamificationManager::claimBonusHold($userId, $datas['total_amount_without_delivery']);
-
-                if ($checkBonusDiscount['success']) {
-                    Log::info('Claim Bonus Hold Success');
-                    $claimId = $checkBonusDiscount['data']['id'];
-                    $bonusAmount = $checkBonusDiscount['data']['bonusAmount'];
-
-                    Log::info('Hit Claim Bonus Apply');
-                    $claimApplyDiscount = GamificationManager::claimBonusApply($claimId, $order->no_reference, $datas['total_amount_without_delivery']);
-
-                    if ($claimApplyDiscount['success']) {
-                        Log::info('Claim Bonus Apply Success');
-
-                        $newOrder = Order::where('id', $order->id)->first();
-                        $newOrder->bonus_discount = $claimApplyDiscount['data']['bonusAmount'];
-                        $newOrder->voucher_bonus_code = $claimApplyDiscount['data']['claimId'] ?? null;
-                        $newOrder->save();
-
-                        // update order detail
-                        $order_detail = OrderDetail::where('order_id', $newOrder->id)->first();
-                        $order_detail->total_discount = $order_detail->total_discount + $claimApplyDiscount['data']['bonusAmount'];
-                        $order_detail->save();
-
-                        // update order payment
-                        $order_payment = OrderPayment::where('id', $newOrder->payment_id)->first();
-                        $order_payment->payment_amount = $order_payment->payment_amount - $claimApplyDiscount['data']['bonusAmount'];
-                        $order_payment->save();
-                    } else {
-                        Log::info('Claim Bonus Apply Failed, Refund with Amount Bonus Hold');
-
-                        $datas['total_payment'] += $bonusAmount;
-                    }
-                } else {
-                    Log::info('Claim Bonus Hold Failed');
-                }
-            } else {
-                Log::info('No Claim Bonus Apply');
+            if ($instalmentCreated) {
+                $instalmentCreated['order_id'] = $this->order_id;
+                InstallmentOrder::create($instalmentCreated);
             }
 
-            if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
-                $installmentOrder = new InstallmentOrder();
-                $installmentOrder->customer_id = $customer_id;
-                $installmentOrder->pi_provider_id = data_get($datas, 'installment.provider_id');
-                $installmentOrder->order_id = $order->id;
-                $installmentOrder->month_tenor = data_get($datas, 'installment_tenor');
-                $installmentOrder->fee_tenor = data_get($datas, 'installment_fee');
-                $installmentOrder->installment_tenor = data_get($datas, 'installment_price') ?? 0;
-                $installmentOrder->markup_price_tenor = data_get($datas, 'installment_markup_price') ?? 0;
-                $installmentOrder->actual_price_tenor = data_get($datas, 'installment_actual_price') ?? 0;
-                $installmentOrder->interest_percentage_tenor = data_get($datas, 'installment_interest_percentage') ?? 0;
-                $installmentOrder->provider_fee = data_get($datas, 'installment_provider_fee') ?? 0;
-                $installmentOrder->save();
+            if ($datas['total_discount'] > 0) {
+                $this->updateCustomerDiscount($customer_id, $customer->email, $datas['total_discount'], $no_reference);
             }
 
-            if ($datas['total_payment'] < 1) {
-                throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
-            }
+            if ($datas['total_payment'] <= 0) throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
 
-            // Log info with message
-            Log::info('Total Payment: ' . $datas['total_payment'] . ' | Bonus Discount: ' . $bonusAmount);
+            DB::commit();
+
+            Log::info('checkout', [
+                'info' => 'Total Payment: ' . $datas['total_payment'] . ' | Bonus Discount: ' . $bonusAmount
+            ]);
 
             $mailSender = new MailSenderManager();
-
-            if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
-                // if ($ev_subsidies) {
-                $ev_subsidy = $ev_subsidies[0];
-                foreach (data_get($data, 'products') as $product) {
-                    if ($ev_subsidy->product_id == data_get($product, 'product_id')) {
-                        $customerEv = new CustomerEVSubsidy();
-                        $customerEv->customer_id = $customer_id;
-                        $customerEv->order_id = $order->id;
-                        $customerEv->product_id = $ev_subsidy->product_id;
-                        $customerEv->status_approval = null;
-                        $customerEv->customer_id_pel = $customer->pln_mobile_customer_id;
-                        $customerEv->customer_nik = data_get($datas, 'customer.nik');
-                        $customerEv->customer_full_name = strtoupper(data_get($datas, 'customer.full_name')) ?? null;
-                        $customerEv->customer_father_name = strtoupper(data_get($datas, 'customer.father_name')) ?? null;
-                        $customerEv->ktp_url = data_get($datas, 'customer.ktp_url');
-                        $customerEv->kk_url = data_get($datas, 'customer.kk_url') ?? null;
-                        $customerEv->file_url = data_get($datas, 'customer.file_url');
-                        $customerEv->created_by = auth()->user()->full_name;
-                        $customerEv->save();
-                    }
-                }
-
+            if ($customerEvCreated != null) {
                 $mailSender->mailCheckoutSubsidy($this->order_id);
-                // } else {
-                //     $master_ubah_daya = UbahDayaMaster::where('event_start_date', '<=', Carbon::now())->where('event_end_date', '>=', Carbon::now())->where('status', 1)->first();
-                //     $check_voucher_ubah_daya_code = UbahDayaLog::where('nik', data_get($datas, 'customer.nik'))->where('master_ubah_daya_id', $master_ubah_daya->id)->first();
-
-                //     $master_data = MasterData::whereIn('key', ['ubah_daya_min_transaction', 'ubah_daya_implementation_period'])->get();
-                //     $min_ubah_daya = collect($master_data)->where('key', 'ubah_daya_min_transaction')->first();
-                //     $period = collect($master_data)->where('key', 'ubah_daya_implementation_period')->first();
-
-                //     $total_amount_trx = data_get($datas, 'total_amount');
-                //     $total_delivery_fee_trx = data_get($datas, 'total_delivery_fee');
-                //     $product_insentif = false;
-                //     foreach ($new_products as $product) {
-                //         if ($product['insentif_ubah_daya'] == true) $product_insentif = true;
-                //     }
-
-                //     if ($check_voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= $min_ubah_daya->value && $product_insentif == true) {
-                //         if (Carbon::parse(explode('/', $period->value)[0]) >= Carbon::now() || Carbon::parse(explode('/', $period->value)[1]) <= Carbon::now()) {
-                //             $log = UbahDayaLog::create([
-                //                 'customer_id' => $customer_id,
-                //                 'order_id' => $order->id,
-                //                 'master_ubah_daya_id' => $master_ubah_daya->id,
-                //                 'customer_email' => $customer->email,
-                //                 'event_name' => $master_ubah_daya->event_name,
-                //                 'event_start_date' => $master_ubah_daya->event_start_date,
-                //                 'event_end_date' => $master_ubah_daya->event_end_date,
-                //                 'nik' => data_get($datas, 'customer.nik'),
-                //                 'created_by' => auth()->user()->full_name,
-                //             ]);
-                //         }
-                //     }
-
-                // $mailSender->mailCheckout($this->order_id);
-                // }
             } else {
                 $mailSender->mailCheckout($this->order_id);
             }
 
-            if ($datas['total_discount'] > 0) {
-                $update_discount = $this->updateCustomerDiscount($customer_id, $customer->email, $datas['total_discount'], $no_reference);
-                if ($update_discount == false) {
-                    throw new Exception('Gagal mengupdate customer discount');
-                }
-            }
+            if (isset($datas['installment_tenor'])) $installment_tenor = $datas['installment_tenor'] < 10 ? str_pad($datas['installment_tenor'], 2, '0', STR_PAD_LEFT) : $datas['installment_tenor'];
 
-            if (isset($datas['installment_tenor'])) {
-                $installment_tenor = $datas['installment_tenor'] < 10 ? str_pad($datas['installment_tenor'], 2, '0', STR_PAD_LEFT) : $datas['installment_tenor'];
-            }
-
-            $product_name = json_decode(OrderDetail::where('order_id', $this->order_id)->first()->product_data)->name;
+            $product_name = $new_products[0]->name;
 
             if (!isset($datas['customer']) || data_get($datas, 'customer') == null) {
-
-                $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
                 $body = [
                     'no_reference' => $no_reference,
                     'transaction_date' => $trx_date,
@@ -2771,32 +2746,8 @@ class TransactionCommands extends Service
                     'additional_info10' => isset($datas['installment_fee']) ? $datas['installment_fee'] : null,
                 ];
 
-                $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
-
-                static::$header['timestamp'] = $timestamp;
-                static::$header['signature'] = hash_hmac('sha256', $encode_body . static::$clientid . $timestamp, sha1(static::$appkey));
-                static::$header['content-type'] = 'application/json';
-
-                $response = static::$curl->request('POST', $url, [
-                    'headers' => static::$header,
-                    'http_errors' => false,
-                    'body' => $encode_body,
-                ]);
-
-                $response = json_decode($response->getBody());
-
-                Log::info("E00002", [
-                    'path_url' => "iconpay.booking",
-                    'query' => [],
-                    'body' => $body,
-                    'response' => $response,
-                ]);
-
-                throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
-
-                if ($response->response_details[0]->response_code != 00) {
-                    throw new Exception($response->response_details[0]->response_message);
-                }
+                $iconpayManager = new IconpayManager();
+                $response = $iconpayManager->booking($body);
 
                 $response->response_details[0]->amount = $datas['total_payment'];
                 $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
@@ -2808,12 +2759,11 @@ class TransactionCommands extends Service
                 $response->product_name = $product_name;
             }
 
-            DB::commit();
-
             $resData = isset($datas['customer']) && data_get($datas, 'customer') != null ? [
                 'order_id' => $this->order_id,
                 'product_name' => $product_name,
             ] : $response;
+
             return [
                 'success' => true,
                 'message' => 'Berhasil create order',
@@ -3121,22 +3071,19 @@ class TransactionCommands extends Service
 
     public function updateCustomerDiscount($user_id, $email, $discount, $no_reference)
     {
-        $now = Carbon::now('Asia/Jakarta');
-        $data = CustomerDiscount::where('customer_reference_id', $user_id)->orWhere('customer_reference_id', $email)
-            ->where('is_used', false)->where('expired_date', '>=', $now)->first();
+        $data = CustomerDiscount::where('customer_reference_id', $user_id)
+            ->orWhere('customer_reference_id', $email)
+            ->where('expired_date', '>=', Carbon::now('Asia/Jakarta'))
+            ->where('is_used', false)
+            ->first();
 
-        if ($data == null) {
-            return true;
+        if ($data) {
+            $data->is_used = true;
+            $data->status = 1;
+            $data->used_amount = $discount;
+            $data->no_reference = $no_reference;
+            $data->save();
         }
-        $data->is_used = true;
-        $data->status = 1;
-        $data->used_amount = $discount;
-        $data->no_reference = $no_reference;
-
-        if ($data->save()) {
-            return true;
-        }
-        return false;
     }
 
     public function orderConfirmHasArrived($trx_no)

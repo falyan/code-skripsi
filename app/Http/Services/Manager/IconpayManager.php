@@ -5,6 +5,7 @@ namespace App\Http\Services\Manager;
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 use LogService;
 
 class IconpayManager
@@ -30,25 +31,9 @@ class IconpayManager
         self::$timestamp = Carbon::now('Asia/Jakarta')->toIso8601String();
     }
 
-    public static function booking($no_reference, $trx_date, $exp_date, $trx_code, $total_amount, $customer_name, $customer_email, $customer_phone, $throw_exception = true)
+    public static function booking($body, $throw_exception = true)
     {
-        $param = self::setParamAPI([]);
-
         $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
-
-        $body = [
-            'no_reference' => $no_reference,
-            'transaction_date' => static::formatToICPDate($trx_date),
-            'transaction_code' => $trx_code,
-            'partner_reference' => $no_reference,
-            'product_id' => self::$productid,
-            'amount' => $total_amount,
-            'customer_id' => $no_reference,
-            'customer_name' => $customer_name,
-            'email' => $customer_email,
-            'phone_number' => $customer_phone,
-            'expired_invoice' => static::formatToICPDate($exp_date),
-        ];
 
         $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
 
@@ -61,19 +46,23 @@ class IconpayManager
         $response = self::$curl->request('POST', $url, [
             'headers' => $headers,
             'http_errors' => false,
-            'connect_timeout' => 10,
+            // 'connect_timeout' => 10,
             'body' => $encode_body,
         ]);
 
         $response = json_decode($response->getBody());
 
-        LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode(self::$service_code)->setCategory('out')->log();
+        Log::info("iconpay.booking", [
+            'url' => $url,
+            'body' => $body,
+            'response' => $response,
+        ]);
 
         if (!$response && $throw_exception) {
             throw new Exception('Terjadi kesalahan: Data tidak dapat diperoleh');
         }
 
-        if (isset($response->response_details[0]->response_code) && $response->response_details[0]->response_code != "00" && $throw_exception) {
+        if (isset($response->response_details[0]->response_code) && $response->response_details[0]->response_code != 00 && $throw_exception) {
             throw new Exception($response->response_details[0]->response_message, (int) $response->response_details[0]->response_code);
         }
 
