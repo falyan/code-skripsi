@@ -308,7 +308,7 @@ class TransactionController extends Controller
             $request = request()->all();
 
             $request['merchants'] = $this->transactionQueries->createOrderV3($request);
-            $response = $this->transactionCommand->createOrderV3($request, $customer);
+            $response = $this->transactionCommand->createOrderNewV3($request, $customer);
 
             if ($response['success'] == true) {
                 foreach ($request['merchants'] as $merchant) {

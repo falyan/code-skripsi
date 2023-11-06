@@ -3,6 +3,7 @@
 namespace App\Http\Services\Transaction;
 
 use App\Http\Services\Manager\GamificationManager;
+use App\Http\Services\Manager\IconpayManager;
 use App\Http\Services\Manager\LogisticManager;
 use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Notification\NotificationCommands;
@@ -24,6 +25,7 @@ use App\Models\OrderDetail;
 use App\Models\OrderPayment;
 use App\Models\OrderProgress;
 use App\Models\Product;
+use App\Models\ProductEvSubsidy;
 use App\Models\PromoLog;
 use App\Models\PromoMaster;
 use App\Models\PromoMerchant;
@@ -1938,11 +1940,855 @@ class TransactionCommands extends Service
                 ] : $response,
             ];
         } catch (Exception $th) {
+            DB::rollBack();
+            // if (in_array($th->getCode(), self::$error_codes)) {
+            //     throw new Exception($th->getMessage(), $th->getCode());
+            // }
+            throw new Exception('Gagal membuat pesanan', 500);
+        }
+    }
+
+    public function createOrderNewV3($datas, $customer)
+    {
+        $customer_id = $customer->id;
+        $no_reference = (int) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
+
+        $customer_address = CustomerAddress::where('id', $datas['customer_address_id'])->first();
+
+        while (static::checkReferenceExist($no_reference) == false) {
+            $no_reference = (int) (Carbon::now('Asia/Jakarta')->timestamp . random_int(10000, 99999));
+        }
+
+        $timestamp = Carbon::now('Asia/Jakarta')->toIso8601String();
+        $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta'))->timestamp);
+        $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now('Asia/Jakarta')->addDays(3))->timestamp);
+        // $district = District::where('id', data_get($datas, 'destination_info.district_id'))->first();
+
+        foreach ($datas['merchants'] as $m) {
+            if (isset($m['is_npwp_required']) && $m['is_npwp_required'] === true) {
+                if (!isset($datas['npwp']) || empty($datas['npwp'])) {
+                    return [
+                        'success' => false,
+                        'status' => "Bad request",
+                        'status_code' => 400,
+                        'message' => 'Validation Error!',
+                        'data' => [
+                            'npwp diperlukan',
+                        ],
+                    ];
+                }
+            }
+        }
+
+        if ($customer_address->address == null || $customer_address->address == '') {
+            return [
+                'success' => false,
+                'status' => "Bad request",
+                'status_code' => 400,
+                'message' => 'Mohon maaf, alamat pengiriman harus diisi terlebih dahulu',
+            ];
+        }
+
+        $check_order = Order::whereIn('merchant_id', array_column($datas['merchants'], 'merchant_id'))
+            ->whereHas('progress_active', function ($progress) {
+                $progress->whereIn('status_code', ['01', '02']);
+            })->count();
+
+        if ($check_order > 50) {
+            return [
+                'success' => false,
+                'status' => "Bad request",
+                'status_code' => 400,
+                'message' => 'Mohon maaf, saat ini merchant tidak dapat melakukan transaksi',
+            ];
+        }
+
+        $ev_subsidies = ProductEvSubsidy::whereIn('product_id', collect($datas['merchants'])->pluck('products.*.product_id')->flatten()->toArray())->get();
+        if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
+            foreach ($datas['merchants'] as $merchant) {
+                foreach ($merchant['products'] as $product) {
+                    $ev_subsidy = collect($ev_subsidies)->where('product_id', $product['product_id'])->first();
+
+                    if ($ev_subsidy) {
+                        if ($product['quantity'] > 1) {
+                            return [
+                                'success' => false,
+                                'status' => "Bad request",
+                                'status_code' => 400,
+                                'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
+                            ];
+                        }
+
+                        $ev_subsidies[] = $ev_subsidy;
+                    } else {
+                        return [
+                            'success' => false,
+                            'status' => "Bad request",
+                            'status_code' => 400,
+                            'message' => 'Anda tidak dapat melakukan pembelian produk yang tidak mendapatkan bantuan',
+                        ];
+                    }
+                }
+            }
+
+            if (!isset($datas['customer.full_name']) && data_get($datas, 'customer.full_name') == null || !isset($datas['customer.father_name']) && data_get($datas, 'customer.father_name') == null) {
+                return [
+                    'success' => false,
+                    'status' => "Bad request",
+                    'status_code' => 400,
+                    'message' => 'Untuk melakukan transaksi pengajuan subsidi, silahkan update aplikasi Anda terlebih dahulu',
+                ];
+            }
+
+            if (count($ev_subsidies) > 1) {
+                return [
+                    'success' => false,
+                    'status' => "Bad request",
+                    'status_code' => 400,
+                    'message' => 'Anda tidak dapat melakukan pembelian lebih dari 1 produk kendaraan listrik bantuan',
+                ];
+            }
+        }
+
+        foreach ($datas['merchants'] as $merchant) {
+            foreach ($merchant['products'] as $product) {
+                $ev_subsidy = collect($ev_subsidies)->where('product_id', $product['product_id'])->first();
+
+                if ($ev_subsidy) {
+                    // validasi jika produk adalah subsidi namun body request tidak mengirimkan data customer
+                    if (!isset($datas['customer']) || data_get($datas, 'customer') == null) {
+                        return [
+                            'success' => false,
+                            'status' => "Bad request",
+                            'status_code' => 400,
+                            'message' => 'Untuk melakukan transaksi pengajuan subsidi, silahkan update aplikasi Anda terlebih dahulu',
+                        ];
+                    }
+                }
+            }
+        }
+
+        // validasi tiket
+        $master_tikets = MasterTiket::with(['master_data'])->where('status', 1)->get();
+        if ($master_tikets) {
+            $customer_tikets = Order::with(['detail', 'detail.product'])->where('buyer_id', $customer->id)
+                ->whereHas('progress_active', function ($q) {
+                    $q->whereIn('status_code', ['00', '01', '02', '03', '08', '88']);
+                })
+                ->whereHas('detail', function ($q) use ($master_tikets) {
+                    $q->whereHas('product', function ($q) use ($master_tikets) {
+                        $q->whereIn('category_id', collect($master_tikets)->pluck('master_data.id')->toArray());
+                    });
+                })->get();
+
+            $count_tiket = 0;
+            foreach ($customer_tikets as $customer_tiket) {
+                foreach ($customer_tiket->detail as $detail) {
+                    $tiket = collect($master_tikets)->where('master_data.id', $detail->product->category_id)->first();
+
+                    if ($tiket) $count_tiket += $detail->quantity;
+                }
+            }
+        }
+
+        $product_ids = collect($datas['merchants'])->pluck('products.*.product_id')->flatten()->toArray();
+        $new_products = Product::with(['product_photo'])->whereIn('id', $product_ids)->get();
+        $new_merchants = Merchant::with(['expedition'])->whereIn('id', collect($datas['merchants'])->pluck('merchant_id')->toArray())->get();
+
+        foreach ($datas['merchants'] as $merchant) {
+            foreach ($merchant['products'] as $product) {
+                foreach ($new_products as $key => $p) {
+                    $new_products[$key]->quantity = 0;
+                    if (data_get($product, 'product_id') == $p->id) $new_products[$key]->quantity = data_get($product, 'quantity');
+                }
+            }
+        }
+
+        if ($master_tikets) {
+            $buying_tiket = false;
+            foreach ($new_products as $product) {
+                $tiket = collect($master_tikets)->where('master_data.id', $product->category_id)->first();
+
+                if ($tiket) {
+                    $count_tiket += $product->quantity;
+                    $buying_tiket = true;
+                }
+            }
+
+            if ($count_tiket > 4 && $buying_tiket) {
+                return [
+                    'success' => false,
+                    'status' => "Bad request",
+                    'status_code' => 400,
+                    'message' => 'Anda telah mencapai batas pembelian tiket',
+                ];
+            }
+        }
+
+        // Start hitung mdr V2 (urgent)
+        $mdr_master = MasterData::whereIn('key', ['mdr_global_value', 'mdr_global_promo'])->get();
+        $mdr_value = collect($mdr_master)->where('key', 'mdr_global_value')->first()->value ?? 0;
+        $mdr_promo = collect($mdr_master)->where('key', 'mdr_global_promo')->first()->value ?? 0;
+        $mdr_total = $mdr_value;
+
+        try {
+            $dataCreateds = [];
+            foreach (data_get($datas, 'merchants') as $data) {
+                $orderCreated = [
+                    'trx_no' => static::invoice_num(static::nextOrderId(), 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/"),
+                    'merchant_id' => data_get($data, 'merchant_id'),
+                    'buyer_id' => $customer_id,
+                    'no_reference' => $no_reference,
+                    'total_amount' => data_get($data, 'total_amount') + data_get($data, 'delivery_fee'),
+                    'total_weight' => data_get($data, 'total_weight'),
+                    'related_pln_mobile_customer_id' => null,
+                    'total_mdr' => (int) $mdr_total,
+                    'discount' => data_get($data, 'product_discount'),
+                    'npwp' => data_get($data, 'npwp'),
+                    'order_date' => date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now())->setTimezone('Asia/Jakarta')->timestamp),
+                    'created_by' => 'user',
+                    'updated_by' => 'user',
+                ];
+
+                $orderDetailCreated = [];
+                foreach (data_get($data, 'products') as $product) {
+                    $product_data = collect($new_products)->where('id', data_get($product, 'product_id'))->first();
+
+                    $orderDetailCreated[] = [
+                        'order_id' => null,
+                        'detail_type' => 1,
+                        'product_id' => data_get($product, 'product_id'),
+                        'quantity' => data_get($product, 'quantity'),
+                        'price' => data_get($product, 'price'),
+                        'weight' => data_get($product, 'weight'),
+                        'insurance_cost' => data_get($product, 'insurance_cost'),
+                        'discount' => data_get($product, 'discount'),
+                        'total_price' => data_get($product, 'total_price'),
+                        'total_weight' => data_get($product, 'total_weight'),
+                        'total_discount' => data_get($product, 'total_discount'),
+                        'total_insentif' => data_get($product, 'total_insentif'),
+                        'total_insurance_cost' => data_get($product, 'total_insurance_cost'),
+                        'total_amount' => data_get($product, 'total_amount'),
+                        'notes' => data_get($product, 'note'),
+                        'variant_value_product_id' => data_get($product, 'variant_value_product_id'),
+                        'product_data' => json_encode([
+                            'name' => data_get($product, 'name'),
+                            'price' => data_get($product, 'price'),
+                            'strike_price' => data_get($product, 'strike_price'),
+                            'condition' => data_get($product, 'condition'),
+                            'description' => data_get($product, 'description'),
+                            'merchant_id' => data_get($product, 'merchant_id'),
+                            'variant_value_product' => $product_variant_value ?? null,
+                            'product_photo' => $product_data->product_photo ?? null,
+                        ]),
+                        'product_main_photo' => $product_data->product_photo[0]['url'] ?? null,
+                        'product_mdr_value' => 0,
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now(),
+                    ];
+                }
+
+                $orderProgressCreated = [
+                    'order_id' => null,
+                    'status_code' => '00',
+                    'status_name' => 'Pesanan Belum Dibayar',
+                    'note' => null,
+                    'status' => 1,
+                    'created_by' => 'user',
+                    'updated_by' => 'user',
+                ];
+
+                $promo_merchant = PromoMerchant::with(['promo_master', 'promo_master.promo_regions', 'promo_master.promo_values'])
+                    ->where('merchant_id', data_get($data, 'merchant_id'))
+                    ->where('status', 1)
+                    ->where('start_date', '<=', date('Y-m-d H:i:s'))
+                    ->where('end_date', '>=', date('Y-m-d H:i:s'))
+                    ->whereHas('promo_master', function ($query) {
+                        $query->where('status', 1);
+                    })
+                    ->get();
+
+                $province_id = data_get($data, 'province_id');
+                $promo_merchant_ongkir = null;
+                $value_ongkir = 0;
+                if (data_get($data, 'can_shipping_discount') == true && data_get($data, 'delivery_discount') > 0) {
+                    foreach ($promo_merchant as $promo) {
+                        if ($promo['promo_master']['event_type'] == 'ongkir') {
+                            foreach ($promo['promo_master']['promo_regions'] as $region) {
+                                $region_ids = collect($region['province_ids'])->toArray();
+                                if (in_array($province_id, $region_ids)) {
+                                    $promo_merchant_ongkir = $promo;
+                                    $value_ongkir_m = 0;
+
+                                    if ($region['value_type'] == 'value_2') {
+                                        $value_ongkir_m = $promo['promo_master']['value_2'];
+                                    } else {
+                                        $value_ongkir_m = $promo['promo_master']['value_1'];
+                                    }
+
+                                    $max_merchant = ($promo['usage_value'] + $value_ongkir_m) > $promo['max_value'];
+                                    $max_master = ($promo['promo_master']['usage_value'] + $value_ongkir_m) > $promo['promo_master']['max_value'];
+
+                                    if ($max_merchant && !$max_master) {
+                                        $value_ongkir = $value_ongkir_m;
+                                        break;
+                                    }
+
+                                    if (!$max_merchant && $max_master) {
+                                        $value_ongkir = $value_ongkir_m;
+                                        break;
+                                    }
+
+                                    if (!$max_merchant && !$max_master) {
+                                        $value_ongkir = $value_ongkir_m;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if ($value_ongkir == 0 && data_get($data, 'delivery_discount') > 0) {
+                    return [
+                        'success' => false,
+                        'status' => "Bad request",
+                        'status_code' => 400,
+                        'message' => 'Promo Ongkir telah mencapai limit silahkah muat ulang halaman ini terlebih dahulu!',
+                    ];
+                }
+
+                if ($value_ongkir > data_get($data, 'delivery_fee')) $value_ongkir = data_get($data, 'delivery_fee');
+
+                if ($promo_merchant_ongkir != null) {
+                    $customer_limit_count = $promo_merchant_ongkir['promo_master']['customer_limit_count'];
+                    if ($customer_limit_count != null && $customer_limit_count > 0) {
+                        $promo_logs = PromoLog::where('promo_master_id', $promo_merchant_ongkir->promo_master->id)
+                            ->whereHas('order', function ($query) {
+                                $query->where('buyer_id', auth()->user()->id);
+                            })->get();
+
+                        $promo_logs_add = collect($promo_logs)->where('type', 'add')->count();
+                        $promo_logs_sub = collect($promo_logs)->where('type', 'sub')->count();
+
+                        if ($customer_limit_count <= ($promo_logs_sub - $promo_logs_add)) {
+                            $promo_merchant_ongkir = null;
+                        }
+                    }
+                }
+
+                $promo_merchant_flash_sale = null;
+                $promo_flash_sale_value = null;
+                $value_flash_sale = 0;
+                $value_flash_sale_m = 0;
+                if (data_get($data, 'can_flash_sale_discount') == true) {
+                    foreach ($promo_merchant as $promo) {
+                        if ($promo['promo_master']['event_type'] == 'flash_sale') {
+                            $promo_merchant_flash_sale = $promo;
+                            $value_flash_sale_m = 0;
+
+                            $value_flash_sale_m = $promo['promo_master']['value_1'];
+                            if ($promo['promo_master']['promo_value_type'] == 'percentage') {
+                                $value_flash_sale_m = $orderCreated['total_amount'] * ($promo_merchant_flash_sale->promo_master->value_1 / 100);
+                                if ($value_flash_sale_m >= $promo['promo_master']['max_discount_value']) {
+                                    $value_flash_sale_m = $promo['promo_master']['max_discount_value'];
+                                }
+                            }
+
+                            foreach ($promo['promo_master']['promo_values'] as $promo_value) {
+                                $value_flash_sale_m = $promo['promo_master']['value_1'];
+                                if ($promo['promo_master']['promo_value_type'] == 'percentage') {
+                                    $value_flash_sale_m = $orderCreated['total_amount'] * ($promo_merchant_flash_sale->promo_master->value_1 / 100);
+                                    if ($value_flash_sale_m >= $promo['promo_master']['max_discount_value']) {
+                                        $value_flash_sale_m = $promo['promo_master']['max_discount_value'];
+                                    }
+                                }
+
+                                if ($orderCreated['total_amount'] >= $promo_value['min_value'] && $orderCreated['total_amount'] <= $promo_value['max_value'] && $promo_value['status'] == 1) {
+                                    $promo_flash_sale_value = $promo_value;
+
+                                    if ($value_flash_sale_m >= $promo_value['max_discount_value']) $value_flash_sale_m = $promo_value['max_discount_value'];
+                                    break;
+                                }
+                            }
+
+                            $max_merchant = ($promo['usage_value'] + $value_flash_sale_m) > $promo['max_value'];
+                            $max_master = ($promo['promo_master']['usage_value'] + $value_flash_sale_m) > $promo['promo_master']['max_value'];
+
+                            if ($max_merchant && !$max_master) {
+                                $value_flash_sale = $value_flash_sale_m;
+                                break;
+                            }
+
+                            if (!$max_merchant && $max_master) {
+                                $value_flash_sale = $value_flash_sale_m;
+                                break;
+                            }
+
+                            if (!$max_merchant && !$max_master) {
+                                $value_flash_sale = $value_flash_sale_m;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if ($value_flash_sale == 0 && data_get($data, 'product_discount') > 0) {
+                    return [
+                        'success' => false,
+                        'status' => "Bad request",
+                        'status_code' => 400,
+                        'message' => 'Promo Flash Sale telah mencapai limit silahkah muat ulang halaman ini terlebih dahulu!',
+                    ];
+                }
+
+                $min_condition = false;
+                if ($promo_flash_sale_value != null) {
+                    $min_condition = true;
+                } else if ($promo_merchant_flash_sale != null) {
+                    $min_condition = $promo_merchant_flash_sale['promo_master']['min_order_value'] <= $orderCreated['total_amount'];
+                }
+
+                if ($promo_merchant_flash_sale != null) {
+                    $customer_limit_count = $promo_merchant_flash_sale['promo_master']['customer_limit_count'];
+                    if ($customer_limit_count != null && $customer_limit_count > 0) {
+                        $promo_logs = PromoLog::where('promo_master_id', $promo_merchant_flash_sale->promo_master->id)
+                            ->whereHas('order', function ($query) {
+                                $query->where('buyer_id', auth()->user()->id);
+                            })->get();
+
+                        $promo_logs_add = collect($promo_logs)->where('type', 'add')->count();
+                        $promo_logs_sub = collect($promo_logs)->where('type', 'sub')->count();
+
+                        if ($customer_limit_count <= ($promo_logs_sub - $promo_logs_add)) {
+                            $promo_merchant_flash_sale = null;
+                        }
+                    }
+                }
+
+                $shipping_type = data_get($data, 'delivery_service');
+                if (str_contains(strtolower($shipping_type), 'seller')) $shipping_type = 'custom';
+
+                $merchant_data = collect($new_merchants)->where('id', data_get($data, 'merchant_id'))->first();
+                $setting_courirers = Cache::remember('setting_courirers', 60 * 60, fn () => MasterData::where('type', 'rajaongkir_courier')->get());
+
+                $s_courier = '';
+                foreach (collect($setting_courirers)->where('key', 's_courier') as $courier) {
+                    foreach (explode(':', $merchant_data->expedition->list_expeditions) as $value) {
+                        if ($value == $courier->reference_third_party_id) $s_courier .= $value . ':';
+                    }
+                }
+
+                $orderDeliveryCreated = [
+                    'order_id' => null,
+                    'receiver_name' => $customer_address->receiver_name,
+                    'receiver_phone' => $customer_address->receiver_phone,
+                    'address' => $customer_address->address,
+                    'city_id' => $customer_address->city_id,
+                    'district_id' => $customer_address->district_id,
+                    'subdistrict_id' => $customer_address->subdistrict_id,
+                    'postal_code' => $customer_address->postal_code,
+                    'latitude' => $customer_address->latitude,
+                    'longitude' => $customer_address->longitude,
+                    'shipping_type' => $shipping_type,
+                    'awb_number' => null,
+                    'delivery_method' => data_get($data, 'delivery_method') == 'J&T' ? 'jnt' : data_get($data, 'delivery_method'),
+                    'delivery_type' => data_get($data, 'delivery_type'),
+                    'delivery_setting' => data_get($data, 'delivery_setting'),
+                    'delivery_fee' => data_get($data, 'delivery_fee'),
+                    'delivery_discount' => data_get($data, 'delivery_discount'),
+                    'must_use_insurance' => data_get($data, 'must_use_insurance') ?? false,
+                    'delivery_fee_origin' => null,
+                    'insurance_fee' => null,
+                    'insurance_tax' => null,
+                    'origin_fee' => null,
+                    'origin_tax' => null,
+                    'is_sameday' => null,
+                    'merchant_data' => json_encode([
+                        'merchant_name' => $merchant_data->name,
+                        'merchant_address' => $merchant_data->address,
+                        'merchant_province_id' => $merchant_data->province_id,
+                        'merchant_city_id' => $merchant_data->city_id,
+                        'merchant_district_id' => $merchant_data->district_id,
+                        'merchant_subdistrict_id' => $merchant_data->subdistrict_id,
+                        'merchant_postal_code' => $merchant_data->postal_code,
+                        'merchant_phone_office' => $merchant_data->phone_office,
+                        'merchant_latitude' => $merchant_data->latitude,
+                        'merchant_longitude' => $merchant_data->longitude,
+                    ]),
+                ];
+
+                if (data_get($data, 'delivery_setting') == 'shipper') {
+                    $logistic_manager = new LogisticManager();
+                    $shipping_prices = $logistic_manager->getOngkir($customer_address, $merchant_data, data_get($data, 'total_weight'), rtrim($s_courier, ':'), data_get($data, 'total_amount'));
+                    foreach (collect($shipping_prices) as $value) {
+                        if ($value['code'] == data_get($data, 'delivery_method')) {
+                            foreach ($value['data'] as $data_value) {
+                                if ($data_value['service_code'] == data_get($data, 'delivery_type')) {
+                                    $orderDeliveryCreated['delivery_fee_origin'] = $data_value['origin_price'];
+                                    $orderDeliveryCreated['insurance_fee'] = $data_value['insurance_fee'];
+                                    $orderDeliveryCreated['insurance_tax'] = $data_value['insurance_tax'];
+                                    $orderDeliveryCreated['origin_fee'] = $data_value['origin_fee'];
+                                    $orderDeliveryCreated['origin_tax'] = $data_value['origin_tax'];
+                                    $orderDeliveryCreated['is_sameday'] = $data_value['is_same_day'];
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $orderPaymentCreated = [
+                    'customer_id' => $customer_id,
+                    'payment_amount' => data_get($data, 'total_payment'),
+                    'date_created' => $trx_date,
+                    'date_expired' => (isset($datas['customer']) && data_get($datas, 'customer') != null) ? null : $exp_date,
+                    'payment_method' => null,
+                    'no_reference' => $no_reference,
+                    'booking_code' => null,
+                    'payment_note' => data_get($data, 'payment_note') ?? null,
+                    'status' => 0,
+                ];
+
+                $total_insentif = 0;
+                foreach ($orderDetailCreated as $detail) {
+                    $total_insentif += $detail['total_insentif'];
+                }
+
+                if ($orderDeliveryCreated['delivery_setting'] == 'shipper') {
+                    $ongkir = $orderDeliveryCreated['delivery_fee'];
+                    $amount = $orderCreated['total_amount'] - $total_insentif - $mdr_total - $ongkir;
+                } else {
+                    // mdr promo
+                    if ($value_ongkir > 0 || $orderDetailCreated[0]['discount'] > 0) {
+                        $mdr_total += $mdr_promo;
+                        $orderCreated['total_mdr'] = (int) $mdr_total;
+                    }
+                    $amount = $orderCreated['total_amount'] - $total_insentif - $mdr_total;
+                }
+
+                $orderCreated['total_amount_iconcash'] = $amount;
+
+                if ($promo_merchant_ongkir) {
+                    $promo_merchant_ongkir['value_onkir'] = $value_ongkir;
+                }
+
+                if ($promo_merchant_flash_sale) {
+                    $promo_merchant_flash_sale['value_flash_sale'] = $value_flash_sale;
+                    $promo_merchant_flash_sale['value_flash_sale_m'] = $value_flash_sale_m;
+                    $promo_merchant_flash_sale['min_condition'] = $min_condition;
+                }
+
+                $dataCreated = [
+                    'order' => $orderCreated,
+                    'order_detail' => $orderDetailCreated,
+                    'order_progress' => $orderProgressCreated,
+                    'order_delivery' => $orderDeliveryCreated,
+                    'order_payment' => $orderPaymentCreated,
+                    'promo_merchant_ongkir' => $promo_merchant_ongkir,
+                    'promo_merchant_flash_sale' => $promo_merchant_flash_sale,
+                ];
+
+                $dataCreateds[] = $dataCreated;
+            }
+
+            $customerEvCreated = null;
+            if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
+                $ev_subsidy = $ev_subsidies[0];
+                foreach ($new_products as $product) {
+                    if ($ev_subsidy->product_id == $product->id) {
+                        $customerEvCreated = [
+                            'order_id' => null,
+                            'customer_id' => $customer_id,
+                            'product_id' => $ev_subsidy->product_id,
+                            'status_approval' => null,
+                            'customer_id_pel' => $customer->pln_mobile_customer_id,
+                            'customer_nik' => data_get($datas, 'customer.nik'),
+                            'customer_full_name' => strtoupper(data_get($datas, 'customer.full_name')) ?? null,
+                            'customer_father_name' => strtoupper(data_get($datas, 'customer.father_name')) ?? null,
+                            'ktp_url' => data_get($datas, 'customer.ktp_url'),
+                            'kk_url' => data_get($datas, 'customer.kk_url') ?? null,
+                            'file_url' => data_get($datas, 'customer.file_url'),
+                            'created_by' => auth()->user()->full_name,
+                        ];
+                    }
+                }
+            }
+
+            $instalmentCreated = null;
+            if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
+                $instalmentCreated = [
+                    'order_id' => null,
+                    'customer_id' => $customer_id,
+                    'pi_provider_id' => data_get($datas, 'installment.provider_id'),
+                    'month_tenor' => data_get($datas, 'installment_tenor'),
+                    'fee_tenor' => data_get($datas, 'installment_fee'),
+                    'installment_tenor' => data_get($datas, 'installment_price') ?? 0,
+                    'markup_price_tenor' => data_get($datas, 'installment_markup_price') ?? 0,
+                    'actual_price_tenor' => data_get($datas, 'installment_actual_price') ?? 0,
+                    'interest_percentage_tenor' => data_get($datas, 'installment_interest_percentage') ?? 0,
+                    'provider_fee' => data_get($datas, 'installment_provider_fee') ?? 0,
+                ];
+            }
+
+            $bonusAmount = 0;
+            $bonus_discount = 0;
+            $voucher_bonus_code = '';
+            if (isset($datas['discount_type']) && $datas['discount_type'] === 'GAMI-BONUS-DISCOUNT') {
+                $userId = auth()->user()->pln_mobile_customer_id;
+
+                $checkBonusDiscount = GamificationManager::claimBonusHold($userId, $datas['total_amount_without_delivery']);
+
+                if ($checkBonusDiscount['success']) {
+                    Log::info('bonus.claim', ['info' => 'Claim Bonus Hold Success']);
+                    $claimId = $checkBonusDiscount['data']['id'];
+                    $bonusAmount = $checkBonusDiscount['data']['bonusAmount'];
+
+                    Log::info('bonus.claim', ['info' => 'Hit Claim Bonus Apply']);
+                    $claimApplyDiscount = GamificationManager::claimBonusApply($claimId, $no_reference, $datas['total_amount_without_delivery']);
+
+                    if ($claimApplyDiscount['success']) {
+                        Log::info('bonus.claim', ['Claim Bonus Apply Success']);
+
+                        $bonus_discount = $claimApplyDiscount['data']['bonusAmount'];
+                        $voucher_bonus_code = $claimApplyDiscount['data']['claimId'] ?? null;
+
+                        // update order detail
+                        $dataCreateds[0]['order_detail'][0]['total_discount'] = $dataCreateds[0]['order_detail'][0]['total_discount'] + $claimApplyDiscount['data']['bonusAmount'];
+
+                        // update order payment
+                        $dataCreateds[0]['order_payment']['payment_amount'] = $dataCreateds[0]['order_payment']['payment_amount'] - $claimApplyDiscount['data']['bonusAmount'];
+                    } else {
+                        Log::info('bonus.claim', ['info' => 'Claim Bonus Apply Failed, Refund with Amount Bonus Hold']);
+
+                        $datas['total_payment'] += $bonusAmount;
+                    }
+                } else {
+                    Log::info('bonus.claim', ['info' => 'Claim Bonus Hold Failed']);
+                }
+            } else {
+                Log::info('bonus.claim', ['info' => 'No Claim Bonus Apply']);
+            }
+
+            DB::beginTransaction();
+            foreach (data_get($datas, 'merchants') as $data) {
+                if (isset($datas['save_npwp'])) {
+                    $datas['save_npwp'] = in_array($datas['save_npwp'], [1, true]) ? true : false;
+                }
+                if (isset($datas['save_npwp']) && $datas['save_npwp'] === true) {
+                    Customer::where('id', $customer_id)->update(['npwp' => $datas['npwp']]);
+                }
+            }
+
+            $gami_claim = false;
+            foreach ($dataCreateds as $key => $dataCreated) {
+                $promoLogOngkirCreated = null;
+                if ($dataCreated['promo_merchant_ongkir']) {
+                    $promo_merchant_ongkir = PromoMerchant::where('id', $dataCreated['promo_merchant_ongkir']['id'])->lockForUpdate()->first();
+                    $promo_merchant_ongkir_master = PromoMaster::where('id', $promo_merchant_ongkir->promo_master_id)->lockForUpdate()->first();
+
+                    if ($promo_merchant_ongkir != null && $promo_merchant_ongkir_master->min_order_value <= $dataCreated['order']['total_amount']) {
+                        $value_ongkir = $dataCreated['promo_merchant_ongkir']['value_ongkir'];
+                        $limit_merchant = ($promo_merchant_ongkir->usage_value + $value_ongkir) > $promo_merchant_ongkir->max_value;
+
+                        if (!$limit_merchant && $promo_merchant_ongkir_master->max_value_merchant > 0) {
+                            $type_usage = 'merchant';
+                            $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
+                            $promo_merchant_ongkir->save();
+                        } else {
+                            $type_usage = 'master';
+                            $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
+                            $promo_merchant_ongkir->save();
+                        }
+
+                        if ($value_ongkir > 0) {
+                            $promoLogOngkirCreated = [
+                                'order_id' => null,
+                                'promo_master_id' => $promo_merchant_ongkir->promo_master_id,
+                                'promo_merchant_id' => $promo_merchant_ongkir->id,
+                                'type' => 'sub',
+                                'type_usage' => $type_usage,
+                                'value' => $value_ongkir,
+                                'created_by' => 'user',
+                            ];
+                        }
+                    }
+                }
+
+                $promoLogFlashSaleCreated = null;
+                if ($dataCreated['promo_merchant_flash_sale']) {
+                    $promo_merchant_flash_sale = PromoMerchant::where('id', $dataCreated['promo_merchant_flash_sale']['id'])->lockForUpdate()->first();
+                    $promo_merchant_flash_sale_master = PromoMaster::where('id', $promo_merchant_flash_sale->promo_master_id)->lockForUpdate()->first();
+
+                    if ($promo_merchant_flash_sale != null && $dataCreated['promo_merchant_flash_sale']['min_condition']) {
+                        $value_flash_sale = $dataCreated['promo_merchant_flash_sale']['value_flash_sale'];
+                        if ($value_flash_sale > $dataCreated['order']['total_amount']) {
+                            $value_flash_sale = $dataCreated['order']['total_amount'];
+                        }
+
+                        $limit_merchant = ($promo_merchant_flash_sale->usage_value + $dataCreated['promo_merchant_flash_sale']['value_flash_sale_m']) > $promo_merchant_flash_sale->max_value;
+
+                        if (!$limit_merchant && $promo_merchant_flash_sale_master->max_value_merchant > 0) {
+                            $type_usage = 'merchant';
+                            $promo_merchant_flash_sale->usage_value = $promo_merchant_flash_sale->usage_value + $value_flash_sale;
+                            $promo_merchant_flash_sale->save();
+                        } else {
+                            $type_usage = 'master';
+                            $promo_merchant_flash_sale_master->usage_value = $promo_merchant_flash_sale_master->usage_value + $value_flash_sale;
+                            $promo_merchant_flash_sale_master->save();
+                        }
+
+                        if ($value_flash_sale > 0) {
+                            $promoLogFlashSaleCreated = [
+                                'order_id' => null,
+                                'promo_master_id' => $promo_merchant_flash_sale->promo_master_id,
+                                'promo_merchant_id' => $promo_merchant_flash_sale->id,
+                                'type' => 'sub',
+                                'type_usage' => $type_usage,
+                                'value' => $value_flash_sale,
+                                'created_by' => 'user',
+                            ];
+                        }
+
+                        // sementara ketika flash sale nempel merchant
+                        $dataCreated['order_detail'][0]['discount'] = $dataCreated['order_detail'][0]['discount'] + $value_flash_sale;
+                        $dataCreated['order_detail'][0]['total_discount'] = $dataCreated['order_detail'][0]['total_discount'] + $value_flash_sale;
+                        $dataCreated['order_detail'][0]['total_amount'] = $dataCreated['order_detail'][0]['total_amount'] - $value_flash_sale;
+                    }
+                }
+
+                $order = Order::create($dataCreated['order']);
+
+                if ($promoLogOngkirCreated != null) {
+                    $promoLogOngkirCreated['order_id'] = $order->id;
+                    PromoLog::create($promoLogOngkirCreated);
+                }
+
+                if ($promoLogFlashSaleCreated != null) {
+                    $promoLogFlashSaleCreated['order_id'] = $order->id;
+                    PromoLog::create($promoLogFlashSaleCreated);
+                }
+
+                if ($customerEvCreated != null) {
+                    $customerEvCreated['order_id'] = $order->id;
+                    CustomerEVSubsidy::create($customerEvCreated);
+                }
+
+                foreach ($dataCreated['order_detail'] as $order_detail) {
+                    $order_detail['order_id'] = $order->id;
+                    OrderDetail::create($order_detail);
+                }
+
+                $dataCreated['order_progress']['order_id'] = $order->id;
+                OrderProgress::create($dataCreated['order_progress']);
+
+                $dataCreated['order_delivery']['order_id'] = $order->id;
+                OrderDelivery::create($dataCreated['order_delivery']);
+
+                $order_payment = OrderPayment::create($dataCreated['order_payment']);
+
+                $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
+                $order->payment_id = $order_payment->id;
+
+                if (!$gami_claim) {
+                    $gami_claim = true;
+                    $order->bonus_discount = $bonus_discount;
+                    $order->voucher_bonus_code = $voucher_bonus_code;
+                }
+
+                if (!$this->order_id) $this->order_id = $order->id;
+
+                if ($order->save()) {
+                    $column_name = 'customer_id';
+                    $column_value = $customer_id;
+                    $type = 2;
+                    $title = 'Transaksi berhasil dibuat';
+                    $message = 'Transaksimu berhasil dibuat, silakan melanjutkan pembayaran.';
+                    $url_path = 'v1/buyer/query/transaction/' . $customer_id . '/detail/' . $order->id;
+
+                    $notificationCommand = new NotificationCommands();
+                    $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
+
+                    // $notificationCommand->sendPushNotification($order->merchant->id, $title, $message, 'active');
+                    $notificationCommand->sendPushNotificationCustomerPlnMobile($customer_id, $title, $message);
+                }
+            }
+
+            if ($instalmentCreated) {
+                $instalmentCreated['order_id'] = $this->order_id;
+                InstallmentOrder::create($instalmentCreated);
+            }
+
+            if ($datas['total_discount'] > 0) {
+                $this->updateCustomerDiscount($customer_id, $customer->email, $datas['total_discount'], $no_reference);
+            }
+
+            if ($datas['total_payment'] <= 0) throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
+
+            DB::commit();
+
+            Log::info('checkout', [
+                'info' => 'Total Payment: ' . $datas['total_payment'] . ' | Bonus Discount: ' . $bonusAmount
+            ]);
+
+            $mailSender = new MailSenderManager();
+            if ($customerEvCreated != null) {
+                $mailSender->mailCheckoutSubsidy($this->order_id);
+            } else {
+                $mailSender->mailCheckout($this->order_id);
+            }
+
+            if (isset($datas['installment_tenor'])) $installment_tenor = $datas['installment_tenor'] < 10 ? str_pad($datas['installment_tenor'], 2, '0', STR_PAD_LEFT) : $datas['installment_tenor'];
+
+            $product_name = $new_products[0]->name;
+
+            if (!isset($datas['customer']) || data_get($datas, 'customer') == null) {
+                $body = [
+                    'no_reference' => $no_reference,
+                    'transaction_date' => $trx_date,
+                    'transaction_code' => '00',
+                    'partner_reference' => $no_reference,
+                    'product_id' => static::$productid,
+                    'amount' => $datas['total_payment'],
+                    'customer_id' => $no_reference,
+                    'customer_name' => $customer->full_name,
+                    'email' => $customer->email,
+                    'phone_number' => $customer->phone,
+                    'expired_invoice' => $exp_date,
+                    'additional_info7' => isset($datas['installment_provider_fee']) ? $datas['installment_provider_fee'] : null,
+                    'additional_info8' => isset($installment_tenor) ? $installment_tenor : null,
+                    'additional_info9' => isset($datas['installment_actual_price']) ? $datas['installment_actual_price'] : null,
+                    'additional_info10' => isset($datas['installment_fee']) ? $datas['installment_fee'] : null,
+                ];
+
+                $iconpayManager = new IconpayManager();
+                $response = $iconpayManager->booking($body);
+
+                $response->response_details[0]->amount = $datas['total_payment'];
+                $response->response_details[0]->customer_id = (int) $response->response_details[0]->customer_id;
+                $response->response_details[0]->partner_reference = (int) $response->response_details[0]->partner_reference;
+
+                //add order id to response
+                $response->order_id = $this->order_id;
+                //get product name from order detail
+                $response->product_name = $product_name;
+            }
+
+            $resData = isset($datas['customer']) && data_get($datas, 'customer') != null ? [
+                'order_id' => $this->order_id,
+                'product_name' => $product_name,
+            ] : $response;
+
+            return [
+                'success' => true,
+                'message' => 'Berhasil create order',
+                'data' => $resData,
+            ];
+        } catch (Exception $th) {
         DB::rollBack();
+        throw new Exception('Gagal membuat pesanan', 500);
         // if (in_array($th->getCode(), self::$error_codes)) {
         //     throw new Exception($th->getMessage(), $th->getCode());
         // }
-        throw new Exception('Gagal membuat pesanan', 500);
         }
     }
 
@@ -2239,22 +3085,19 @@ class TransactionCommands extends Service
 
     public function updateCustomerDiscount($user_id, $email, $discount, $no_reference)
     {
-        $now = Carbon::now('Asia/Jakarta');
-        $data = CustomerDiscount::where('customer_reference_id', $user_id)->orWhere('customer_reference_id', $email)
-            ->where('is_used', false)->where('expired_date', '>=', $now)->first();
+        $data = CustomerDiscount::where('customer_reference_id', $user_id)
+            ->orWhere('customer_reference_id', $email)
+            ->where('expired_date', '>=', Carbon::now('Asia/Jakarta'))
+            ->where('is_used', false)
+            ->first();
 
-        if ($data == null) {
-            return true;
+        if ($data) {
+            $data->is_used = true;
+            $data->status = 1;
+            $data->used_amount = $discount;
+            $data->no_reference = $no_reference;
+            $data->save();
         }
-        $data->is_used = true;
-        $data->status = 1;
-        $data->used_amount = $discount;
-        $data->no_reference = $no_reference;
-
-        if ($data->save()) {
-            return true;
-        }
-        return false;
     }
 
     public function orderConfirmHasArrived($trx_no)
