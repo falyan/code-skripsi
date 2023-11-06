@@ -2425,7 +2425,7 @@ class TransactionCommands extends Service
                         if ($value['code'] == data_get($data, 'delivery_method')) {
                             foreach ($value['data'] as $data_value) {
                                 if ($data_value['service_code'] == data_get($data, 'delivery_type')) {
-                                    $orderDeliveryCreated['delivery_fee_origin'] = $data_value['price'];
+                                    $orderDeliveryCreated['delivery_fee_origin'] = $data_value['origin_price'];
                                     $orderDeliveryCreated['insurance_fee'] = $data_value['insurance_fee'];
                                     $orderDeliveryCreated['insurance_tax'] = $data_value['insurance_tax'];
                                     $orderDeliveryCreated['origin_fee'] = $data_value['origin_fee'];
@@ -2468,10 +2468,15 @@ class TransactionCommands extends Service
 
                 $orderCreated['total_amount_iconcash'] = $amount;
 
-                $promo_merchant_ongkir['value_onkir'] = $value_ongkir;
-                $promo_merchant_flash_sale['value_flash_sale'] = $value_flash_sale;
-                $promo_merchant_flash_sale['value_flash_sale_m'] = $value_flash_sale_m;
-                $promo_merchant_flash_sale['min_condition'] = $min_condition;
+                if ($promo_merchant_ongkir) {
+                    $promo_merchant_ongkir['value_onkir'] = $value_ongkir;
+                }
+
+                if ($promo_merchant_flash_sale) {
+                    $promo_merchant_flash_sale['value_flash_sale'] = $value_flash_sale;
+                    $promo_merchant_flash_sale['value_flash_sale_m'] = $value_flash_sale_m;
+                    $promo_merchant_flash_sale['min_condition'] = $min_condition;
+                }
 
                 $dataCreated = [
                     'order' => $orderCreated,
@@ -2576,75 +2581,79 @@ class TransactionCommands extends Service
 
             $gami_claim = false;
             foreach ($dataCreateds as $key => $dataCreated) {
-                $promo_merchant_ongkir = PromoMerchant::where('id', $dataCreated['promo_merchant_ongkir']['id'])->lockForUpdate()->first();
-                $promo_merchant_ongkir_master = PromoMaster::where('id', $promo_merchant_ongkir->promo_master_id)->lockForUpdate()->first();
-
                 $promoLogOngkirCreated = null;
-                if ($promo_merchant_ongkir != null && $promo_merchant_ongkir_master->min_order_value <= $dataCreated['order']['total_amount']) {
-                    $value_ongkir = $dataCreated['promo_merchant_ongkir']['value_ongkir'];
-                    $limit_merchant = ($promo_merchant_ongkir->usage_value + $value_ongkir) > $promo_merchant_ongkir->max_value;
+                if ($dataCreated['promo_merchant_ongkir']) {
+                    $promo_merchant_ongkir = PromoMerchant::where('id', $dataCreated['promo_merchant_ongkir']['id'])->lockForUpdate()->first();
+                    $promo_merchant_ongkir_master = PromoMaster::where('id', $promo_merchant_ongkir->promo_master_id)->lockForUpdate()->first();
 
-                    if (!$limit_merchant && $promo_merchant_ongkir_master->max_value_merchant > 0) {
-                        $type_usage = 'merchant';
-                        $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
-                        $promo_merchant_ongkir->save();
-                    } else {
-                        $type_usage = 'master';
-                        $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
-                        $promo_merchant_ongkir->save();
-                    }
+                    if ($promo_merchant_ongkir != null && $promo_merchant_ongkir_master->min_order_value <= $dataCreated['order']['total_amount']) {
+                        $value_ongkir = $dataCreated['promo_merchant_ongkir']['value_ongkir'];
+                        $limit_merchant = ($promo_merchant_ongkir->usage_value + $value_ongkir) > $promo_merchant_ongkir->max_value;
 
-                    if ($value_ongkir > 0) {
-                        $promoLogOngkirCreated = [
-                            'order_id' => null,
-                            'promo_master_id' => $promo_merchant_ongkir->promo_master_id,
-                            'promo_merchant_id' => $promo_merchant_ongkir->id,
-                            'type' => 'sub',
-                            'type_usage' => $type_usage,
-                            'value' => $value_ongkir,
-                            'created_by' => 'user',
-                        ];
+                        if (!$limit_merchant && $promo_merchant_ongkir_master->max_value_merchant > 0) {
+                            $type_usage = 'merchant';
+                            $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
+                            $promo_merchant_ongkir->save();
+                        } else {
+                            $type_usage = 'master';
+                            $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
+                            $promo_merchant_ongkir->save();
+                        }
+
+                        if ($value_ongkir > 0) {
+                            $promoLogOngkirCreated = [
+                                'order_id' => null,
+                                'promo_master_id' => $promo_merchant_ongkir->promo_master_id,
+                                'promo_merchant_id' => $promo_merchant_ongkir->id,
+                                'type' => 'sub',
+                                'type_usage' => $type_usage,
+                                'value' => $value_ongkir,
+                                'created_by' => 'user',
+                            ];
+                        }
                     }
                 }
 
-                $promo_merchant_flash_sale = PromoMerchant::where('id', $dataCreated['promo_merchant_flash_sale']['id'])->lockForUpdate()->first();
-                $promo_merchant_flash_sale_master = PromoMaster::where('id', $promo_merchant_flash_sale->promo_master_id)->lockForUpdate()->first();
-
                 $promoLogFlashSaleCreated = null;
-                if ($promo_merchant_flash_sale != null && $dataCreated['promo_merchant_flash_sale']['min_condition']) {
-                    $value_flash_sale = $dataCreated['promo_merchant_flash_sale']['value_flash_sale'];
-                    if ($value_flash_sale > $dataCreated['order']['total_amount']) {
-                        $value_flash_sale = $dataCreated['order']['total_amount'];
+                if ($dataCreated['promo_merchant_flash_sale']) {
+                    $promo_merchant_flash_sale = PromoMerchant::where('id', $dataCreated['promo_merchant_flash_sale']['id'])->lockForUpdate()->first();
+                    $promo_merchant_flash_sale_master = PromoMaster::where('id', $promo_merchant_flash_sale->promo_master_id)->lockForUpdate()->first();
+
+                    if ($promo_merchant_flash_sale != null && $dataCreated['promo_merchant_flash_sale']['min_condition']) {
+                        $value_flash_sale = $dataCreated['promo_merchant_flash_sale']['value_flash_sale'];
+                        if ($value_flash_sale > $dataCreated['order']['total_amount']) {
+                            $value_flash_sale = $dataCreated['order']['total_amount'];
+                        }
+
+                        $limit_merchant = ($promo_merchant_flash_sale->usage_value + $dataCreated['promo_merchant_flash_sale']['value_flash_sale_m']) > $promo_merchant_flash_sale->max_value;
+
+                        if (!$limit_merchant && $promo_merchant_flash_sale_master->max_value_merchant > 0) {
+                            $type_usage = 'merchant';
+                            $promo_merchant_flash_sale->usage_value = $promo_merchant_flash_sale->usage_value + $value_flash_sale;
+                            $promo_merchant_flash_sale->save();
+                        } else {
+                            $type_usage = 'master';
+                            $promo_merchant_flash_sale_master->usage_value = $promo_merchant_flash_sale_master->usage_value + $value_flash_sale;
+                            $promo_merchant_flash_sale_master->save();
+                        }
+
+                        if ($value_flash_sale > 0) {
+                            $promoLogFlashSaleCreated = [
+                                'order_id' => null,
+                                'promo_master_id' => $promo_merchant_flash_sale->promo_master_id,
+                                'promo_merchant_id' => $promo_merchant_flash_sale->id,
+                                'type' => 'sub',
+                                'type_usage' => $type_usage,
+                                'value' => $value_flash_sale,
+                                'created_by' => 'user',
+                            ];
+                        }
+
+                        // sementara ketika flash sale nempel merchant
+                        $dataCreated['order_detail'][0]['discount'] = $dataCreated['order_detail'][0]['discount'] + $value_flash_sale;
+                        $dataCreated['order_detail'][0]['total_discount'] = $dataCreated['order_detail'][0]['total_discount'] + $value_flash_sale;
+                        $dataCreated['order_detail'][0]['total_amount'] = $dataCreated['order_detail'][0]['total_amount'] - $value_flash_sale;
                     }
-
-                    $limit_merchant = ($promo_merchant_flash_sale->usage_value + $dataCreated['promo_merchant_flash_sale']['value_flash_sale_m']) > $promo_merchant_flash_sale->max_value;
-
-                    if (!$limit_merchant && $promo_merchant_flash_sale_master->max_value_merchant > 0) {
-                        $type_usage = 'merchant';
-                        $promo_merchant_flash_sale->usage_value = $promo_merchant_flash_sale->usage_value + $value_flash_sale;
-                        $promo_merchant_flash_sale->save();
-                    } else {
-                        $type_usage = 'master';
-                        $promo_merchant_flash_sale_master->usage_value = $promo_merchant_flash_sale_master->usage_value + $value_flash_sale;
-                        $promo_merchant_flash_sale_master->save();
-                    }
-
-                    if ($value_flash_sale > 0) {
-                        $promoLogFlashSaleCreated = [
-                            'order_id' => null,
-                            'promo_master_id' => $promo_merchant_flash_sale->promo_master_id,
-                            'promo_merchant_id' => $promo_merchant_flash_sale->id,
-                            'type' => 'sub',
-                            'type_usage' => $type_usage,
-                            'value' => $value_flash_sale,
-                            'created_by' => 'user',
-                        ];
-                    }
-
-                    // sementara ketika flash sale nempel merchant
-                    $dataCreated['order_detail'][0]['discount'] = $dataCreated['order_detail'][0]['discount'] + $value_flash_sale;
-                    $dataCreated['order_detail'][0]['total_discount'] = $dataCreated['order_detail'][0]['total_discount'] + $value_flash_sale;
-                    $dataCreated['order_detail'][0]['total_amount'] = $dataCreated['order_detail'][0]['total_amount'] - $value_flash_sale;
                 }
 
                 $order = Order::create($dataCreated['order']);
@@ -2686,6 +2695,8 @@ class TransactionCommands extends Service
                     $order->voucher_bonus_code = $voucher_bonus_code;
                 }
 
+                if (!$this->order_id) $this->order_id = $order->id;
+
                 if ($order->save()) {
                     $column_name = 'customer_id';
                     $column_value = $customer_id;
@@ -2696,6 +2707,9 @@ class TransactionCommands extends Service
 
                     $notificationCommand = new NotificationCommands();
                     $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
+
+                    // $notificationCommand->sendPushNotification($order->merchant->id, $title, $message, 'active');
+                    $notificationCommand->sendPushNotificationCustomerPlnMobile($customer_id, $title, $message);
                 }
             }
 
@@ -2770,11 +2784,11 @@ class TransactionCommands extends Service
                 'data' => $resData,
             ];
         } catch (Exception $th) {
-            DB::rollBack();
-            throw new Exception('Gagal membuat pesanan', 500);
-            // if (in_array($th->getCode(), self::$error_codes)) {
-            //     throw new Exception($th->getMessage(), $th->getCode());
-            // }
+        DB::rollBack();
+        throw new Exception('Gagal membuat pesanan', 500);
+        // if (in_array($th->getCode(), self::$error_codes)) {
+        //     throw new Exception($th->getMessage(), $th->getCode());
+        // }
         }
     }
 
