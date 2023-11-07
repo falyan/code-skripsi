@@ -479,7 +479,7 @@ class IconcashManager
     {
         $param = self::setParamAPI([]);
 
-        $url = sprintf('%s/%s', self::$topupApiEndpoint, 'command/topup-inquiri' . $param);
+        $url = sprintf('%s/%s', self::$topupApiEndpoint, 'command/topup-inquiry' . $param);
 
         $response = self::$curl->request('POST', $url, [
             'headers' => self::$headerTopup,
