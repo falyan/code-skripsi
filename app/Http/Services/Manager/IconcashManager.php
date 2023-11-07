@@ -499,11 +499,11 @@ class IconcashManager
             'response' => $response,
         ]);
 
-        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+        // throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-        if ($response->success != true) {
-            throw new Exception($response->message, $response->code);
-        }
+        // if ($response->success != true) {
+        //     throw new Exception($response->message, $response->code);
+        // }
 
         return data_get($response, 'data');
     }

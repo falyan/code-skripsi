@@ -1380,6 +1380,7 @@ class TransactionController extends Controller
 
                 $order = Order::with(['delivery', 'detail'])->where('id', $id)->first();
                 $customer = Customer::with('iconcash')->where('merchant_id', $order->merchant_id)->first();
+
                 $iconcash = $customer->iconcash;
                 $account_type_id = null;
 
