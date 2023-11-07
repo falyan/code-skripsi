@@ -1417,13 +1417,16 @@ class TransactionController extends Controller
                 $corporate_id = 10;
 
                 $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
-                $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
-                if ($resConfrim) {
-                    $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
-                    $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
-                    $iconcash_inquiry->confirm_status = $resConfrim->success;
-                    $iconcash_inquiry->save();
+                if ($topup_inquiry->success) {
+                    $resConfrim = IconcashManager::topupConfirm(data_get($topup_inquiry, 'data.orderId'), data_get($topup_inquiry, 'data.amount'));
+
+                    if ($resConfrim) {
+                        $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
+                        $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
+                        $iconcash_inquiry->confirm_status = $resConfrim->success;
+                        $iconcash_inquiry->save();
+                    }
                 }
 
                 $column_name = 'merchant_id';
@@ -2190,20 +2193,24 @@ class TransactionController extends Controller
             }
 
             $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order, 'topup-refund-ongkir');
-            $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
-            if ($resConfrim) {
-                $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
-                $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
-                $iconcash_inquiry->confirm_status = $resConfrim->success;
-                $iconcash_inquiry->save();
+            if ($topup_inquiry->success) {
+                $resConfrim = IconcashManager::topupConfirm(data_get($topup_inquiry, 'data.orderId'), data_get($topup_inquiry, 'data.amount'));
 
-                $refund->status = 'success';
-                $refund->updated_by = 'system';
-            } else {
-                $refund->status = 'failed';
-                $refund->updated_by = 'system';
+                if ($resConfrim) {
+                    $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
+                    $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
+                    $iconcash_inquiry->confirm_status = $resConfrim->success;
+                    $iconcash_inquiry->save();
+
+                    $refund->status = 'success';
+                    $refund->updated_by = 'system';
+                } else {
+                    $refund->status = 'failed';
+                    $refund->updated_by = 'system';
+                }
             }
+
             $refund->save();
 
             // $column_name = 'merchant_id';

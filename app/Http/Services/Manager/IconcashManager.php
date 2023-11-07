@@ -505,7 +505,7 @@ class IconcashManager
         //     throw new Exception($response->message, $response->code);
         // }
 
-        return data_get($response, 'data');
+        return $response;
     }
 
     public static function topupConfirm($order_id, $amount)
