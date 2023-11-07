@@ -1418,7 +1418,7 @@ class TransactionController extends Controller
 
                 $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
 
-                if ($topup_inquiry->success) {
+                if (isset($topup_inquiry->success) && $topup_inquiry->success) {
                     $resConfrim = IconcashManager::topupConfirm(data_get($topup_inquiry, 'data.orderId'), data_get($topup_inquiry, 'data.amount'));
 
                     if ($resConfrim) {
