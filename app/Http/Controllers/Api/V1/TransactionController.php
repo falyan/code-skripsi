@@ -1419,7 +1419,17 @@ class TransactionController extends Controller
 
                 if ($merchant_u17 && $merchant_u17->value == $order->merchant_id) {
                     $expired = $expired_u17 ? $expired_u17->value : '2020-12-31';
-                    $this->voucherCommand->generateVoucherU17($order, $customer, $mdr_total, $expired);
+                    $buyer = Customer::where('id', $order->buyer_id)->first();
+                    if ($buyer->pln_mobile_customer_id) {
+                        $this->voucherCommand->generateVoucherU17($order, $buyer, $mdr_total, $expired);
+                    } else {
+                        Log::info([
+                            'path_info' => 'generate_voucher_u17',
+                            'message' => 'Tidak memenuhi syarat untuk generate voucher u17',
+                            'order_id' => $order->id,
+                            'buyer_id' => $buyer,
+                        ]);
+                    }
                 } else {
                     $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
 
@@ -1445,8 +1455,10 @@ class TransactionController extends Controller
                 $notificationCommand = new NotificationCommands();
                 $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
 
-                $customer = Customer::where('merchant_id', $data->merchant_id)->first();
-                $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
+                if (!$merchant_u17 && $merchant_u17->value != $order->merchant_id) {
+                    $customer = Customer::where('merchant_id', $data->merchant_id)->first();
+                    $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
+                }
 
                 $mailSender = new MailSenderManager();
                 $mailSender->mailOrderDone($id);
