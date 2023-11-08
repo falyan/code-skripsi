@@ -2327,10 +2327,11 @@ class TransactionCommands extends Service
                 $delivery->awb_number = $resi['data']['awb_number'];
                 $delivery->no_reference = $resi['data']['no_reference'];
                 $delivery->image_logistic = $resi['data']['courier_image'];
-                $delivery->is_request_pickup = $expect_time != null ? true : false;
-                $delivery->request_pickup_time =  $expect_time != null ? Carbon::parse($expect_time)->format('Y-m-d H:i:s') : null;
-                $delivery->save();
             }
+            $delivery->is_request_pickup = $expect_time != null ? true : false;
+            $delivery->request_pickup_time =  $expect_time != null ? Carbon::parse($expect_time)->format('Y-m-d H:i:s') : null;
+            $delivery->save();
+
         } else {
             Carbon::setLocale('id');
             $date = Carbon::now('Asia/Jakarta')->isoFormat('YMMDD');
