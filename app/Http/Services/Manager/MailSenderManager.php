@@ -158,7 +158,7 @@ class MailSenderManager
         });
 
         if (Mail::failures()) {
-            Log::error('Gagal mengirim email pesanan sampai untuk ke email: ' . $customer->email, );
+            Log::error('Gagal mengirim email pesanan sampai untuk ke email: ' . $customer->email,);
         } else {
             Log::info('Berhasil mengirim email pesanan sampai ke email: ' . $customer->email);
         }
@@ -468,6 +468,23 @@ class MailSenderManager
         Mail::send('email.vaoucherClaim', $data, function ($mail) use ($customer) {
             $mail->to($customer->email, 'no-reply')
                 ->subject("Klaim Voucher Ubah Daya PLN");
+            $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
+        });
+
+        if (Mail::failures()) {
+            Log::error('Gagal mengirim email klaim voucher ke email: ' . $customer->email);
+        } else {
+            Log::info('Berhasil mengirim email klaim voucher ke email: ' . $customer->email);
+        }
+
+        return;
+    }
+
+    public function mailVoucherMerchandiseU17Claim($data, $customer)
+    {
+        Mail::send('email.voucherMerchandiseU17Claim', $data, function ($mail) use ($customer) {
+            $mail->to($customer->email, 'no-reply')
+                ->subject("Voucher Listrik Merchandise PLN Mobile");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
         });
 
