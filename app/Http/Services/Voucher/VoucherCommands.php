@@ -340,10 +340,10 @@ class VoucherCommands
         $products = [];
         foreach ($order->detail as $detail) {
             $products[] = [
-                'productId' => $detail->product_id,
+                'productId' => (string) $detail->product_id,
                 'qty' => $detail->quantity,
-                'price' => $detail->price,
-                'totalPrice' => $detail->total_price,
+                'price' => (float) $detail->price,
+                'totalPrice' => (float) $detail->total_price,
             ];
         }
 
@@ -413,7 +413,7 @@ class VoucherCommands
             PromoLogMerchandise::create([
                 'customer_id' => $order->buyer_id,
                 'order_id' => $order->id,
-                'pln_mobile_customer_id' => $order->buyer->email,
+                'pln_mobile_customer_id' => $customer->pln_mobile_customer_id,
                 'event_name' => 'merchandise-u17',
                 'mdr_value' => $mdr_value,
                 'value' => $total_voucher,
@@ -424,10 +424,10 @@ class VoucherCommands
 
             $title = 'Selamat Anda Mendapatkan Voucher';
             $message = 'Selamat, Anda mendapatkan voucher listrik berikut dari pembelian merchandise event Piala Dunia U17 FIFA Indonesia 2023!';
-            $url_path = 'v1/buyer/query/transaction/' . $order->buyer->id . '/detail/' . $order->id;
+            $url_path = 'v1/buyer/query/transaction/' . $customer->id . '/detail/' . $order->id;
             $notificationCommand = new NotificationCommands();
-            $notificationCommand->create('customer_id', $order->buyer->id, 2, $title, $message, $url_path);
-            $notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
+            $notificationCommand->create('customer_id', $customer->id, 2, $title, $message, $url_path);
+            $notificationCommand->sendPushNotificationCustomerPlnMobile($customer->id, $title, $message);
 
             $mailSender = new MailSenderManager();
             $mailSender->mailVoucherMerchandiseU17Claim($dataMail, $customer);
