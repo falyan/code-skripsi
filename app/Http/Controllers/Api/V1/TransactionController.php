@@ -1036,7 +1036,6 @@ class TransactionController extends Controller
                         if ($o->voucher_ubah_daya_code != null) {
                             $check_voucher_exist = true;
                         }
-
                     }
 
                     $is_ev2go = false;
@@ -1048,7 +1047,6 @@ class TransactionController extends Controller
                                 if ($order->merchant_id == $value->merchant_id) {
                                     $merchat_ev2go = true;
                                 }
-
                             }
                         }
                     }
@@ -1381,6 +1379,10 @@ class TransactionController extends Controller
 
                 $order = Order::with(['delivery', 'detail'])->where('id', $id)->first();
                 $customer = Customer::with('iconcash')->where('merchant_id', $order->merchant_id)->first();
+                $master_data = MasterData::whereIn('key', ['merchant_u17_id', 'merchant_u17_expired'])->get();
+                $merchant_u17 = collect($master_data)->where('key', 'merchant_u17_id')->first();
+                $expired_u17 = collect($master_data)->where('key', 'merchant_u17_expired')->first();
+
                 $iconcash = $customer->iconcash;
                 $account_type_id = null;
 
@@ -1410,14 +1412,19 @@ class TransactionController extends Controller
                 $client_ref = $order->trx_no;
                 $corporate_id = 10;
 
-                $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
-                $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+                if ($merchant_u17 && $merchant_u17->value == $order->merchant_id) {
+                    $expired = $expired_u17 ? $expired_u17->value : '2020-12-31';
+                    $this->voucherCommand->generateVoucherU17($order, $customer, $mdr_total, $expired);
+                } else {
+                    $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
+                    $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
-                if ($resConfrim) {
-                    $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
-                    $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
-                    $iconcash_inquiry->confirm_status = $resConfrim->success;
-                    $iconcash_inquiry->save();
+                    if ($resConfrim) {
+                        $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
+                        $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
+                        $iconcash_inquiry->confirm_status = $resConfrim->success;
+                        $iconcash_inquiry->save();
+                    }
                 }
 
                 $column_name = 'merchant_id';
@@ -1506,7 +1513,6 @@ class TransactionController extends Controller
                         if ($payment_info->date_expired != null) {
                             IconpayManager::booking($payment_info->no_reference, $payment_info->date_created, $payment_info->date_expired, "99", $payment_info->payment_amount, $payment_info->customer->full_name, $payment_info->customer->email, $payment_info->customer->phone, false);
                         }
-
                     }
 
                     $evCustomer = CustomerEVSubsidy::where([
