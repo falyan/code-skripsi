@@ -25,21 +25,26 @@
         vertical-align: top;
         font-family: 'Nunito Sans', sans-serif;
         background: #e3e7ea;">
-    <table width="600" align="center" style="border-spacing: 10px; background: #ffffff; padding: 48px 48px 0 48px;">
-        <tbody>
-            <tr>
-                <td style="width: 50%;">
-                    <img src="https://api-mkp.iconcash.id/v1/cdn/api/firebase/file/load/Marketplace~merchants~1699432068b03575c1-990e-46f4-b666-bc476d83a2e9.png"
-                        alt="" style="max-width: 90px" />
-                </td>
-                <td style="width: 50%; text-align: -webkit-right !important;">
-                    <img src="https://media.discordapp.net/attachments/830329995989352458/1062551640978247770/pln-mobile-logo.png"
-                        alt="" style="max-width: 200px" />
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <table width="600" align="center" style="border-spacing: 10px; background: #ffffff; padding:  0 48px 48px 48px;">
+    <table width="600" align="center" style="border-spacing: 10px; background: #ffffff; padding: 48px;">
+        <tr>
+            <td>
+                <table width="100%">
+                    <tbody>
+                        <tr>
+                            <td>
+                                <img src="https://api-mkp.iconcash.id/v1/cdn/api/firebase/file/load/Marketplace~merchants~1699432068b03575c1-990e-46f4-b666-bc476d83a2e9.png"
+                                    alt="" style="max-width: 90px" />
+                            </td>
+                            <td style="width: 50%; text-align: -webkit-right !important;">
+                                <img src="https://media.discordapp.net/attachments/830329995989352458/1062551640978247770/pln-mobile-logo.png"
+                                    alt="" style="max-width: 200px" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+
         <tr>
             <td>
                 <p style="font-weight: 400; font-size: 16px; color: #323232;">
@@ -47,6 +52,7 @@
                 </p>
             </td>
         </tr>
+
         <tr>
             <td>
                 <p
@@ -59,37 +65,31 @@
                 </p>
             </td>
         </tr>
+
         @foreach ($list_voucher as $voucher)
             <tr>
                 <td>
-                    <div
-                        style="width: 100%; width: 100%; height: 50px; border: 1px rgba(0, 162, 185, 0.10) solid; border-radius: 8px;">
-                        <table style="padding: 4px 8px; width: 100%;">
-                            <tbody>
+                    <div style="width: 100%; height: 58px; border: 1px rgba(0, 162, 185, 0.10) solid; border-radius: 8px;">
+                        <table style="padding: 4px 8px;" width="100%">
                                 <tr>
-                                    <td style="width: 50%; color: #323232; font-size: 14px; font-weight: 400; line-height: 20px;">
-                                        {{ $voucher['name'] }}</td>
-                                    <td style="width: 50%; text-align: -webkit-right !important;">
-                                        <div
-                                            style="padding: 4px 6px; background: rgba(0, 169, 47.32, 0.10); border-radius: 4px; width: 54px;">
-                                            <div
-                                                style="color: #00A92F; font-size: 10px; font-weight: 600; line-height: 12px; text-align: center;">
-                                                {{ $voucher['qty'] }} Voucher</div>
+                                    <td style="color: #323232; font-size: 14px; font-weight: 400; line-height: 20px;">{{ $voucher['name'] }}</td>
+                                    <td style="text-align: -webkit-right !important;" width="50%">
+                                        <div style="padding: 4px 6px; background: rgba(0, 169, 47.32, 0.10); border-radius: 4px; width: 54px;">
+                                            <div style="color: #00A92F; font-size: 10px; font-weight: 600; line-height: 12px; text-align: center;">{{ $voucher['qty'] }} Voucher</div>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td colspan="2"
-                                        style="color: #00A2B9; font-size: 18px; font-weight: 700; line-height: 20px;">
+                                    <td colspan="2" style="color: #00A2B9; font-size: 18px; font-weight: 700; line-height: 20px;">
                                         Rp {{ number_format($voucher['amount'], 0, ',', '.') }}
                                     </td>
                                 </tr>
-                            </tbody>
                         </table>
                     </div>
                 </td>
             </tr>
         @endforeach
+
         <tr>
             <td style="padding-top: 20px;">
                 <p
@@ -100,11 +100,10 @@
                     <table style="width: 100%;">
                         <tbody>
                             <tr>
-                                <td style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0; width: 50%; ">
+                                <td style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0;">
                                     Jumlah Voucher
                                 </td>
-                                <td
-                                    style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0; width: 50%; text-align: -webkit-right !important;">
+                                <td width="50%" style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0; text-align: -webkit-right !important;">
                                     {{ $total_qty }}
                                 </td>
                             </tr>
@@ -115,11 +114,10 @@
                     <table style="width: 100%;">
                         <tbody>
                             <tr>
-                                <td style="font-weight: 700; font-size: 16px; color: black; padding: 0; width: 50%; ">
+                                <td style="font-weight: 700; font-size: 16px; color: black; padding: 0;">
                                     Total Nominal Voucher
                                 </td>
-                                <td
-                                    style="font-weight: 700; font-size: 16px; color: black; padding: 0; width: 50%; text-align: -webkit-right !important;">
+                                <td width="50%" style="font-weight: 700; font-size: 16px; color: black; padding: 0; text-align: -webkit-right !important;">
                                     Rp {{ number_format($total_voucher, 0, ',', '.') }}
                                 </td>
                             </tr>
@@ -259,20 +257,10 @@
             </td>
         </tr>
         <tr>
-            <td style="width: 40%; text-align: right;">
+            <td style="text-align: center;">
                 <div>
-                    <img src="https://media.discordapp.net/attachments/830329995989352458/1062551642253303808/icon-phone.png"
-                        alt="" style="max-width: 50px; padding: 0px 6px" />
-                    <span
-                        style="font-weight: 400; font-size: 14px; line-height: 19px; vertical-align: text-top; margin-right: 30px;">
-                        150 0071
-                    </span>
-                </div>
-            </td>
-            <td style="width: 40%; text-align: left;">
-                <div style="display: flex; align-items: center;">
                     <img src="https://media.discordapp.net/attachments/830329995989352458/1062551641888411768/icon-mail.png"
-                        alt="" style="max-width: 50px; padding: 0px 6px" />
+                    alt="" style="width: 18px; padding: 0px 2px" />
                     <span style="font-weight: 400; font-size: 14px; line-height: 19px; vertical-align: text-top;">
                         support.marketplace@iconpln.co.id
                     </span>
@@ -290,11 +278,13 @@
                     font-size: 16px;
                     line-height: 22px;
                     color: #666666;
+                    margin: 0 0 16px 0;
                     ">
                     Download PLN Mobile di
                 </p>
             </td>
         </tr>
+
         <tr>
             <td style="text-align: right;">
                 <a href="https://apps.apple.com/nz/app/pln-mobile/id1299581030" target="_blank"><img

@@ -1418,9 +1418,9 @@ class TransactionController extends Controller
                 $corporate_id = 10;
 
                 if ($merchant_u17 && $merchant_u17->value == $order->merchant_id) {
-                    $expired = $expired_u17 ? $expired_u17->value : '2020-12-31';
+                    $expired = $expired_u17 ? $expired_u17->value : '2024-12-31';
                     $buyer = Customer::where('id', $order->buyer_id)->first();
-                    if ($buyer->pln_mobile_customer_id) {
+                    if ($buyer->pln_mobile_customer_id && \Carbon\Carbon::parse($expired) <= \Carbon\Carbon::now()) {
                         $this->voucherCommand->generateVoucherU17($order, $buyer, $mdr_total, $expired);
                     } else {
                         Log::info([
@@ -1437,8 +1437,8 @@ class TransactionController extends Controller
                         $resConfrim = IconcashManager::topupConfirm(data_get($topup_inquiry, 'data.orderId'), data_get($topup_inquiry, 'data.amount'));
 
                         if ($resConfrim) {
-                            $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
-                            $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
+                            $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', data_get($topup_inquiry, 'data.orderId'))->first();
+                            $iconcash_inquiry->confirm_res_json = json_encode($resConfrim);
                             $iconcash_inquiry->confirm_status = $resConfrim->success;
                             $iconcash_inquiry->save();
                         }
