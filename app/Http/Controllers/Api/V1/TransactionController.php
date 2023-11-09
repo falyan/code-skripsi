@@ -1556,8 +1556,26 @@ class TransactionController extends Controller
 
                         $payment_info = OrderPayment::getByRefnum($order->no_reference)->first();
 
+                        $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', $payment_info->date_created)->timestamp);
+                        $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', $payment_info->date_expired)->timestamp);
+
                         if ($payment_info->date_expired != null) {
-                            IconpayManager::booking($payment_info->no_reference, $payment_info->date_created, $payment_info->date_expired, "99", $payment_info->payment_amount, $payment_info->customer->full_name, $payment_info->customer->email, $payment_info->customer->phone, false);
+                            $body = [
+                                'no_reference' => $payment_info->no_reference,
+                                'transaction_date' => $trx_date,
+                                'transaction_code' => '99',
+                                'partner_reference' => $payment_info->no_reference,
+                                'product_id' => config('credentials.iconpay.product_id'),
+                                'amount' => $payment_info->payment_amount,
+                                'customer_id' => $payment_info->no_reference,
+                                'customer_name' => $payment_info->customer->full_name,
+                                'email' => $payment_info->customer->email,
+                                'phone_number' => $payment_info->customer->phone,
+                                'expired_invoice' => $exp_date,
+                            ];
+
+                            $iconpayManager = new IconpayManager();
+                            $iconpayManager->booking($body);
                         }
                     }
 
