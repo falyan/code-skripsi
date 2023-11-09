@@ -16,17 +16,6 @@
     rel="stylesheet">
 
 <style>
-    body {
-        padding: 0;
-        margin: 0;
-        border: none;
-        border-spacing: 0px;
-        border-collapse: collapse;
-        vertical-align: top;
-        font-family: 'Nunito Sans', sans-serif;
-        background: #e3e7ea;
-    }
-
     .rules span {
         color: rgba(18, 19, 20, 0.70);
         font-size: 14px;
@@ -37,26 +26,33 @@
 
     .rules .number {
         padding-right: 8px;
-        padding-top: 4px;
-        display: flex;
-        align-items: start;
+        vertical-align: text-top;
     }
 </style>
 
-<body>
-    <table width="600" align="center" style="border-spacing: 10px; background: #ffffff; padding: 48px">
+<body
+    style="
+        padding: 0;
+        margin: 0;
+        border: none;
+        border-spacing: 0px;
+        border-collapse: collapse;
+        vertical-align: top;
+        font-family: 'Nunito Sans', sans-serif;
+        background: #e3e7ea;">
+    <table width="600" align="center" style="border-spacing: 10px; background: #ffffff; padding: 48px 48px 0 48px;">
         <tr>
-            <td style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <img src="https://api-mkp.iconcash.id/v1/cdn/api/firebase/file/load/Marketplace~merchants~1699432068b03575c1-990e-46f4-b666-bc476d83a2e9.png"
-                        alt="" style="max-width: 90px" />
-                </div>
-                <div>
-                    <img src="https://media.discordapp.net/attachments/830329995989352458/1062551640978247770/pln-mobile-logo.png"
-                        alt="" style="max-width: 200px" />
-                </div>
+            <td>
+                <img src="https://api-mkp.iconcash.id/v1/cdn/api/firebase/file/load/Marketplace~merchants~1699432068b03575c1-990e-46f4-b666-bc476d83a2e9.png"
+                    alt="" style="max-width: 90px" />
+            </td>
+            <td style="text-align: end;">
+                <img src="https://media.discordapp.net/attachments/830329995989352458/1062551640978247770/pln-mobile-logo.png"
+                    alt="" style="max-width: 200px" />
             </td>
         </tr>
+    </table>
+    <table width="600" align="center" style="border-spacing: 10px; background: #ffffff; padding:  0 48px 48px 48px;">
         <tr>
             <td>
                 <p style="font-weight: 400; font-size: 16px; color: #323232;">
@@ -76,76 +72,67 @@
                 </p>
             </td>
         </tr>
-        <tr>
-            <td style="display: flex; flex-direction: column; gap: 20px;">
-                @foreach ($list_voucher as $voucher)
-                    <div
-                        style="width: 100%; height: 58px; background: rgba(0, 162, 185, 0.05); border-radius: 8px; flex-direction: column; justify-content: flex-start; align-items: flex-start; display: inline-flex">
-                        <div
-                            style="align-self: stretch; height: 58px; padding-left: 12px; padding-right: 12px; padding-top: 10px; padding-bottom: 10px; background: white; border-radius: 8px; border: 1px rgba(0, 162, 185, 0.10) solid; flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: 10px; display: flex">
-                            <div
-                                style="align-self: stretch; justify-content: flex-start; align-items: flex-start; gap: 12px; display: inline-flex">
-                                <div
-                                    style="flex: 1 1 0; flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: 12px; display: inline-flex">
-                                    <div
-                                        style="align-self: stretch; height: 44px; flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: 4px; display: flex">
-                                        <div
-                                            style="align-self: stretch; color: #323232; font-size: 14px; font-weight: 400; line-height: 20px; word-wrap: break-word">
-                                            {{ $voucher['name'] }}</div>
-                                        <div
-                                            style="align-self: stretch; color: #00A2B9; font-size: 18px; font-weight: 700; line-height: 20px; word-wrap: break-word">
-                                            Rp {{ number_format($voucher['amount'], 2, ',', '.') }}</div>
+        @foreach ($list_voucher as $voucher)
+            <tr>
+                <td>
+                    <div style="width: 100%; width: 100%; height: 58px; border: 1px rgba(0, 162, 185, 0.10) solid; border-radius: 8px;">
+                        <table style="padding: 4px 8px; width: 100%;">
+                            <tr>
+                                <td style="color: #323232; font-size: 14px; font-weight: 400; line-height: 20px;">{{ $voucher['name'] }}</td>
+                                <td>
+                                    <div style="padding: 4px 6px; background: rgba(0, 169, 47.32, 0.10); border-radius: 4px; max-width: 54px; margin-left: auto;">
+                                        <div style="color: #00A92F; font-size: 10px; font-weight: 600; line-height: 12px; text-align: center;">{{ $voucher['qty'] }} Voucher</div>
                                     </div>
-                                </div>
-                                <div
-                                    style="flex-direction: column; justify-content: flex-start; align-items: flex-end; gap: 8px; display: inline-flex">
-                                    <div
-                                        style="padding-left: 8px; padding-right: 8px; padding-top: 4px; padding-bottom: 4px; background: rgba(0, 169, 47.32, 0.10); border-radius: 4px; justify-content: center; align-items: center; gap: 10px; display: inline-flex">
-                                        <div
-                                            style="color: #00A92F; font-size: 10px; font-weight: 600; line-height: 12px; word-wrap: break-word">
-                                            {{ $voucher['qty'] }} Voucher</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="color: #00A2B9; font-size: 18px; font-weight: 700; line-height: 20px;">
+                                    Rp {{ number_format($voucher['amount'], 0, ',', '.') }}
+                                </td>
+                            </tr>
+                        </table>
                     </div>
-                @endforeach
-            </td>
-        </tr>
+                </td>
+            </tr>
+        @endforeach
         <tr>
             <td style="padding-top: 20px;">
                 <p
                     style="font-weight: 700; font-size: 14px; line-height: 140%; color: black; padding-bottom: 14px; border-bottom: 1px dashed #d9d9d9;">
                     Rincian Voucher Listrik
                 </p>
-                <div
-                    style="padding: 0 0 14px 0; border-bottom: 1px dashed #d9d9d9; display: flex; justify-content: space-between;">
-                    <p style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0;">
-                        Jumlah Voucher
-                    </p>
-                    <p style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0;">
-                        {{ $total_qty }}
-                    </p>
+                <div style="padding: 0 0 14px 0; border-bottom: 1px dashed #d9d9d9;">
+                    <table style="width: 100%;">
+                        <tr>
+                            <td style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0;">
+                                Jumlah Voucher
+                            </td>
+                            <td
+                                style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0; text-align: end;">
+                                {{ $total_qty }}
+                            </td>
+                        </tr>
+                    </table>
                 </div>
-                <div style="padding: 0 0 14px 0; display: flex; justify-content: space-between;">
-                    <p style="font-weight: 700;  font-size: 16px; color: black; padding: 0;">
-                        Total Nominal Voucher
-                    </p>
-                    <p style="font-weight: 700;  font-size: 16px; color: black; padding: 0;">
-                        Rp {{ number_format($total_voucher, 2, ',', '.') }}
-                    </p>
+                <div style="padding: 14px 0 14px 0;">
+                    <table style="width: 100%;">
+                        <tr>
+                            <td style="font-weight: 700; font-size: 16px; color: black; padding: 0;">
+                                Total Nominal Voucher
+                            </td>
+                            <td style="font-weight: 700; font-size: 16px; color: black; padding: 0; text-align: end;">
+                                Rp {{ number_format($total_voucher, 2, ',', '.') }}
+                            </td>
+                        </tr>
+                    </table>
                 </div>
                 <div style="padding: 0 0 14px 0; border-bottom: 1px dotted #d9d9d9;">
                     <div style="padding: 12px 16px; background: rgba(0, 162, 185, 0.05); border-radius: 8px;">
-                        <div
-                            style="flex-direction: column; justify-content: flex-start; align-items: center; gap: 12px; display: flex">
-                            <div style="text-align: center">
-                                <span
-                                    style="color: #00A2B9; font-size: 14px; font-family: Nunito Sans; font-weight: 400; word-wrap: break-word">Harap
-                                    tukarkan voucher di atas sebelum tanggal </span>
-                                <span
-                                    style="color: #00A2B9; font-size: 14px; font-family: Nunito Sans; font-weight: 700; word-wrap: break-word">{{ tanggal($expired_date) }}</span>
-                            </div>
+                        <div style="text-align: center">
+                            <span style="color: #00A2B9; font-size: 14px;">Harap
+                                tukarkan voucher di atas sebelum tanggal </span>
+                            <span
+                                style="color: #00A2B9; font-size: 14px; font-weight: 700;">{{ tanggal($expired_date) }}</span>
                         </div>
                     </div>
                 </div>
@@ -153,7 +140,7 @@
         </tr>
         <tr>
             <td>
-                <div style="padding: 0 0 6px 0;">
+                <div style="padding: 0;">
                     <p style="font-weight: 700; font-size: 16px; color: rgba(18, 19, 20, 0.70);">
                         Tata Cara Penggunaan
                     </p>
@@ -246,70 +233,77 @@
             </td>
         </tr>
     </table>
+
     <table width="600" align="center"
         style="border-spacing: 10px; background: #00a2b9; margin-top: 17px; margin-bottom: 17px; color: #ffffff; border-radius: 8px;">
         <tr>
-            <td>
+            <td colspan="2">
                 <p
                     style="
-              text-align: center;
-              font-weight: 800;
-              font-size: 16px;
-              line-height: 22px;
-              margin-bottom: 16px;
-            ">
+                    text-align: center;
+                    font-weight: 800;
+                    font-size: 16px;
+                    line-height: 22px;
+                    margin-bottom: 6px;
+                    ">
                     Punya Pertanyaan?
                 </p>
                 <p
                     style="
-              text-align: center;
-              font-weight: 400;
-              font-size: 14px;
-              line-height: 19px;
-              margin: 0;
-            ">
+                    text-align: center;
+                    font-weight: 400;
+                    font-size: 14px;
+                    line-height: 19px;
+                    margin: 0;
+                    ">
                     Hubungi PLN Mobile Help Center disini:
                 </p>
             </td>
         </tr>
         <tr>
-            <td style="display: flex; justify-content: center">
-                <div style="display: flex; align-items: center">
+            <td style="width: 40%; text-align: right;">
+                <div>
                     <img src="https://media.discordapp.net/attachments/830329995989352458/1062551642253303808/icon-phone.png"
-                        alt="" style="max-width: 50px; margin: 0 8px" />
-                    <span style="font-weight: 400; font-size: 14px; line-height: 19px">
+                        alt="" style="max-width: 50px; padding: 0px 6px" />
+                    <span
+                        style="font-weight: 400; font-size: 14px; line-height: 19px; vertical-align: text-top; margin-right: 30px;">
                         150 0071
                     </span>
                 </div>
-                <div style="display: flex; align-items: center; padding-left: 21px">
+            </td>
+            <td style="width: 40%; text-align: left;">
+                <div style="display: flex; align-items: center;">
                     <img src="https://media.discordapp.net/attachments/830329995989352458/1062551641888411768/icon-mail.png"
-                        alt="" style="max-width: 50px; margin: 0 8px" />
-                    <span style="font-weight: 400; font-size: 14px; line-height: 19px">
-                        humas@pln.co.id
+                        alt="" style="max-width: 50px; padding: 0px 6px" />
+                    <span style="font-weight: 400; font-size: 14px; line-height: 19px; vertical-align: text-top;">
+                        support.marketplace@iconpln.co.id
                     </span>
                 </div>
             </td>
         </tr>
     </table>
+
     <table width="600" align="center" style="border-spacing: 10px">
         <tr>
-            <td align="center">
+            <td align="center" colspan="2">
                 <p
                     style="
-              font-weight: 700;
-              font-size: 16px;
-              line-height: 22px;
-              color: #666666;
-            ">
+                    font-weight: 700;
+                    font-size: 16px;
+                    line-height: 22px;
+                    color: #666666;
+                    ">
                     Download PLN Mobile di
                 </p>
             </td>
         </tr>
         <tr>
-            <td style="display: flex; align-items: center; justify-content: center">
+            <td style="text-align: right;">
                 <a href="https://apps.apple.com/nz/app/pln-mobile/id1299581030" target="_blank"><img
                         src="https://media.discordapp.net/attachments/830329995989352458/1062551641280225320/appstore.png"
                         alt="" style="max-width: 150px; padding: 0 8px" /></a>
+            </td>
+            <td>
                 <a href="https://play.google.com/store/apps/details?id=com.icon.pln123" target="_blank"><img
                         src="https://media.discordapp.net/attachments/830329995989352458/1062551642572079124/playstore.png"
                         alt="" style="max-width: 150px; padding: 0 8px" /></a>
