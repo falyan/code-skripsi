@@ -28,7 +28,7 @@
     <table width="600" align="center" style="border-spacing: 10px; background: #ffffff; padding: 48px 48px 0 48px;">
         <tbody>
             <tr>
-                <td>
+                <td style="width: 50%;">
                     <img src="https://api-mkp.iconcash.id/v1/cdn/api/firebase/file/load/Marketplace~merchants~1699432068b03575c1-990e-46f4-b666-bc476d83a2e9.png"
                         alt="" style="max-width: 90px" />
                 </td>
@@ -67,7 +67,7 @@
                         <table style="padding: 4px 8px; width: 100%;">
                             <tbody>
                                 <tr>
-                                    <td style="color: #323232; font-size: 14px; font-weight: 400; line-height: 20px;">
+                                    <td style="width: 50%; color: #323232; font-size: 14px; font-weight: 400; line-height: 20px;">
                                         {{ $voucher['name'] }}</td>
                                     <td style="width: 50%; text-align: -webkit-right !important;">
                                         <div
@@ -100,7 +100,7 @@
                     <table style="width: 100%;">
                         <tbody>
                             <tr>
-                                <td style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0;">
+                                <td style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0; width: 50%; ">
                                     Jumlah Voucher
                                 </td>
                                 <td
@@ -115,7 +115,7 @@
                     <table style="width: 100%;">
                         <tbody>
                             <tr>
-                                <td style="font-weight: 700; font-size: 16px; color: black; padding: 0;">
+                                <td style="font-weight: 700; font-size: 16px; color: black; padding: 0; width: 50%; ">
                                     Total Nominal Voucher
                                 </td>
                                 <td
