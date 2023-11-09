@@ -32,7 +32,7 @@
                     <img src="https://api-mkp.iconcash.id/v1/cdn/api/firebase/file/load/Marketplace~merchants~1699432068b03575c1-990e-46f4-b666-bc476d83a2e9.png"
                         alt="" style="max-width: 90px" />
                 </td>
-                <td style="text-align: right;">
+                <td style="width: 50%; text-align: -webkit-right !important;">
                     <img src="https://media.discordapp.net/attachments/830329995989352458/1062551640978247770/pln-mobile-logo.png"
                         alt="" style="max-width: 200px" />
                 </td>
@@ -69,7 +69,7 @@
                                 <tr>
                                     <td style="color: #323232; font-size: 14px; font-weight: 400; line-height: 20px;">
                                         {{ $voucher['name'] }}</td>
-                                    <td align="right">
+                                    <td style="width: 50%; text-align: -webkit-right !important;">
                                         <div
                                             style="padding: 4px 6px; background: rgba(0, 169, 47.32, 0.10); border-radius: 4px; width: 54px;">
                                             <div
@@ -104,7 +104,7 @@
                                     Jumlah Voucher
                                 </td>
                                 <td
-                                    style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0; text-align: right;">
+                                    style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0; width: 50%; text-align: -webkit-right !important;">
                                     {{ $total_qty }}
                                 </td>
                             </tr>
@@ -119,7 +119,7 @@
                                     Total Nominal Voucher
                                 </td>
                                 <td
-                                    style="font-weight: 700; font-size: 16px; color: black; padding: 0; text-align: right;">
+                                    style="font-weight: 700; font-size: 16px; color: black; padding: 0; width: 50%; text-align: -webkit-right !important;">
                                     Rp {{ number_format($total_voucher, 0, ',', '.') }}
                                 </td>
                             </tr>
