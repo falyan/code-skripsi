@@ -1415,7 +1415,7 @@ class TransactionController extends Controller
                 if ($merchant_u17 && $merchant_u17->value == $order->merchant_id) {
                     $expired = $expired_u17 ? $expired_u17->value : '2024-12-31';
                     $buyer = Customer::where('id', $order->buyer_id)->first();
-                    if ($buyer->pln_mobile_customer_id && \Carbon\Carbon::parse($expired) <= \Carbon\Carbon::now()) {
+                    if ($buyer->pln_mobile_customer_id && \Carbon\Carbon::now() <= \Carbon\Carbon::parse($expired)) {
                         $this->voucherCommand->generateVoucherU17($order, $buyer, $mdr_total, $expired);
                     } else {
                         Log::info([
