@@ -16,7 +16,7 @@
     rel="stylesheet">
 
 <style>
-    .rules span {
+    #rules span {
         color: rgba(18, 19, 20, 0.70);
         font-size: 14px;
         font-weight: 400;
@@ -24,7 +24,7 @@
         word-wrap: break-word;
     }
 
-    .rules .number {
+    #number {
         padding-right: 8px;
         vertical-align: text-top;
     }
@@ -79,8 +79,8 @@
                         <table style="padding: 4px 8px; width: 100%;">
                             <tr>
                                 <td style="color: #323232; font-size: 14px; font-weight: 400; line-height: 20px;">{{ $voucher['name'] }}</td>
-                                <td>
-                                    <div style="padding: 4px 6px; background: rgba(0, 169, 47.32, 0.10); border-radius: 4px; max-width: 54px; margin-left: auto;">
+                                <td align="right">
+                                    <div style="padding: 4px 6px; background: rgba(0, 169, 47.32, 0.10); border-radius: 4px; width: 54px;">
                                         <div style="color: #00A92F; font-size: 10px; font-weight: 600; line-height: 12px; text-align: center;">{{ $voucher['qty'] }} Voucher</div>
                                     </div>
                                 </td>
@@ -108,7 +108,7 @@
                                 Jumlah Voucher
                             </td>
                             <td
-                                style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0; text-align: end;">
+                                style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0; text-align: right;">
                                 {{ $total_qty }}
                             </td>
                         </tr>
@@ -120,8 +120,8 @@
                             <td style="font-weight: 700; font-size: 16px; color: black; padding: 0;">
                                 Total Nominal Voucher
                             </td>
-                            <td style="font-weight: 700; font-size: 16px; color: black; padding: 0; text-align: end;">
-                                Rp {{ number_format($total_voucher, 2, ',', '.') }}
+                            <td style="font-weight: 700; font-size: 16px; color: black; padding: 0; text-align: right;">
+                                Rp {{ number_format($total_voucher, 0, ',', '.') }}
                             </td>
                         </tr>
                     </table>
@@ -138,17 +138,18 @@
                 </div>
             </td>
         </tr>
+
         <tr>
             <td>
                 <div style="padding: 0;">
-                    <p style="font-weight: 700; font-size: 16px; color: rgba(18, 19, 20, 0.70);">
+                    <p style="font-weight: 700; font-size: 16px; color: #1213148d;">
                         Tata Cara Penggunaan
                     </p>
                 </div>
-                <div class="rules">
+                <div id="rules">
                     <table>
                         <tr>
-                            <td class="number"><span>1.</span></td>
+                            <td id="number"><span>1.</span></td>
                             <td>
                                 <span>Buka
                                     aplikasi PLN Mobile, lalu tekan menu Token dan Pembayaran. Jika Anda belum mempunyai
@@ -173,7 +174,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="number"><span>2.</span></td>
+                            <td id="number"><span>2.</span></td>
                             <td>
                                 <span>Saat
                                     sudah di dalam halaman Token dan Pembayaran, lakukan pembelian token dengan
@@ -185,7 +186,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="number"><span>3.</span></td>
+                            <td id="number"><span>3.</span></td>
                             <td>
                                 <span>Periksa nominal pada voucher yang Anda dapat,
                                     lalu pilih token yang sesuai dengan nominal yang tertera pada voucher tersebut.
@@ -193,14 +194,14 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="number"><span>4.</span></td>
+                            <td id="number"><span>4.</span></td>
                             <td>
                                 <span>Tekan “Gunakan Voucher” untuk memasukkan kode voucher Anda.
                                 </span>
                             </td>
                         </tr>
                         <tr>
-                            <td class="number"><span>5.</span></td>
+                            <td id="number"><span>5.</span></td>
                             <td>
                                 <span>Masukkan kode voucher lalu tekan
                                     “Gunakan” untuk melanjutkan proses penukaran voucher.
@@ -208,20 +209,20 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="number"><span>6.</span></td>
+                            <td id="number"><span>6.</span></td>
                             <td>
                                 <span>Tekan "Lanjutkan Pembayaran".</span>
                             </td>
                         </tr>
                         <tr>
-                            <td class="number"><span>7.</span></td>
+                            <td id="number"><span>7.</span></td>
                             <td>
                                 <span>Voucher Anda bisa dipakai untuk pembelian token ini, total pembayaran Anda
                                     menjadi Rp 0. Lalu tekan “Pay” untuk menyelesaikan proses penukaran voucher.</span>
                             </td>
                         </tr>
                         <tr>
-                            <td class="number"><span>8.</span></td>
+                            <td id="number"><span>8.</span></td>
                             <td>
                                 <span>Selamat
                                     penukaran voucher Anda telah berhasil. Silakan gunakan token/stroom pada kWh meter
