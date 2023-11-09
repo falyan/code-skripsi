@@ -31,11 +31,7 @@
                 <table width="100%">
                     <tbody>
                         <tr>
-                            <td>
-                                <img src="https://api-mkp.iconcash.id/v1/cdn/api/firebase/file/load/Marketplace~merchants~1699432068b03575c1-990e-46f4-b666-bc476d83a2e9.png"
-                                    alt="" style="max-width: 90px" />
-                            </td>
-                            <td style="width: 50%; text-align: -webkit-right !important;">
+                            <td style="width: 100%; text-align: -webkit-right !important;">
                                 <img src="https://media.discordapp.net/attachments/830329995989352458/1062551640978247770/pln-mobile-logo.png"
                                     alt="" style="max-width: 200px" />
                             </td>
