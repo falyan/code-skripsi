@@ -15,21 +15,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,700&display=swap"
     rel="stylesheet">
 
-<style>
-    #rules span {
-        color: rgba(18, 19, 20, 0.70);
-        font-size: 14px;
-        font-weight: 400;
-        line-height: 19.60px;
-        word-wrap: break-word;
-    }
-
-    #number {
-        padding-right: 8px;
-        vertical-align: text-top;
-    }
-</style>
-
 <body
     style="
         padding: 0;
@@ -41,16 +26,18 @@
         font-family: 'Nunito Sans', sans-serif;
         background: #e3e7ea;">
     <table width="600" align="center" style="border-spacing: 10px; background: #ffffff; padding: 48px 48px 0 48px;">
-        <tr>
-            <td>
-                <img src="https://api-mkp.iconcash.id/v1/cdn/api/firebase/file/load/Marketplace~merchants~1699432068b03575c1-990e-46f4-b666-bc476d83a2e9.png"
-                    alt="" style="max-width: 90px" />
-            </td>
-            <td style="text-align: end;">
-                <img src="https://media.discordapp.net/attachments/830329995989352458/1062551640978247770/pln-mobile-logo.png"
-                    alt="" style="max-width: 200px" />
-            </td>
-        </tr>
+        <tbody>
+            <tr>
+                <td>
+                    <img src="https://api-mkp.iconcash.id/v1/cdn/api/firebase/file/load/Marketplace~merchants~1699432068b03575c1-990e-46f4-b666-bc476d83a2e9.png"
+                        alt="" style="max-width: 90px" />
+                </td>
+                <td style="text-align: right;">
+                    <img src="https://media.discordapp.net/attachments/830329995989352458/1062551640978247770/pln-mobile-logo.png"
+                        alt="" style="max-width: 200px" />
+                </td>
+            </tr>
+        </tbody>
     </table>
     <table width="600" align="center" style="border-spacing: 10px; background: #ffffff; padding:  0 48px 48px 48px;">
         <tr>
@@ -75,21 +62,29 @@
         @foreach ($list_voucher as $voucher)
             <tr>
                 <td>
-                    <div style="width: 100%; width: 100%; height: 58px; border: 1px rgba(0, 162, 185, 0.10) solid; border-radius: 8px;">
+                    <div
+                        style="width: 100%; width: 100%; height: 50px; border: 1px rgba(0, 162, 185, 0.10) solid; border-radius: 8px;">
                         <table style="padding: 4px 8px; width: 100%;">
-                            <tr>
-                                <td style="color: #323232; font-size: 14px; font-weight: 400; line-height: 20px;">{{ $voucher['name'] }}</td>
-                                <td align="right">
-                                    <div style="padding: 4px 6px; background: rgba(0, 169, 47.32, 0.10); border-radius: 4px; width: 54px;">
-                                        <div style="color: #00A92F; font-size: 10px; font-weight: 600; line-height: 12px; text-align: center;">{{ $voucher['qty'] }} Voucher</div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" style="color: #00A2B9; font-size: 18px; font-weight: 700; line-height: 20px;">
-                                    Rp {{ number_format($voucher['amount'], 0, ',', '.') }}
-                                </td>
-                            </tr>
+                            <tbody>
+                                <tr>
+                                    <td style="color: #323232; font-size: 14px; font-weight: 400; line-height: 20px;">
+                                        {{ $voucher['name'] }}</td>
+                                    <td align="right">
+                                        <div
+                                            style="padding: 4px 6px; background: rgba(0, 169, 47.32, 0.10); border-radius: 4px; width: 54px;">
+                                            <div
+                                                style="color: #00A92F; font-size: 10px; font-weight: 600; line-height: 12px; text-align: center;">
+                                                {{ $voucher['qty'] }} Voucher</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"
+                                        style="color: #00A2B9; font-size: 18px; font-weight: 700; line-height: 20px;">
+                                        Rp {{ number_format($voucher['amount'], 0, ',', '.') }}
+                                    </td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 </td>
@@ -103,27 +98,32 @@
                 </p>
                 <div style="padding: 0 0 14px 0; border-bottom: 1px dashed #d9d9d9;">
                     <table style="width: 100%;">
-                        <tr>
-                            <td style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0;">
-                                Jumlah Voucher
-                            </td>
-                            <td
-                                style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0; text-align: right;">
-                                {{ $total_qty }}
-                            </td>
-                        </tr>
+                        <tbody>
+                            <tr>
+                                <td style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0;">
+                                    Jumlah Voucher
+                                </td>
+                                <td
+                                    style="font-weight: 400;  font-size: 16px; color: #323232; padding: 0; margin: 0; text-align: right;">
+                                    {{ $total_qty }}
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
                 <div style="padding: 14px 0 14px 0;">
                     <table style="width: 100%;">
-                        <tr>
-                            <td style="font-weight: 700; font-size: 16px; color: black; padding: 0;">
-                                Total Nominal Voucher
-                            </td>
-                            <td style="font-weight: 700; font-size: 16px; color: black; padding: 0; text-align: right;">
-                                Rp {{ number_format($total_voucher, 0, ',', '.') }}
-                            </td>
-                        </tr>
+                        <tbody>
+                            <tr>
+                                <td style="font-weight: 700; font-size: 16px; color: black; padding: 0;">
+                                    Total Nominal Voucher
+                                </td>
+                                <td
+                                    style="font-weight: 700; font-size: 16px; color: black; padding: 0; text-align: right;">
+                                    Rp {{ number_format($total_voucher, 0, ',', '.') }}
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
                 <div style="padding: 0 0 14px 0; border-bottom: 1px dotted #d9d9d9;">
@@ -147,34 +147,31 @@
                     </p>
                 </div>
                 <div id="rules">
-                    <table>
+                    <table style="color: rgba(18, 19, 20, 0.70); font-size: 14px; font-weight: 400;">
                         <tr>
-                            <td id="number"><span>1.</span></td>
+                            <td style="padding-right: 8px; vertical-align: text-top;">1.</td>
                             <td>
                                 <span>Buka
                                     aplikasi PLN Mobile, lalu tekan menu Token dan Pembayaran. Jika Anda belum mempunyai
                                     aplikasi
                                     PLN Mobile,
                                 </span>
-                                <span
-                                    style="color: rgba(18, 19, 20, 0.70); font-size: 14px; font-style: italic; font-weight: 400;">download</span><span>
+                                <span style="font-style: italic;">download</span><span>
                                     di </span>
-                                <span
-                                    style="color: rgba(18, 19, 20, 0.70); font-size: 14px; font-style: italic; font-weight: 400;">
+                                <span style="font-style: italic;">
                                     Play Store
                                 </span>
                                 <span>
                                     atau
                                 </span>
-                                <span
-                                    style="color: rgba(18, 19, 20, 0.70); font-size: 14px; font-style: italic; font-weight: 400;">
+                                <span style="font-style: italic;">
                                     App Store
                                 </span>
                                 <span>.</span>
                             </td>
                         </tr>
                         <tr>
-                            <td id="number"><span>2.</span></td>
+                            <td style="padding-right: 8px; vertical-align: text-top;">2.</td>
                             <td>
                                 <span>Saat
                                     sudah di dalam halaman Token dan Pembayaran, lakukan pembelian token dengan
@@ -186,7 +183,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td id="number"><span>3.</span></td>
+                            <td style="padding-right: 8px; vertical-align: text-top;">3.</td>
                             <td>
                                 <span>Periksa nominal pada voucher yang Anda dapat,
                                     lalu pilih token yang sesuai dengan nominal yang tertera pada voucher tersebut.
@@ -194,14 +191,14 @@
                             </td>
                         </tr>
                         <tr>
-                            <td id="number"><span>4.</span></td>
+                            <td style="padding-right: 8px; vertical-align: text-top;">4.</td>
                             <td>
                                 <span>Tekan “Gunakan Voucher” untuk memasukkan kode voucher Anda.
                                 </span>
                             </td>
                         </tr>
                         <tr>
-                            <td id="number"><span>5.</span></td>
+                            <td style="padding-right: 8px; vertical-align: text-top;">5.</td>
                             <td>
                                 <span>Masukkan kode voucher lalu tekan
                                     “Gunakan” untuk melanjutkan proses penukaran voucher.
@@ -209,20 +206,20 @@
                             </td>
                         </tr>
                         <tr>
-                            <td id="number"><span>6.</span></td>
+                            <td style="padding-right: 8px; vertical-align: text-top;">6.</td>
                             <td>
                                 <span>Tekan "Lanjutkan Pembayaran".</span>
                             </td>
                         </tr>
                         <tr>
-                            <td id="number"><span>7.</span></td>
+                            <td style="padding-right: 8px; vertical-align: text-top;">7.</td>
                             <td>
                                 <span>Voucher Anda bisa dipakai untuk pembelian token ini, total pembayaran Anda
                                     menjadi Rp 0. Lalu tekan “Pay” untuk menyelesaikan proses penukaran voucher.</span>
                             </td>
                         </tr>
                         <tr>
-                            <td id="number"><span>8.</span></td>
+                            <td style="padding-right: 8px; vertical-align: text-top;">8.</td>
                             <td>
                                 <span>Selamat
                                     penukaran voucher Anda telah berhasil. Silakan gunakan token/stroom pada kWh meter
