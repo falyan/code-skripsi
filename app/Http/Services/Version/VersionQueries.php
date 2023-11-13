@@ -4,13 +4,17 @@ namespace App\Http\Services\Version;
 
 use App\Models\Version;
 
-class VersionQueries{
-    public function getVersionStatus($version){
-        $data = Version::where('version', 'ILIKE', '%'. $version .'%')->where('status', 1)->first();
-        if ($data == null){
+class VersionQueries
+{
+
+    public function getVersionStatus()
+    {
+        $data = Version::where('status', 1)->first();
+
+        if ($data == null) {
             $response['success'] = false;
             $response['message'] = 'Versi aplikasi tidak ditemukan.';
-            $response['data'] = $version;
+            $response['data'] = null;
             return $response;
         }
         $response['success'] = true;
