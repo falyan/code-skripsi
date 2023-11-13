@@ -623,7 +623,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     });
 
     $router->group(['prefix' => 'version'], static function () use ($router) {
-        $router->post('status', 'VersionController@getVersionStatus');
+        $router->get('status', 'VersionController@getVersionStatus');
     });
 
     $router->group(['prefix' => 'voucher'], static function () use ($router) {

@@ -1670,7 +1670,7 @@ class TransactionCommands extends Service
                 $order_delivery->delivery_fee = data_get($data, 'delivery_fee');
                 $order_delivery->delivery_discount = data_get($data, 'delivery_discount');
                 $order_delivery->must_use_insurance = data_get($data, 'must_use_insurance') ?? false;
-                $order_delivery->delivery_fee_origin =  $shipping_origin_price;
+                $order_delivery->delivery_fee_origin = $shipping_origin_price;
                 $order_delivery->insurance_fee = $shipping_insurance_fee;
                 $order_delivery->insurance_tax = $shipping_insurance_tax;
                 $order_delivery->origin_fee = $shipping_origin_fee;
@@ -2324,10 +2324,10 @@ class TransactionCommands extends Service
                 $delivery->awb_number = $resi['data']['awb_number'];
                 $delivery->no_reference = $resi['data']['no_reference'];
                 $delivery->image_logistic = $resi['data']['courier_image'];
-                $delivery->is_request_pickup = $expect_time != null ? true : false;
-                $delivery->request_pickup_time =  $expect_time != null ? Carbon::parse($expect_time)->format('Y-m-d H:i:s') : null;
-                $delivery->save();
             }
+            $delivery->is_request_pickup = $expect_time != null ? true : false;
+            $delivery->request_pickup_time = $expect_time != null ? Carbon::parse($expect_time)->format('Y-m-d H:i:s') : null;
+            $delivery->save();
         } else {
             Carbon::setLocale('id');
             $date = Carbon::now('Asia/Jakarta')->isoFormat('YMMDD');
