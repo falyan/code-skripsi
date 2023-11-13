@@ -8,6 +8,8 @@ use Exception;
 
 class VersionController extends Controller
 {
+    private $versionQuery;
+
     public function __construct()
     {
         $this->versionQuery = new VersionQueries();
@@ -15,11 +17,8 @@ class VersionController extends Controller
 
     public function getVersionStatus()
     {
-        if (!$version = request()->get('version')) {
-            return $this->respondWithResult(false, 'field version kosong', 400);
-        }
         try {
-            return $this->versionQuery->getVersionStatus($version);
+            return $this->versionQuery->getVersionStatus();
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
