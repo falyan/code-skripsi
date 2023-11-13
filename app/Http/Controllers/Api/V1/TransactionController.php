@@ -1525,7 +1525,16 @@ class TransactionController extends Controller
                         $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', $payment_info->date_created)->timestamp);
                         $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', $payment_info->date_expired)->timestamp);
 
-                        if ($payment_info->date_expired != null) {
+                        $evCustomer = CustomerEVSubsidy::where([
+                            'order_id' => $order->id,
+                        ])->first();
+
+                        if ($evCustomer) {
+                            $evCustomer->status_approval = 0;
+                            $evCustomer->save();
+                        }
+
+                        if ($payment_info->date_expired != null && $evCustomer == null) {
                             $body = [
                                 'no_reference' => $payment_info->no_reference,
                                 'transaction_date' => $trx_date,
@@ -1543,15 +1552,6 @@ class TransactionController extends Controller
                             $iconpayManager = new IconpayManager();
                             $iconpayManager->bookingV2($body);
                         }
-                    }
-
-                    $evCustomer = CustomerEVSubsidy::where([
-                        'order_id' => $order->id,
-                    ])->first();
-
-                    if ($evCustomer) {
-                        $evCustomer->status_approval = 0;
-                        $evCustomer->save();
                     }
 
                     foreach ($order->detail as $detail) {
