@@ -5,7 +5,7 @@ namespace App\Http\Services\Manager;
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
-use LogService;
+use Illuminate\Support\Facades\Log;
 
 class IconpayManager
 {
@@ -67,13 +67,59 @@ class IconpayManager
 
         $response = json_decode($response->getBody());
 
-        LogService::setUrl($url)->setRequest($body)->setResponse($response)->setServiceCode(self::$service_code)->setCategory('out')->log();
+        Log::info("iconpay.booking", [
+            'url' => $url,
+            'body' => $body,
+            'response' => $response,
+        ]);
 
         if (!$response && $throw_exception) {
             throw new Exception('Terjadi kesalahan: Data tidak dapat diperoleh');
         }
 
         if (isset($response->response_details[0]->response_code) && $response->response_details[0]->response_code != "00" && $throw_exception) {
+            throw new Exception($response->response_details[0]->response_message, (int) $response->response_details[0]->response_code);
+        }
+
+        if (isset($response->response_code) && $response->response_code != "00" && $throw_exception) {
+            throw new Exception($response->response_message, (int) $response->response_code);
+        }
+
+        return $response;
+    }
+
+    public static function bookingV2($body, $throw_exception = true)
+    {
+        $url = sprintf('%s/%s', static::$apiendpoint, 'booking');
+
+        $encode_body = json_encode($body, JSON_UNESCAPED_SLASHES);
+
+        $headers = self::headers([
+            'timestamp' => self::$timestamp,
+            'signature' => hash_hmac('sha256', $encode_body . self::$clientid . self::$timestamp, sha1(self::$appkey)),
+            'Content-Type' => 'application/json',
+        ]);
+
+        $response = self::$curl->request('POST', $url, [
+            'headers' => $headers,
+            'http_errors' => false,
+            // 'connect_timeout' => 10,
+            'body' => $encode_body,
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        Log::info("iconpay.booking", [
+            'url' => $url,
+            'body' => $body,
+            'response' => $response,
+        ]);
+
+        if (!$response && $throw_exception) {
+            throw new Exception('Terjadi kesalahan: Data tidak dapat diperoleh');
+        }
+
+        if (isset($response->response_details[0]->response_code) && $response->response_details[0]->response_code != 00 && $throw_exception) {
             throw new Exception($response->response_details[0]->response_message, (int) $response->response_details[0]->response_code);
         }
 

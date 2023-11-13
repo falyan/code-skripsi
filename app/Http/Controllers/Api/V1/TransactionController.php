@@ -1541,7 +1541,7 @@ class TransactionController extends Controller
                             ];
 
                             $iconpayManager = new IconpayManager();
-                            $iconpayManager->booking($body);
+                            $iconpayManager->bookingV2($body);
                         }
                     }
 
