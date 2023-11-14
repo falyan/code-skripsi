@@ -1623,7 +1623,7 @@ class TransactionController extends Controller
             DB::beginTransaction();
             foreach ($orderByReference as $key => $order) {
                 if (!in_array($order->progress_active->status_code, ['09', '88', '99', '98'])) {
-                    $this->transactionCommand->updateOrderStatus($order->id, '99', 'cancel by bot');
+                    $this->transactionCommand->updateOrderStatus($order->id, '09', 'cancel by bot');
 
                     if ($order->delivery->delivery_setting == 'shipper') {
                         $this->transactionCommand->cancelResi($order);
