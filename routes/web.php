@@ -627,7 +627,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     });
 
     $router->group(['prefix' => 'version'], static function () use ($router) {
-        $router->post('status', 'VersionController@getVersionStatus');
+        $router->get('status', 'VersionController@getVersionStatus');
     });
 
     $router->group(['prefix' => 'voucher'], static function () use ($router) {
@@ -676,7 +676,13 @@ $router->group(['namespace' => '\Rap2hpoutre\LaravelLogViewer'], function () use
 
 // cache clear
 $router->get('/cache-clear', function () {
-    if (env('CACHE_DRIVER') === 'redis') \Illuminate\Support\Facades\Cache::flush();
-    if (env('CACHE_DRIVER') !== 'redis') \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    if (env('CACHE_DRIVER') === 'redis') {
+        \Illuminate\Support\Facades\Cache::flush();
+    }
+
+    if (env('CACHE_DRIVER') !== 'redis') {
+        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    }
+
     return 'cache clear';
 });

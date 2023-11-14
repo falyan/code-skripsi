@@ -25,7 +25,6 @@ use App\Models\OrderDetail;
 use App\Models\OrderPayment;
 use App\Models\OrderProgress;
 use App\Models\Product;
-use App\Models\ProductEvSubsidy;
 use App\Models\PromoLog;
 use App\Models\PromoMaster;
 use App\Models\PromoMerchant;
@@ -1674,7 +1673,7 @@ class TransactionCommands extends Service
                 $order_delivery->delivery_fee = data_get($data, 'delivery_fee');
                 $order_delivery->delivery_discount = data_get($data, 'delivery_discount');
                 $order_delivery->must_use_insurance = data_get($data, 'must_use_insurance') ?? false;
-                $order_delivery->delivery_fee_origin =  $shipping_origin_price;
+                $order_delivery->delivery_fee_origin = $shipping_origin_price;
                 $order_delivery->insurance_fee = $shipping_insurance_fee;
                 $order_delivery->insurance_tax = $shipping_insurance_tax;
                 $order_delivery->origin_fee = $shipping_origin_fee;
@@ -2003,11 +2002,11 @@ class TransactionCommands extends Service
             ];
         }
 
-        $ev_subsidies = ProductEvSubsidy::whereIn('product_id', collect($datas['merchants'])->pluck('products.*.product_id')->flatten()->toArray())->get();
+        $ev_subsidies = [];
         if (isset($datas['customer']) && data_get($datas, 'customer') != null) {
             foreach ($datas['merchants'] as $merchant) {
                 foreach ($merchant['products'] as $product) {
-                    $ev_subsidy = collect($ev_subsidies)->where('product_id', $product['product_id'])->first();
+                    $ev_subsidy = Product::with('ev_subsidy')->where('id', $product['product_id'])->first()->ev_subsidy;
 
                     if ($ev_subsidy) {
                         if ($product['quantity'] > 1) {
@@ -2052,7 +2051,7 @@ class TransactionCommands extends Service
 
         foreach ($datas['merchants'] as $merchant) {
             foreach ($merchant['products'] as $product) {
-                $ev_subsidy = collect($ev_subsidies)->where('product_id', $product['product_id'])->first();
+                $ev_subsidy = Product::with('ev_subsidy')->where('id', $product['product_id'])->first()->ev_subsidy;
 
                 if ($ev_subsidy) {
                     // validasi jika produk adalah subsidi namun body request tidak mengirimkan data customer
@@ -2086,7 +2085,10 @@ class TransactionCommands extends Service
                 foreach ($customer_tiket->detail as $detail) {
                     $tiket = collect($master_tikets)->where('master_data.id', $detail->product->category_id)->first();
 
-                    if ($tiket) $count_tiket += $detail->quantity;
+                    if ($tiket) {
+                        $count_tiket += $detail->quantity;
+                    }
+
                 }
             }
         }
@@ -2099,7 +2101,10 @@ class TransactionCommands extends Service
             foreach ($merchant['products'] as $product) {
                 foreach ($new_products as $key => $p) {
                     $new_products[$key]->quantity = 0;
-                    if (data_get($product, 'product_id') == $p->id) $new_products[$key]->quantity = data_get($product, 'quantity');
+                    if (data_get($product, 'product_id') == $p->id) {
+                        $new_products[$key]->quantity = data_get($product, 'quantity');
+                    }
+
                 }
             }
         }
@@ -2258,7 +2263,9 @@ class TransactionCommands extends Service
                     ];
                 }
 
-                if ($value_ongkir > data_get($data, 'delivery_fee')) $value_ongkir = data_get($data, 'delivery_fee');
+                if ($value_ongkir > data_get($data, 'delivery_fee')) {
+                    $value_ongkir = data_get($data, 'delivery_fee');
+                }
 
                 if ($promo_merchant_ongkir != null) {
                     $customer_limit_count = $promo_merchant_ongkir['promo_master']['customer_limit_count'];
@@ -2307,7 +2314,10 @@ class TransactionCommands extends Service
                                 if ($orderCreated['total_amount'] >= $promo_value['min_value'] && $orderCreated['total_amount'] <= $promo_value['max_value'] && $promo_value['status'] == 1) {
                                     $promo_flash_sale_value = $promo_value;
 
-                                    if ($value_flash_sale_m >= $promo_value['max_discount_value']) $value_flash_sale_m = $promo_value['max_discount_value'];
+                                    if ($value_flash_sale_m >= $promo_value['max_discount_value']) {
+                                        $value_flash_sale_m = $promo_value['max_discount_value'];
+                                    }
+
                                     break;
                                 }
                             }
@@ -2367,15 +2377,20 @@ class TransactionCommands extends Service
                 }
 
                 $shipping_type = data_get($data, 'delivery_service');
-                if (str_contains(strtolower($shipping_type), 'seller')) $shipping_type = 'custom';
+                if (str_contains(strtolower($shipping_type), 'seller')) {
+                    $shipping_type = 'custom';
+                }
 
                 $merchant_data = collect($new_merchants)->where('id', data_get($data, 'merchant_id'))->first();
-                $setting_courirers = Cache::remember('setting_courirers', 60 * 60, fn () => MasterData::where('type', 'rajaongkir_courier')->get());
+                $setting_courirers = Cache::remember('setting_courirers', 60 * 60, fn() => MasterData::where('type', 'rajaongkir_courier')->get());
 
                 $s_courier = '';
                 foreach (collect($setting_courirers)->where('key', 's_courier') as $courier) {
                     foreach (explode(':', $merchant_data->expedition->list_expeditions) as $value) {
-                        if ($value == $courier->reference_third_party_id) $s_courier .= $value . ':';
+                        if ($value == $courier->reference_third_party_id) {
+                            $s_courier .= $value . ':';
+                        }
+
                     }
                 }
 
@@ -2695,7 +2710,9 @@ class TransactionCommands extends Service
                     $order->voucher_bonus_code = $voucher_bonus_code;
                 }
 
-                if (!$this->order_id) $this->order_id = $order->id;
+                if (!$this->order_id) {
+                    $this->order_id = $order->id;
+                }
 
                 if ($order->save()) {
                     $column_name = 'customer_id';
@@ -2722,12 +2739,14 @@ class TransactionCommands extends Service
                 $this->updateCustomerDiscount($customer_id, $customer->email, $datas['total_discount'], $no_reference);
             }
 
-            if ($datas['total_payment'] <= 0) throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
+            if ($datas['total_payment'] <= 0) {
+                throw new Exception('Total pembayaran harus lebih dari 0 rupiah');
+            }
 
             DB::commit();
 
             Log::info('checkout', [
-                'info' => 'Total Payment: ' . $datas['total_payment'] . ' | Bonus Discount: ' . $bonusAmount
+                'info' => 'Total Payment: ' . $datas['total_payment'] . ' | Bonus Discount: ' . $bonusAmount,
             ]);
 
             $mailSender = new MailSenderManager();
@@ -2737,7 +2756,9 @@ class TransactionCommands extends Service
                 $mailSender->mailCheckout($this->order_id);
             }
 
-            if (isset($datas['installment_tenor'])) $installment_tenor = $datas['installment_tenor'] < 10 ? str_pad($datas['installment_tenor'], 2, '0', STR_PAD_LEFT) : $datas['installment_tenor'];
+            if (isset($datas['installment_tenor'])) {
+                $installment_tenor = $datas['installment_tenor'] < 10 ? str_pad($datas['installment_tenor'], 2, '0', STR_PAD_LEFT) : $datas['installment_tenor'];
+            }
 
             $product_name = $new_products[0]->name;
 
@@ -2784,11 +2805,12 @@ class TransactionCommands extends Service
                 'data' => $resData,
             ];
         } catch (Exception $th) {
-        DB::rollBack();
-        throw new Exception('Gagal membuat pesanan', 500);
-        // if (in_array($th->getCode(), self::$error_codes)) {
-        //     throw new Exception($th->getMessage(), $th->getCode());
-        // }
+            DB::rollBack();
+            throw new Exception('Gagal membuat pesanan', 500);
+            // return [
+            //     'success' => false,
+            //     'message' => $th->getMessage(),
+            // ];
         }
     }
 
@@ -3172,7 +3194,7 @@ class TransactionCommands extends Service
                 $delivery->image_logistic = $resi['data']['courier_image'];
             }
             $delivery->is_request_pickup = $expect_time != null ? true : false;
-            $delivery->request_pickup_time =  $expect_time != null ? Carbon::parse($expect_time)->format('Y-m-d H:i:s') : null;
+            $delivery->request_pickup_time = $expect_time != null ? Carbon::parse($expect_time)->format('Y-m-d H:i:s') : null;
             $delivery->save();
         } else {
             Carbon::setLocale('id');
