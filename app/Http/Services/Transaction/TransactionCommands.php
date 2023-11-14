@@ -3174,7 +3174,6 @@ class TransactionCommands extends Service
             $delivery->is_request_pickup = $expect_time != null ? true : false;
             $delivery->request_pickup_time =  $expect_time != null ? Carbon::parse($expect_time)->format('Y-m-d H:i:s') : null;
             $delivery->save();
-
         } else {
             Carbon::setLocale('id');
             $date = Carbon::now('Asia/Jakarta')->isoFormat('YMMDD');
@@ -3184,6 +3183,11 @@ class TransactionCommands extends Service
             $delivery->awb_number = $resi;
             $delivery->save();
         }
+    }
+
+    public function cancelResi($order)
+    {
+        LogisticManager::cancel($order);
     }
 
     public function generateTicket($order_id)
