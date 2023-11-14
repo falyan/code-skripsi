@@ -578,6 +578,7 @@ class LogisticManager
             'json' => $body,
         ]);
 
+        $status_code = $response->getStatusCode();
         $response = json_decode($response->getBody());
 
         Log::info("E00002", [
@@ -589,8 +590,8 @@ class LogisticManager
 
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
-        if ($response->status_code != 200) {
-            throw new Exception($response->message, $response->status_code);
+        if ($status_code != 200) {
+            throw new Exception($response->message, $status_code);
         }
 
         return $response;
