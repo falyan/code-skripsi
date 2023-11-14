@@ -563,15 +563,14 @@ class LogisticManager
         return $response;
     }
 
-    public static function cancel($trx_no)
+    public static function cancel($order)
     {
         $param = static::setParamAPI([]);
-        $url = sprintf('%s/%s', static::$endpoint, 'v2/cancel-order' . $param);
+        $url = sprintf('%s/%s', static::$endpoint, 'v1/cancel-order' . $param);
 
         $body = [
-            'trx_no' => $trx_no,
+            'trx_no' => $order->trx_no,
         ];
-        // return $body;
 
         $response = static::$curl->request('POST', $url, [
             'headers' => static::$headers,
@@ -579,17 +578,20 @@ class LogisticManager
             'json' => $body,
         ]);
 
+        $response = json_decode($response->getBody());
+
         Log::info("E00002", [
-            'path_url' => "hedwig.endpoint/v2/cancel-order",
+            'path_url' => "hedwig.endpoint/v1/cancel-order",
             'query' => [],
             'body' => $body,
             'response' => $response,
         ]);
 
-        $response = json_decode($response->getBody(), true);
-        // return $response;
-
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+
+        if ($response->status_code != 200) {
+            throw new Exception($response->message, $response->status_code);
+        }
 
         return $response;
     }
