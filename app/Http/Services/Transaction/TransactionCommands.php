@@ -2905,11 +2905,11 @@ class TransactionCommands extends Service
     public function updatePromoLog($promo_log_order)
     {
         if ($promo_log_order->type_usage == 'merchant') {
-            $promo_merchant = PromoMerchant::where('promo_master_id', $promo_log_order->promo_master_id)->where('merchant_id', $promo_log_order->order->merchant_id)->first();
+            $promo_merchant = PromoMerchant::where('promo_master_id', $promo_log_order->promo_master_id)->where('merchant_id', $promo_log_order->order->merchant_id)->lockForUpdate()->first();
             $promo_merchant->usage_value = $promo_merchant->usage_value - (int) $promo_log_order->value;
             $promo_merchant->save();
         } else {
-            $promo_master = PromoMaster::where('id', $promo_log_order->promo_master_id)->first();
+            $promo_master = PromoMaster::where('id', $promo_log_order->promo_master_id)->lockForUpdate()->first();
             $promo_master->usage_value = $promo_master->usage_value - (int) $promo_log_order->value;
             $promo_master->save();
         }
