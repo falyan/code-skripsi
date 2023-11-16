@@ -317,46 +317,67 @@ class RajaOngkirManager
             'courier' => strtolower($courirer),
         ];
 
-        $response = static::$curl->request('POST', $url, [
-            'headers' => static::$header,
-            'http_errors' => false,
-            'json' => $body
-        ]);
+        try {
+            if ($courirer == '' || $courirer == null) {
+                Log::info("E00002", [
+                    'path_url' => "rajaongkir.endpoint/api/cost",
+                    'query' => [],
+                    'body' => $body,
+                    'response' => 'Courier not found'
+                ]);
+                return $cache_response;
+            }
 
-        $response = json_decode($response->getBody());
+            $response = static::$curl->request('POST', $url, [
+                'headers' => static::$header,
+                'http_errors' => false,
+                'json' => $body
+            ]);
 
-        Log::info("E00002", [
-            'path_url' => "rajaongkir.endpoint/api/cost",
-            'query' => [],
-            'body' => $body,
-            'response' => $response
-        ]);
+            $response = json_decode($response->getBody());
 
-        throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+            Log::info("E00002", [
+                'path_url' => "rajaongkir.endpoint/api/cost",
+                'query' => [],
+                'body' => $body,
+                'response' => $response
+            ]);
 
-        if ($response->rajaongkir->status->code != 200) {
+            throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+
+            if ($response->rajaongkir->status->code != 200) {
+                return $cache_response;
+            }
+
+            // $transactionQueries = new TransactionQueries();
+            // $response->delivery_discount = $transactionQueries->getDeliveryDiscount();
+
+            $resources = collect(new RajaongkirSameLogisticResources($response));
+
+            foreach ($resources as $resource) {
+                $cache = [
+                    'key' =>  $merchant->district_id . '.' . $customer_address->district_id . '.' . $weight . '.' . data_get($resource, 'code'),
+                    'value' => json_encode($resource),
+                    'expired_at' => Carbon::now()->addDays(env('RAJAONGKIR_CACHE_EXPIRE_DAY', 1))->format('Y-m-d H:i:s'),
+                ];
+
+                CacheRajaongkirShipping::updateOrCreate(
+                    ['key' => $cache['key']],
+                    $cache
+                );
+            }
+
+            return $resources;
+        } catch (\Throwable $th) {
+            Log::info("E00002", [
+                'path_url' => "rajaongkir.endpoint/api/cost",
+                'query' => [],
+                'body' => $body,
+                'response' => $th->getMessage()
+            ]);
+
             return $cache_response;
         }
-
-        // $transactionQueries = new TransactionQueries();
-        // $response->delivery_discount = $transactionQueries->getDeliveryDiscount();
-
-        $resources = collect(new RajaongkirSameLogisticResources($response));
-
-        foreach ($resources as $resource) {
-            $cache = [
-                'key' =>  $merchant->district_id . '.' . $customer_address->district_id . '.' . $weight . '.' . data_get($resource, 'code'),
-                'value' => json_encode($resource),
-                'expired_at' => Carbon::now()->addDays(env('RAJAONGKIR_CACHE_EXPIRE_DAY', 1))->format('Y-m-d H:i:s'),
-            ];
-
-            CacheRajaongkirShipping::updateOrCreate(
-                ['key' => $cache['key']],
-                $cache
-            );
-        }
-
-        return $resources;
     }
 
     public static function trackOrderSameLogistic($order)
