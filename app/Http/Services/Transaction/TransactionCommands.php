@@ -2418,7 +2418,7 @@ class TransactionCommands extends Service
                     'insurance_tax' => null,
                     'origin_fee' => null,
                     'origin_tax' => null,
-                    'is_sameday' => null,
+                    'is_sameday' => false,
                     'merchant_data' => json_encode([
                         'merchant_name' => $merchant_data->name,
                         'merchant_address' => $merchant_data->address,
