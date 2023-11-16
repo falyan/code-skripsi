@@ -2290,6 +2290,7 @@ class TransactionController extends Controller
                 return $this->respondWithResult(false, 'Signature tidak valid.', 400);
             }
 
+            DB::beginTransaction();
             $this->transactionCommand->updateOrderStatus($id, '98', 'refund ongkir');
 
             $order = Order::with('delivery')->find($id);
@@ -2317,24 +2318,20 @@ class TransactionController extends Controller
             }
 
             $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order, 'topup-refund-ongkir');
+            $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
-            if (isset($topup_inquiry->success) && $topup_inquiry->success) {
-                $resConfrim = IconcashManager::topupConfirm(data_get($topup_inquiry, 'data.orderId'), data_get($topup_inquiry, 'data.amount'));
+            if ($resConfrim) {
+                $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
+                $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
+                $iconcash_inquiry->confirm_status = $resConfrim->success;
+                $iconcash_inquiry->save();
 
-                if ($resConfrim) {
-                    $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
-                    $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
-                    $iconcash_inquiry->confirm_status = $resConfrim->success;
-                    $iconcash_inquiry->save();
-
-                    $refund->status = 'success';
-                    $refund->updated_by = 'system';
-                } else {
-                    $refund->status = 'failed';
-                    $refund->updated_by = 'system';
-                }
+                $refund->status = 'success';
+                $refund->updated_by = 'system';
+            } else {
+                $refund->status = 'failed';
+                $refund->updated_by = 'system';
             }
-
             $refund->save();
 
             // $column_name = 'merchant_id';
@@ -2353,8 +2350,10 @@ class TransactionController extends Controller
             // $mailSender = new MailSenderManager();
             // $mailSender->mailOrderDone($id);
 
+            DB::commit();
             return $this->respondWithResult(true, 'Topup refund ongkir berhasil!', 200);
         } catch (Exception $e) {
+            DB::rollBack();
             return $this->respondErrorException($e, request());
         }
     }
