@@ -1698,9 +1698,9 @@ class TransactionController extends Controller
 
                     $evCustomer = CustomerEVSubsidy::where('order_id', $order->id)->first();
 
-                    if ($evCustomer) {
-                        $evCustomer->status_approval = 0;
-                        $evCustomer->save();
+                            $iconpayManager = new IconpayManager();
+                            $iconpayManager->bookingV2($body);
+                        }
                     }
 
                     foreach ($order->detail as $detail) {
