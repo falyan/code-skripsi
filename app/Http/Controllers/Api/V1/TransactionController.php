@@ -1373,6 +1373,7 @@ class TransactionController extends Controller
         }
 
         try {
+            DB::beginTransaction();
             if (in_array($status_code, $check_status)) {
                 if ($status_code == '03') {
                     $notes = 'finish on delivery';
@@ -1432,16 +1433,13 @@ class TransactionController extends Controller
                     }
                 } else {
                     $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
+                    $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
 
-                    if (isset($topup_inquiry->success) && $topup_inquiry->success) {
-                        $resConfrim = IconcashManager::topupConfirm(data_get($topup_inquiry, 'data.orderId'), data_get($topup_inquiry, 'data.amount'));
-
-                        if ($resConfrim) {
-                            $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', data_get($topup_inquiry, 'data.orderId'))->first();
-                            $iconcash_inquiry->confirm_res_json = json_encode($resConfrim);
-                            $iconcash_inquiry->confirm_status = $resConfrim->success;
-                            $iconcash_inquiry->save();
-                        }
+                    if ($resConfrim) {
+                        $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
+                        $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
+                        $iconcash_inquiry->confirm_status = $resConfrim->success;
+                        $iconcash_inquiry->save();
                     }
                 }
 
@@ -1463,6 +1461,7 @@ class TransactionController extends Controller
                 $mailSender = new MailSenderManager();
                 $mailSender->mailOrderDone($id);
 
+                DB::commit();
                 return $this->respondWithResult(true, 'Selamat! Pesanan anda telah selesai', 200);
             } else {
                 if ($status_code == '03') {
