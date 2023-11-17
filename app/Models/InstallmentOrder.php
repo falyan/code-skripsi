@@ -8,14 +8,7 @@ class InstallmentOrder extends Model
 {
     protected $table = 'pi_order';
 
-    protected $fillable = [
-        'customer_id',
-        'pi_provider_id',
-        'order_id',
-        'month_tenor',
-        'fee_tenor',
-        'installment_tenor',
-    ];
+    protected $guarded = ['id'];
 
     public function customer()
     {
