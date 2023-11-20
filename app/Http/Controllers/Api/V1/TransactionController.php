@@ -1133,7 +1133,7 @@ class TransactionController extends Controller
             if (!in_array($order->progress_active->status_code, ['09', '88', '99', '98'])) {
                 $updatedStatus = $this->transactionCommand->updateOrderStatus($order->id, '09', $notes);
 
-                if ($order->delivery->delivery_setting == 'shipper') {
+                if ($order->delivery->delivery_setting == 'shipper' && $order->delivery->awb_number != null) {
                     $this->transactionCommand->cancelResi($order);
                 }
 
@@ -1683,7 +1683,7 @@ class TransactionController extends Controller
             if (!in_array($order->progress_active->status_code, ['09', '88', '99', '98'])) {
                 $updatedStatus = $this->transactionCommand->updateOrderStatus($order->id, '09', 'cancel by bot');
 
-                if ($order->delivery->delivery_setting == 'shipper') {
+                if ($order->delivery->delivery_setting == 'shipper' && $order->delivery->awb_number != null) {
                     $this->transactionCommand->cancelResi($order);
                 }
 
