@@ -1726,7 +1726,7 @@ class TransactionController extends Controller
                     $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
                 }
 
-                if ($$updatedStatus['success'] == true) {
+                if ($updatedStatus['success'] == true) {
                     $mailSender = new MailSenderManager();
                     $mailSender->mailorderCanceled($order->id);
                 }
