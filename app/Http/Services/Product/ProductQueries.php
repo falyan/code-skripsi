@@ -1156,7 +1156,8 @@ class ProductQueries extends Service
                         ->where('end_date', '>=', date('Y-m-d'));
                 });
             },
-            'promo_merchant.promo_master',
+            'promo_merchant.promo_master.promo_regions',
+            'promo_merchant.promo_master.promo_values',
         ])
             ->where('id', $merchant_id)
             ->first(['id', 'name', 'address', 'province_id', 'city_id', 'district_id', 'postal_code', 'photo_url', 'can_shipping_discount', 'can_flash_sale_discount', 'is_shipping_discount']);
@@ -1778,9 +1779,10 @@ class ProductQueries extends Service
         // }])
         ->where('status', 1)->with([
             'product_stock', 'product_photo', 'is_wishlist',
-            'merchant' => function ($merchant) {
-                $merchant->with(['city:id,name', 'promo_merchant.promo_master']);
-            },
+            'merchant',
+            'merchant.promo_merchant.promo_master.promo_regions',
+            'merchant.promo_merchant.promo_master.promo_values',
+            'city:id,name',
             'varian_product' => function ($query) {
                 $query->with(['variant_stock'])->where('main_variant', true);
             },
