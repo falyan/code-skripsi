@@ -600,7 +600,7 @@ class LogisticManager
 
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
-        if ($status_code != 200) {
+        if ($response->status_code != 200) {
             throw new Exception($response->message, $status_code);
         }
 
