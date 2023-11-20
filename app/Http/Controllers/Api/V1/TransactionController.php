@@ -1480,7 +1480,7 @@ class TransactionController extends Controller
             return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
         }
 
-        $timestamp_plus = \Carbon\Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
+        $timestamp_plus = \Carbon\Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
         if (strtotime($timestamp) < strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
 
         $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
@@ -1590,7 +1590,7 @@ class TransactionController extends Controller
             return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
         }
 
-        $timestamp_plus = \Carbon\Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
+        $timestamp_plus = \Carbon\Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
         if (strtotime($timestamp) < strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
 
         $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
@@ -1615,7 +1615,7 @@ class TransactionController extends Controller
                 return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
             }
 
-            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
+            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
             if (strtotime($timestamp) < strtotime($timestamp_plus)) {
                 return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
             }
@@ -2245,7 +2245,7 @@ class TransactionController extends Controller
                 return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
             }
 
-            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
+            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
             if (strtotime($timestamp) < strtotime($timestamp_plus)) {
                 return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
             }
@@ -2334,7 +2334,7 @@ class TransactionController extends Controller
                 return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
             }
 
-            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
+            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
             if (strtotime($timestamp) < strtotime($timestamp_plus)) {
                 return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
             }
