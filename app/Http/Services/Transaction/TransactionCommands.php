@@ -2699,11 +2699,6 @@ class TransactionCommands extends Service
                 $dataCreated['order_delivery']['order_id'] = $order->id;
                 OrderDelivery::create($dataCreated['order_delivery']);
 
-                if ($instalmentCreated) {
-                    $instalmentCreated['order_id'] = $this->order_id;
-                    InstallmentOrder::create($instalmentCreated);
-                }
-
                 $order_payment = OrderPayment::create($dataCreated['order_payment']);
 
                 $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
@@ -2733,6 +2728,11 @@ class TransactionCommands extends Service
                     // $notificationCommand->sendPushNotification($order->merchant->id, $title, $message, 'active');
                     $notificationCommand->sendPushNotificationCustomerPlnMobile($customer_id, $title, $message);
                 }
+            }
+
+            if ($instalmentCreated) {
+                $instalmentCreated['order_id'] = $this->order_id;
+                InstallmentOrder::create($instalmentCreated);
             }
 
             if ($datas['total_discount'] > 0) {
