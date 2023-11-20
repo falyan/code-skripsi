@@ -2699,6 +2699,11 @@ class TransactionCommands extends Service
                 $dataCreated['order_delivery']['order_id'] = $order->id;
                 OrderDelivery::create($dataCreated['order_delivery']);
 
+                if ($instalmentCreated) {
+                    $instalmentCreated['order_id'] = $this->order_id;
+                    InstallmentOrder::create($instalmentCreated);
+                }
+
                 $order_payment = OrderPayment::create($dataCreated['order_payment']);
 
                 $order->trx_no = static::invoice_num($order->id, 9, "INVO/" . Carbon::now()->year . Carbon::now()->month . Carbon::now()->day . "/MKP/");
@@ -2728,11 +2733,6 @@ class TransactionCommands extends Service
                     // $notificationCommand->sendPushNotification($order->merchant->id, $title, $message, 'active');
                     $notificationCommand->sendPushNotificationCustomerPlnMobile($customer_id, $title, $message);
                 }
-            }
-
-            if ($instalmentCreated) {
-                $instalmentCreated['order_id'] = $this->order_id;
-                InstallmentOrder::create($instalmentCreated);
             }
 
             if ($datas['total_discount'] > 0) {
@@ -2775,9 +2775,10 @@ class TransactionCommands extends Service
                     'email' => $customer->email,
                     'phone_number' => $customer->phone,
                     'expired_invoice' => $exp_date,
+                    'additional_info6' => isset($datas['installment_settlement']) ? $datas['installment_settlement'] : null,
                     'additional_info7' => isset($datas['installment_provider_fee']) ? $datas['installment_provider_fee'] : null,
                     'additional_info8' => isset($installment_tenor) ? $installment_tenor : null,
-                    'additional_info9' => isset($datas['installment_actual_price']) ? $datas['installment_actual_price'] : null,
+                    'additional_info9' => isset($datas['installment_markup_price']) ? $datas['installment_markup_price'] : null,
                     'additional_info10' => isset($datas['installment_fee']) ? $datas['installment_fee'] : null,
                 ];
 
