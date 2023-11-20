@@ -1125,52 +1125,64 @@ class TransactionController extends Controller
     {
         try {
             $notes = request()->input('notes');
-            $response = $this->transactionCommand->updateOrderStatus($order_id, '09', $notes);
-            $order = Order::with('detail')->find($order_id);
-            $order->load('promo_log_orders');
 
-            if (count($order->promo_log_orders) > 0) {
-                foreach ($order->promo_log_orders as $promo_log_order) {
-                    $this->transactionCommand->updatePromoLog($promo_log_order);
+            $order = Order::find($order_id);
+            $order->load(['detail', 'promo_log_orders']);
+
+            DB::beginTransaction();
+            if (!in_array($order->progress_active->status_code, ['09', '88', '99', '98'])) {
+                $updatedStatus = $this->transactionCommand->updateOrderStatus($order->id, '09', $notes);
+
+                if ($order->delivery->delivery_setting == 'shipper') {
+                    $this->transactionCommand->cancelResi($order);
                 }
+
+                // refund claim bonus voucher gami
+                if ($order->voucher_bonus_code != null && $order->bonus_discount != null) {
+                    GamificationManager::claimBonusRefund($order->voucher_bonus_code);
+
+                    $order->voucher_bonus_code = 'RF_' . $order->voucher_bonus_code;
+                    $order->save();
+                    Log::info('Succeeded Hit Refund Bonus Voucher Gami - Reject Order ' . $order_id);
+                }
+
+                if (count($order->promo_log_orders) > 0) {
+                    foreach ($order->promo_log_orders as $promo_log_order) {
+                        $this->transactionCommand->updatePromoLog($promo_log_order);
+                    }
+                }
+
+                $evCustomer = CustomerEVSubsidy::where('order_id', $order_id)->first();
+
+                if ($evCustomer) {
+                    $evCustomer->status_approval = 0;
+                    $evCustomer->save();
+                }
+
+                foreach ($order->detail as $detail) {
+                    $stock = ProductStock::where('product_id', $detail->product_id)
+                        ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
+
+                    $data['amount'] = $stock->amount + $detail->quantity;
+                    $data['uom'] = $stock->uom;
+                    $data['full_name'] = 'system';
+
+                    $productCommand = new ProductCommands();
+                    $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
+                }
+
+                if ($updatedStatus['success'] == true) {
+                    $mailSender = new MailSenderManager();
+                    $mailSender->mailorderRejected($order_id, $notes);
+                }
+            } else {
+                return $this->respondWithResult(false, 'Pesanan ' . $order->id . ' tidak dalam status yang bisa dibatalkan!', 400);
             }
 
-            // refund claim bonus voucher gami
-            if ($order->voucher_bonus_code != null && $order->bonus_discount != null) {
-                GamificationManager::claimBonusRefund($order->voucher_bonus_code);
-
-                $order->voucher_bonus_code = 'RF_' . $order->voucher_bonus_code;
-                $order->save();
-                Log::info('Succeeded Hit Refund Bonus Voucher Gami - Reject Order ' . $order_id);
-            }
-
-            $evCustomer = CustomerEVSubsidy::where([
-                'order_id' => $order_id,
-            ])->first();
-
-            if ($evCustomer) {
-                $evCustomer->status_approval = 0;
-                $evCustomer->save();
-            }
-
-            foreach ($order->detail as $detail) {
-                $stock = ProductStock::where('product_id', $detail->product_id)
-                    ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
-
-                $data['amount'] = $stock->amount + $detail->quantity;
-                $data['uom'] = $stock->uom;
-                $data['full_name'] = 'system';
-
-                $productCommand = new ProductCommands();
-                $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
-            }
-            if ($response['success'] == true) {
-                $mailSender = new MailSenderManager();
-                $mailSender->mailorderRejected($order_id, $notes);
-            }
-
-            return $response;
+            DB::commit();
+            return $this->respondWithResult(true, 'Pesanan anda berhasil dibatalkan.', 200);
         } catch (Exception $e) {
+            DB::rollBack();
             return $this->respondErrorException($e, request());
         }
     }
@@ -1555,6 +1567,10 @@ class TransactionController extends Controller
 
                         $payment_info = OrderPayment::getByRefnum($order->no_reference)->first();
 
+                        if ($payment_info->date_expired != null) {
+                            IconpayManager::booking($payment_info->no_reference, $payment_info->date_created, $payment_info->date_expired, "99", $payment_info->payment_amount, $payment_info->customer->full_name, $payment_info->customer->email, $payment_info->customer->phone, false);
+                        }
+
                         $evCustomer = CustomerEVSubsidy::where([
                             'order_id' => $order->id,
                         ])->first();
@@ -1661,64 +1677,65 @@ class TransactionController extends Controller
                 return $this->respondWithResult(false, 'Signature tidak valid.', 400);
             }
 
-            $orderFind = Order::where('id', $id)->first();
-            $orderByReference = $this->transactionQueries->getTransactionByReference($orderFind->no_reference);
+            $order = Order::with(['detail', 'promo_log_orders', 'progress_active', 'delivery'])->where('id', $id)->first();
 
             DB::beginTransaction();
-            foreach ($orderByReference as $key => $order) {
-                if (!in_array($order->progress_active->status_code, ['09', '88', '99', '98'])) {
-                    $this->transactionCommand->updateOrderStatus($order->id, '09', 'cancel by bot');
+            if (!in_array($order->progress_active->status_code, ['09', '88', '99', '98'])) {
+                $updatedStatus = $this->transactionCommand->updateOrderStatus($order->id, '09', 'cancel by bot');
 
-                    if ($order->delivery->delivery_setting == 'shipper') {
-                        $this->transactionCommand->cancelResi($order);
-                    }
+                if ($order->delivery->delivery_setting == 'shipper') {
+                    $this->transactionCommand->cancelResi($order);
+                }
 
-                    // refund claim bonus voucher gami
-                    if ($order->voucher_bonus_code != null && $order->bonus_discount != null) {
-                        GamificationManager::claimBonusRefund($order->voucher_bonus_code);
+                // refund claim bonus voucher gami
+                if ($order->voucher_bonus_code != null && $order->bonus_discount != null) {
+                    GamificationManager::claimBonusRefund($order->voucher_bonus_code);
 
-                        $order = Order::find($order->id);
-                        $order->voucher_bonus_code = 'RF_' . $order->voucher_bonus_code;
-                        $order->save();
-                        Log::info('Succeded Hit Refund Bonus Voucher Gami - Cancel Order ' . $order->id);
-                    }
+                    $order = Order::find($order->id);
+                    $order->voucher_bonus_code = 'RF_' . $order->voucher_bonus_code;
+                    $order->save();
+                    Log::info('Succeded Hit Refund Bonus Voucher Gami - Cancel Order ' . $order->id);
+                }
 
+                if (count($order->promo_log_orders) > 0) {
                     foreach ($order->promo_log_orders as $promo_log_order) {
                         $this->transactionCommand->updatePromoLog($promo_log_order);
                     }
+                }
 
-                    // if ($key == 0) {
-                    //     $payment_info = OrderPayment::getByRefnum($order->no_reference)->first();
+                // if ($key == 0) {
+                //     $payment_info = OrderPayment::getByRefnum($order->no_reference)->first();
 
-                    //     if ($payment_info->date_expired != null) {
-                    //         IconpayManager::booking($payment_info->no_reference, $payment_info->date_created, $payment_info->date_expired, "99", $payment_info->payment_amount, $payment_info->customer->full_name, $payment_info->customer->email, $payment_info->customer->phone, false);
-                    //     }
-                    // }
+                //     if ($payment_info->date_expired != null) {
+                //         IconpayManager::booking($payment_info->no_reference, $payment_info->date_created, $payment_info->date_expired, "99", $payment_info->payment_amount, $payment_info->customer->full_name, $payment_info->customer->email, $payment_info->customer->phone, false);
+                //     }
+                // }
 
-                    $evCustomer = CustomerEVSubsidy::where('order_id', $order->id)->first();
+                $evCustomer = CustomerEVSubsidy::where('order_id', $order->id)->first();
 
-                    if ($evCustomer) {
-                        $evCustomer->status_approval = 0;
-                        $evCustomer->save();
-                    }
+                if ($evCustomer) {
+                    $evCustomer->status_approval = 0;
+                    $evCustomer->save();
+                }
 
-                    foreach ($order->detail as $detail) {
-                        $stock = ProductStock::where('product_id', $detail->product_id)
-                            ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
+                foreach ($order->detail as $detail) {
+                    $stock = ProductStock::where('product_id', $detail->product_id)
+                        ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
 
-                        $data['amount'] = $stock->amount + $detail->quantity;
-                        $data['uom'] = $stock->uom;
-                        $data['full_name'] = 'system';
+                    $data['amount'] = $stock->amount + $detail->quantity;
+                    $data['uom'] = $stock->uom;
+                    $data['full_name'] = 'system';
 
-                        $productCommand = new ProductCommands();
-                        $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
-                    }
+                    $productCommand = new ProductCommands();
+                    $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
+                }
 
+                if ($$updatedStatus['success'] == true) {
                     $mailSender = new MailSenderManager();
                     $mailSender->mailorderCanceled($order->id);
-                } else {
-                    return $this->respondWithResult(false, 'Pesanan ' . $order->id . ' tidak dalam status yang bisa dibatalkan!', 400);
                 }
+            } else {
+                return $this->respondWithResult(false, 'Pesanan ' . $order->id . ' tidak dalam status yang bisa dibatalkan!', 400);
             }
 
             DB::commit();
