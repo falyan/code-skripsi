@@ -2471,12 +2471,13 @@ class TransactionCommands extends Service
         return $response;
     }
 
-    public function updateAwb($trx_no, $awb)
+    public function updateAwb($trx_no, $awb, $no_reference)
     {
         $order = Order::where('trx_no', $trx_no)->first();
         $delivery = OrderDelivery::where('order_id', $order->id)->first();
 
         $delivery->awb_number = $awb;
+        $delivery->no_reference = $no_reference;
         $delivery->save();
 
         $response['success'] = true;

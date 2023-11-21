@@ -240,8 +240,9 @@ class LogisticController extends Controller
         try {
             $trx_no = $request->get('partner_no_trx');
             $awb_number = $request->get('awb_number');
+            $no_reference = $request->get('no_reference');
 
-            $this->transactionCommand->updateAwb($trx_no, $awb_number);
+            $this->transactionCommand->updateAwb($trx_no, $awb_number, $no_reference);
 
             $response = [
                 'success' => true,
