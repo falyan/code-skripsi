@@ -241,8 +241,9 @@ class LogisticController extends Controller
             $trx_no = $request->get('partner_no_trx');
             $awb_number = $request->get('awb_number');
             $no_reference = $request->get('no_reference');
+            $courier_image = $request->get('courier_image');
 
-            $this->transactionCommand->updateAwb($trx_no, $awb_number, $no_reference);
+            $this->transactionCommand->updateAwb($trx_no, $awb_number, $no_reference, $courier_image);
 
             $response = [
                 'success' => true,
