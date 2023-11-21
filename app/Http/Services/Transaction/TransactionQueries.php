@@ -1528,6 +1528,15 @@ class TransactionQueries extends Service
 
             $total_insentif += $product_insentif;
 
+            if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
+                $installment = InstallmentQueries::calculateInstallment($datas['installment'], $merchant['total_payment']);
+
+                // get only the highest one total_payment in data merchant then override it with markup_price
+                if ($merchant['id'] == $datas['merchants'][0]['id']) {
+                    $merchant['total_payment'] = $installment['markup_price'];
+                }
+            }
+
             $new_merchant[] = $merchant;
         }
 
