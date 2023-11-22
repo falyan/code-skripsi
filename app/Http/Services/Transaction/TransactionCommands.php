@@ -2088,7 +2088,6 @@ class TransactionCommands extends Service
                     if ($tiket) {
                         $count_tiket += $detail->quantity;
                     }
-
                 }
             }
         }
@@ -2104,7 +2103,6 @@ class TransactionCommands extends Service
                     if (data_get($product, 'product_id') == $p->id) {
                         $new_products[$key]->quantity = data_get($product, 'quantity');
                     }
-
                 }
             }
         }
@@ -2382,7 +2380,7 @@ class TransactionCommands extends Service
                 }
 
                 $merchant_data = collect($new_merchants)->where('id', data_get($data, 'merchant_id'))->first();
-                $setting_courirers = Cache::remember('setting_courirers', 60 * 60, fn() => MasterData::where('type', 'rajaongkir_courier')->get());
+                $setting_courirers = Cache::remember('setting_courirers', 60 * 60, fn () => MasterData::where('type', 'rajaongkir_courier')->get());
 
                 $s_courier = '';
                 foreach (collect($setting_courirers)->where('key', 's_courier') as $courier) {
@@ -2390,7 +2388,6 @@ class TransactionCommands extends Service
                         if ($value == $courier->reference_third_party_id) {
                             $s_courier .= $value . ':';
                         }
-
                     }
                 }
 
@@ -2610,7 +2607,7 @@ class TransactionCommands extends Service
                             $type_usage = 'merchant';
                             $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
                             $promo_merchant_ongkir->save();
-                        }elseif(!$limit_master) {
+                        } elseif (!$limit_master) {
                             $type_usage = 'master';
                             $promo_merchant_ongkir_master->usage_value = $promo_merchant_ongkir_master->usage_value + $value_ongkir;
                             $promo_merchant_ongkir_master->save();
@@ -2637,22 +2634,25 @@ class TransactionCommands extends Service
                     $promo_merchant_flash_sale = PromoMerchant::where('id', $dataCreated['promo_merchant_flash_sale']['id'])->lockForUpdate()->first();
                     $promo_merchant_flash_sale_master = PromoMaster::where('id', $promo_merchant_flash_sale->promo_master_id)->lockForUpdate()->first();
 
-                    if ($promo_merchant_flash_sale != null && $dataCreated['promo_merchant_flash_sale']['min_condition']) {
+                    if ($promo_merchant_flash_sale_master && $dataCreated['promo_merchant_flash_sale']['min_condition']) {
                         $value_flash_sale = $dataCreated['promo_merchant_flash_sale']['value_flash_sale'];
                         if ($value_flash_sale > $dataCreated['order']['total_amount']) {
                             $value_flash_sale = $dataCreated['order']['total_amount'];
                         }
 
                         $limit_merchant = ($promo_merchant_flash_sale->usage_value + $dataCreated['promo_merchant_flash_sale']['value_flash_sale_m']) > $promo_merchant_flash_sale->max_value;
+                        $limit_master = ($promo_merchant_flash_sale_master->usage_value + $dataCreated['promo_merchant_flash_sale']['value_flash_sale_m']) > $promo_merchant_flash_sale_master->max_value;
 
                         if (!$limit_merchant && $promo_merchant_flash_sale_master->max_value_merchant > 0) {
                             $type_usage = 'merchant';
                             $promo_merchant_flash_sale->usage_value = $promo_merchant_flash_sale->usage_value + $value_flash_sale;
                             $promo_merchant_flash_sale->save();
-                        } else {
+                        } elseif (!$limit_master) {
                             $type_usage = 'master';
                             $promo_merchant_flash_sale_master->usage_value = $promo_merchant_flash_sale_master->usage_value + $value_flash_sale;
                             $promo_merchant_flash_sale_master->save();
+                        } else {
+                            $value_flash_sale = 0;
                         }
 
                         if ($value_flash_sale > 0) {
@@ -2665,12 +2665,12 @@ class TransactionCommands extends Service
                                 'value' => $value_flash_sale,
                                 'created_by' => 'user',
                             ];
-                        }
 
-                        // sementara ketika flash sale nempel merchant
-                        $dataCreated['order_detail'][0]['discount'] = $dataCreated['order_detail'][0]['discount'] + $value_flash_sale;
-                        $dataCreated['order_detail'][0]['total_discount'] = $dataCreated['order_detail'][0]['total_discount'] + $value_flash_sale;
-                        $dataCreated['order_detail'][0]['total_amount'] = $dataCreated['order_detail'][0]['total_amount'] - $value_flash_sale;
+                            // sementara ketika flash sale nempel merchant
+                            $dataCreated['order_detail'][0]['discount'] = $dataCreated['order_detail'][0]['discount'] + $value_flash_sale;
+                            $dataCreated['order_detail'][0]['total_discount'] = $dataCreated['order_detail'][0]['total_discount'] + $value_flash_sale;
+                            $dataCreated['order_detail'][0]['total_amount'] = $dataCreated['order_detail'][0]['total_amount'] - $value_flash_sale;
+                        }
                     }
                 }
 
@@ -2809,12 +2809,12 @@ class TransactionCommands extends Service
                 'data' => $resData,
             ];
         } catch (Exception $th) {
-        DB::rollBack();
-        throw new Exception('Gagal membuat pesanan', 500);
-        // return [
-        //     'success' => false,
-        //     'message' => $th->getMessage(),
-        // ];
+            DB::rollBack();
+            throw new Exception('Gagal membuat pesanan', 500);
+            // return [
+            //     'success' => false,
+            //     'message' => $th->getMessage(),
+            // ];
         }
     }
 
