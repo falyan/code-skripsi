@@ -1501,8 +1501,8 @@ class TransactionController extends Controller
             return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
         }
 
-        $timestamp_plus = \Carbon\Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
-        if (strtotime($timestamp) < strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+        $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
+        if (strtotime($timestamp) > strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
 
         $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
         $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
@@ -1631,8 +1631,8 @@ class TransactionController extends Controller
             return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
         }
 
-        $timestamp_plus = \Carbon\Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
-        if (strtotime($timestamp) < strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+        $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
+        if (strtotime($timestamp) > strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
 
         $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
         $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
@@ -1659,9 +1659,7 @@ class TransactionController extends Controller
             }
 
             $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
-            if (strtotime($timestamp) < strtotime($timestamp_plus)) {
-                return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
-            }
+            if (strtotime($timestamp) > strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
 
             $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
             $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
@@ -2289,9 +2287,7 @@ class TransactionController extends Controller
             }
 
             $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
-            if (strtotime($timestamp) < strtotime($timestamp_plus)) {
-                return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
-            }
+            if (strtotime($timestamp) > strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
 
             $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
             $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
@@ -2378,9 +2374,7 @@ class TransactionController extends Controller
             }
 
             $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
-            if (strtotime($timestamp) < strtotime($timestamp_plus)) {
-                return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
-            }
+            if (strtotime($timestamp) > strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
 
             $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
             $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
