@@ -2484,7 +2484,7 @@ class TransactionCommands extends Service
                 $orderCreated['total_amount_iconcash'] = $amount;
 
                 if ($promo_merchant_ongkir) {
-                    $promo_merchant_ongkir['value_onkir'] = $value_ongkir;
+                    $promo_merchant_ongkir['value_ongkir'] = $value_ongkir;
                 }
 
                 if ($promo_merchant_flash_sale) {
@@ -2601,18 +2601,21 @@ class TransactionCommands extends Service
                     $promo_merchant_ongkir = PromoMerchant::where('id', $dataCreated['promo_merchant_ongkir']['id'])->lockForUpdate()->first();
                     $promo_merchant_ongkir_master = PromoMaster::where('id', $promo_merchant_ongkir->promo_master_id)->lockForUpdate()->first();
 
-                    if ($promo_merchant_ongkir != null && $promo_merchant_ongkir_master->min_order_value <= $dataCreated['order']['total_amount']) {
+                    if ($promo_merchant_ongkir_master && $promo_merchant_ongkir_master->min_order_value <= $dataCreated['order']['total_amount']) {
                         $value_ongkir = $dataCreated['promo_merchant_ongkir']['value_ongkir'];
                         $limit_merchant = ($promo_merchant_ongkir->usage_value + $value_ongkir) > $promo_merchant_ongkir->max_value;
+                        $limit_master = ($promo_merchant_ongkir_master->usage_value + $value_ongkir) > $promo_merchant_ongkir_master->max_value;
 
                         if (!$limit_merchant && $promo_merchant_ongkir_master->max_value_merchant > 0) {
                             $type_usage = 'merchant';
                             $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
                             $promo_merchant_ongkir->save();
-                        } else {
+                        }elseif(!$limit_master) {
                             $type_usage = 'master';
-                            $promo_merchant_ongkir->usage_value = $promo_merchant_ongkir->usage_value + $value_ongkir;
-                            $promo_merchant_ongkir->save();
+                            $promo_merchant_ongkir_master->usage_value = $promo_merchant_ongkir_master->usage_value + $value_ongkir;
+                            $promo_merchant_ongkir_master->save();
+                        } else {
+                            $value_ongkir = 0;
                         }
 
                         if ($value_ongkir > 0) {
@@ -2806,12 +2809,12 @@ class TransactionCommands extends Service
                 'data' => $resData,
             ];
         } catch (Exception $th) {
-            DB::rollBack();
-            throw new Exception('Gagal membuat pesanan', 500);
-            // return [
-            //     'success' => false,
-            //     'message' => $th->getMessage(),
-            // ];
+        DB::rollBack();
+        throw new Exception('Gagal membuat pesanan', 500);
+        // return [
+        //     'success' => false,
+        //     'message' => $th->getMessage(),
+        // ];
         }
     }
 
