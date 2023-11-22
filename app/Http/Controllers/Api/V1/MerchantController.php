@@ -410,7 +410,7 @@ class MerchantController extends Controller
 
         if ($request->status == 1) {
             $status = 'Disetujui';
-        } elseif ($$request->status == 9) {
+        } elseif ($request->status == 9) {
             $status = 'Ditolak';
         }
 
