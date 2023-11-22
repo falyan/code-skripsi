@@ -1565,10 +1565,6 @@ class TransactionController extends Controller
 
                         $payment_info = OrderPayment::getByRefnum($order->no_reference)->first();
 
-                        if ($payment_info->date_expired != null) {
-                            IconpayManager::booking($payment_info->no_reference, $payment_info->date_created, $payment_info->date_expired, "99", $payment_info->payment_amount, $payment_info->customer->full_name, $payment_info->customer->email, $payment_info->customer->phone, false);
-                        }
-
                         $evCustomer = CustomerEVSubsidy::where([
                             'order_id' => $order->id,
                         ])->first();
