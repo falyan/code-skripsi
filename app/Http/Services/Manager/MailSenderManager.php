@@ -153,7 +153,7 @@ class MailSenderManager
 
         Mail::send('email.orderDeliveredBuyer', $data, function ($mail) use ($customer) {
             $mail->to($customer->email, 'no-reply')
-                ->subject("Pesanan Telah Dikirim");
+                ->subject("Pesanan Telah Sampai");
             $mail->from(env('MAIL_FROM_ADDRESS'), 'PLN Marketplace');
         });
 

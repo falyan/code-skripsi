@@ -6,6 +6,7 @@ use App\Http\Services\Service;
 use App\Models\Customer;
 use App\Models\Notification;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
 class NotificationCommands extends Service
 {
@@ -15,7 +16,7 @@ class NotificationCommands extends Service
     {
         self::$curl = new Client();
         self::$apiendpoint = config('credentials.radagast.endpoint');
-        self::$apiendpointplnmobile = env('PLNMOBILE_ENDPOINT');
+        self::$apiendpointplnmobile = config('credentials.plnmobile.endpoint');
     }
 
     public function create($column_name, $column_value, $type, $title, $message, $url_path, $related_pln_mobile_customer_id = null, $created_by = null)
@@ -42,12 +43,11 @@ class NotificationCommands extends Service
         $data = Notification::findOrFail($id);
         $data->status = 1;
         $data->updated_by = $updated_by;
-        if($data->save()){
+        if ($data->save()) {
             return true;
-        }else {
+        } else {
             return false;
         }
-
     }
 
     public function destroy($id, $updated_by = "system")
@@ -57,15 +57,14 @@ class NotificationCommands extends Service
         $data->updated_by = $updated_by;
         if ($data->save() && $data->delete()) {
             return true;
-        }else {
+        } else {
             return false;
         }
     }
 
-    public function sendPushNotification($id, $title, $body, $status){
-        $param = static::setParamAPI([
-            'status' => $status
-        ]);
+    public function sendPushNotification($id, $title, $body, $status)
+    {
+        $param = static::setParamAPI(['status' => $status]);
 
         $json_body = [
             'customer_id' => $id,
@@ -74,24 +73,48 @@ class NotificationCommands extends Service
         ];
 
         $url = sprintf('%s/%s', static::$apiendpoint, 'api/notify/' . $id . $param);
-        $response = static::$curl->request('POST', $url, [
-            'http_errors' => false,
-            'json' => $json_body
-        ]);
 
-        return json_decode($response->getBody());
+        try {
+            $response = static::$curl->request('POST', $url, [
+                'http_errors' => false,
+                'timeout' => 10,
+                'json' => $json_body
+            ]);
+
+            $status_code = $response->getStatusCode();
+            $response = json_decode($response->getBody());
+
+            Log::info("send.push_notif", [
+                'url' => $url,
+                'body' => $json_body,
+                'response' => $response,
+                'status' => $status_code,
+                'time' => time(),
+            ]);
+
+            return $response;
+        } catch (\Throwable $th) {
+            Log::error("send.push_notif", [
+                'url' => $url,
+                'body' => $json_body,
+                'response' => $th->getMessage(),
+                'status' => $th->getCode(),
+                'time' => time(),
+            ]);
+            return false;
+        }
     }
 
-    public function sendPushNotificationCustomerPlnMobile($id, $title, $body){
+    public function sendPushNotificationCustomerPlnMobile($id, $title, $body)
+    {
         $user = Customer::findOrFail($id);
-        $signature = hash('sha256', $user->email.$user->phone);
+        $signature = hash('sha256', $user->email . $user->phone);
 
         self::$header = [
             'signature' => $signature
         ];
 
-        $param = static::setParamAPI([
-        ]);
+        $param = static::setParamAPI([]);
 
         $json_body = [
             'email' => $user->email,
@@ -102,13 +125,36 @@ class NotificationCommands extends Service
 
         $url = sprintf('%s/%s', static::$apiendpointplnmobile, 'beyondkwh/push-notif' . $param);
 
-        $response = static::$curl->request('POST', $url, [
-            'http_errors' => false,
-            'headers' => self::$header,
-            'json' => $json_body
-        ]);
+        try {
+            $response = static::$curl->request('POST', $url, [
+                'headers' => self::$header,
+                'http_errors' => false,
+                'timeout' => 10,
+                'json' => $json_body
+            ]);
 
-        return true;
+            $status_code = $response->getStatusCode();
+            $response = json_decode($response->getBody());
+
+            Log::info("send.push_notif.customer", [
+                'url' => $url,
+                'body' => $json_body,
+                'response' => $response,
+                'status' => $status_code,
+                'time' => time(),
+            ]);
+
+            return true;
+        } catch (\Throwable $th) {
+            Log::error("send.push_notif.customer", [
+                'url' => $url,
+                'body' => $json_body,
+                'response' => $th->getMessage(),
+                'status' => $th->getCode(),
+                'time' => time(),
+            ]);
+            return false;
+        }
     }
 
     static function setParamAPI($data = [])

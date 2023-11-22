@@ -90,6 +90,7 @@ $app->configure('app');
 $app->configure('auth');
 $app->configure('swagger-lume');
 $app->configure('dompdf');
+$app->configure('database');
 //$app->configure('elastic-apm');
 
 /*
@@ -141,6 +142,7 @@ $app->register(App\Providers\LogServiceProvider::class);
 $app->register(Maatwebsite\Excel\ExcelServiceProvider::class);
 $app->register(Barryvdh\DomPDF\ServiceProvider::class);
 $app->register(\Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::class);
+$app->register(\Illuminate\Redis\RedisServiceProvider::class);
 
 class_alias(Maatwebsite\Excel\Facades\Excel::class, 'Excel');
 

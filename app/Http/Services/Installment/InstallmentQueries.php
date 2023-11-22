@@ -24,7 +24,7 @@ class InstallmentQueries extends Service
                         ->where('min_price', '<=', $price)
                         ->where('max_price', '>=', $price);
                 })->orWhere(function ($query) use ($price) {
-                    $query->where('provider_code', 'bni-installment')
+                    $query->whereIn('provider_code', ['bni-installment', 'mandiri-installment', 'bri-installment'])
                         ->where('min_price', '<=', $price);
                 });
             });
@@ -45,7 +45,7 @@ class InstallmentQueries extends Service
                         $detail->simulation_fee_installment = 0;
                     }
                 }
-            } else if ($provider->provider_code == 'bni-installment') {
+            } else if ($provider->provider_code == 'bni-installment' || $provider->provider_code == 'mandiri-installment' || $provider->provider_code === 'bri-installment') {
                 foreach ($provider->details as $detail) {
                     if (!empty($price)) {
                         $markup_price = ($price + $detail->fee_provider) / (1 - ($detail->mdr_percentage / 100));
@@ -84,7 +84,7 @@ class InstallmentQueries extends Service
             if ($provider->provider_code == 'bri-ceria') {
                 unset($provider->details);
                 $provider->details = [];
-            } else if ($provider->provider_code == 'bni-installment') {
+            } else if ($provider->provider_code == 'bni-installment' || $provider->provider_code == 'mandiri-installment' || $provider->provider_code === 'bri-installment') {
                 foreach ($provider->details as $detail) {
                     if (!empty($price)) {
                         $markup_price = ($price + $detail->fee_provider) / (1 - ($detail->mdr_percentage / 100));
@@ -119,10 +119,12 @@ class InstallmentQueries extends Service
         if ($providers->provider_code === 'bri-ceria') {
             $markup_price = ceil($price / (1 - ($providers->details[0]->mdr_percentage / 100)));
             $installment_fee = ceil($markup_price * $providers->details[0]->mdr_percentage / 100);
-        } else if ($providers->provider_code === 'bni-installment') {
+            $installment_settlement = $markup_price - $installment_fee;
+        } else if ($providers->provider_code === 'bni-installment' || $providers->provider_code === 'mandiri-installment' || $providers->provider_code === 'bri-installment') {
             $markup_price = round(($price + $providers->details[0]->fee_provider) / (1 - ($providers->details[0]->mdr_percentage / 100)));
             $installment_price = round($markup_price / $tenor);
             $installment_fee = round($markup_price * $providers->details[0]->mdr_percentage / 100);
+            $installment_settlement = $markup_price - $installment_fee;
         }
 
         return [
@@ -133,6 +135,7 @@ class InstallmentQueries extends Service
             'installment_fee' => $installment_fee ?? 0,
             'provider_fee' => $providers->details[0]->fee_provider ?? 0,
             'interest_percentage' => $providers->details[0]->interest_percentage ?? 0,
+            'installment_settlement' => $installment_settlement ?? 0,
         ];
     }
 }

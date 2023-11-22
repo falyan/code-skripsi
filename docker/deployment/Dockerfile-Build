@@ -20,8 +20,15 @@ RUN NUMPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1) \
 RUN docker-php-ext-configure intl \
     && docker-php-ext-install intl
 
+RUN apk add --no-cache \
+		$PHPIZE_DEPS \
+		openssl-dev
+
+RUN pecl install redis \
+    && docker-php-ext-enable redis
+
 RUN wget -O elastic-apm.apk https://github.com/elastic/apm-agent-php/releases/download/v1.7.1/apm-agent-php_1.7.1_all.apk
-RUN apk --allow-untrusted add elastic-apm.apk 
+RUN apk --allow-untrusted add elastic-apm.apk
 
 # RUN mkdir -p /home/apm-agent && \
 #     cd /home/apm-agent && \

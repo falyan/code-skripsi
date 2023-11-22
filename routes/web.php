@@ -546,11 +546,15 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
     $router->group(['prefix' => 'order'], static function () use ($router) {
         $router->group(['middleware' => 'auth'], static function () use ($router) {
             $router->post('/{id}/request-cancel', 'TransactionController@requestCancelOrder');
+            $router->post('/{id}/finish', 'TransactionController@finishOrder');
+            $router->post('/{id}/cancel', 'TransactionController@cancelOrder');
         });
-        $router->post('/{id}/cancel', 'TransactionController@cancelOrder');
-        $router->post('/{id}/finish', 'TransactionController@finishOrder');
         $router->post('/{id}/refund-ongkir', 'TransactionController@refundOngkir');
         $router->post('/{id}/generate-awb', 'TransactionController@generateAwbBOT');
+        $router->post('/{id}/cancel-bot', 'TransactionController@cancelOrderBOT');
+        $router->post('cancel/{order_id}', 'TransactionController@cancelScheduller');
+        $router->post('finish/{order_id}', 'TransactionController@finishScheduller');
+        $router->get('track/{order_id}', 'LogisticController@trackScheduller');
     });
 
     $router->group(['prefix' => 'merchant'], static function () use ($router) {
@@ -672,6 +676,13 @@ $router->group(['namespace' => '\Rap2hpoutre\LaravelLogViewer'], function () use
 
 // cache clear
 $router->get('/cache-clear', function () {
-    $exitCode = \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    if (env('CACHE_DRIVER') === 'redis') {
+        \Illuminate\Support\Facades\Cache::flush();
+    }
+
+    if (env('CACHE_DRIVER') !== 'redis') {
+        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    }
+
     return 'cache clear';
 });

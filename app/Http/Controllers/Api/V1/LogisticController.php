@@ -240,8 +240,10 @@ class LogisticController extends Controller
         try {
             $trx_no = $request->get('partner_no_trx');
             $awb_number = $request->get('awb_number');
+            $no_reference = $request->get('no_reference');
+            $courier_image = $request->get('courier_image');
 
-            $this->transactionCommand->updateAwb($trx_no, $awb_number);
+            $this->transactionCommand->updateAwb($trx_no, $awb_number, $no_reference, $courier_image);
 
             $response = [
                 'success' => true,
@@ -400,6 +402,60 @@ class LogisticController extends Controller
 
     public function trackOrder($order_id)
     {
+        try {
+            $order = Order::with(['delivery', 'merchant'])->where('id', $order_id)->first();
+            if (!$order) {
+                throw new Exception("Nomor invoice tidak ditemukan", 404);
+            }
+
+            if ($order->delivery->delivery_setting == 'shipper') {
+                $tracking_data = $this->logisticManager->track($order);
+
+                if (isset($tracking_data['status'])) {
+                    $status_code = $tracking_data['status'];
+                } else if (isset($tracking_data['status_code'])) {
+                    $status_code = $tracking_data['status_code'];
+                } else {
+                    $status_code = 200;
+                }
+
+                return $this->respondCustom([
+                    'status' => $status_code,
+                    'message' => isset($tracking_data['message']) ? $tracking_data['message'] : '',
+                    'success' => isset($tracking_data['success']) ? $tracking_data['success'] : true,
+                    'data' => isset($tracking_data['data']) ? $tracking_data['data'] : null,
+                ]);
+            } else {
+                $tracking_data = $this->rajaongkirManager->trackOrderSameLogistic($order);
+
+                return $this->respondCustom([
+                    'status' => 200,
+                    'message' => 'Data berhasil didapatkan!',
+                    'success' => true,
+                    'data' => $tracking_data,
+                ]);
+            }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function trackScheduller($order_id)
+    {
+        $timestamp = request()->header('timestamp');
+        $signature = request()->header('signature');
+
+        if ($timestamp == null || $signature == null) {
+            return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+        }
+
+        $timestamp_plus = \Carbon\Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
+        if (strtotime($timestamp) > strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+
+        $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
+        $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
+        if ($hash != $signature) return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+
         try {
             $order = Order::with(['delivery', 'merchant'])->where('id', $order_id)->first();
             if (!$order) {

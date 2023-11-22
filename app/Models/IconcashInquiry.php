@@ -119,11 +119,11 @@ class IconcashInquiry extends Model
             'customer_id' => $iconcash->customer_id,
             'iconcash_id' => $iconcash->id,
             'type' => $type,
-            'source_account_id' => $response->accountId,
+            'source_account_id' => data_get($response, 'data.accountId'),
             'order_id' => $order->id,
             'amount' => $amount,
             'client_ref' => $client_ref,
-            'iconcash_order_id' => $response->orderId,
+            'iconcash_order_id' => data_get($response, 'data.orderId'),
             'res_json' => json_encode($response),
         ]);
 

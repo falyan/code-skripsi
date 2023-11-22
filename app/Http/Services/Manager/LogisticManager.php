@@ -227,31 +227,41 @@ class LogisticManager
             'courier' => $courirer,
         ];
 
-        $response = static::$curl->request('POST', $url, [
-            'headers' => static::$headers,
-            'http_errors' => false,
-            'json' => $body,
-        ]);
+        try {
+            $response = static::$curl->request('POST', $url, [
+                'headers' => static::$headers,
+                'http_errors' => false,
+                'json' => $body,
+            ]);
 
-        $response = json_decode($response->getBody(), true);
+            $response = json_decode($response->getBody(), true);
 
-        Log::info("E00002", [
-            'path_url' => "hedwig.endpoint/v2/service/rates",
-            'query' => [],
-            'body' => $body,
-            'response' => $response,
-        ]);
+            Log::info("E00002", [
+                'path_url' => "hedwig.endpoint/v2/service/rates",
+                'query' => [],
+                'body' => $body,
+                'response' => $response,
+            ]);
 
-        throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+            // throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
 
-        if ($response['status'] != 200) {
+            if ($response['status'] != 200) {
+                return [];
+            }
+
+            // $transactionQueries = new TransactionQueries();
+            // $response['delivery_discount'] = $transactionQueries->getDeliveryDiscount();
+
+            return $response['data'];
+        } catch (\Throwable $th) {
+            Log::info("E00002", [
+                'path_url' => "hedwig.endpoint/v2/service/rates",
+                'query' => [],
+                'body' => $body,
+                'response' => $th->getMessage(),
+            ]);
             return [];
         }
-
-        // $transactionQueries = new TransactionQueries();
-        // $response['delivery_discount'] = $transactionQueries->getDeliveryDiscount();
-
-        return $response['data'];
     }
 
     public static function updateAwb($trx_no, $awb_number)
@@ -563,15 +573,14 @@ class LogisticManager
         return $response;
     }
 
-    public static function cancel($trx_no)
+    public static function cancel($order)
     {
         $param = static::setParamAPI([]);
-        $url = sprintf('%s/%s', static::$endpoint, 'v2/cancel-order' . $param);
+        $url = sprintf('%s/%s', static::$endpoint, 'v1/cancel-order' . $param);
 
         $body = [
-            'trx_no' => $trx_no,
+            'trx_no' => $order->trx_no,
         ];
-        // return $body;
 
         $response = static::$curl->request('POST', $url, [
             'headers' => static::$headers,
@@ -579,17 +588,21 @@ class LogisticManager
             'json' => $body,
         ]);
 
+        $status_code = $response->getStatusCode();
+        $response = json_decode($response->getBody());
+
         Log::info("E00002", [
-            'path_url' => "hedwig.endpoint/v2/cancel-order",
+            'path_url' => "hedwig.endpoint/v1/cancel-order",
             'query' => [],
             'body' => $body,
             'response' => $response,
         ]);
 
-        $response = json_decode($response->getBody(), true);
-        // return $response;
-
         throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+
+        if ($response->status_code != 200) {
+            throw new Exception($response->message, $status_code);
+        }
 
         return $response;
     }

@@ -308,7 +308,7 @@ class TransactionController extends Controller
             $request = request()->all();
 
             $request['merchants'] = $this->transactionQueries->createOrderV3($request);
-            $response = $this->transactionCommand->createOrderV3($request, $customer);
+            $response = $this->transactionCommand->createOrderNewV3($request, $customer);
 
             if ($response['success'] == true) {
                 foreach ($request['merchants'] as $merchant) {
@@ -976,6 +976,7 @@ class TransactionController extends Controller
         try {
             $rules = [
                 'id.*' => 'required',
+                'acc_sameday' => 'nullable|boolean',
             ];
 
             $validator = Validator::make($request->all(), $rules, [
@@ -1025,7 +1026,12 @@ class TransactionController extends Controller
                         }
                     }
 
-                    $order = Order::with(['buyer', 'merchant', 'detail', 'detail.product', 'progress_active', 'payment'])->find($order_id);
+                    $order = Order::with(['buyer', 'merchant', 'detail', 'delivery', 'detail.product', 'progress_active', 'payment'])->find($order_id);
+
+                    if ($order->delivery->is_sameday && (!isset($request->acc_sameday) || $request->acc_sameday == false)) {
+                        return $this->respondWithResult(false, 'Pesanan termasuk same day delivery, apakah anda yakin untuk menerima pesanan ini?', 400);
+                    }
+
                     $orders = Order::with(['delivery', 'detail', 'detail.product'])->where('no_reference', $order->no_reference)->get();
                     $total_amount_trx = $total_delivery_fee_trx = 0;
 
@@ -1119,52 +1125,64 @@ class TransactionController extends Controller
     {
         try {
             $notes = request()->input('notes');
-            $response = $this->transactionCommand->updateOrderStatus($order_id, '09', $notes);
-            $order = Order::with('detail')->find($order_id);
-            $order->load('promo_log_orders');
 
-            if (count($order->promo_log_orders) > 0) {
-                foreach ($order->promo_log_orders as $promo_log_order) {
-                    $this->transactionCommand->updatePromoLog($promo_log_order);
+            $order = Order::find($order_id);
+            $order->load(['detail', 'promo_log_orders']);
+
+            DB::beginTransaction();
+            if (!in_array($order->progress_active->status_code, ['09', '88', '99', '98'])) {
+                $updatedStatus = $this->transactionCommand->updateOrderStatus($order->id, '09', $notes);
+
+                if ($order->delivery->delivery_setting == 'shipper' && $order->delivery->awb_number != null) {
+                    $this->transactionCommand->cancelResi($order);
                 }
+
+                // refund claim bonus voucher gami
+                if ($order->voucher_bonus_code != null && $order->bonus_discount != null) {
+                    GamificationManager::claimBonusRefund($order->voucher_bonus_code);
+
+                    $order->voucher_bonus_code = 'RF_' . $order->voucher_bonus_code;
+                    $order->save();
+                    Log::info('Succeeded Hit Refund Bonus Voucher Gami - Reject Order ' . $order_id);
+                }
+
+                if (count($order->promo_log_orders) > 0) {
+                    foreach ($order->promo_log_orders as $promo_log_order) {
+                        $this->transactionCommand->updatePromoLog($promo_log_order);
+                    }
+                }
+
+                $evCustomer = CustomerEVSubsidy::where('order_id', $order_id)->first();
+
+                if ($evCustomer) {
+                    $evCustomer->status_approval = 0;
+                    $evCustomer->save();
+                }
+
+                foreach ($order->detail as $detail) {
+                    $stock = ProductStock::where('product_id', $detail->product_id)
+                        ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
+
+                    $data['amount'] = $stock->amount + $detail->quantity;
+                    $data['uom'] = $stock->uom;
+                    $data['full_name'] = 'system';
+
+                    $productCommand = new ProductCommands();
+                    $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
+                }
+
+                if ($updatedStatus['success'] == true) {
+                    $mailSender = new MailSenderManager();
+                    $mailSender->mailorderRejected($order_id, $notes);
+                }
+            } else {
+                return $this->respondWithResult(false, 'Pesanan ' . $order->id . ' tidak dalam status yang bisa dibatalkan!', 400);
             }
 
-            // refund claim bonus voucher gami
-            if ($order->voucher_bonus_code != null && $order->bonus_discount != null) {
-                GamificationManager::claimBonusRefund($order->voucher_bonus_code);
-
-                $order->voucher_bonus_code = 'RF_' . $order->voucher_bonus_code;
-                $order->save();
-                Log::info('Succeeded Hit Refund Bonus Voucher Gami - Reject Order ' . $order_id);
-            }
-
-            $evCustomer = CustomerEVSubsidy::where([
-                'order_id' => $order_id,
-            ])->first();
-
-            if ($evCustomer) {
-                $evCustomer->status_approval = 0;
-                $evCustomer->save();
-            }
-
-            foreach ($order->detail as $detail) {
-                $stock = ProductStock::where('product_id', $detail->product_id)
-                    ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
-
-                $data['amount'] = $stock->amount + $detail->quantity;
-                $data['uom'] = $stock->uom;
-                $data['full_name'] = 'system';
-
-                $productCommand = new ProductCommands();
-                $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
-            }
-            if ($response['success'] == true) {
-                $mailSender = new MailSenderManager();
-                $mailSender->mailorderRejected($order_id, $notes);
-            }
-
-            return $response;
+            DB::commit();
+            return $this->respondWithResult(true, 'Pesanan anda berhasil dibatalkan.', 200);
         } catch (Exception $e) {
+            DB::rollBack();
             return $this->respondErrorException($e, request());
         }
     }
@@ -1427,10 +1445,10 @@ class TransactionController extends Controller
                     }
                 } else {
                     $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
-                    $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+                    $resConfrim = IconcashManager::topupConfirm($topup_inquiry->data->orderId, $topup_inquiry->data->amount);
 
                     if ($resConfrim) {
-                        $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
+                        $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->data->orderId)->first();
                         $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
                         $iconcash_inquiry->confirm_status = $resConfrim->success;
                         $iconcash_inquiry->save();
@@ -1470,6 +1488,31 @@ class TransactionController extends Controller
             }
         } catch (Exception $e) {
             DB::rollBack();
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function finishScheduller($order_id)
+    {
+        $timestamp = request()->header('timestamp');
+        $signature = request()->header('signature');
+
+        if ($timestamp == null || $signature == null) {
+            return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+        }
+
+        $timestamp_plus = \Carbon\Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
+        if (strtotime($timestamp) < strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+
+        $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
+        $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
+        if ($hash != $signature) {
+            return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+        }
+
+        try {
+            $this->finishOrder($order_id);
+        } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
     }
@@ -1522,6 +1565,10 @@ class TransactionController extends Controller
 
                         $payment_info = OrderPayment::getByRefnum($order->no_reference)->first();
 
+                        if ($payment_info->date_expired != null) {
+                            IconpayManager::booking($payment_info->no_reference, $payment_info->date_created, $payment_info->date_expired, "99", $payment_info->payment_amount, $payment_info->customer->full_name, $payment_info->customer->email, $payment_info->customer->phone, false);
+                        }
+
                         $evCustomer = CustomerEVSubsidy::where([
                             'order_id' => $order->id,
                         ])->first();
@@ -1569,6 +1616,122 @@ class TransactionController extends Controller
                     $mailSender = new MailSenderManager();
                     $mailSender->mailorderCanceled($order->id);
                 }
+            }
+
+            DB::commit();
+            return $this->respondWithResult(true, 'Pesanan anda berhasil dibatalkan.', 200);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function cancelScheduller($order_id)
+    {
+        $timestamp = request()->header('timestamp');
+        $signature = request()->header('signature');
+
+        if ($timestamp == null || $signature == null) {
+            return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+        }
+
+        $timestamp_plus = \Carbon\Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
+        if (strtotime($timestamp) < strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+
+        $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
+        $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
+        if ($hash != $signature) {
+            return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+        }
+
+        try {
+            $this->cancelOrder($order_id);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+
+    public function cancelOrderBOT($id)
+    {
+        try {
+            $timestamp = request()->header('timestamp');
+            $signature = request()->header('signature');
+
+            if ($timestamp == null || $signature == null) {
+                return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+            }
+
+            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
+            if (strtotime($timestamp) < strtotime($timestamp_plus)) {
+                return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+            }
+
+            $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
+            $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
+            if ($hash != $signature) {
+                return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+            }
+
+            $order = Order::with(['detail', 'promo_log_orders', 'progress_active', 'delivery'])->where('id', $id)->first();
+
+            DB::beginTransaction();
+            if (!in_array($order->progress_active->status_code, ['09', '88', '99', '98'])) {
+                $updatedStatus = $this->transactionCommand->updateOrderStatus($order->id, '09', 'cancel by bot');
+
+                if ($order->delivery->delivery_setting == 'shipper' && $order->delivery->awb_number != null) {
+                    $this->transactionCommand->cancelResi($order);
+                }
+
+                // refund claim bonus voucher gami
+                if ($order->voucher_bonus_code != null && $order->bonus_discount != null) {
+                    GamificationManager::claimBonusRefund($order->voucher_bonus_code);
+
+                    $order = Order::find($order->id);
+                    $order->voucher_bonus_code = 'RF_' . $order->voucher_bonus_code;
+                    $order->save();
+                    Log::info('Succeded Hit Refund Bonus Voucher Gami - Cancel Order ' . $order->id);
+                }
+
+                if (count($order->promo_log_orders) > 0) {
+                    foreach ($order->promo_log_orders as $promo_log_order) {
+                        $this->transactionCommand->updatePromoLog($promo_log_order);
+                    }
+                }
+
+                // if ($key == 0) {
+                //     $payment_info = OrderPayment::getByRefnum($order->no_reference)->first();
+
+                //     if ($payment_info->date_expired != null) {
+                //         IconpayManager::booking($payment_info->no_reference, $payment_info->date_created, $payment_info->date_expired, "99", $payment_info->payment_amount, $payment_info->customer->full_name, $payment_info->customer->email, $payment_info->customer->phone, false);
+                //     }
+                // }
+
+                $evCustomer = CustomerEVSubsidy::where('order_id', $order->id)->first();
+
+                if ($evCustomer) {
+                    $evCustomer->status_approval = 0;
+                    $evCustomer->save();
+                }
+
+                foreach ($order->detail as $detail) {
+                    $stock = ProductStock::where('product_id', $detail->product_id)
+                        ->where('merchant_id', $order->merchant_id)->where('status', 1)->first();
+
+                    $data['amount'] = $stock->amount + $detail->quantity;
+                    $data['uom'] = $stock->uom;
+                    $data['full_name'] = 'system';
+
+                    $productCommand = new ProductCommands();
+                    $productCommand->updateStockProduct($detail->product_id, $order->merchant_id, $data);
+                }
+
+                if ($updatedStatus['success'] == true) {
+                    $mailSender = new MailSenderManager();
+                    $mailSender->mailorderCanceled($order->id);
+                }
+            } else {
+                return $this->respondWithResult(false, 'Pesanan ' . $order->id . ' tidak dalam status yang bisa dibatalkan!', 400);
             }
 
             DB::commit();
@@ -2129,8 +2292,8 @@ class TransactionController extends Controller
                 return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
             }
 
-            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
-            if (strtotime($timestamp) > strtotime($timestamp_plus)) {
+            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
+            if (strtotime($timestamp) < strtotime($timestamp_plus)) {
                 return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
             }
 
@@ -2218,8 +2381,8 @@ class TransactionController extends Controller
                 return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
             }
 
-            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(1)->toIso8601String();
-            if (strtotime($timestamp) > strtotime($timestamp_plus)) {
+            $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
+            if (strtotime($timestamp) < strtotime($timestamp_plus)) {
                 return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
             }
 
@@ -2229,8 +2392,9 @@ class TransactionController extends Controller
                 return $this->respondWithResult(false, 'Signature tidak valid.', 400);
             }
 
-            DB::beginTransaction();
             $order = Order::with('detail', 'buyer', 'merchant', 'merchant.corporate', 'progress', 'progress_active', 'delivery')->where('id', $id)->first();
+
+            DB::beginTransaction();
             $this->transactionCommand->generateResi($order, $order->delivery->request_pickup_time);
 
             $delivery = OrderDelivery::where('order_id', $id)->first();

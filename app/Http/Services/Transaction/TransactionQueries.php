@@ -1528,6 +1528,15 @@ class TransactionQueries extends Service
 
             $total_insentif += $product_insentif;
 
+            if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
+                $installment = InstallmentQueries::calculateInstallment($datas['installment'], $merchant['total_payment']);
+
+                // get only the highest one total_payment in data merchant then override it with markup_price
+                if ($merchant['id'] == $datas['merchants'][0]['id']) {
+                    $merchant['total_payment'] = $installment['markup_price'];
+                }
+            }
+
             $new_merchant[] = $merchant;
         }
 
@@ -1604,6 +1613,7 @@ class TransactionQueries extends Service
             $installment_actual_price = $datas['total_payment'];
             $installment_provider_fee = $installment['provider_fee'];
             $installment_interest_percentage = $installment['interest_percentage'];
+            $installment_settlement = $installment['installment_settlement'];
         }
 
         $datas['installment_price'] = $installment_price ?? 0;
@@ -1613,6 +1623,7 @@ class TransactionQueries extends Service
         $datas['installment_actual_price'] = $installment_actual_price ?? 0;
         $datas['installment_provider_fee'] = $installment_provider_fee ?? 0;
         $datas['installment_interest_percentage'] = $installment_interest_percentage ?? 0;
+        $datas['installment_settlement'] = $installment_settlement ?? 0;
 
         $datas['total_payment'] = $installment_total_payment ?? $datas['total_payment'];
 
