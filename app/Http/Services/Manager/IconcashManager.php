@@ -243,12 +243,16 @@ class IconcashManager
             'http_errors' => false,
         ]);
 
-        $response = json_decode($response->getBody());
+        $response = json_decode($response->getBody(), true);
 
         throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
 
-        if ($response->success != true) {
-            throw new Exception($response->message, $response->code);
+        if (isset($response['success']) && $response['success'] != true) {
+            throw new Exception($response['message'], $response['code']);
+        }
+
+        if (isset($response['status']) && $response['status'] == 500) {
+            throw new Exception($response['error'], $response['status']);
         }
 
         return data_get($response, 'data');
