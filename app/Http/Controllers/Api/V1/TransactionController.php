@@ -1647,7 +1647,6 @@ class TransactionController extends Controller
         }
     }
 
-
     public function cancelOrderBOT($id)
     {
         try {
