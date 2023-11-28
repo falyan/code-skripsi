@@ -1517,7 +1517,7 @@ class TransactionController extends Controller
         }
     }
 
-    public function cancelOrder($id)
+    public function cancelOrder($id, $isScheduller = false)
     {
         $rules = [
             'reason' => 'required',
@@ -1562,9 +1562,7 @@ class TransactionController extends Controller
                     }
 
                     if ($key == 0) {
-
                         $payment_info = OrderPayment::getByRefnum($order->no_reference)->first();
-
                         $evCustomer = CustomerEVSubsidy::where([
                             'order_id' => $order->id,
                         ])->first();
@@ -1574,7 +1572,7 @@ class TransactionController extends Controller
                             $evCustomer->save();
                         }
 
-                        if ($payment_info->date_expired != null && $evCustomer == null) {
+                        if ($payment_info->date_expired != null && $evCustomer == null && $isScheduller == false) {
                             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', $payment_info->date_created)->timestamp);
                             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', $payment_info->date_expired)->timestamp);
 
@@ -1641,7 +1639,7 @@ class TransactionController extends Controller
         }
 
         try {
-            $this->cancelOrder($order_id);
+            $this->cancelOrder($order_id, true);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
