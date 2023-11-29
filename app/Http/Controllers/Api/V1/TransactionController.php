@@ -1397,9 +1397,6 @@ class TransactionController extends Controller
 
                 $order = Order::with(['delivery', 'detail'])->where('id', $id)->first();
                 $customer = Customer::with('iconcash')->where('merchant_id', $order->merchant_id)->first();
-                $master_data = MasterData::whereIn('key', ['merchant_u17_id', 'merchant_u17_expired'])->get();
-                $merchant_u17 = collect($master_data)->where('key', 'merchant_u17_id')->first();
-                $expired_u17 = collect($master_data)->where('key', 'merchant_u17_expired')->first();
 
                 $iconcash = $customer->iconcash;
                 $account_type_id = null;
@@ -1430,20 +1427,10 @@ class TransactionController extends Controller
                 $client_ref = $order->trx_no;
                 $corporate_id = 10;
 
-                if ($merchant_u17 && $merchant_u17->value == $order->merchant_id) {
-                    $expired = $expired_u17 ? $expired_u17->value : '2024-12-31';
-                    $buyer = Customer::where('id', $order->buyer_id)->first();
-                    if ($buyer->pln_mobile_customer_id && \Carbon\Carbon::now() <= \Carbon\Carbon::parse($expired)) {
-                        $this->voucherCommand->generateVoucherU17($order, $buyer, $mdr_total, $expired);
-                    } else {
-                        Log::info([
-                            'path_info' => 'generate_voucher_u17',
-                            'message' => 'Tidak memenuhi syarat untuk generate voucher u17',
-                            'order_id' => $order->id,
-                            'buyer_id' => $buyer,
-                        ]);
-                    }
-                } else {
+                $master_data = MasterData::whereIn('key', ['merchant_u17_id', 'merchant_u17_expired'])->get();
+                $merchant_u17 = collect($master_data)->where('key', 'merchant_u17_id')->first();
+
+                if (!$merchant_u17 && $merchant_u17->value != $order->merchant_id) {
                     $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
                     $resConfrim = IconcashManager::topupConfirm($topup_inquiry->data->orderId, $topup_inquiry->data->amount);
 
@@ -2382,7 +2369,8 @@ class TransactionController extends Controller
             $order = Order::with('detail', 'buyer', 'merchant', 'merchant.corporate', 'progress', 'progress_active', 'delivery')->where('id', $id)->first();
 
             DB::beginTransaction();
-            $this->transactionCommand->generateResi($order, $order->delivery->request_pickup_time);
+            $statusCreateAwb = $this->transactionCommand->generateResi($order, $order->delivery->request_pickup_time);
+            if ($statusCreateAwb) $this->generateVoucherU17($order);
 
             $delivery = OrderDelivery::where('order_id', $id)->first();
             if ($delivery->awb_number != null) {
@@ -2447,7 +2435,8 @@ class TransactionController extends Controller
                         }
                     } else {
                         $this->transactionCommand->updateOrderStatusV2($order, '03');
-                        $this->transactionCommand->generateResi($order, $request->expect_time);
+                        $statusCreateAwb = $this->transactionCommand->generateResi($order, $request->expect_time);
+                        if ($statusCreateAwb) $this->generateVoucherU17($order);
 
                         $delivery = OrderDelivery::where('order_id', $order->id)->first();
                         $results[] = [
@@ -2495,6 +2484,28 @@ class TransactionController extends Controller
             return $this->respondWithData($results, $message);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function generateVoucherU17($order)
+    {
+        $master_data = MasterData::whereIn('key', ['merchant_u17_id', 'merchant_u17_expired'])->get();
+        $merchant_u17 = collect($master_data)->where('key', 'merchant_u17_id')->first();
+        $expired_u17 = collect($master_data)->where('key', 'merchant_u17_expired')->first();
+
+        if ($merchant_u17 && $merchant_u17->value == $order->merchant_id) {
+            $expired = $expired_u17 ? $expired_u17->value : '2024-12-31';
+            $buyer = Customer::where('id', $order->buyer_id)->first();
+            if ($buyer->pln_mobile_customer_id && \Carbon\Carbon::now() <= \Carbon\Carbon::parse($expired)) {
+                $this->voucherCommand->generateVoucherU17($order, $buyer, $order->total_mdr, $expired);
+            } else {
+                Log::info([
+                    'path_info' => 'generate_voucher_u17',
+                    'message' => 'Tidak memenuhi syarat untuk generate voucher u17',
+                    'order_id' => $order->id,
+                    'buyer_id' => $buyer,
+                ]);
+            }
         }
     }
 

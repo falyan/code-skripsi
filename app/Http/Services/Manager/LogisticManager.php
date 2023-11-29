@@ -518,25 +518,49 @@ class LogisticManager
         // return $body;
 
         $url = sprintf('%s/%s', static::$endpoint, 'v1/preorder');
-        $response = static::$curl->request('POST', $url, [
-            'headers' => static::$headers,
-            'http_errors' => false,
-            'json' => $body,
-        ]);
+        try {
+            $response = static::$curl->request('POST', $url, [
+                'headers' => static::$headers,
+                'http_errors' => false,
+                'json' => $body,
+            ]);
 
-        $response = json_decode($response->getBody(), true);
-        // return $response;
+            $status_code = $response->getStatusCode();
+            $response = json_decode($response->getBody(), true);
+            // return $response;
 
-        Log::info("E00002", [
-            'path_url' => "hedwig.endpoint/v1/preorder",
-            'query' => [],
-            'body' => $body,
-            'response' => $response,
-        ]);
+            Log::info("hedwig.preorder", [
+                'url' => $url,
+                'body' => $body,
+                'response' => $response,
+                'status_code' => $status_code
+            ]);
 
-        // throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh', 500));
+            if ($status_code != 200 || !$response) {
+                return [
+                    'awb_number' => null,
+                    'no_reference' => null,
+                    'courier' => null,
+                    'courier_name' =>  null,
+                    'courier_image' =>  null,
+                ];
+            }
 
-        return $response;
+            return $response['data'];
+        } catch (\Throwable $th) {
+            Log::info("hedwig.preorder", [
+                'url' => $url,
+                'errors' => $th
+            ]);
+
+            return [
+                'awb_number' => null,
+                'no_reference' => null,
+                'courier' => null,
+                'courier_name' =>  null,
+                'courier_image' =>  null,
+            ];
+        }
     }
 
     public static function requestPickup($order_id, $expect_time)

@@ -3188,15 +3188,19 @@ class TransactionCommands extends Service
 
     public function generateResi($order, $expect_time)
     {
+        $status = true;
         $delivery = OrderDelivery::where('order_id', $order->id)->first();
         if ($delivery->delivery_method != 'Pengiriman oleh Seller' && $delivery->delivery_setting == 'shipper') {
             $resi = LogisticManager::preorder($order, $expect_time);
 
-            if (isset($resi['data'])) {
-                $delivery->awb_number = $resi['data']['awb_number'];
-                $delivery->no_reference = $resi['data']['no_reference'];
-                $delivery->image_logistic = $resi['data']['courier_image'];
+            if (isset($resi['awb_number'])) {
+                $delivery->awb_number = $resi['awb_number'];
+                $delivery->no_reference = $resi['no_reference'];
+                $delivery->image_logistic = $resi['courier_image'];
+            } else {
+                $status = false;
             }
+
             $delivery->is_request_pickup = $expect_time != null ? true : false;
             $delivery->request_pickup_time = $expect_time != null ? Carbon::parse($expect_time)->format('Y-m-d H:i:s') : null;
             $delivery->save();
@@ -3209,6 +3213,8 @@ class TransactionCommands extends Service
             $delivery->awb_number = $resi;
             $delivery->save();
         }
+
+        return $status;
     }
 
     public function cancelResi($order)
