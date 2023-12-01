@@ -1489,7 +1489,7 @@ class TransactionController extends Controller
         }
     }
 
-    public function cancelOrder($id, $isScheduller = false)
+    public function cancelOrder($id)
     {
         $rules = [
             'reason' => 'required',
@@ -1544,7 +1544,9 @@ class TransactionController extends Controller
                             $evCustomer->save();
                         }
 
-                        if ($payment_info->date_expired != null && $evCustomer == null && $isScheduller == false) {
+                        $now = Carbon::now('Asia/Jakarta');
+
+                        if ($payment_info->date_expired != null && $evCustomer == null && $payment_info->date_expired <= $now) {
                             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', $payment_info->date_created)->timestamp);
                             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', $payment_info->date_expired)->timestamp);
 
@@ -1611,7 +1613,7 @@ class TransactionController extends Controller
         }
 
         try {
-            $this->cancelOrder($order_id, true);
+            $this->cancelOrder($order_id);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
