@@ -1190,7 +1190,6 @@ class TransactionController extends Controller
     public function addAwbNumberOrder($order_id, $awb)
     {
         try {
-
             if (!is_numeric($order_id)) {
                 $response = [
                     'success' => false,
@@ -1199,7 +1198,6 @@ class TransactionController extends Controller
                 return $response;
             }
 
-            // $awb_number = $request->input('awb_number');
             $check_awb = $this->transactionQueries->checkAwb($awb);
 
             if (!empty($check_awb)) {
@@ -1209,20 +1207,6 @@ class TransactionController extends Controller
                 ];
                 return $response;
             }
-
-            // $courir = OrderDelivery::where('order_id', $order_id)->first()->delivery_method;
-            // if ($courir == 'J&T') {
-            //     $courir = 'jnt';
-            // }
-            // $cek_resi = $this->rajaongkirManager->cekResi($awb, $courir);
-            // if ($cek_resi == false) {
-            //     $response = [
-            //         'success' => false,
-            //         'message' => 'Nomor resi yang anda masukkan tidak ditemukan',
-            //     ];
-
-            //     return $response;
-            // }
 
             DB::beginTransaction();
             $data = $this->transactionQueries->getStatusOrder($order_id, true);
@@ -1248,20 +1232,8 @@ class TransactionController extends Controller
                 $title = 'Pesanan Dikirim';
                 $message = 'Pesanan anda sedang dalam pengiriman.';
                 $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($order_id);
-                // $this->notificationCommand->sendPushNotification($order->buyer->id, $title, $message, 'active');
                 $this->notificationCommand->sendPushNotificationCustomerPlnMobile($order->buyer->id, $title, $message);
 
-                // $orders = Order::with(['delivery'])->where('no_reference', $order->no_reference)->get();
-                // $total_amount_trx = $total_delivery_fee_trx = 0;
-
-                // foreach($orders as $o){
-                //     $total_amount_trx += $o->total_amount;
-                //     $total_delivery_fee_trx += $o->delivery->delivery_fee;
-                // }
-
-                // if ($order->voucher_ubah_daya_code == null && ($total_amount_trx - $total_delivery_fee_trx) >= 100000){
-                //     $this->voucherCommand->generateVoucher($order);
-                // }
                 DB::commit();
 
                 $mailSender = new MailSenderManager();
@@ -1504,7 +1476,7 @@ class TransactionController extends Controller
         }
     }
 
-    public function cancelOrder($id, $isScheduller = false)
+    public function cancelOrder($id)
     {
         $rules = [
             'reason' => 'required',
@@ -1559,7 +1531,9 @@ class TransactionController extends Controller
                             $evCustomer->save();
                         }
 
-                        if ($payment_info->date_expired != null && $evCustomer == null && $isScheduller == false) {
+                        $now = Carbon::now('Asia/Jakarta');
+
+                        if ($payment_info->date_expired != null && $evCustomer == null && $payment_info->date_expired <= $now) {
                             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', $payment_info->date_created)->timestamp);
                             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', $payment_info->date_expired)->timestamp);
 
@@ -1626,7 +1600,7 @@ class TransactionController extends Controller
         }
 
         try {
-            $this->cancelOrder($order_id, true);
+            $this->cancelOrder($order_id);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
