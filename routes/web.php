@@ -290,7 +290,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'transaction', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('/delivery-discount', 'TransactionController@getDeliveryDiscount');
                 $router->get('/customer-discount', 'TransactionController@getCustomerDiscount');
-                $router->get('/complaint/list', 'TransactionController@getListComplaint');
                 $router->get('/{related_id}', 'TransactionController@buyerIndex');
 
                 $router->get('/{related_id}/category/{category_key}', 'TransactionController@transactionByCategoryKey');
@@ -345,6 +344,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'installment', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('provider', 'InstallmentController@getListInstallmentProvider');
                 $router->get('provider/tenor', 'InstallmentController@getTenorInstallmentByProvider');
+            });
+
+            $router->group(['prefix' => 'complaint'], static function () use ($router) {
+                $router->get('list', 'TransactionController@getListComplaint');
             });
 
         });
