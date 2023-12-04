@@ -290,7 +290,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->group(['prefix' => 'transaction', 'middleware' => 'auth'], static function () use ($router) {
                 $router->get('/delivery-discount', 'TransactionController@getDeliveryDiscount');
                 $router->get('/customer-discount', 'TransactionController@getCustomerDiscount');
-                $router->get('/list-complaint', 'TransactionController@getListComplaint');
+                $router->get('/complaint/list', 'TransactionController@getListComplaint');
                 $router->get('/{related_id}', 'TransactionController@buyerIndex');
 
                 $router->get('/{related_id}/category/{category_key}', 'TransactionController@transactionByCategoryKey');
