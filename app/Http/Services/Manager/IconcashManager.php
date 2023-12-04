@@ -233,7 +233,7 @@ class IconcashManager
     {
         $param = self::setParamAPI([]);
 
-        $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/balance/customer' . $param);
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/balance/cusmer' . $param);
 
         $response = self::$curl->request('GET', $url, [
             'headers' => [
