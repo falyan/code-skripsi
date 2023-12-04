@@ -2729,7 +2729,7 @@ class TransactionCommands extends Service
                     $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
 
                     // $notificationCommand->sendPushNotification($order->merchant->id, $title, $message, 'active');
-                    $notificationCommand->sendPushNotificationCustomerPlnMobile($customer_id, $title, $message);
+                    // $notificationCommand->sendPushNotificationCustomerPlnMobile($customer_id, $title, $message);
                 }
             }
 
