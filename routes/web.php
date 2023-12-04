@@ -552,6 +552,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->post('/{id}/finish', 'TransactionController@finishOrder');
             $router->post('/{id}/cancel', 'TransactionController@cancelOrder');
         });
+        $router->post('/{id}/generate-u17', 'TransactionController@generateU17');
         $router->post('/{id}/refund-ongkir', 'TransactionController@refundOngkir');
         $router->post('/{id}/generate-awb', 'TransactionController@generateAwbBOT');
         $router->post('/{id}/cancel-bot', 'TransactionController@cancelOrderBOT');
