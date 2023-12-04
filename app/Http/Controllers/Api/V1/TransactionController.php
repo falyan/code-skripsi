@@ -2483,6 +2483,49 @@ class TransactionController extends Controller
         }
     }
 
+    public function generateU17($id)
+    {
+        $timestamp = request()->header('timestamp');
+        $signature = request()->header('signature');
+
+        if ($timestamp == null || $signature == null) {
+            return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+        }
+
+        $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
+        if (strtotime($timestamp) > strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+
+        $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
+        $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
+        if ($hash != $signature) {
+            return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+        }
+
+        $order = Order::with(['buyer', 'detail', 'progress_active', 'payment'])->find($id);
+        $status_code = $order->progress_active->status_code;
+
+        if (!in_array($status_code, ['03', '08', '88'])) {
+            return $this->respondWithResult(false, 'Status pesanan tidak memenuhi syarat!', 400);
+        }
+
+        try {
+            DB::beginTransaction();
+            $master_ubah_dayas = UbahDayaMaster::where('status', 1)->orderBy('event_start_date', 'asc')->get();
+            $ubah_daya = collect($master_ubah_dayas)->whereNot('event_name', 'ev2go')->all();
+            $this->voucherCommand->generateVoucher($order, $ubah_daya);
+
+            DB::commit();
+
+            $response['success'] = true;
+            $response['message'] = 'Berhasil generate voucher';
+
+            return $this->respondWithResult(true, 'Berhasil generate voucher.');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return $this->respondErrorException($th, request());
+        }
+    }
+
     public function getListComplaint()
     {
         $complaints = MasterData::select('key', 'value')->where('type', 'complaint')->get();
