@@ -1402,7 +1402,7 @@ class TransactionController extends Controller
                 $master_data = MasterData::whereIn('key', ['merchant_u17_id', 'merchant_u17_expired'])->get();
                 $merchant_u17 = collect($master_data)->where('key', 'merchant_u17_id')->first();
 
-                if (!$merchant_u17 && $merchant_u17->value != $order->merchant_id) {
+                if (!$merchant_u17 || $merchant_u17->value != $order->merchant_id) {
                     $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
                     $resConfrim = IconcashManager::topupConfirm($topup_inquiry->data->orderId, $topup_inquiry->data->amount);
 
