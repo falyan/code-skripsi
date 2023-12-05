@@ -2510,14 +2510,33 @@ class TransactionController extends Controller
 
         try {
             DB::beginTransaction();
-            $master_ubah_dayas = UbahDayaMaster::where('status', 1)->orderBy('event_start_date', 'asc')->get();
-            $ubah_daya = collect($master_ubah_dayas)->whereNot('event_name', 'ev2go')->all();
-            $this->voucherCommand->generateVoucher($order, $ubah_daya);
+            $master_data = MasterData::whereIn('key', ['merchant_u17_id', 'merchant_u17_expired'])->get();
+            $merchant_u17 = collect($master_data)->where('key', 'merchant_u17_id')->first();
+            $expired_u17 = collect($master_data)->where('key', 'merchant_u17_expired')->first();
+
+            $is_failed = false;
+            if ($merchant_u17 && $merchant_u17->value == $order->merchant_id) {
+                $expired = $expired_u17 ? $expired_u17->value : '2024-12-31';
+                $buyer = Customer::where('id', $order->buyer_id)->first();
+                if ($buyer->pln_mobile_customer_id && \Carbon\Carbon::now() <= \Carbon\Carbon::parse($expired)) {
+                    $this->voucherCommand->generateVoucherU17($order, $buyer, $order->total_mdr, $expired);
+                } else {
+                    $is_failed = true;
+                }
+            } else {
+                $is_failed = true;
+            }
 
             DB::commit();
 
-            $response['success'] = true;
-            $response['message'] = 'Berhasil generate voucher';
+            if ($is_failed) {
+                Log::info([
+                    'path_info' => 'generate_voucher_u17',
+                    'message' => 'Tidak memenuhi syarat untuk generate voucher u17',
+                    'order_id' => $order->id,
+                ]);
+                return $this->respondWithResult(false, 'Gagal generate voucher.', 400);
+            }
 
             return $this->respondWithResult(true, 'Berhasil generate voucher.');
         } catch (\Throwable $th) {
