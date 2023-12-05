@@ -183,7 +183,7 @@ class IconcashController extends Controller
             $iconcash = Auth::user()->iconcash;
 
             if (!isset($iconcash->token)) {
-                return response()->json(['success' => false, 'code' => 2021, 'message' => 'user belum aktivasi iconcash / token expired'], 200);
+                return response()->json(['success' => false, 'code' => 400, 'message' => 'user belum aktivasi iconcash / token expired'], 400);
             }
 
             $response = IconcashManager::getCustomerAllBalance($iconcash->token);
