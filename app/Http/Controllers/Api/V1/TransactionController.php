@@ -24,6 +24,7 @@ use App\Models\OrderDelivery;
 use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Models\PromoLogMerchandise;
 use App\Models\RefundOrder;
 use App\Models\UbahDayaLog;
 use App\Models\UbahDayaMaster;
@@ -2506,6 +2507,11 @@ class TransactionController extends Controller
 
         if (!in_array($status_code, ['03', '08', '88'])) {
             return $this->respondWithResult(false, 'Status pesanan tidak memenuhi syarat!', 400);
+        }
+
+        $promo = PromoLogMerchandise::where('order_id', $id)->first();
+        if ($promo) {
+            return $this->respondWithResult(false, 'Transaksi telah mendapat vouher!', 400);
         }
 
         try {
