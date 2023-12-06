@@ -2464,15 +2464,20 @@ class TransactionController extends Controller
 
     public function generateVoucherU17($order)
     {
-        $master_data = MasterData::whereIn('key', ['merchant_u17_id', 'merchant_u17_expired'])->get();
-        $merchant_u17 = collect($master_data)->where('key', 'merchant_u17_id')->first();
-        $expired_u17 = collect($master_data)->where('key', 'merchant_u17_expired')->first();
+        $merchant_u17 = null;
+        $expired_u17 = null;
+        if ($master_data = MasterData::whereIn('key', ['merchant_u17_id', 'merchant_u17_expired'])->get()) {
+            $merchant_u17 = collect($master_data)->where('key', 'merchant_u17_id')->first();
+            $expired_u17 = collect($master_data)->where('key', 'merchant_u17_expired')->first();
 
-        if ($merchant_u17 && $merchant_u17->value == $order->merchant_id) {
-            $expired = $expired_u17 ? $expired_u17->value : '2024-12-31';
+            if ($merchant_u17) $merchant_u17 = $merchant_u17->value;
+            if ($expired_u17) $expired_u17 =  $expired_u17->value;
+        }
+
+        if ($merchant_u17 && $expired_u17 && $merchant_u17 == $order->merchant_id) {
             $buyer = Customer::where('id', $order->buyer_id)->first();
-            if ($buyer->pln_mobile_customer_id && \Carbon\Carbon::now() <= \Carbon\Carbon::parse($expired)) {
-                $this->voucherCommand->generateVoucherU17($order, $buyer, $order->total_mdr, $expired);
+            if ($buyer->pln_mobile_customer_id && \Carbon\Carbon::now() <= \Carbon\Carbon::parse($expired_u17)) {
+                $this->voucherCommand->generateVoucherU17($order, $buyer, $order->total_mdr, $expired_u17);
             } else {
                 Log::info([
                     'path_info' => 'generate_voucher_u17',
@@ -2481,6 +2486,12 @@ class TransactionController extends Controller
                     'buyer_id' => $buyer,
                 ]);
             }
+        } else {
+            Log::info([
+                'path_info' => 'generate_voucher_u17',
+                'message' => 'Tidak memenuhi syarat untuk generate voucher u17',
+                'order_id' => $order->id,
+            ]);
         }
     }
 
