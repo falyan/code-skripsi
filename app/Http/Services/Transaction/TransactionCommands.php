@@ -3044,15 +3044,19 @@ class TransactionCommands extends Service
     public function addAwbNumber($order_id, $awb)
     {
         $delivery = OrderDelivery::where('order_id', $order_id)->first();
+
         if ($delivery->delivery_setting != 'rajaongkir') {
             $response['success'] = false;
             $response['message'] = 'Gagal menambahkan nomor resi, mohon menghubungi Marketplace Service untuk melanjutkan transaksi!';
             return $response;
         }
+
+        $image_logistic = null;
         $logistic_master = MasterData::where('type', 'rajaongkir_courier')->where('reference_third_party_id', $delivery->delivery_method)->first();
+        if ($logistic_master) $image_logistic = $logistic_master->photo_url;
 
         $delivery->awb_number = $awb;
-        $delivery->image_logistic = $logistic_master != null ? $logistic_master->photo_url : null;
+        $delivery->image_logistic = $image_logistic;
 
         if (!$delivery->save()) {
             $response['success'] = false;
