@@ -1432,7 +1432,7 @@ class TransactionController extends Controller
                     ]);
                 }
 
-                if (!$merchant_u17 || $merchant_u17->value != $order->merchant_id) {
+                if (!$merchant_u17 || $merchant_u17 != $order->merchant_id) {
                     $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order);
                     $resConfrim = IconcashManager::topupConfirm($topup_inquiry->data->orderId, $topup_inquiry->data->amount);
 
@@ -1454,7 +1454,7 @@ class TransactionController extends Controller
                 $notificationCommand = new NotificationCommands();
                 $notificationCommand->create($column_name, $column_value, $type, $title, $message, $url_path);
 
-                if (!$merchant_u17 && $merchant_u17->value != $order->merchant_id) {
+                if (!$merchant_u17 && $merchant_u17 != $order->merchant_id) {
                     $customer = Customer::where('merchant_id', $data->merchant_id)->first();
                     $notificationCommand->sendPushNotification($customer->id, $title, $message, 'active');
                 }
