@@ -367,70 +367,89 @@ class VoucherCommands
         $hashmac = hash_hmac('sha256', self::$header['timestamp'] . json_encode($json_body), self::$keysecret);
         self::$header['signature'] = $hashmac;
 
-        $response = static::$curl->request('POST', $url, [
-            'headers' => static::$header,
-            'http_errors' => false,
-            'json' => $json_body,
-        ]);
-
-        $response = json_decode($response->getBody());
-
-        Log::info("voucher.claim.merchant-u17", [
-            'path_url' => $url,
-            'body' => $json_body,
-            'response' => $response,
-        ]);
-
-        throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
-
-        if (!isset($response->success) || $response->success != true) {
-            throw new Exception('Terjadi kesalahan: ' . $response->message, 400);
-        }
-
-        if ($response->data != null) {
-            $list_voucher = [];
-            $total_voucher = 0;
-            $total_qty = 0;
-            foreach ($response->data->vouchers as $voucher) {
-                $list_voucher[] = [
-                    'name' => 'Voucher Listrik',
-                    'qty' => $voucher->qty,
-                    'amount' => $voucher->denom,
-                ];
-
-                $total_qty += $voucher->qty;
-                $total_voucher += $voucher->denom * $voucher->qty;
-            }
-
-            $dataMail = [
-                'customer_name' => $customer->full_name ?? 'Pengguna Setia',
-                'total_voucher' => $total_voucher,
-                'total_qty' => $total_qty,
-                'expired_date' => $expired_date,
-                'list_voucher' => $list_voucher,
-            ];
-
-            PromoLogMerchandise::create([
-                'customer_id' => $order->buyer_id,
-                'order_id' => $order->id,
-                'pln_mobile_customer_id' => $customer->pln_mobile_customer_id,
-                'event_name' => 'merchandise-u17',
-                'mdr_value' => $mdr_value,
-                'value' => $total_voucher,
-                'reward_id' => $response->data->voltrikRewardId,
-                'request' => json_encode($json_body),
-                'response' => json_encode($response),
+        try {
+            $response = static::$curl->request('POST', $url, [
+                'headers' => static::$header,
+                'http_errors' => false,
+                'json' => $json_body,
             ]);
 
-            $title = 'Selamat Anda Mendapatkan Voucher';
-            $message = 'Selamat, Anda mendapatkan voucher listrik berikut dari pembelian merchandise event Piala Dunia U17 FIFA Indonesia 2023!';
-            $url_path = 'v1/buyer/query/transaction/' . $customer->id . '/detail/' . $order->id;
-            $notificationCommand = new NotificationCommands();
-            $notificationCommand->create('customer_id', $customer->id, 2, $title, $message, $url_path);
-            $notificationCommand->sendPushNotificationCustomerPlnMobile($customer->id, $title, $message);
+            $status_code = $response->getStatusCode();
+            $response = json_decode($response->getBody());
 
-            $mailSender = new MailSenderManager();
-            $mailSender->mailVoucherMerchandiseU17Claim($dataMail, $customer);
+            Log::info("voucher.claim.merchant-u17", [
+                'path_url' => $url,
+                'body' => $json_body,
+                'response' => $response,
+                'status_code' => $status_code
+            ]);
+
+            // throw_if(!$response, Exception::class, new Exception('Terjadi kesalahan: Tidak dapat terhubung ke server', 400));
+
+            // if (!isset($response->success) || $response->success != true) {
+            //     throw new Exception('Terjadi kesalahan: ' . $response->message, 400);
+            // }
+
+            if ($response && (isset($response->success) || $response->success) && $response->data != null) {
+                $list_voucher = [];
+                $total_voucher = 0;
+                $total_qty = 0;
+                foreach ($response->data->vouchers as $voucher) {
+                    $list_voucher[] = [
+                        'name' => 'Voucher Listrik',
+                        'qty' => $voucher->qty,
+                        'amount' => $voucher->denom,
+                    ];
+
+                    $total_qty += $voucher->qty;
+                    $total_voucher += $voucher->denom * $voucher->qty;
+                }
+
+                $dataMail = [
+                    'customer_name' => $customer->full_name ?? 'Pengguna Setia',
+                    'total_voucher' => $total_voucher,
+                    'total_qty' => $total_qty,
+                    'expired_date' => $expired_date,
+                    'list_voucher' => $list_voucher,
+                ];
+
+                PromoLogMerchandise::create([
+                    'customer_id' => $order->buyer_id,
+                    'order_id' => $order->id,
+                    'pln_mobile_customer_id' => $customer->pln_mobile_customer_id,
+                    'event_name' => 'merchandise-u17',
+                    'mdr_value' => $mdr_value,
+                    'value' => $total_voucher,
+                    'reward_id' => $response->data->voltrikRewardId,
+                    'request' => json_encode($json_body),
+                    'response' => json_encode($response),
+                ]);
+
+                $title = 'Selamat Anda Mendapatkan Voucher';
+                $message = 'Selamat, Anda mendapatkan voucher listrik berikut dari pembelian merchandise event Piala Dunia U17 FIFA Indonesia 2023!';
+                $url_path = 'v1/buyer/query/transaction/' . $customer->id . '/detail/' . $order->id;
+                $notificationCommand = new NotificationCommands();
+                $notificationCommand->create('customer_id', $customer->id, 2, $title, $message, $url_path);
+                $notificationCommand->sendPushNotificationCustomerPlnMobile($customer->id, $title, $message);
+
+                $mailSender = new MailSenderManager();
+                $mailSender->mailVoucherMerchandiseU17Claim($dataMail, $customer);
+            } else {
+                return [
+                    'status' => false,
+                    'error' => $response
+                ];
+            }
+
+            return [
+                'status' => true,
+                'error' => null
+            ];
+        } catch (\Throwable $th) {
+            return [
+                'status' => false,
+                'error' => $th->getMessage()
+            ];
         }
     }
 

@@ -2561,11 +2561,16 @@ class TransactionController extends Controller
             $expired_u17 = collect($master_data)->where('key', 'merchant_u17_expired')->first();
 
             $is_failed = false;
+            $failed = null;
             if ($merchant_u17 && $merchant_u17->value == $order->merchant_id) {
                 $expired = $expired_u17 ? $expired_u17->value : '2024-12-31';
                 $buyer = Customer::where('id', $order->buyer_id)->first();
                 if ($buyer->pln_mobile_customer_id && \Carbon\Carbon::now() <= \Carbon\Carbon::parse($expired)) {
-                    $this->voucherCommand->generateVoucherU17($order, $buyer, $order->total_mdr, $expired);
+                    $res = $this->voucherCommand->generateVoucherU17($order, $buyer, $order->total_mdr, $expired);
+                    if ($res['status'] == false) {
+                        $failed = $res['error'];
+                        $is_failed = true;
+                    }
                 } else {
                     $is_failed = true;
                 }
@@ -2573,17 +2578,24 @@ class TransactionController extends Controller
                 $is_failed = true;
             }
 
-            DB::commit();
 
             if ($is_failed) {
-                Log::info([
-                    'path_info' => 'generate_voucher_u17',
+                DB::rollBack();
+                Log::info('generate_voucher_u17', [
                     'message' => 'Tidak memenuhi syarat untuk generate voucher u17',
                     'order_id' => $order->id,
+                    'error' => $failed,
                 ]);
-                return $this->respondWithResult(false, 'Gagal generate voucher.', 400);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal generate voucher',
+                    'data' => $failed == null ? null : $order->id,
+                    'status_code' => 400,
+                ], 400);
             }
 
+            DB::commit();
             return $this->respondWithResult(true, 'Berhasil generate voucher.');
         } catch (\Throwable $th) {
             DB::rollBack();
