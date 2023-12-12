@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Services\Manager\LogisticManager;
+use App\Http\Services\Manager\MailSenderManager;
 use App\Http\Services\Manager\RajaOngkirManager;
+use App\Http\Services\Notification\NotificationCommands;
 use App\Http\Services\Transaction\TransactionCommands;
+use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\MasterData;
 use App\Models\Merchant;
 use App\Models\Order;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -489,6 +493,58 @@ class LogisticController extends Controller
                     'data' => $tracking_data,
                 ]);
             }
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
+    public function trackEmailScheduller($order_id)
+    {
+        $timestamp = request()->header('timestamp');
+        $signature = request()->header('signature');
+
+        if ($timestamp == null || $signature == null) {
+            return $this->respondWithResult(false, 'Timestamp dan Signature diperlukan.', 400);
+        }
+
+        $timestamp_plus = Carbon::now('Asia/Jakarta')->addMinutes(5)->toIso8601String();
+        if (strtotime($timestamp) > strtotime($timestamp_plus)) return $this->respondWithResult(false, 'Timestamp tidak valid.', 400);
+
+        $boromir_key = env('BOROMIR_AUTH_KEY', 'boromir');
+        $hash = hash_hmac('sha256', 'bot-' . $timestamp, $boromir_key);
+        if ($hash != $signature) {
+            return $this->respondWithResult(false, 'Signature tidak valid.', 400);
+        }
+
+        try {
+            $order = Order::where('id', $order_id)->first();
+            if (!$order) {
+                throw new Exception("Nomor invoice tidak ditemukan", 404);
+            }
+
+            $notif_command = new NotificationCommands();
+            $title = 'Pesanan anda telah sampai';
+            $message = 'Pesanan anda telah sampai, silakan cek kelengkapan pesanan anda sebelum menyelesaikan pesanan.';
+            $url_path = 'v1/buyer/query/transaction/' . $order->buyer_id . '/detail/' . $order->id;
+            $notif_command->create('customer_id', $order->buyer_id, '2', $title, $message, $url_path);
+            $notif_command->sendPushNotificationCustomerPlnMobile($order->buyer_id, $title, $message);
+
+            //Notification seller
+            $title_seller = 'Pesanan Sampai';
+            $message_seller = 'Pesanan telah sampai, menunggu pembeli menyelesaikan pesanan.';
+            $url_path_seller = 'v1/seller/query/transaction/detail/' . $order->id;
+            $seller = Customer::where('merchant_id', $order['merchant_id'])->first();
+            $notif_command->create('merchant_id', $order->merchant_id, '2', $title_seller, $message_seller, $url_path_seller);
+            $notif_command->sendPushNotification($seller->id, $title_seller, $message_seller, 'active');
+
+            $mailSender = new MailSenderManager();
+            $mailSender->mailOrderArrived($order->id, Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s'));
+
+            return $this->respondCustom([
+                'status' => 200,
+                'message' => 'Email berhasil dikirim!',
+                'success' => true
+            ]);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }

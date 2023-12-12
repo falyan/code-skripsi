@@ -559,6 +559,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
         $router->post('cancel/{order_id}', 'TransactionController@cancelScheduller');
         $router->post('finish/{order_id}', 'TransactionController@finishScheduller');
         $router->get('track/{order_id}', 'LogisticController@trackScheduller');
+        $router->get('track/{order_id}/email', 'LogisticController@trackEmailScheduller');
     });
 
     $router->group(['prefix' => 'merchant'], static function () use ($router) {
