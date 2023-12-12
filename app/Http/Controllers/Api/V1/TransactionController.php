@@ -1562,8 +1562,8 @@ class TransactionController extends Controller
                         }
 
                         $now = Carbon::now('Asia/Jakarta');
-
-                        if ($payment_info->date_expired != null && $evCustomer == null && $payment_info->date_expired <= $now) {
+                        $date_expired = Carbon::createFromFormat('Y-m-d H:i:s', $payment_info->date_expired);
+                        if ($payment_info->date_expired != null && $evCustomer == null && $date_expired >= $now) {
                             $trx_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', $payment_info->date_created)->timestamp);
                             $exp_date = date('Y/m/d H:i:s', Carbon::createFromFormat('Y-m-d H:i:s', $payment_info->date_expired)->timestamp);
 
