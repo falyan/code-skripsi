@@ -4,7 +4,7 @@ namespace App\Http\Services\Banner;
 
 use App\Http\Services\Service;
 use App\Models\Banner;
-use App\Models\MasterData;
+use App\Models\PopupBanners;
 
 class BannerQueries extends Service
 {
@@ -59,18 +59,16 @@ class BannerQueries extends Service
 
     public function getFlashPopup()
     {
-        $master_data = MasterData::with('parent')->where('key', 'like', 'banner_url_path%')->inRandomOrder()->first();
-
-        $url_path = $master_data;
-        $deeplink = $master_data->parent;
+        $popup_banner = PopupBanners::where('is_active', 1)->inRandomOrder()->first();
 
         return [
             'sukses' => true,
             'message' => !empty($url_path) ? 'Berhasil mendapatkan data banner' : 'Data banner tidak ada',
             'data' => [
-                'url_path' => $url_path->value ?? '',
-                'deeplink' => $deeplink->value ?? ''
-            ]
+                'url_path' => env('SAURON_CDN_ENDPOINT') . '/file/load/' . $popup_banner->image_url,
+                'deeplink' => $popup_banner->content_url,
+                'analytics_tracker' => $popup_banner->analytics_tracker,
+            ],
         ];
     }
 
