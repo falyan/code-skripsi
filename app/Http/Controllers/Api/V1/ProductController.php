@@ -437,6 +437,38 @@ class ProductController extends Controller
         }
     }
 
+    public function searchProductAndMerchant(Request $request)
+    {
+        try {
+            $validator = Validator::make(request()->all(), [
+                'keyword' => 'required|min:3',
+                'limit' => 'nullable',
+            ], [
+                'required' => ':attribute wajib diisi.',
+                'min' => 'panjang :attribute minimum :min karakter.',
+            ]);
+
+            if ($validator->fails()) {
+                $errors = collect();
+                foreach ($validator->errors()->getMessages() as $key => $value) {
+                    foreach ($value as $error) {
+                        $errors->push($error);
+                    }
+                }
+                return $this->respondValidationError($errors, 'Validation Error!');
+            }
+
+            $limit = $request->limit ?? 10;
+            $filter = $request->filter ?? [];
+            $sorting = $request->sortby ?? null;
+            $page = $request->page ?? 1;
+
+            return $this->productQueries->searchProductAndMerchant($request->keyword, $limit, $filter, $sorting, $page);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     //Get Produk Berdasarkan Merchant Buyer
     public function getProductByMerchantBuyer($merchant_id, Request $request)
     {
@@ -662,7 +694,10 @@ class ProductController extends Controller
             $sorting = $request->sortby ?? null;
             $page = $request->page ?? 1;
 
-            if ($category_key == 'prodcat_pv_rooftop') return $this->productQueries->getRecommendProductPvRooftop($filter, $sorting, $limit, $page);
+            if ($category_key == 'prodcat_pv_rooftop') {
+                return $this->productQueries->getRecommendProductPvRooftop($filter, $sorting, $limit, $page);
+            }
+
             return $this->productQueries->getRecommendProductByCategory($category_key, $filter, $sorting, $limit, $page);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
