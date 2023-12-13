@@ -1785,6 +1785,7 @@ class TransactionCommands extends Service
                 $installmentOrder->actual_price_tenor = data_get($datas, 'installment_actual_price') ?? 0;
                 $installmentOrder->interest_percentage_tenor = data_get($datas, 'installment_interest_percentage') ?? 0;
                 $installmentOrder->provider_fee = data_get($datas, 'installment_provider_fee') ?? 0;
+                $installmentOrder->sharing_fee = data_get($datas, 'installment_sharing_fee') ?? 0;
                 $installmentOrder->save();
             }
 
@@ -1868,6 +1869,10 @@ class TransactionCommands extends Service
                 $installment_tenor = $datas['installment_tenor'] < 10 ? str_pad($datas['installment_tenor'], 2, '0', STR_PAD_LEFT) : $datas['installment_tenor'];
             }
 
+            if (isset($datas['installment_sharing_fee']) && $datas['installment_sharing_fee'] > 0) {
+                $installment_sharing_fee = $datas['installment_sharing_fee'];
+            }
+
             $product_name = json_decode(OrderDetail::where('order_id', $this->order_id)->first()->product_data)->name;
 
             if (!isset($datas['customer']) || data_get($datas, 'customer') == null) {
@@ -1885,9 +1890,10 @@ class TransactionCommands extends Service
                     'email' => $customer->email,
                     'phone_number' => $customer->phone,
                     'expired_invoice' => $exp_date,
-                    'additional_info7' => isset($datas['installment_provider_fee']) ? $datas['installment_provider_fee'] : null,
+                    'additional_info6' => isset($datas['installment_settlement']) ? $datas['installment_settlement'] : null,
+                    'additional_info7' => isset($installment_sharing_fee) ? $installment_sharing_fee : $datas['installment_provider_fee'] ?? null,
                     'additional_info8' => isset($installment_tenor) ? $installment_tenor : null,
-                    'additional_info9' => isset($datas['installment_actual_price']) ? $datas['installment_actual_price'] : null,
+                    'additional_info9' => isset($datas['installment_markup_price']) ? $datas['installment_markup_price'] : null,
                     'additional_info10' => isset($datas['installment_fee']) ? $datas['installment_fee'] : null,
                 ];
 
@@ -2380,7 +2386,7 @@ class TransactionCommands extends Service
                 }
 
                 $merchant_data = collect($new_merchants)->where('id', data_get($data, 'merchant_id'))->first();
-                $setting_courirers = Cache::remember('setting_courirers', 60 * 60, fn () => MasterData::where('type', 'rajaongkir_courier')->get());
+                $setting_courirers = Cache::remember('setting_courirers', 60 * 60, fn() => MasterData::where('type', 'rajaongkir_courier')->get());
 
                 $s_courier = '';
                 foreach (collect($setting_courirers)->where('key', 's_courier') as $courier) {
@@ -2539,6 +2545,7 @@ class TransactionCommands extends Service
                     'actual_price_tenor' => data_get($datas, 'installment_actual_price') ?? 0,
                     'interest_percentage_tenor' => data_get($datas, 'installment_interest_percentage') ?? 0,
                     'provider_fee' => data_get($datas, 'installment_provider_fee') ?? 0,
+                    'sharing_fee' => data_get($datas, 'installment_sharing_fee') ?? 0,
                 ];
             }
 
@@ -2763,6 +2770,10 @@ class TransactionCommands extends Service
                 $installment_tenor = $datas['installment_tenor'] < 10 ? str_pad($datas['installment_tenor'], 2, '0', STR_PAD_LEFT) : $datas['installment_tenor'];
             }
 
+            if (isset($datas['installment_sharing_fee']) && $datas['installment_sharing_fee'] > 0) {
+                $installment_sharing_fee = $datas['installment_sharing_fee'];
+            }
+
             $product_name = $new_products[0]->name;
 
             if (!isset($datas['customer']) || data_get($datas, 'customer') == null) {
@@ -2779,7 +2790,7 @@ class TransactionCommands extends Service
                     'phone_number' => $customer->phone,
                     'expired_invoice' => $exp_date,
                     'additional_info6' => isset($datas['installment_settlement']) ? $datas['installment_settlement'] : null,
-                    'additional_info7' => isset($datas['installment_provider_fee']) ? $datas['installment_provider_fee'] : null,
+                    'additional_info7' => isset($installment_sharing_fee) ? $installment_sharing_fee : $datas['installment_provider_fee'] ?? null,
                     'additional_info8' => isset($installment_tenor) ? $installment_tenor : null,
                     'additional_info9' => isset($datas['installment_markup_price']) ? $datas['installment_markup_price'] : null,
                     'additional_info10' => isset($datas['installment_fee']) ? $datas['installment_fee'] : null,
@@ -3053,7 +3064,9 @@ class TransactionCommands extends Service
 
         $image_logistic = null;
         $logistic_master = MasterData::where('type', 'rajaongkir_courier')->where('reference_third_party_id', $delivery->delivery_method)->first();
-        if ($logistic_master) $image_logistic = $logistic_master->photo_url;
+        if ($logistic_master) {
+            $image_logistic = $logistic_master->photo_url;
+        }
 
         $delivery->awb_number = $awb;
         $delivery->image_logistic = $image_logistic;
