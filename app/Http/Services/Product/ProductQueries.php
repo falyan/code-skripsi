@@ -366,60 +366,37 @@ class ProductQueries extends Service
         return $response;
     }
 
-    public function searchProductAndMerchant($keyword, $limit, $filter = [], $sortby = null, $current_page = 1)
+    public function preSearchProductAndMerchant($keyword)
     {
-        $product = new Product();
-        $products = $product
-            ->where('status', 1)->with([
-            'product_stock:id,product_id,amount,uom',
-            'product_photo:id,product_id,url',
-            'is_wishlist',
-            'merchant',
-            'merchant.city:id,name',
-            'merchant.promo_merchant' => function ($pd) {
-                $pd->where(function ($query) {
-                    $query->where('start_date', '<=', date('Y-m-d H:i:s'))
-                        ->where('end_date', '>=', date('Y-m-d H:i:s'));
-                });
-            },
-            'merchant.promo_merchant.promo_master.promo_regions',
-            'merchant.promo_merchant.promo_master.promo_values',
-            'varian_product' => function ($query) {
-                $query->with(['variant_stock'])->where('main_variant', true);
-            },
-            'ev_subsidy',
-        ])
-            ->whereHas('merchant', function ($merchant) use ($filter) {
-                $merchant->where('status', 1);
-                $location = $filter['location'] ?? null;
-                if (!empty($location)) {
-                    if (strpos($location, ',')) {
-                        $merchant->whereIn('city_id', explode(',', $location));
-                    } else {
-                        $merchant->where('city_id', 'LIKE', $location);
-                    }
-                }
-            });
+        // Lakukan fuzzy search terhadap database produk dan toko.
+        $products = Product::where('status', 1)->where('name', 'ILIKE', '%' . $keyword . '%')->take(3)->get(['name']);
+        $merchants = Merchant::where('status', 1)->where('name', 'ILIKE', '%' . $keyword . '%')->take(5)->get(['id', 'name', 'official_store', 'photo_url']);
 
-        if (!empty($keyword)) {
-            // handle search with keyword if there more than 1 words with space
-            $keywords = explode(' ', $keyword);
-            $products = $products->where(function ($query) use ($keywords) {
-                foreach ($keywords as $keyword) {
-                    $query->orWhere('name', 'ILIKE', '%' . $keyword . '%');
-                }
-            });
-        }
+        // Perform fuzzy search ranking for each model separately.
+        $products = $products->sortBy(fn(Product $product) => levenshtein($product->name, $keyword));
+        $merchants = $merchants->sortBy(fn(Merchant $merchant) => levenshtein($merchant->name, $keyword));
 
-        $filtered_data = $this->filter($products, $filter);
-        $sorted_data = $this->sorting($filtered_data, $sortby);
+        // Transform models to desired data format.
+        $formattedProducts = $products->values()->map(fn(Product $product) => [
+            'name' => $product->name,
+        ])->toArray();
 
-        $data = $this->productPaginate($sorted_data, $limit);
+        $formattedMerchants = $merchants->values()->map(fn(Merchant $merchant) => [
+            'id' => $merchant->id,
+            'name' => $merchant->name,
+            'official_store' => $merchant->official_store,
+            'photo_url' => $merchant->photo_url,
+        ])->toArray();
 
         $response['success'] = true;
-        $response['message'] = 'Produk berhasil didapatkan.';
-        $response['data'] = $data;
+        $response['message'] = 'Berhasil mendapatkan suggest pencarian!';
+        $response['data'] = [
+            'products' => $formattedProducts,
+            'merchants' => $formattedMerchants,
+        ];
+
         return $response;
+
     }
 
     public function getProductFeatured($merchant_id, $limit, $filter = [], $sortby = null, $current_page)

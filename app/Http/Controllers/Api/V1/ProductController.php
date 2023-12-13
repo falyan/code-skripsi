@@ -437,7 +437,7 @@ class ProductController extends Controller
         }
     }
 
-    public function searchProductAndMerchant(Request $request)
+    public function preSearchProductAndMerchant(Request $request)
     {
         try {
             $validator = Validator::make(request()->all(), [
@@ -463,7 +463,7 @@ class ProductController extends Controller
             $sorting = $request->sortby ?? null;
             $page = $request->page ?? 1;
 
-            return $this->productQueries->searchProductAndMerchant($request->keyword, $limit, $filter, $sorting, $page);
+            return $this->productQueries->preSearchProductAndMerchant($request->keyword, $limit, $filter, $sorting, $page);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
