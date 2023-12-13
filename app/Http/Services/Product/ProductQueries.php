@@ -366,6 +366,39 @@ class ProductQueries extends Service
         return $response;
     }
 
+    public function preSearchProductAndMerchant($keyword)
+    {
+        // Lakukan fuzzy search terhadap database produk dan toko.
+        $products = Product::where('status', 1)->where('name', 'ILIKE', '%' . $keyword . '%')->take(3)->get(['name']);
+        $merchants = Merchant::where('status', 1)->where('name', 'ILIKE', '%' . $keyword . '%')->take(5)->get(['id', 'name', 'official_store', 'photo_url']);
+
+        // Perform fuzzy search ranking for each model separately.
+        $products = $products->sortBy(fn(Product $product) => levenshtein($product->name, $keyword));
+        $merchants = $merchants->sortBy(fn(Merchant $merchant) => levenshtein($merchant->name, $keyword));
+
+        // Transform models to desired data format.
+        $formattedProducts = $products->values()->map(fn(Product $product) => [
+            'name' => $product->name,
+        ])->toArray();
+
+        $formattedMerchants = $merchants->values()->map(fn(Merchant $merchant) => [
+            'id' => $merchant->id,
+            'name' => $merchant->name,
+            'official_store' => $merchant->official_store,
+            'photo_url' => $merchant->photo_url,
+        ])->toArray();
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil mendapatkan suggest pencarian!';
+        $response['data'] = [
+            'products' => $formattedProducts,
+            'merchants' => $formattedMerchants,
+        ];
+
+        return $response;
+
+    }
+
     public function getProductFeatured($merchant_id, $limit, $filter = [], $sortby = null, $current_page)
     {
         $product = new Product();
