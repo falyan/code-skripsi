@@ -1614,6 +1614,7 @@ class TransactionQueries extends Service
             $installment_provider_fee = $installment['provider_fee'];
             $installment_interest_percentage = $installment['interest_percentage'];
             $installment_settlement = $installment['installment_settlement'];
+            $installment_sharing_fee = $installment['installment_sharing_fee'];
         }
 
         $datas['installment_price'] = $installment_price ?? 0;
@@ -1624,6 +1625,7 @@ class TransactionQueries extends Service
         $datas['installment_provider_fee'] = $installment_provider_fee ?? 0;
         $datas['installment_interest_percentage'] = $installment_interest_percentage ?? 0;
         $datas['installment_settlement'] = $installment_settlement ?? 0;
+        $datas['installment_sharing_fee'] = $installment_sharing_fee ?? 0;
 
         $datas['total_payment'] = $installment_total_payment ?? $datas['total_payment'];
 

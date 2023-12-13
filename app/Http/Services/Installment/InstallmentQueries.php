@@ -120,11 +120,13 @@ class InstallmentQueries extends Service
             $markup_price = ceil($price / (1 - ($providers->details[0]->mdr_percentage / 100)));
             $installment_fee = ceil($markup_price * $providers->details[0]->mdr_percentage / 100);
             $installment_settlement = $markup_price - $installment_fee;
+            $sharing_fee = ceil($markup_price * $providers->details[0]->sharing_fee);
         } else if ($providers->provider_code === 'bni-installment' || $providers->provider_code === 'mandiri-installment' || $providers->provider_code === 'bri-installment') {
             $markup_price = round(($price + $providers->details[0]->fee_provider) / (1 - ($providers->details[0]->mdr_percentage / 100)));
             $installment_price = round($markup_price / $tenor);
             $installment_fee = round($markup_price * $providers->details[0]->mdr_percentage / 100);
             $installment_settlement = $markup_price - $installment_fee;
+            $sharing_fee = round($markup_price * $providers->details[0]->sharing_fee);
         }
 
         return [
@@ -136,6 +138,7 @@ class InstallmentQueries extends Service
             'provider_fee' => $providers->details[0]->fee_provider ?? 0,
             'interest_percentage' => $providers->details[0]->interest_percentage ?? 0,
             'installment_settlement' => $installment_settlement ?? 0,
+            'installment_sharing_fee' => $sharing_fee ?? 0,
         ];
     }
 }
