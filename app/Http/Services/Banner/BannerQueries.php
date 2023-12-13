@@ -59,7 +59,7 @@ class BannerQueries extends Service
 
     public function getFlashPopup()
     {
-        $popup_banner = PopupBanners::where('is_active', 1)->inRandomOrder()->first();
+        $popup_banner = PopupBanners::where('status', true)->inRandomOrder()->first();
 
         return [
             'sukses' => true,
