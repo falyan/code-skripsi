@@ -13,6 +13,7 @@ use App\Models\ProductEvSubsidy;
 use App\Models\Review;
 use App\Models\VariantValueProduct;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class ProductQueries extends Service
@@ -306,12 +307,7 @@ class ProductQueries extends Service
     {
         $product = new Product();
         $products = $product
-        // ->withCount(['order_details' => function ($details) {
-        //     $details->whereHas('order', function ($order) {
-        //         $order->whereHas('progress_done');
-        //     });
-        // }])
-        ->where('status', 1)->with([
+            ->where('status', 1)->with([
             'product_stock:id,product_id,amount,uom',
             'product_photo:id,product_id,url',
             'is_wishlist',
@@ -341,11 +337,10 @@ class ProductQueries extends Service
                     }
                 }
             });
-        // ->orWhereHas('merchant', function ($query) use ($keyword) {
-        //     $query->where('name', 'ILIKE', '%' . $keyword . '%')->where('status', 1);
-        // });
 
         if (!empty($keyword)) {
+            // Simpan keyword ke cache dengan opsi insensitive case selama 1 hari
+            Cache::put('search_history:' . strtolower($keyword), $keyword, Carbon::now()->addDay());
             // handle search with keyword if there more than 1 words with space
             $keywords = explode(' ', $keyword);
             $products = $products->where(function ($query) use ($keywords) {
@@ -368,6 +363,9 @@ class ProductQueries extends Service
 
     public function preSearchProductAndMerchant($keyword)
     {
+        $lastSearch = Cache::get('search_history:' . strtolower($keyword));
+        $lastSearch = $lastSearch ?? null;
+
         // Lakukan fuzzy search terhadap database produk dan toko.
         $products = Product::where('status', 1)->where('name', 'ILIKE', '%' . $keyword . '%')->take(3)->get(['name']);
         $merchants = Merchant::where('status', 1)->where('name', 'ILIKE', '%' . $keyword . '%')->take(5)->get(['id', 'name', 'official_store', 'photo_url']);
@@ -391,6 +389,7 @@ class ProductQueries extends Service
         $response['success'] = true;
         $response['message'] = 'Berhasil mendapatkan suggest pencarian!';
         $response['data'] = [
+            'last_keyword' => $lastSearch ?? null,
             'products' => $formattedProducts,
             'merchants' => $formattedMerchants,
         ];
