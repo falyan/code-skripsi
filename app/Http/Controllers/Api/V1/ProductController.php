@@ -442,7 +442,6 @@ class ProductController extends Controller
         try {
             $validator = Validator::make(request()->all(), [
                 'keyword' => 'required|min:3',
-                'limit' => 'nullable',
             ], [
                 'required' => ':attribute wajib diisi.',
                 'min' => 'panjang :attribute minimum :min karakter.',
@@ -458,12 +457,7 @@ class ProductController extends Controller
                 return $this->respondValidationError($errors, 'Validation Error!');
             }
 
-            $limit = $request->limit ?? 10;
-            $filter = $request->filter ?? [];
-            $sorting = $request->sortby ?? null;
-            $page = $request->page ?? 1;
-
-            return $this->productQueries->preSearchProductAndMerchant($request->keyword, $limit, $filter, $sorting, $page);
+            return $this->productQueries->preSearchProductAndMerchant($request->keyword);
         } catch (Exception $e) {
             return $this->respondErrorException($e, request());
         }
