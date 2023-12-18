@@ -374,6 +374,9 @@ class ProductQueries extends Service
         $products = $products->sortBy(fn(Product $product) => levenshtein($product->name, $keyword));
         $merchants = $merchants->sortBy(fn(Merchant $merchant) => levenshtein($merchant->name, $keyword));
 
+        // sort by official store first
+        $merchants = $merchants->sortByDesc(fn(Merchant $merchant) => $merchant->official_store);
+
         // Transform models to desired data format.
         $formattedProducts = $products->values()->map(fn(Product $product) => [
             'name' => $product->name,
