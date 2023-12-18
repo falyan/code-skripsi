@@ -368,7 +368,7 @@ class ProductQueries extends Service
 
         // Lakukan fuzzy search terhadap database produk dan toko.
         $products = Product::where('status', 1)->where('name', 'ILIKE', '%' . $keyword . '%')->take(3)->get(['name']);
-        $merchants = Merchant::where('status', 1)->where('name', 'ILIKE', '%' . $keyword . '%')->take(5)->get(['id', 'name', 'official_store', 'photo_url']);
+        $merchants = Merchant::with('city:id,name')->where('status', 1)->where('name', 'ILIKE', '%' . $keyword . '%')->take(5)->get();
 
         // Perform fuzzy search ranking for each model separately.
         $products = $products->sortBy(fn(Product $product) => levenshtein($product->name, $keyword));
@@ -383,7 +383,8 @@ class ProductQueries extends Service
             'id' => $merchant->id,
             'name' => $merchant->name,
             'official_store' => $merchant->official_store,
-            'photo_url' => $merchant->photo_url,
+            'photo_url' => $merchant->photo_url ?? null,
+            'city_name' => $merchant->city->name ?? null,
         ])->toArray();
 
         $response['success'] = true;
