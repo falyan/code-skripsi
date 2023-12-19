@@ -2311,10 +2311,10 @@ class TransactionController extends Controller
             }
 
             $topup_inquiry = IconcashInquiry::createTopupInquiry($iconcash, $account_type_id, $amount, $client_ref, $corporate_id, $order, 'topup-refund-ongkir');
-            $resConfrim = IconcashManager::topupConfirm($topup_inquiry->orderId, $topup_inquiry->amount);
+            $resConfrim = IconcashManager::topupConfirm($topup_inquiry->data->orderId, $topup_inquiry->data->amount);
 
             if ($resConfrim) {
-                $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->orderId)->first();
+                $iconcash_inquiry = IconcashInquiry::where('iconcash_order_id', $topup_inquiry->data->orderId)->first();
                 $iconcash_inquiry->confirm_res_json = json_encode($resConfrim->data);
                 $iconcash_inquiry->confirm_status = $resConfrim->success;
                 $iconcash_inquiry->save();
