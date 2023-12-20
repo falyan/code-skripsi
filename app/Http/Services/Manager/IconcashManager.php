@@ -783,6 +783,35 @@ class IconcashManager
         return data_get($response, 'data');
     }
 
+    public static function checkBeneficiary($token, $customer_bank_id, $account_number)
+    {
+        $param = self::setParamAPI([
+            'bankId' => $customer_bank_id,
+            'noRekening' => $account_number,
+        ]);
+
+        $url = sprintf('%s/%s', self::$apiendpoint, 'api/query/customerbank/check-rekening' . $param);
+
+        $response = self::$curl->request('GET', $url, [
+            'headers' => [
+                'Authorization' => $token,
+                'app_source' => 'marketplace',
+            ],
+
+            'http_errors' => false,
+        ]);
+
+        $response = json_decode($response->getBody());
+
+        throw_if(!$response, new Exception('Terjadi kesalahan: Data tidak dapat diperoleh'));
+
+        if ($response->success != true) {
+            throw new Exception($response->message, $response->code);
+        }
+
+        return data_get($response, 'data');
+    }
+
     public static function changePin($token, $old_pin, $new_pin, $confirm_new_pin)
     {
         $param = self::setParamAPI([]);

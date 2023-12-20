@@ -746,6 +746,31 @@ class IconcashController extends Controller
         }
     }
 
+    public function checkBeneficiary()
+    {
+        if (!$bank_id = request()->get('bank_id')) {
+            return $this->respondWithResult(false, 'field bank_id kosong', 400);
+        }
+
+        if (!$account_number = request()->get('account_number')) {
+            return $this->respondWithResult(false, 'field account_number kosong', 400);
+        }
+
+        try {
+            $iconcash = Auth::user()->iconcash;
+
+            $response = IconcashManager::checkBeneficiary($iconcash->token, $bank_id, $account_number);
+
+            return $this->respondWithData([
+                'bank' => $response->bank,
+                'account_name' => $response->accountName,
+                'account_number' => $response->accountNumber,
+            ]);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     public function changePin()
     {
         if (!$old_pin = request()->get('old_pin')) {
