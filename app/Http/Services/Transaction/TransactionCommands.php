@@ -1994,18 +1994,20 @@ class TransactionCommands extends Service
             ];
         }
 
-        $check_order = Order::whereIn('merchant_id', array_column($datas['merchants'], 'merchant_id'))
+        $check_orders = Order::whereIn('merchant_id', array_column($datas['merchants'], 'merchant_id'))
             ->whereHas('progress_active', function ($progress) {
                 $progress->whereIn('status_code', ['01', '02']);
-            })->count();
+            })->groupBy('merchant_id')->selectRaw('count(*) as total')->get();
 
-        if ($check_order > 50) {
-            return [
-                'success' => false,
-                'status' => "Bad request",
-                'status_code' => 400,
-                'message' => 'Mohon maaf, saat ini merchant tidak dapat melakukan transaksi',
-            ];
+        foreach ($check_orders as $check_order) {
+            if ($check_order->total > 50) {
+                return [
+                    'success' => false,
+                    'status' => "Bad request",
+                    'status_code' => 400,
+                    'message' => 'Mohon maaf, saat ini merchant tidak dapat melakukan transaksi',
+                ];
+            }
         }
 
         $ev_subsidies = [];
