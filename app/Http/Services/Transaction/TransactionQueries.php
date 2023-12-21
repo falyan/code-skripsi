@@ -1128,6 +1128,7 @@ class TransactionQueries extends Service
         $new_merchant = [];
         $ev_subsidies = [];
         $promo_masters = [];
+
         foreach (data_get($datas, 'merchants') as $merchant) {
             $total_weight = 0;
             $merchant_total_price = 0;
@@ -1529,14 +1530,14 @@ class TransactionQueries extends Service
             $total_insentif += $product_insentif;
 
             if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
-                $installment = InstallmentQueries::calculateInstallment($datas['installment'], $merchant['total_payment']);
+                // $installment = InstallmentQueries::calculateInstallment($datas['installment'], $merchant['total_payment']);
 
-                // get only the highest one total_payment in data merchant then override it with markup_price
-                // if ($merchant['id'] == $datas['merchants'][0]['id']) {
-                //     $merchant['total_payment'] = $installment['markup_price'];
-                // }
+                // // get only the highest one total_payment in data merchant then override it with markup_price
+                // // if ($merchant['id'] == $datas['merchants'][0]['id']) {
+                // //     $merchant['total_payment'] = $installment['markup_price'];
+                // // }
 
-                $merchant['total_payment'] = $installment['markup_price'];
+                // $merchant['total_payment'] = $installment['markup_price'];
             }
 
             $new_merchant[] = $merchant;
@@ -1605,6 +1606,11 @@ class TransactionQueries extends Service
         // Payment Installment //
 
         if (isset($datas['installment']) && data_get($datas, 'installment') != null) {
+            // validasi jika ada total 2 merchant dalam 1 order, maka return validasi pesan error
+            if (count($datas['merchants']) > 1) {
+                $message_error = 'Mohon maaf, saat ini pembayaran dengan cicilan hanya dapat dilakukan untuk 1 toko dalam setiap transaksi.';
+            }
+
             $installment = InstallmentQueries::calculateInstallment($datas['installment'], $datas['total_payment']);
 
             $installment_price = $installment['installment_price'];

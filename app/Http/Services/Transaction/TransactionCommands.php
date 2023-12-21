@@ -1985,6 +1985,18 @@ class TransactionCommands extends Service
             }
         }
 
+        // jika order adalah installment
+        if (isset($datas['installment']) && data_get($datas, 'installment') != null && $datas['installment_markup_price'] > 0) {
+            if (count($datas['merchants']) > 1) {
+                return [
+                    'success' => false,
+                    'status' => "Bad request",
+                    'status_code' => 400,
+                    'message' => 'Mohon maaf, saat ini pembayaran dengan cicilan hanya dapat dilakukan untuk 1 toko dalam setiap transaksi.',
+                ];
+            }
+        }
+
         if ($customer_address->address == null || $customer_address->address == '') {
             return [
                 'success' => false,
