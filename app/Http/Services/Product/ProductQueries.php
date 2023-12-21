@@ -384,7 +384,8 @@ class ProductQueries extends Service
 
         $formattedMerchants = $merchants->values()->map(fn(Merchant $merchant) => [
             'id' => $merchant->id,
-            'name' => $merchant->name,
+            // capitalize first letter of each word
+            'name' => ucwords(strtolower($merchant->name)),
             'official_store' => $merchant->official_store,
             'photo_url' => $merchant->photo_url ?? null,
             'city_name' => $merchant->city->name ?? null,
