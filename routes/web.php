@@ -594,7 +594,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () use ($ro
             $router->post('command/disbursement', 'IconcashController@withdrawalV2');
             $router->post('command/disbursement/customerbank', 'IconcashController@addCustomerBankV2');
             $router->put('command/disbursement/customerbank/{id}', 'IconcashController@updateCustomerBankV2');
-            $router->get('query/customerbank/check-beneficiary', 'IconcashController@checkBeneficiary');
+            $router->get('query/disbursement/customerbank/check-beneficiary', 'IconcashController@checkBeneficiary');
 
             $router->post('command/create-order', 'IconcashController@createOrder');
             $router->post('command/order-confirm', 'IconcashController@orderConfirm');
