@@ -403,6 +403,18 @@ class ProductQueries extends Service
 
     }
 
+    public function clearSearchHistory($keyword)
+    {
+        //    clear or delete cache
+        Cache::forget('search_history:' . strtolower($keyword));
+
+        $response['success'] = true;
+        $response['message'] = 'Berhasil menghapus history pencarian!';
+        $response['data'] = null;
+
+        return $response;
+    }
+
     public function getProductFeatured($merchant_id, $limit, $filter = [], $sortby = null, $current_page)
     {
         $product = new Product();
