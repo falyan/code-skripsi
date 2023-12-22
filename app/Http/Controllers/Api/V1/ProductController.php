@@ -463,6 +463,32 @@ class ProductController extends Controller
         }
     }
 
+    public function clearSearchHistory(Request $request)
+    {
+        $validator = Validator::make(request()->all(), [
+            'keyword' => 'required|min:3',
+        ], [
+            'required' => ':attribute wajib diisi.',
+            'min' => 'panjang :attribute minimum :min karakter.',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = collect();
+            foreach ($validator->errors()->getMessages() as $key => $value) {
+                foreach ($value as $error) {
+                    $errors->push($error);
+                }
+            }
+            return $this->respondValidationError($errors, 'Validation Error!');
+        }
+
+        try {
+            return $this->productQueries->clearSearchHistory($request->keyword);
+        } catch (Exception $e) {
+            return $this->respondErrorException($e, request());
+        }
+    }
+
     //Get Produk Berdasarkan Merchant Buyer
     public function getProductByMerchantBuyer($merchant_id, Request $request)
     {
